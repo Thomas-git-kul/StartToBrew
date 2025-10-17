@@ -26,6 +26,10 @@ jobs:
     needs: build
     
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: StartBrewing
     
     steps: 
       - name: checkout repo
