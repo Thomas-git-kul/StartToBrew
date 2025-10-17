@@ -6,6 +6,10 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: StartBrewing
+
     steps:
       - name: Checkout repository code
         uses: actions/checkout@v4
