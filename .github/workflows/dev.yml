@@ -10,5 +10,12 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      - run: echo "$(cat hello_world.txt)"
+      - name: use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm install
+      - run: npm run build
   
