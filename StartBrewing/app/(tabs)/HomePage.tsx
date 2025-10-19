@@ -26,19 +26,6 @@ export default function HomepageScreen() {
         accessibilityLabel="first-input"
       />
 
-      {/* Existing button */}
-      <Link href="/popUpWindow" asChild>
-        <Pressable style={styles.button}>
-          <Text style={styles.buttonText}>Go to popUpWindow</Text>
-        </Pressable>
-      </Link>
-
-      {/* authorization page*/}
-      <Link href="../Auth" asChild>
-        <Pressable style={[styles.button, styles.authButton]}>
-          <Text style={styles.buttonText}>Go to Auth Page</Text>
-        </Pressable>
-      </Link>
 
       {submitted !== null && (
         <ThemedText style={styles.result}>

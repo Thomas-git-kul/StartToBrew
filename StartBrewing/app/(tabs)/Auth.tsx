@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Alert, AppState, View } from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
 import { supabase } from "../../supabase";
+import "../../global.css";
 
 export default function Auth() {
   const theme = useTheme();
