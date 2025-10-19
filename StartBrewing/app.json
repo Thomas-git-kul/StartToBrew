@@ -2,6 +2,11 @@
   "expo": {
     "name": "StartBrewing",
     "slug": "StartBrewing",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -23,7 +28,15 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "bundler": "metro",
+      "favicon": "./assets/images/favicon.png",
+      "pwa": {
+        "name": "My PWA App",
+        "shortName": "PWAApp",
+        "backgroundColor": "#ffffff",
+        "themeColor": "#000000",
+        "orientation": "portrait"
+      }
     },
     "plugins": [
       "expo-router",

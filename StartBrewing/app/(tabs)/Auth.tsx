@@ -1,7 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Alert, AppState, View } from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
-import { supabase } from "../supabase";
+import { supabase } from "../../supabase";
+const getSupabaseClient = (require("../../supabase") as any).getSupabaseClient as (() => typeof supabase) | undefined;
+
+let client: typeof supabase | undefined;
+
+if (typeof window !== "undefined") {
+  // Only create client on web runtime
+  const getClient = getSupabaseClient as unknown as (() => typeof supabase) | undefined;
+  client = getClient?.();
+} else {
+  // Use native client on mobile/SSR
+  client = supabase;
+}
 
 // Handle Supabase auto-refresh
 AppState.addEventListener("change", (state) => {
