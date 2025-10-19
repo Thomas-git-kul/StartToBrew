@@ -1,13 +1,12 @@
 import { Platform } from 'react-native';
 
-let supabaseNative;
-let getSupabaseClientWeb
+let supabase: any;
 
 if (Platform.OS === 'web') {
-  getSupabaseClientWeb = require('./client.web').getSupabaseClient;
+  const { getSupabaseClient } = require('./client.web');
+  supabase = getSupabaseClient(); // call the function to get the client
 } else {
-  supabaseNative = require('./client.native').supabase;
+  supabase = require('./client.native').supabase;
 }
 
-export const supabase = supabaseNative;
-export { getSupabaseClientWeb as getSupabaseClient };
+export { supabase };

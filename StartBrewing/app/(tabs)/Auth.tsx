@@ -2,27 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Alert, AppState, View } from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
 import { supabase } from "../../supabase";
-const getSupabaseClient = (require("../../supabase") as any).getSupabaseClient as (() => typeof supabase) | undefined;
-
-let client: typeof supabase | undefined;
-
-if (typeof window !== "undefined") {
-  // Only create client on web runtime
-  const getClient = getSupabaseClient as unknown as (() => typeof supabase) | undefined;
-  client = getClient?.();
-} else {
-  // Use native client on mobile/SSR
-  client = supabase;
-}
-
-// Handle Supabase auto-refresh
-AppState.addEventListener("change", (state) => {
-  if (state === "active") {
-    supabase.auth.startAutoRefresh();
-  } else {
-    supabase.auth.stopAutoRefresh();
-  }
-});
 
 export default function Auth() {
   const theme = useTheme();
@@ -30,39 +9,41 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        supabase.auth.startAutoRefresh?.();
+      } else {
+        supabase.auth.stopAutoRefresh?.();
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
   async function signInWithEmail() {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) Alert.alert(error.message);
     setLoading(false);
   }
 
   async function signUpWithEmail() {
     setLoading(true);
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    const { data: { session }, error } = await supabase.auth.signUp({ email, password });
 
     if (error) Alert.alert(error.message);
-    if (!session)
-      Alert.alert("Please check your inbox for email verification!");
+    if (!session) Alert.alert("Please check your inbox for email verification!");
     setLoading(false);
   }
 
   return (
-    <View className="flex-1 justify-center px-6 bg-white">
-      <Text className="text-3xl font-bold mb-8 text-center text-black">
+    <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24, backgroundColor: "white" }}>
+      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 32, textAlign: "center", color: "black" }}>
         Welcome
       </Text>
 
-      <View className="space-y-4">
+      <View style={{ gap: 16 }}>
         <TextInput
           label="Email"
           mode="outlined"
@@ -70,10 +51,7 @@ export default function Auth() {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
-          left={<TextInput.Icon icon="email" />}
-          className="mb-4"
         />
-
         <TextInput
           label="Password"
           mode="outlined"
@@ -81,25 +59,11 @@ export default function Auth() {
           onChangeText={setPassword}
           secureTextEntry
           autoCapitalize="none"
-          left={<TextInput.Icon icon="lock" />}
-          className="mb-4"
         />
-
-        <Button
-          mode="contained"
-          loading={loading}
-          onPress={signInWithEmail}
-          className="mb-3 bg-blue-600"
-        >
+        <Button mode="contained" loading={loading} onPress={signInWithEmail} style={{ marginBottom: 12 }}>
           Sign In
         </Button>
-
-        <Button
-          mode="outlined"
-          loading={loading}
-          onPress={signUpWithEmail}
-          textColor={theme.colors.primary}
-        >
+        <Button mode="outlined" loading={loading} onPress={signUpWithEmail} textColor={theme.colors.primary}>
           Sign Up
         </Button>
       </View>
