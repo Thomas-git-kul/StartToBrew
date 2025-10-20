@@ -30,13 +30,16 @@
       "output": "static",
       "bundler": "metro",
       "favicon": "./assets/images/favicon.png",
-      "pwa": {
-        "name": "My PWA App",
-        "shortName": "PWAApp",
+      "manifest": {
+        "name": "StartToBrew",
+        "shortName": "StartToBrew",
+        "start_url": ".",
+        "display": "standalone",
         "backgroundColor": "#ffffff",
         "themeColor": "#000000",
         "orientation": "portrait"
-      }
+      },
+      "serviceWorker": true
     },
     "plugins": [
       "expo-router",
