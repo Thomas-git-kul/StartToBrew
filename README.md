@@ -65,4 +65,6 @@ npx expo start --tunnel
 4. Scan the QR code in the expo go app
 
 ## How to contribute to the project
-personal branches or branches per functionality?
+Everybody pushes changes on their local branch.
+Then you merge with the dev branch.
+Finally, you merge to the main.
