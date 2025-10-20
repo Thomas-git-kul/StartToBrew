@@ -1,7 +1,6 @@
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'jest-expo',
-  setupFiles: ['<rootDir>/jest.preload.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 
   moduleNameMapper: {
