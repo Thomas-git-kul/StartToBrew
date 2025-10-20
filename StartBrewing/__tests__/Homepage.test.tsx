@@ -2,7 +2,7 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 
-import HomepageScreen from '../app/(tabs)/homePage'; // import the component
+import HomepageScreen from '../app/(tabs)/HomePage'; // import the component
 
 describe('HomepageScreen', () => {
   it('displays Hello world', () => {
