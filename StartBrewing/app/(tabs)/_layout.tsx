@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import "../../global.css"; // from app/(tabs)/_layout.tsx up two levels
+import "../../global.css"; 
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -19,7 +19,7 @@ export default function TabLayout() {
     >
       {/* Home Page Tab */}
       <Tabs.Screen
-        name="homePage"
+        name="HomePage"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
@@ -30,7 +30,7 @@ export default function TabLayout() {
 
       {/* Agenda Tab */}
       <Tabs.Screen
-        name="agenda"
+        name="Agenda"
         options={{
           title: "Agenda",
           tabBarIcon: ({ color }) => (
@@ -41,7 +41,7 @@ export default function TabLayout() {
 
       {/* Store Tab */}
       <Tabs.Screen
-        name="store"
+        name="Store"
         options={{
           title: "Store",
           tabBarIcon: ({ color }) => (
@@ -50,24 +50,23 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Profile Tab */}
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={color} />
-          ),
-        }}
-      />
-
       {/* Recipes Tab */}
       <Tabs.Screen
-        name="recipes"
+        name="Recipes"
         options={{
           title: "Recipes",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="book.fill" color={color} />
+          ),
+        }}
+      />
+    {/* Auth Tab */}
+      <Tabs.Screen
+        name="Auth"
+        options={{
+          title: "Auth",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.fill" color={color} />
           ),
         }}
       />

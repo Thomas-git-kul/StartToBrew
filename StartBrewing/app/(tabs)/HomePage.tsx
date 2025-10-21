@@ -1,68 +1,64 @@
+import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Link } from "expo-router";
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-const React = require("react") as typeof import("react");
+import { TouchableOpacity, Text, Alert, StyleSheet } from "react-native";
+import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
+import { useRouter } from "expo-router"; 
 
-export default function HomepageScreen() {
-  const insets = useSafeAreaInsets();
-  const [text, setText] = useState("");
-  const [submitted, setSubmitted] = useState<string | null>(null);
-
+export default function HomePage() {
+  const router = useRouter();
   return (
-    <ThemedView
-      style={[styles.container, { paddingTop: (insets.top ?? 0) + 12 }]}
-    >
-      <ThemedText type="title">Hello world</ThemedText>
-      <ThemedText>some random words</ThemedText>
+    <SafeAreaView style={[styles.general]}>
+      <ThemedText style={styles.title}>StartToBrew</ThemedText>
+      <ThemedText style={styles.title2}>In progress</ThemedText>
+      <ThemedText style={styles.title2}>Start a new brew</ThemedText>
+      <TouchableOpacity
+          style={styles.knop}
+          onPress={() => router.push("/Recipes")}      >
+      <Text style={styles.buttonText}>Here</Text>
+</TouchableOpacity>
 
-      <TextInput
-        value={text}
-        onChangeText={setText}
-        placeholder="Text message"
-        style={styles.input}
-        accessibilityLabel="first-input"
-      />
-
-
-      {submitted !== null && (
-        <ThemedText style={styles.result}>
-          You submitted: {submitted}
-        </ThemedText>
-      )}
-    </ThemedView>
+      <ThemedText style={styles.title2}>Popular recipes</ThemedText>
+    </SafeAreaView>
+    
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
+  general: {
     flex: 1,
-    gap: 12,
-    padding: 16,
+    backgroundColor: BASE_COLORS.WHITE,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 8,
-    borderRadius: 6,
+  title: {
+    paddingTop: 25,
+    fontSize: 50,
+    fontWeight: 'bold',
+    marginHorizontal: 10,
+    fontFamily: FontFamilies.HEADING,
+    color: BASE_COLORS.TEXT_DARK,
   },
-  button: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  authButton: {
-    backgroundColor: "#34C759", // Apple-style green for Auth
+  title2: {
+    paddingTop: 20,
+    fontSize: 25,
+    fontWeight: 'bold',
+    marginHorizontal: 10,
+    fontFamily: FontFamilies.HEADING,
+    color: BASE_COLORS.TEXT_DARK,
   },
   buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  result: {
-    marginTop: 12,
-  },
+  color: BASE_COLORS.WHITE,
+  textAlign: "center", // tekst horizontaal centreren
+  fontWeight: "bold",
+},
+
+knop: {
+  backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
+  height: 30, 
+  width: "50%", 
+  marginLeft: 10,
+  justifyContent: "center", 
+  alignItems: "center", 
+  borderRadius: 6, 
+},
+
 });
