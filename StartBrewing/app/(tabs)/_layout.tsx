@@ -4,6 +4,7 @@ import "../../global.css";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { BASE_COLORS } from "@/constants/Colors"; 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function TabLayout() {
@@ -23,7 +24,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <IconSymbol size={28} name="house.fill" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
@@ -34,7 +35,7 @@ export default function TabLayout() {
         options={{
           title: "Agenda",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="calendar" color={color} />
+            <IconSymbol size={28} name="calendar" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
@@ -45,7 +46,7 @@ export default function TabLayout() {
         options={{
           title: "Store",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="cart.fill" color={color} />
+            <IconSymbol size={28} name="cart.fill" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
@@ -56,7 +57,7 @@ export default function TabLayout() {
         options={{
           title: "Recipes",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="book.fill" color={color} />
+            <IconSymbol size={28} name="book.fill" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
@@ -66,7 +67,7 @@ export default function TabLayout() {
         options={{
           title: "Auth",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={color} />
+            <IconSymbol size={28} name="person.fill" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
