@@ -2,21 +2,15 @@ name: CI pipeline
 
 on:
   push:
-    branches:
-      - main
-      - dev
+    branches: [main, dev]
 
 jobs:
   setup:
     name: Setup & Cache dependencies
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: StartBrewing
-
-    outputs:
-      node-modules-cache: ${{ steps.cache-deps.outputs.cache-hit }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,39 +21,35 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-  # lint, test  and security
+  # lint and security
   lint:
     name: Run ESLint
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: StartBrewing
-
     needs: setup
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
+      - run: npm ci
       - name: Run lint
         run: npm run lint
 
   security:
     name: Vulnerability Scan
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: StartBrewing
-
     needs: setup
     steps:
       - uses: actions/checkout@v4
-      - name: Run npm audit
+      - name: npm audit (moderate+)
         run: npm audit --audit-level=moderate || true
 
   build:
@@ -74,16 +64,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - run: npm install
+      - run: npm ci
       - name: Build web export
         run: npm run build:web
-
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: web-build
-          path: dist
+          path: StartBrewing/dist
+          # retention-days: 7  # optional
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -99,17 +88,21 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: StartBrewing
     env:
-      IS_PROD: ${{ github.ref == 'refs/heads/main' }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+<<<<<<< HEAD
+=======
 
     defaults:
       run:
         working-directory: StartBrewing
 
+>>>>>>> 4fb86e7cc3e864f8a1bfb1785346237722347cba
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -123,10 +116,22 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-build
+<<<<<<< HEAD
+          path: StartBrewing/dist
+=======
           path: dist
+>>>>>>> 4fb86e7cc3e864f8a1bfb1785346237722347cba
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: npm i -g vercel@latest
 
+<<<<<<< HEAD
+      - name: Link env (preview)
+        run: vercel pull --yes --environment=preview --token "$VERCEL_TOKEN"
+
+      - name: Deploy folder to Vercel (no build on Vercel)
+        run: vercel deploy StartBrewing/dist --token "$VERCEL_TOKEN" --confirm
+=======
       - name: Deploy to Vercel
         run: vercel deploy --prebuilt dist --token=${{ secrets.VERCEL_TOKEN }} --confirm
+>>>>>>> 4fb86e7cc3e864f8a1bfb1785346237722347cba
