@@ -85,6 +85,12 @@ jobs:
           name: web-build
           path: dist
 
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: dist
+
   deploy-development:
     name: Deploy to Vercel (Development)
     needs: build
