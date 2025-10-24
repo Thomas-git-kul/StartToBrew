@@ -11,10 +11,6 @@ on:
       - main
       - dev
 
-defaults:
-  run:
-    working-directory: StartBrewing
-
 jobs:
   setup:
       name: Setup & Cache dependencies
@@ -72,7 +68,9 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm isntall
+          cache-dependency-path: StartBrewing/package-lock.json
+          
+      - run: npm install
       - name: Build web export
         run: npm run build:web
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { render } from '@testing-library/react-native';
 import HomePage from '../app/(tabs)/HomePage'; // pas dit pad aan als nodig
 
