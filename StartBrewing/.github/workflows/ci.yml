@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - dev
-  # Is dit nodig -> vraag Ube
+
   pull_request:
     branches:
       - main
@@ -26,8 +26,6 @@ jobs:
           uses: actions/setup-node@v4
           with:
             node-version: 20
-            cache: 'npm'
-            cache-dependency-path: StartBrewing/package-lock.json
   
         - name: Install dependencies
           run: npm install
@@ -67,9 +65,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-          cache-dependency-path: StartBrewing/package-lock.json
-          
+
       - run: npm install
       - name: Build web export
         run: npm run build:web
