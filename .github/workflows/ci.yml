@@ -5,11 +5,6 @@ on:
     branches:
       - main
       - dev
-  # Is dit nodig -> vraag Ube
-  pull_request:
-    branches:
-      - main
-      - dev
 
 jobs:
   setup:
@@ -99,17 +94,27 @@ jobs:
     if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
 
+    env:
+      IS_PROD: ${{ github.ref == 'refs/heads/main' }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
     defaults:
       run:
         working-directory: StartBrewing
 
     steps:
       - uses: actions/checkout@v2
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
+
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
       - name: Build Project Artifacts
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        
       - name: Deploy Project Artifacts to Vercel
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
