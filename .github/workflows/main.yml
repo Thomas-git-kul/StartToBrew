@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - dev
-  # Is dit nodig -> vraag Ube
+
   pull_request:
     branches:
       - main
@@ -15,11 +15,6 @@ jobs:
   setup:
       name: Setup & Cache dependencies
       runs-on: ubuntu-latest
-
-      defaults:
-        run:
-          working-directory: StartBrewing
-
 
       outputs:
         node-modules-cache: ${{ steps.cache-deps.outputs.cache-hit }}
@@ -39,12 +34,6 @@ jobs:
   lint:
     name: Run ESLint
     runs-on: ubuntu-latest
-
-
-    defaults:
-      run:
-        working-directory: StartBrewing
-
     needs: setup
     steps:
       - uses: actions/checkout@v4
@@ -58,12 +47,6 @@ jobs:
   security:
     name: Vulnerability Scan
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: StartBrewing
-
-
     needs: setup
     steps:
       - uses: actions/checkout@v4
@@ -74,8 +57,8 @@ jobs:
     name: Build Expo Web App
     runs-on: ubuntu-latest
     defaults:
-      run:
-        working-directory: StartBrewing
+        run:
+          working-directory: StartBrewing
     needs: [lint, security]
     steps:
       - uses: actions/checkout@v4
@@ -98,10 +81,6 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: StartBrewing
 
     steps:
       - uses: actions/checkout@v2
