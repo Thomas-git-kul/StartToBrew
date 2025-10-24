@@ -74,15 +74,6 @@ jobs:
           path: StartBrewing/dist
           # retention-days: 7  # optional
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: dist
-
-      - name: Verify build output
-        run: ls -la dist
-
   deploy-development:
     name: Deploy to Vercel (Development)
     needs: build
@@ -95,14 +86,6 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-<<<<<<< HEAD
-=======
-
-    defaults:
-      run:
-        working-directory: StartBrewing
-
->>>>>>> 4fb86e7cc3e864f8a1bfb1785346237722347cba
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -116,22 +99,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-build
-<<<<<<< HEAD
           path: StartBrewing/dist
-=======
-          path: dist
->>>>>>> 4fb86e7cc3e864f8a1bfb1785346237722347cba
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
 
-<<<<<<< HEAD
       - name: Link env (preview)
         run: vercel pull --yes --environment=preview --token "$VERCEL_TOKEN"
 
       - name: Deploy folder to Vercel (no build on Vercel)
         run: vercel deploy StartBrewing/dist --token "$VERCEL_TOKEN" --confirm
-=======
-      - name: Deploy to Vercel
-        run: vercel deploy --prebuilt dist --token=${{ secrets.VERCEL_TOKEN }} --confirm
->>>>>>> 4fb86e7cc3e864f8a1bfb1785346237722347cba
