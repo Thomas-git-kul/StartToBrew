@@ -91,6 +91,9 @@ jobs:
           name: web-build
           path: dist
 
+      - name: Verify build output
+        run: ls -la dist
+
   deploy-development:
     name: Deploy to Vercel (Development)
     needs: build
