@@ -4,16 +4,21 @@ import { TouchableOpacity, Text, Alert, StyleSheet } from "react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useRouter } from "expo-router"; 
+import { useFonts } from "@/hooks/use-fonts";
 
 export default function HomePage() {
   const router = useRouter();
+  const fontsLoaded = useFonts();
+
+  if (!fontsLoaded) {return null;}
+
   return (
     <SafeAreaView style={[styles.general]}>
       <ThemedText style={styles.title}>StartToBrew</ThemedText>
       <ThemedText style={styles.title2}>In progress</ThemedText>
       <ThemedText style={styles.title2}>Start a new brew</ThemedText>
       <TouchableOpacity
-          style={styles.knop}
+          style={styles.button}
           onPress={() => router.push("/Recipes")}      >
       <Text style={styles.buttonText}>Here</Text>
 </TouchableOpacity>
@@ -32,7 +37,6 @@ const styles = StyleSheet.create({
   title: {
     paddingTop: 25,
     fontSize: 50,
-    fontWeight: 'bold',
     marginHorizontal: 10,
     fontFamily: FontFamilies.HEADING,
     color: BASE_COLORS.TEXT_DARK,
@@ -40,18 +44,17 @@ const styles = StyleSheet.create({
   title2: {
     paddingTop: 20,
     fontSize: 25,
-    fontWeight: 'bold',
     marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
+    fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.TEXT_DARK,
   },
   buttonText: {
   color: BASE_COLORS.WHITE,
   textAlign: "center", // tekst horizontaal centreren
-  fontWeight: "bold",
+  fontFamily: FontFamilies.BODY_BOLD,
 },
 
-knop: {
+button: {
   backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
   height: 30, 
   width: "50%", 
