@@ -73,7 +73,7 @@ jobs:
     defaults:
       run:
         working-directory: StartBrewing
-    needs: [lint, security]
+    needs: [lint, test, security]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
