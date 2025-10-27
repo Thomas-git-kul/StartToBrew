@@ -107,4 +107,4 @@ jobs:
       - name: Deploy folder to Vercel (no build on Vercel)
         run: |
           cd StartBrewing/dist
-          vercel deploy --token "$VERCEL_TOKEN" --yes --build-env VERCEL_SKIP_BUILD=1
+          vercel deploy --token "$VERCEL_TOKEN" --yes
