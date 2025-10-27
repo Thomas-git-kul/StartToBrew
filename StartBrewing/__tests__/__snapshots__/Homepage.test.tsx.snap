@@ -1,0 +1,132 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
+<RNCSafeAreaView
+  edges={
+    {
+      "bottom": "additive",
+      "left": "additive",
+      "right": "additive",
+      "top": "additive",
+    }
+  }
+  style={
+    [
+      {
+        "backgroundColor": "#fff",
+        "flex": 1,
+      },
+    ]
+  }
+>
+  <Text
+    style={
+      {
+        "color": "#000",
+        "fontFamily": "System",
+        "fontSize": 50,
+        "fontWeight": "bold",
+        "marginHorizontal": 10,
+        "paddingTop": 25,
+      }
+    }
+  >
+    StartToBrew
+  </Text>
+  <Text
+    style={
+      {
+        "color": "#000",
+        "fontFamily": "System",
+        "fontSize": 25,
+        "fontWeight": "bold",
+        "marginHorizontal": 10,
+        "paddingTop": 20,
+      }
+    }
+  >
+    In progress
+  </Text>
+  <Text
+    style={
+      {
+        "color": "#000",
+        "fontFamily": "System",
+        "fontSize": 25,
+        "fontWeight": "bold",
+        "marginHorizontal": 10,
+        "paddingTop": 20,
+      }
+    }
+  >
+    Start a new brew
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "alignItems": "center",
+        "backgroundColor": "#f00",
+        "borderRadius": 6,
+        "height": 30,
+        "justifyContent": "center",
+        "marginLeft": 10,
+        "opacity": 1,
+        "width": "50%",
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "#fff",
+          "fontWeight": "bold",
+          "textAlign": "center",
+        }
+      }
+    >
+      Here
+    </Text>
+  </View>
+  <Text
+    style={
+      {
+        "color": "#000",
+        "fontFamily": "System",
+        "fontSize": 25,
+        "fontWeight": "bold",
+        "marginHorizontal": 10,
+        "paddingTop": 20,
+      }
+    }
+  >
+    Popular recipes
+  </Text>
+</RNCSafeAreaView>
+`;
