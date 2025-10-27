@@ -105,4 +105,6 @@ jobs:
 
       # Deploy directly from StartBrewing/dist
       - name: Deploy folder to Vercel (no build on Vercel)
-        run: vercel deploy --cwd StartBrewing/dist --token "$VERCEL_TOKEN" --yes
+        run: |
+          cd StartBrewing/dist
+          vercel deploy --token "$VERCEL_TOKEN" --yes
