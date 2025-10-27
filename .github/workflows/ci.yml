@@ -39,6 +39,22 @@ jobs:
       - name: Run lint
         run: npm run lint
 
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: StartBrewing
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - name: Run tests
+        run: npm run test
+
   security:
     name: Vulnerability Scan
     runs-on: ubuntu-latest
