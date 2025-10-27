@@ -123,4 +123,4 @@ jobs:
       - name: Deploy folder to Vercel (no build on Vercel)
         run: |
           cd StartBrewing/dist
-          vercel deploy dist --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes
+          vercel deploy --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes
