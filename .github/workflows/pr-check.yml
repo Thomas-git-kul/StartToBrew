@@ -1,0 +1,11 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  pr-validation:
+    uses: ./.github/workflows/test-reusable.yml
+    with:
+      node-version: '20'
