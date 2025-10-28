@@ -11,18 +11,19 @@ jobs:
       node-version: '20'
 
   check-actor:
+    name: check who is actor
     needs: tests
     runs-on: ubuntu-latest
     outputs:
-      has_rights: ${{ steps.check.output.has_rights }}
+      has_rights: ${{ steps.setflag.output.has_rights }}
     steps:
-      - name: Check who pushed
-        id: check
+      - name: Check who is the author
+        id: setflag
         run: |
           if [ "${{ github.actor }}" == "Thomas-git-kul" ]; then
-            echo  has_rights=true" >> $GITHUB_OUTPUT
+            echo "is_author=true" >> $GITHUB_OUTPUT
           else
-            echo  has_rights=false" >> $GITHUB_OUTPUT
+            echo "is_author=false" >> $GITHUB_OUTPUT
           fi
 
   debug:
@@ -32,13 +33,9 @@ jobs:
       - run: echo "Actor = ${{ github.actor }}, Is Author = ${{ needs.check-actor.outputs.is_author }}"
 
   notify-Thomas:
+      name: Notify Thomas to pull
       needs: check-actor
-      if: needs.check-actor.output.has_rights == 'false'
+      if: needs.check-actor.outputs.is_author == 'false'
       runs-on: ubuntu-latest
       steps:
-        - name: Notify Thomas via issue comment
-          uses: peter-evans/create-issue-from-file@v5
-          with:
-            title: "Unauthorized push to dev by ${{ github.actor }}"
-            content-filepath: .github/notifications/dev_push_notice.md
-            labels: "notification"
+        - run: echo "🚨 Unauthorized push by ${{ github.actor }}!"
