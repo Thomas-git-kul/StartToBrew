@@ -25,6 +25,12 @@ jobs:
             echo  has_rights=false" >> $GITHUB_OUTPUT
           fi
 
+  debug:
+    needs: check-actor
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Actor = ${{ github.actor }}, Is Author = ${{ needs.check-actor.outputs.is_author }}"
+
   notify-Thomas:
       needs: check-actor
       if: needs.check-actor.output.has_rights == 'false'
