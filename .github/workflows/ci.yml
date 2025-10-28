@@ -124,7 +124,7 @@ jobs:
         run: |
           cd StartBrewing/dist
           vercel deploy --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes
-
+  #main deployment
   deploy-main:
     name: Deploy to Vercel (Production)
     needs: build
