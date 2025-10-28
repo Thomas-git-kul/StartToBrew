@@ -5,7 +5,7 @@ on:
     branches: [main, dev]
 
 jobs:
-  pr-validation:
+  pr-check:
     uses: ./.github/workflows/test-reusable.yml
     with:
       node-version: '20'
