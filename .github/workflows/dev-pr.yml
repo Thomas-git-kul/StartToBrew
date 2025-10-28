@@ -11,11 +11,11 @@ jobs:
       node-version: '20'
 
   check-actor:
-    name: check who is actor
+    name: check who is author
     needs: tests
     runs-on: ubuntu-latest
     outputs:
-      has_rights: ${{ steps.setflag.output.has_rights }}
+      is_author: ${{ steps.setflag.outputs.is_author }}
     steps:
       - name: Check who is the author
         id: setflag
@@ -33,9 +33,9 @@ jobs:
       - run: echo "Actor = ${{ github.actor }}, Is Author = ${{ needs.check-actor.outputs.is_author }}"
 
   notify-Thomas:
-      name: Notify Thomas to pull
-      needs: check-actor
-      if: needs.check-actor.outputs.is_author == 'false'
-      runs-on: ubuntu-latest
-      steps:
-        - run: echo "🚨 Unauthorized push by ${{ github.actor }}!"
+    name: Notify Thomas to pull
+    needs: check-actor
+    if: needs.check-actor.outputs.is_author == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🚨 Unauthorized push by ${{ github.actor }}!"
