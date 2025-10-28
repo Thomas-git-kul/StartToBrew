@@ -28,7 +28,7 @@ StartToBrew is a SaaS app designed for beginner homebrewers who want to learn be
 
 - **Database:**
 
-- **Deployment:** Vercel, Netlify, Azure?
+- **Deployment:** Vercel
 
 ## How to run the project locally:
 1. Clone the repository
@@ -65,7 +65,8 @@ npx expo start --tunnel
 4. Scan the QR code in the expo go app
 
 ## How to contribute to the project
-Everybody pushes changes on their local branch.
-Then you merge with the dev branch.
-Finally, you merge to the main.
-
+You create a branch for each functionality that is added.
+When you're done implementing that funcitonality, you merge with the dev branch.
+Before merging a pull request check is run, make sure that no tests fail and make changes accordingly.
+After merging with dev, check if the functionlity works in preview deployment.
+If everything is fine there, you can merge dev with the main branch.
