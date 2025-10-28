@@ -119,7 +119,7 @@ jobs:
       - name: Link Vercel project
         run: vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
 
-      # Deploy directly from StartBrewing/dist
+      # Deploy directly from StartBrewing/dist/ folder
       - name: Deploy folder to Vercel (no build on Vercel)
         run: |
           cd StartBrewing/dist
