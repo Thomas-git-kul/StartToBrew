@@ -1,0 +1,38 @@
+name: CI-CD pipeline
+
+on:
+  pull:
+    branches: [dev]
+
+jobs:
+  tests:
+    uses: ./.github/workflows/test-reusable.yml
+    with:
+      node-version: '20'
+
+  check-actor:
+    needs: tests
+    runs-on: ubuntu-latest
+    outputs:
+      has_rights: ${{ steps.check.output  has_rights }}
+    steps:
+      - name: Check who pushed
+        id: check
+        run: |
+          if [ "${{ github.actor }}" == "Thomas-git-kul" ]; then
+            echo  has_rights=true" >> $GITHUB_OUTPUT
+          else
+            echo  has_rights=false" >> $GITHUB_OUTPUT
+          fi
+
+  notify-Thomas:
+      needs: check-actor
+      if: needs.check-actor.output.has_rights == 'false'
+      runs-on: ubuntu-latest
+      steps:
+        - name: Notify Thomas via issue comment
+          uses: peter-evans/create-issue-from-file@v5
+          with:
+            title: "Unauthorized push to dev by ${{ github.actor }}"
+            content-filepath: .github/notifications/dev_push_notice.md
+            labels: "notification"
