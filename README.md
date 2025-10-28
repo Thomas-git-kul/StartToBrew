@@ -70,5 +70,3 @@ When you're done implementing that funcitonality, you merge with the dev branch.
 Before merging a pull request check is run, make sure that no tests fail and make changes accordingly.
 After merging with dev, check if the functionlity works in preview deployment.
 If everything is fine there, you can merge dev with the main branch.
-
-
