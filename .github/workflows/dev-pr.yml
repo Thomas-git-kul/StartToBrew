@@ -2,7 +2,7 @@ name: dev pull requests
 
 on:
   pull_request_target:
-    types: [opened, reopened]
+    types: [opened, synchronize, reopened]
     branches: [dev]
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
   notify-Thomas:
     name: Notify Thomas to pull
     needs: check-actor
-    if: needs.check-actor.outputs.is_author == 'false'
+    if: github.event.action == 'opened' && needs.check-actor.outputs.is_author == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Create GitHub issue to notify Thomas
