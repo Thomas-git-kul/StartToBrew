@@ -68,3 +68,4 @@ npx expo start --tunnel
 Everybody pushes changes on their local branch.
 Then you merge with the dev branch.
 Finally, you merge to the main.
+
