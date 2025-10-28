@@ -9,7 +9,7 @@ on:
         type: string
 
 jobs:
-  test, lint, security:
+  test-lint-security:
     runs-on: ubuntu-latest
 
     defaults:
