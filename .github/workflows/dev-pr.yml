@@ -18,6 +18,7 @@ jobs:
   check-actor:
     name: check who is author
     needs: tests
+    if: github.event.action == 'opened'
     runs-on: ubuntu-latest
     outputs:
       is_author: ${{ steps.setflag.outputs.is_author }}
