@@ -1,89 +1,42 @@
-name: CI pipeline
+name: CI-CD pipeline
 
 on:
   push:
     branches: [main, dev]
 
+
 jobs:
-  setup:
-    name: Setup & Cache dependencies
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: StartBrewing
-        
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm ci
-
-  lint:
-    name: Run ESLint
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: StartBrewing
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci
-      - name: Run lint
-        run: npm run lint
-
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: StartBrewing
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install
-      - name: Run tests
-        run: npm run test
-
-  security:
-    name: Vulnerability Scan
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: StartBrewing
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - name: npm audit (moderate+)
-        run: npm audit --audit-level=moderate || true
+  tests:
+    uses: ./.github/workflows/test-reusable.yml
+    with:
+      node-version: '20'
 
   build:
     name: Build Expo Web App
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: StartBrewing
-    needs: [lint, test, security]
+
+    needs: [tests]
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
         with:
-          node-version: 20
-      - run: npm ci
+          path: StartBrewing/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - run: npm install
+
       - name: Build web export
         run: npm run build
+        
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
