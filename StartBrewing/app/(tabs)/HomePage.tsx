@@ -9,7 +9,7 @@ export default function HomePage() {
   const router = useRouter();
   return (
     <SafeAreaView style={[styles.general]}>
-      <ThemedText style={styles.title}>StartToBrew</ThemedText>
+      <ThemedText style={styles.title}>Test Title</ThemedText>
       <ThemedText style={styles.title2}>In progress</ThemedText>
       <ThemedText style={styles.title2}>Start a new brew</ThemedText>
       <TouchableOpacity
