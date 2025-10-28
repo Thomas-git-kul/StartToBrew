@@ -38,4 +38,10 @@ jobs:
     if: needs.check-actor.outputs.is_author == 'false'
     runs-on: ubuntu-latest
     steps:
-      - run: echo "🚨 Unauthorized push by ${{ github.actor }}!"
+      - name: Notify via GitHub Issue
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "🚨 Unauthorized PR to dev by ${{ github.actor }}"
+          content-filepath: .github/notifications/dev_push_notice.md
+          labels: "notification"
+          assignees: Thomas-git-kul
