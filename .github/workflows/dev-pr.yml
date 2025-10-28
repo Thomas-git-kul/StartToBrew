@@ -68,5 +68,3 @@ jobs:
               assignees: ['Thomas-git-kul'],
               labels: ['notification']
             });
-
-
