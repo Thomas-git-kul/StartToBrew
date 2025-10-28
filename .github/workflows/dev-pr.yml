@@ -1,8 +1,12 @@
 name: dev pull requests
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [dev]
+
+permissions:
+  contents: read
+  issues: write
 
 jobs:
   tests:
