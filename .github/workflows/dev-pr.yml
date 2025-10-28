@@ -31,12 +31,6 @@ jobs:
             echo "is_author=false" >> $GITHUB_OUTPUT
           fi
 
-  debug:
-    needs: check-actor
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Actor = ${{ github.actor }}, Is Author = ${{ needs.check-actor.outputs.is_author }}"
-
   notify-Thomas:
     name: Notify Thomas to pull
     needs: check-actor
