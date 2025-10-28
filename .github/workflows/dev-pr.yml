@@ -39,9 +39,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Notify via GitHub Issue
-        uses: peter-evans/create-issue-from-file@v5
+        uses: peter-evans/create-issue@v5
         with:
           title: "🚨 Unauthorized PR to dev by ${{ github.actor }}"
-          content-filepath: .github/notifications/dev_push_notice.md
-          labels: "notification"
+          body: |
+            ⚠️ **Unauthorized PR detected**
+
+            - **User:** ${{ github.actor }}
+            - **Branch:** ${{ github.head_ref }}
+            - **PR Title:** ${{ github.event.pull_request.title }}
+            - **Link:** ${{ github.event.pull_request.html_url }}
+
+            Please review and merge manually if appropriate.
+          labels: notification
           assignees: Thomas-git-kul
