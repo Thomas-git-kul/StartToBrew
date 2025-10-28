@@ -8,9 +8,11 @@ jobs:
   setup:
     name: Setup & Cache dependencies
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: StartBrewing
+        
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

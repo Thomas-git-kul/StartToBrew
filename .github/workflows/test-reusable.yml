@@ -6,6 +6,7 @@ on:
       node-version:
         required: false
         default: '20'
+        type: string
 
 jobs:
   test, lint, security:
