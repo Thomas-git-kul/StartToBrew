@@ -8,7 +8,7 @@ jobs:
   tests:
     uses: ./.github/workflows/test-reusable.yml
     with:
-      node-version: '20'
+      node-version: "20"
 
   build:
     name: Build Expo Web App
@@ -35,13 +35,12 @@ jobs:
 
       - name: Build web export
         run: npm run build
-        
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: web-build
           path: StartBrewing/dist
-
   deploy-development:
     name: Deploy to Vercel Preview Environment
     needs: build
@@ -78,9 +77,9 @@ jobs:
         run: |
           cd StartBrewing/dist
           vercel deploy --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes
-
-  deploy-production:
-    name: Deploy to Vercel Production Environment
+  #main deployment
+  deploy-main:
+    name: Deploy to Vercel (Production)
     needs: build
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -102,7 +101,6 @@ jobs:
         with:
           name: web-build
           path: StartBrewing/dist
-
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
 
@@ -114,4 +112,4 @@ jobs:
       - name: Deploy folder to Vercel (no build on Vercel)
         run: |
           cd StartBrewing/dist
-          vercel deploy --prod --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes
+          vercel deploy --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes
