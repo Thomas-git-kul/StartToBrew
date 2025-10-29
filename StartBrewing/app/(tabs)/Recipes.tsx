@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   title: {
     paddingTop: 25,
     fontSize: 50,
-    fontWeight: 'bold',
+    //fontWeight: 'bold',
     marginHorizontal: 10,
     fontFamily: FontFamilies.HEADING,
     color: BASE_COLORS.TEXT_DARK,
@@ -35,9 +35,9 @@ const styles = StyleSheet.create({
   title2: {
     paddingTop: 10,
     fontSize: 25,
-    fontWeight: 'bold',
+    //fontWeight: 'bold',
     marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
+    fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.TEXT_DARK,
   },
 });
