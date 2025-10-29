@@ -25,7 +25,6 @@ exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
         "color": "#000",
         "fontFamily": "System",
         "fontSize": 50,
-        "fontWeight": "bold",
         "marginHorizontal": 10,
         "paddingTop": 25,
       }
@@ -37,9 +36,8 @@ exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
     style={
       {
         "color": "#000",
-        "fontFamily": "System",
+        "fontFamily": undefined,
         "fontSize": 25,
-        "fontWeight": "bold",
         "marginHorizontal": 10,
         "paddingTop": 20,
       }
@@ -51,9 +49,8 @@ exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
     style={
       {
         "color": "#000",
-        "fontFamily": "System",
+        "fontFamily": undefined,
         "fontSize": 25,
-        "fontWeight": "bold",
         "marginHorizontal": 10,
         "paddingTop": 20,
       }
@@ -106,7 +103,7 @@ exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
       style={
         {
           "color": "#fff",
-          "fontWeight": "bold",
+          "fontFamily": undefined,
           "textAlign": "center",
         }
       }
@@ -118,9 +115,8 @@ exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
     style={
       {
         "color": "#000",
-        "fontFamily": "System",
+        "fontFamily": undefined,
         "fontSize": 25,
-        "fontWeight": "bold",
         "marginHorizontal": 10,
         "paddingTop": 20,
       }
