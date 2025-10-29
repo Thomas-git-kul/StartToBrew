@@ -32,6 +32,10 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
+jest.mock("expo-font", () => ({
+  useFonts: () => [true], // fonts always "loaded"
+}));
+
 // The actual tests
 describe("<HomePage />", () => {
   afterEach(() => {
