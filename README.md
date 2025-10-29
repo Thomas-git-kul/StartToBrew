@@ -78,5 +78,3 @@ npx expo start --tunnel
 3. Check your pull request: linting, testing and vulnability scan should all be succesful.
 
 4. In case of errors, you can do new pushes to your branch. You do not have to make a new pull request, your pull request will synchronize automatically.
-
-
