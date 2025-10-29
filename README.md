@@ -80,4 +80,3 @@ npx expo start --tunnel
 4. In case of errors, you can do new pushes to your branch. You do not have to make a new pull request, your pull request will synchronize automatically.
 
 
-

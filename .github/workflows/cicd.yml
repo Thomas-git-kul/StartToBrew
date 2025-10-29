@@ -8,7 +8,7 @@ jobs:
   tests:
     uses: ./.github/workflows/test-reusable.yml
     with:
-      node-version: '20'
+      node-version: "20"
 
   build:
     name: Build Expo Web App
@@ -35,7 +35,7 @@ jobs:
 
       - name: Build web export
         run: npm run build
-        
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:

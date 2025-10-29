@@ -16,5 +16,8 @@ export default ({ config }) => ({
   extra: {
     apiUrl: process.env.API_URL || 'https://fallback.example.com',
     appTitle: process.env.APP_TITLE || config.name
-  }
+  },
+  plugins: [
+    "expo-font"
+  ]
 });
