@@ -29,7 +29,13 @@ jest.mock("@/constants/Colors", () => ({
 jest.mock("@/constants/Fonts", () => ({
   FontFamilies: {
     HEADING: "System",
+    BODY: "System",
+    BODY_BOLD: "System",
   },
+}));
+
+jest.mock("expo-font", () => ({
+  useFonts: () => [true], // fonts always "loaded"
 }));
 
 // The actual tests
