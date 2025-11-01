@@ -22,7 +22,7 @@ StartToBrew is a SaaS app designed for beginner homebrewers who want to learn be
 - **Community Recipe Sharing** - Add friends and share your personal recipes
 
 ## Tech Stack
-- **Frontend:** React Native + TailwindCSS
+- **Frontend:** React Native + Nativewind 
 
 - **Backend:** SupaBase
 
