@@ -26,7 +26,7 @@ StartToBrew is a SaaS app designed for beginner homebrewers who want to learn be
 
 - **Backend:** SupaBase
 
-- **Database:**
+- **Database:** Supabase Postgres Database
 
 - **Deployment:** Vercel
     - [Production environment](https://start-to-brew.vercel.app)
