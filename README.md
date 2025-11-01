@@ -24,7 +24,7 @@ StartToBrew is a SaaS app designed for beginner homebrewers who want to learn be
 ## Tech Stack
 - **Frontend:** React Native + Nativewind 
 
-- **Backend:** SupaBase
+- **Backend:** SupaBase, Stripe
 
 - **Database:** Supabase Postgres Database
 
