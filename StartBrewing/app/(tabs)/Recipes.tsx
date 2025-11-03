@@ -12,7 +12,7 @@ export default function Recipes() {
 
   return (
     <SafeAreaView style={styles.general}>
-      <ThemedText style={styles.title}>Title test</ThemedText>
+      <ThemedText style={styles.title}>Recipes</ThemedText>
       <ThemedText style={styles.title2}>Popular Recipes</ThemedText>
       <ThemedText style={styles.title2}>Recipes</ThemedText>
     </SafeAreaView>
