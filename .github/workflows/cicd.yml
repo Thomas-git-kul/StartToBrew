@@ -74,11 +74,15 @@ jobs:
       - name: Link Vercel project
         run: vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
 
-      # Deploy directly from StartBrewing/dist
-      - name: Deploy folder to Vercel (no build on Vercel)
+      - name: Deploy
+        id: deploy
         run: |
           cd StartBrewing/dist
-          vercel deploy --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes
+          URL=$(vercel deploy \
+            $([ "$IS_PROD" = "true" ] && echo "--prod") \
+            --token "$VERCEL_TOKEN")
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed URL: $URL"
 
       - name: Alias
         run: |
