@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   title: {
     paddingTop: 25,
     fontSize: 50,
-    fontWeight: "bold",
+    //fontWeight: "bold",
     marginHorizontal: 10,
     fontFamily: FontFamilies.HEADING,
     color: BASE_COLORS.TEXT_DARK,
@@ -45,9 +45,10 @@ const styles = StyleSheet.create({
   label: {
     position: "absolute",
     top: 65, 
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 55,
-    fontWeight: "bold",
+    //fontWeight: "bold",
+    fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.ACCENT_PRIMARY,
   },
   input: {
