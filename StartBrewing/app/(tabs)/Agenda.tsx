@@ -98,9 +98,17 @@ export default function Agenda() {
     <SafeAreaView style={styles.general}>
       <ThemedText style={styles.title}>Agenda</ThemedText>
 
-      <TouchableOpacity style={styles.todayButton} onPress={goToToday}>
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.todayButton} onPress={goToToday}>
         <ThemedText style={styles.todayButtonText}>Today</ThemedText>
       </TouchableOpacity>
+
+      <TouchableOpacity
+                style={styles.todayButton}
+                onPress={() => router.push("/progress")}      >
+              <ThemedText style={styles.todayButtonText}>Progress</ThemedText>
+      </TouchableOpacity>
+      </View>
 
       {calendarVisible && (
       <Calendar
@@ -190,5 +198,13 @@ todayButtonText: {
   color: BASE_COLORS.WHITE,
   fontFamily: FontFamilies.BODY,
   fontSize: 16,
+},
+buttonRow: {
+  flexDirection: "row",
+  justifyContent: "flex-start",
+  gap: 10,
+  marginHorizontal: 10,
+  marginTop: 10,
+  marginBottom: 10,
 },
 });
