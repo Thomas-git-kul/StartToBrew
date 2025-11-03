@@ -49,8 +49,6 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
-});
-
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     WHITE: "#fff",
