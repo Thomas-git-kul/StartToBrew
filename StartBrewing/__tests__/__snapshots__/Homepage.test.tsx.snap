@@ -1,6 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
+<View>
 <RNCSafeAreaView
   edges={
     {
@@ -124,5 +125,6 @@ exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
   >
     Popular recipes
   </Text>
+</View>
 </RNCSafeAreaView>
 `;

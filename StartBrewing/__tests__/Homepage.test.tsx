@@ -10,12 +10,45 @@ jest.mock("expo-router", () => ({
   }),
 }));
 
+// Mock themed text
 // Mock custom components & constants
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
     ThemedText: ({ children, style }: any) => <Text style={style}>{children}</Text>,
   };
+});
+
+// ✅ Correct: mock custom font hook
+jest.mock("@/hooks/use-fonts", () => ({
+  useFonts: () => true,
+}));
+
+// Mock constants
+jest.mock("@/constants/Colors", () => ({
+  BASE_COLORS: {
+    WHITE: "#fff",
+    TEXT_DARK: "#000",
+    ACCENT_PRIMARY: "#f00",
+  },
+}));
+
+jest.mock("@/constants/Fonts", () => ({
+  FontFamilies: {
+    HEADING: "System",
+    BODY: "System",
+    BODY_BOLD: "System",
+  },
+}));
+
+// ✅ Mock SafeAreaView
+jest.mock("react-native-safe-area-context", () => {
+  const { View } = require("react-native");
+  return {
+    SafeAreaView: ({ children }: any) => <View>{children}</View>,
+  };
+});
+
 });
 
 jest.mock("@/constants/Colors", () => ({
