@@ -1,0 +1,92 @@
+name: CI-CD pipeline
+
+on:
+  push:
+    branches: [main, dev]
+
+jobs:
+  tests:
+    uses: ./.github/workflows/test-reusable.yml
+    with:
+      node-version: "20"
+
+  build:
+    name: Build Expo Web App
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: StartBrewing
+
+    needs: [tests]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: StartBrewing/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - run: npm install
+
+      - name: Build web export
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: StartBrewing/dist
+
+  deploy:
+    name: Deploy to Vercel
+    needs: build
+    runs-on: ubuntu-latest
+
+    env:
+      IS_PROD: ${{ github.ref == 'refs/heads/main' }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: StartBrewing/dist
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      # Explicitly link to the correct Vercel project
+      - name: Link Vercel project
+        run: vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
+
+      - name: Deploy
+        id: deploy
+        run: |
+          cd StartBrewing/dist
+          URL=$(vercel deploy \
+            $([ "$IS_PROD" = "true" ] && echo "--prod") \
+            --token "$VERCEL_TOKEN")
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed URL: $URL"
+
+      - name: Alias
+        run: |
+          ALIAS=$([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")
+          vercel alias set "${{ steps.deploy.outputs.url }}" "$ALIAS" --token "$VERCEL_TOKEN"
+          echo "Aliased to: $ALIAS"
