@@ -2,24 +2,6 @@
 
 exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
 <View>
-<RNCSafeAreaView
-  edges={
-    {
-      "bottom": "additive",
-      "left": "additive",
-      "right": "additive",
-      "top": "additive",
-    }
-  }
-  style={
-    [
-      {
-        "backgroundColor": "#fff",
-        "flex": 1,
-      },
-    ]
-  }
->
   <Text
     style={
       {
@@ -126,5 +108,4 @@ exports[`<HomePage /> matches snapshot (layout consistency) 1`] = `
     Popular recipes
   </Text>
 </View>
-</RNCSafeAreaView>
 `;
