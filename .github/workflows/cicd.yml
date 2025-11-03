@@ -42,15 +42,17 @@ jobs:
           name: web-build
           path: StartBrewing/dist
 
-  deploy-development:
-    name: Deploy to Vercel Preview Environment
+  deploy:
+    name: Deploy to Vercel
     needs: build
-    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
+
     env:
+      IS_PROD: ${{ github.ref == 'refs/heads/main' }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -73,45 +75,18 @@ jobs:
       - name: Link Vercel project
         run: vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
 
-      # Deploy directly from StartBrewing/dist
-      - name: Deploy folder to Vercel (no build on Vercel)
+      - name: Deploy
+        id: deploy
         run: |
           cd StartBrewing/dist
-          vercel deploy --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes
+          URL=$(vercel deploy \
+            $([ "$IS_PROD" = "true" ] && echo "--prod") \
+            --token "$VERCEL_TOKEN")
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed URL: $URL"
 
-  deploy-production:
-    name: Deploy to Vercel Production Environment
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: web-build
-          path: StartBrewing/dist
-
-      - name: Install Vercel CLI
-        run: npm i -g vercel@latest
-
-      # Explicitly link to the correct Vercel project
-      - name: Link Vercel project
-        run: vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
-
-      # Deploy directly from StartBrewing/dist
-      - name: Deploy folder to Vercel (no build on Vercel)
+      - name: Alias
         run: |
-          cd StartBrewing/dist
-          vercel deploy --prod --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID" --yes
+          ALIAS=$([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")
+          vercel alias set "${{ steps.deploy.outputs.url }}" "$ALIAS" --token "$VERCEL_TOKEN"
+          echo "Aliased to: $ALIAS"
