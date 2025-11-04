@@ -1,17 +1,20 @@
-import { render, fireEvent } from "@testing-library/react-native";
 import React from "react";
+import { render, fireEvent } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
 
-// Mock Expo Router
+// --- Mocks --- //
 const mockPush = jest.fn();
+
 jest.mock("expo-router", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
 }));
 
-// Mock themed text
-// Mock custom components & constants
+jest.mock("@/hooks/use-fonts", () => ({
+  useFonts: () => true,
+}));
+
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
@@ -19,29 +22,6 @@ jest.mock("@/components/themed-text", () => {
   };
 });
 
-// ✅ Correct: mock custom font hook
-jest.mock("@/hooks/use-fonts", () => ({
-  useFonts: () => true,
-}));
-
-// Mock constants
-jest.mock("@/constants/Colors", () => ({
-  BASE_COLORS: {
-    WHITE: "#fff",
-    TEXT_DARK: "#000",
-    ACCENT_PRIMARY: "#f00",
-  },
-}));
-
-jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: {
-    HEADING: "System",
-    BODY: "System",
-    BODY_BOLD: "System",
-  },
-}));
-
-// ✅ Mock SafeAreaView
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
   return {
@@ -65,17 +45,13 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
-jest.mock("expo-font", () => ({
-  useFonts: () => [true], // fonts always "loaded"
-}));
-
-// The actual tests
+// --- Tests --- //
 describe("<HomePage />", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders the main title and subtitles", () => {
+  it("renders all main titles correctly", () => {
     const { getByText } = render(<HomePage />);
 
     expect(getByText("StartToBrew")).toBeTruthy();
@@ -90,7 +66,7 @@ describe("<HomePage />", () => {
     expect(buttonText).toBeTruthy();
   });
 
-  it("navigates to /Recipes when the button is pressed", () => {
+  it("navigates to /Recipes when the 'Here' button is pressed", () => {
     const { getByText } = render(<HomePage />);
     const button = getByText("Here");
 
@@ -100,7 +76,17 @@ describe("<HomePage />", () => {
     expect(mockPush).toHaveBeenCalledWith("/Recipes");
   });
 
-  it("matches snapshot (layout consistency)", () => {
+  it("navigates to /Recipes when the FAB '+' is pressed", () => {
+    const { getByText } = render(<HomePage />);
+    const fabButton = getByText("+");
+
+    fireEvent.press(fabButton);
+
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith("/Recipes");
+  });
+
+  it("matches the snapshot", () => {
     const tree = render(<HomePage />).toJSON();
     expect(tree).toMatchSnapshot();
   });
