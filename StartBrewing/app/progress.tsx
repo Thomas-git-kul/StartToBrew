@@ -8,60 +8,109 @@ import { useFonts } from "@/hooks/use-fonts";
 import { ProgressBar } from "react-native-paper";
 import { useState } from "react";
 import { ScrollView } from "react-native";
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect } from 'react';
 
 export default function Progress() {
     const router = useRouter();
     const fontsLoaded = useFonts();
 
-    const initialSteps = [
-        { text: "Step 1", done: true },
-        { text: "Step 2", done: true },
-        { text: "Step 3", done: false },
-        { text: "Step 4", done: false },
-        { text: "Step 5", done: false },
-        { text: "Step 6", done: false },
+    const initialPhases = [
+        {
+            title: "Phase 1: Mash",
+            steps: [
+            { text: "Heat strike water", done: true },
+            { text: "Mash in", done: true },
+            { text: "Saccharification rest", done: true },
+            { text: "Mash out", done: true },
+            ],
+        },
+        {
+            title: "Phase 2: Boil",
+            steps: [
+            { text: "Bring to boil", done: false },
+            { text: "30-min cascade", done: false },
+            { text: "10-min cascade", done: false },
+            ],
+        },
+        {
+            title: "Phase 3: Whirlpool",
+            steps: [
+            { text: "Cool to 80°C", done: false },
+            { text: "Whirlpool cascade + cascade", done: false },
+            ],
+        },
+        {
+            title: "Phase 4: Chill",
+            steps: [
+            { text: "Chill to 19°C", done: false },
+            { text: "Transfer to fermenter", done: false },
+            { text: "Pitch yeast", done: false },
+            ],
+        },
+        {
+            title: "Phase 5: ferment",
+            steps: [
+            { text: "Primary ferment", done: false },
+            { text: "Dry hop (3days)", done: false },
+            ],
+        },
+        {
+            title: "Phase 6: package",
+            steps: [
+            { text: "package (bottle/keg)", done: false },
+            ],
+        },
     ];
 
-    const [stepsState, setStepsState] = useState(initialSteps);
+    const [phases, setPhases] = useState(initialPhases);
 
-    const toggleStep = (index: number) => {
-    const newSteps = [...stepsState];
-    newSteps[index].done = !newSteps[index].done;
-    setStepsState(newSteps);
+    const toggleStep = (phaseIndex: number, stepIndex: number) => {
+        const newPhases = [...phases];
+        newPhases[phaseIndex].steps[stepIndex].done =
+            !newPhases[phaseIndex].steps[stepIndex].done;
+        setPhases(newPhases);
     };
 
-    const progress = stepsState.filter(step => step.done).length / stepsState.length;
+    const totalSteps = phases.reduce((sum, p) => sum + p.steps.length, 0);
+    const doneSteps = phases.reduce(
+        (sum, p) => sum + p.steps.filter(s => s.done).length, 0);
+    const progress = doneSteps / totalSteps;
     const progressPercentage = Math.round(progress * 100);
+
 
     if (!fontsLoaded) {return null;}
 
-
     return (
-        <SafeAreaView style={[styles.general]}>
-            <ScrollView contentContainerStyle={styles.contentContainer}>
+        <SafeAreaView style={styles.general}>
+            <View style={styles.headerSection}>
                 <ThemedText style={styles.title}>Progress</ThemedText>
-
                 <ThemedText style={styles.percentageText}>{progressPercentage}%</ThemedText>
-
                 <ProgressBar progress={progress} color={BASE_COLORS.ACCENT_PRIMARY}  style={styles.progressBar} />
-
                 <ThemedText style={styles.title2}>To do</ThemedText>
+            </View>
                 
-                <View>
-                {stepsState.map((step, index) => (
-                        <TouchableOpacity key={index} onPress={() => toggleStep(index)}>
-                            <ThemedText
-                                style={[
-                                    styles.stepText,
-                                    step.done && { textDecorationLine: "line-through", opacity: 0.5 },
-                                ]}
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                {phases.map((phase, phaseIndex) => (
+                    <View key={phaseIndex} style={{ marginBottom: 20 }}>
+                        <ThemedText style={styles.phaseTitle}>{phase.title}</ThemedText>
+                        {phase.steps.map((step, stepIndex) => (
+                            <TouchableOpacity
+                                key={stepIndex}
+                                onPress={() => toggleStep(phaseIndex, stepIndex)}
                             >
-                                {step.text}
-                            </ThemedText>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                                <ThemedText
+                                    style={[
+                                        styles.stepText,
+                                        step.done && { textDecorationLine: "line-through", opacity: 0.5 },
+                                    ]}
+                                >
+                                    {step.text}
+                                </ThemedText>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                ))}
             </ScrollView>
         </SafeAreaView>
         
@@ -73,9 +122,19 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: BASE_COLORS.WHITE,
     },
-    contentContainer: {
+    headerSection: {        
         paddingHorizontal: 20,
         paddingTop: 20,
+        paddingBottom: 5,
+        backgroundColor: BASE_COLORS.WHITE,
+        elevation: 3,        // 👈 subtiele schaduw (Android)
+        shadowColor: "#000", // 👈 subtiele schaduw (iOS)
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        shadowOffset: { width: 0, height: 2 },
+    },
+    scrollContent: {
+        paddingHorizontal: 20,
         paddingBottom: 20,
     },
     title: {
@@ -87,15 +146,14 @@ const styles = StyleSheet.create({
         color: BASE_COLORS.TEXT_DARK,
     },
     title2: {
-        fontSize: 22,
-        marginHorizontal: 10,
+        fontSize: 25,
         fontFamily: FontFamilies.BODY,
         color: BASE_COLORS.TEXT_DARK,
-        marginBottom: 5,
+        marginTop: 10,
     },
     stepText: {
-        fontSize: 16,
-        color: BASE_COLORS.TEXT_DARK,
+        fontSize: 15,
+        //color: BASE_COLORS.TEXT_DARK,
         fontFamily: FontFamilies.BODY_LIGHT,
         marginVertical: 5,
     },
@@ -110,7 +168,12 @@ const styles = StyleSheet.create({
     progressBar: {
         height: 10,
         borderRadius: 5,
-        marginBottom: 10,
     },
-
+    phaseTitle: {
+        fontSize: 18,
+        marginTop: 10,
+        marginBottom: 5,
+        fontFamily: FontFamilies.BODY,
+        color: BASE_COLORS.ACCENT_PRIMARY,
+    },
 });
