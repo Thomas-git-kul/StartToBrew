@@ -1,0 +1,57 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Recipes /> matches snapshot for layout consistency 1`] = `
+<View>
+  <RCTScrollView>
+    <View>
+      <Text
+        style={
+          {
+            "color": "#000",
+            "fontFamily": "System",
+            "fontSize": 50,
+            "marginHorizontal": 10,
+            "paddingTop": 25,
+          }
+        }
+      >
+        Recipes
+      </Text>
+      <Text
+        style={
+          {
+            "color": "#000",
+            "fontFamily": "System",
+            "fontSize": 25,
+            "marginHorizontal": 10,
+            "paddingTop": 10,
+          }
+        }
+      >
+        Popular Recipes
+      </Text>
+      <Text
+        style={
+          {
+            "color": "#000",
+            "fontFamily": "System",
+            "fontSize": 25,
+            "marginHorizontal": 10,
+            "paddingTop": 10,
+          }
+        }
+      >
+        Recipes
+      </Text>
+      <View
+        style={
+          {
+            "paddingBottom": 20,
+            "paddingHorizontal": 10,
+          }
+        }
+      />
+    </View>
+  </RCTScrollView>
+</View>
+`;
