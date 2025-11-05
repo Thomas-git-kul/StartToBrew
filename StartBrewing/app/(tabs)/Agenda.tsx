@@ -72,6 +72,7 @@ export default function Agenda() {
   5: "2025-11-15", // Phase 6
 };
 
+
   const [phasesByDate, setPhasesByDate] = useState<{ [date: string]: typeof initialPhases }>({});
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
   const [calendarVisible, setCalendarVisible] = useState(true);
@@ -138,7 +139,7 @@ export default function Agenda() {
           <ThemedText style={styles.todayButtonText}>Today</ThemedText>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.todayButton} onPress={() => router.push("/progress")}>
+        <TouchableOpacity style={styles.todayButton} onPress={() => router.push("../progress")}>
           <ThemedText style={styles.todayButtonText}>Progress</ThemedText>
         </TouchableOpacity>
       </View>
