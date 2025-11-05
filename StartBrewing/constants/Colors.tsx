@@ -13,5 +13,8 @@ export const BASE_COLORS = {
   
   // voor de gewone tekst
   ACCENT_PRIMARY: '#B45309' as HexColor,
+
+  // voor outlines (donkerder grijs)
+  OUTLINE: ''
 };
 

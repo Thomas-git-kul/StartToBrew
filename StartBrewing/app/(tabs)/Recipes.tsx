@@ -1,11 +1,11 @@
 import React from "react";
 import { View, ScrollView } from "react-native";
 import { Text, Searchbar, IconButton } from "react-native-paper";
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import BeerCard from '@/components/ui/IPAcomponent';
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 
-import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { StyleSheet} from "react-native";
 import { useRouter } from "expo-router"; 
@@ -20,6 +20,16 @@ interface Beer {
 
 export default function Recipes() {
   const [searchQuery, setSearchQuery] = React.useState("");
+
+  // helper to check whether an item matches the query (name or description)
+  const filterMatches = (item: Beer, q: string) => {
+    if (!q) return true;
+    const lower = q.toLowerCase();
+    return (
+      item.name.toLowerCase().includes(lower) ||
+      item.description.toLowerCase().includes(lower)
+    );
+  };
 
   const router = useRouter();
 
@@ -100,42 +110,42 @@ export default function Recipes() {
     >
     
     {/* Fixed header */}
-    <View className="w-full z-50"
+    <View className="w-full px-5 pt-5 pb-5"
       style={{
         backgroundColor: BASE_COLORS.LIGHT_BG,
       }}
     >
-      <Text className=""
+      <Text className="mb-4"
         style={{
           fontSize: 50,
           color: BASE_COLORS.TEXT_DARK,
           fontFamily: FontFamilies.HEADING,
         }}
       >Recipes</Text>
-
       <Searchbar
         placeholder="Search"
         value={searchQuery}
         onChangeText={setSearchQuery}
-        className="rounded-full"
-        icon="magnify"
+        // make typed text darker gray to match beer cards
+        inputStyle={{ color: '#444' }}
+        icon={() => (
+          <MaterialCommunityIcons name="magnify" size={20} color="#999" />
+        )}
+          clearIcon={searchQuery ? () => (
+            <MaterialCommunityIcons name="close" size={18} color="#999" />
+          ) : undefined}
+          onClearIconPress={() => setSearchQuery("")}
         style={{
           backgroundColor: BASE_COLORS.WHITE,
+          borderColor: "#999",
           borderWidth: 1,
-          borderColor: "#E7E5E4",
         }}
       />
     </View>
       
-      
-      
-      
-      
       <ScrollView>
-        <ThemedText style={styles.title2}>Popular Recipes</ThemedText>
-        <ThemedText style={styles.title2}>Recipes</ThemedText>
         <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
-          {popular_recipes.map((beer, index) => (
+          {popular_recipes.filter((b) => filterMatches(b, searchQuery)).map((beer, index) => (
             <BeerCard key={index} {...beer} />
           ))}
         </View>
