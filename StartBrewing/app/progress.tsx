@@ -86,7 +86,7 @@ export default function Progress() {
             <View style={styles.headerSection}>
                 <ThemedText style={styles.title}>Progress</ThemedText>
                 <ThemedText style={styles.percentageText}>{progressPercentage}%</ThemedText>
-                <ProgressBar progress={progress} color={BASE_COLORS.ACCENT_PRIMARY}  style={styles.progressBar} />
+                <ProgressBar progress={progress} color={BASE_COLORS.ACCENT_PRIMARY}  style={styles.progressBar} testID="progress-bar" accessible={true}/>
                 <ThemedText style={styles.title2}>To do</ThemedText>
             </View>
                 
