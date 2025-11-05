@@ -2,7 +2,7 @@ import React from "react";
 import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import Progress from "../app/progress";
-import {View} from 'react-native';
+import { View } from 'react-native';
 
 // --- Mocks --- //
 const mockPush = jest.fn();
@@ -25,16 +25,7 @@ jest.mock("@/hooks/use-fonts", () => ({
 }));
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
-  getItem: jest.fn(() =>
-    Promise.resolve(
-      JSON.stringify({
-        "2025-11-10": [
-          { name: "Phase 1: Mash", done: true },
-          { name: "Phase 2: Boil", done: false },
-        ],
-      })
-    )
-  ),
+  getItem: jest.fn(() => Promise.resolve(null)),
   setItem: jest.fn(() => Promise.resolve()),
 }));
 
@@ -78,53 +69,45 @@ describe("<Progress />", () => {
   });
 
   it("renders the header and phases", async () => {
-    const { getByText } = renderWithNavigation(<Progress />);
+    const { findByText } = renderWithNavigation(<Progress />);
 
-    await act(async () => {
-      await waitFor(() => {
-        expect(getByText("Progress")).toBeTruthy();
-        expect(getByText("To do")).toBeTruthy();
-        expect(getByText("Phase 1: Mash")).toBeTruthy();
-        expect(getByText("Phase 2: Boil")).toBeTruthy();
-      });
-    });
+    expect(await findByText("Progress")).toBeTruthy();
+    expect(await findByText("To do")).toBeTruthy();
+    expect(await findByText("Phase 1: Mash")).toBeTruthy();
+    expect(await findByText("Phase 2: Boil")).toBeTruthy();
   });
 
   it("renders the progress percentage and bar", async () => {
-    const { getByText, getByTestId } = renderWithNavigation(<Progress />);
+    const { findByText, findByTestId } = renderWithNavigation(<Progress />);
 
-    await act(async () => {
-      await waitFor(() => {
-        expect(getByText(/\d+%/)).toBeTruthy();
-        expect(getByTestId("progress-bar")).toBeTruthy();
-      });
-    });
+    // 4 completed steps out of 15 total = 27%
+    expect(await findByText("27%")).toBeTruthy();
+    expect(await findByTestId("progress-bar")).toBeTruthy();
   });
 
   it("toggles a step when pressed", async () => {
-    const { getByText } = renderWithNavigation(<Progress />);
+    const { findByText } = renderWithNavigation(<Progress />);
 
-    await waitFor(() => {
-      expect(getByText("Bring to boil")).toBeTruthy();
-    });
+    const step = await findByText("Bring to boil");
+    
+    // Initial state
+    expect(step.props.style).not.toContainEqual(
+      expect.objectContaining({
+        textDecorationLine: "line-through",
+        opacity: 0.5,
+      })
+    );
 
-    const step = getByText("Bring to boil");
+    // Press the step
+    fireEvent.press(step);
 
-    await act(async () => {
-      fireEvent.press(step);
-    });
-
-    await waitFor(() => {
-      // controleer of toggle een line-through en opacity toepast
-      expect(step.props.style).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            textDecorationLine: "line-through",
-            opacity: 0.5,
-          }),
-        ])
-      );
-    });
+    // Check if style was updated
+    expect(step.props.style).toContainEqual(
+      expect.objectContaining({
+        textDecorationLine: "line-through",
+        opacity: 0.5,
+      })
+    );
   });
 
   it("matches snapshot", async () => {

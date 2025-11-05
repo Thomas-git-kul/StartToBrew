@@ -111,7 +111,7 @@ describe("<Agenda />", () => {
     
 
     expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith("/progress");
+    expect(mockPush).toHaveBeenCalledWith("../progress");
   });
 
   it("toggles a checkbox when pressed", async () => {
