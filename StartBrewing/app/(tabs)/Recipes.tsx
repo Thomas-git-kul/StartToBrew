@@ -109,60 +109,73 @@ export default function Recipes() {
       }}
     >
     
-    {/* Fixed header */}
-    <View className="w-full px-5 pt-5 pb-5"
-      style={{
-        backgroundColor: BASE_COLORS.LIGHT_BG,
-      }}
-    >
-      <Text className="mb-4"
+      {/* Fixed header */}
+      <View className="w-full px-5 pb-5"
         style={{
-          fontSize: 50,
-          color: BASE_COLORS.TEXT_DARK,
-          fontFamily: FontFamilies.HEADING,
+          backgroundColor: BASE_COLORS.LIGHT_BG,
         }}
-      >Recipes</Text>
-      <Searchbar
-        placeholder="Search"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        // make typed text darker gray to match beer cards
-        inputStyle={{ color: '#444' }}
-        icon={() => (
-          <MaterialCommunityIcons name="magnify" size={20} color="#999" />
-        )}
-          clearIcon={searchQuery ? () => (
-            <MaterialCommunityIcons name="close" size={18} color="#999" />
-          ) : undefined}
-          onClearIconPress={() => setSearchQuery("")}
-        style={{
-          backgroundColor: BASE_COLORS.WHITE,
-          borderColor: "#999",
-          borderWidth: 1,
-        }}
-      />
-    </View>
+      >
+        <Text className="mb-4"
+          style={styles.title}
+        >Recipes</Text>
+        <Searchbar
+          placeholder="Search"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          // make typed text darker gray to match beer cards
+          inputStyle={{ color: BASE_COLORS.STONE500 }}
+          icon={() => (
+            <MaterialCommunityIcons name="magnify" size={20} color={BASE_COLORS.STONE300} />
+          )}
+            clearIcon={searchQuery ? () => (
+              <MaterialCommunityIcons name="close" size={18} color={BASE_COLORS.STONE500} />
+            ) : undefined}
+            onClearIconPress={() => setSearchQuery("")}
+          style={{
+            backgroundColor: BASE_COLORS.WHITE,
+            borderColor: BASE_COLORS.STONE300,
+            borderWidth: 1,
+            fontFamily: FontFamilies.BODY,
+          }}
+        />
+      </View>
     
-    <ScrollView>
-        <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
-          {popular_recipes.filter((b) => filterMatches(b, searchQuery)).map((beer, index) => (
-            <BeerCard key={index} {...beer} />
-          ))}
-        </View>
+      {/* Scrollable content */}
+      <ScrollView className="pl-5">
+        {!searchQuery ? ( 
+          <>
+            <ThemedText style={styles.title2}>Popular Recipes</ThemedText>
+              <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
+                {popular_recipes.map((beer, index) => (
+                  <BeerCard key={index} {...beer} />
+                ))}
+              </View>
+
+            <ThemedText style={styles.title2}>Recipes</ThemedText>
+            <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
+              {all_recipes.map((beer, index) => (
+                <BeerCard key={index} {...beer} />
+              ))}
+            </View>
+          </>
+        ) : (
+          <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
+            {all_recipes
+              .filter((b) => filterMatches(b, searchQuery))
+              .map((beer, index) => (
+                <BeerCard key={index} {...beer} />
+              ))}
+          </View>
+        )}
       </ScrollView>
-    </View>
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
-  },
   title: {
     paddingTop: 25,
     fontSize: 50,
-    //fontWeight: 'bold',
     marginHorizontal: 10,
     fontFamily: FontFamilies.HEADING,
     color: BASE_COLORS.TEXT_DARK,
@@ -170,7 +183,6 @@ const styles = StyleSheet.create({
   title2: {
     paddingTop: 10,
     fontSize: 25,
-    //fontWeight: 'bold',
     marginHorizontal: 10,
     fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.TEXT_DARK,
