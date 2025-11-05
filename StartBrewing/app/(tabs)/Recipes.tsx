@@ -1,13 +1,11 @@
 import React from "react";
-import { View, ScrollView } from "react-native";
-import { Text, Searchbar, IconButton } from "react-native-paper";
+import { View, ScrollView, StyleSheet } from "react-native";
+import { Text, Searchbar} from "react-native-paper";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import BeerCard from '@/components/ui/IPAcomponent';
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-
 import { ThemedText } from "@/components/themed-text";
-import { StyleSheet} from "react-native";
 import { useRouter } from "expo-router"; 
 
 interface Beer {
@@ -58,27 +56,6 @@ export default function Recipes() {
   ];
 
   const all_recipes: Beer[] = [
-    {
-      name: "IJ IPA",
-      rating: 4.8,
-      reviews: 256,
-      image: require("@/assets/images/default-beer.png"),
-      description: "An assertive bitterness that dominates the palate, with citrus and pine notes."
-    },
-    {
-      name: "Voodoo Ranger",
-      rating: 4.5,
-      reviews: 98,
-      image: require("@/assets/images/default-beer.png"),
-      description: "A crystal-clear IPA dominated by citrus and resin hop profile.",
-    },
-    {
-      name: "Two Hearted IPA",
-      rating: 4.9,
-      reviews: 322,
-      image: require("@/assets/images/default-beer.png"),
-      description: "A slightly hazy gold color with tropical flavors like mango and orange.",
-    },
     {
       name: "IJ IPA",
       rating: 4.8,
