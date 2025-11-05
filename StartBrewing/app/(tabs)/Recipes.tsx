@@ -142,8 +142,8 @@ export default function Recipes() {
         }}
       />
     </View>
-      
-      <ScrollView>
+    
+    <ScrollView>
         <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
           {popular_recipes.filter((b) => filterMatches(b, searchQuery)).map((beer, index) => (
             <BeerCard key={index} {...beer} />
