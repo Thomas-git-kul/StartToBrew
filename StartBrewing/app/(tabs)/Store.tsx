@@ -57,7 +57,7 @@ export default function StorePage() {
 
           <Appbar.Action
             icon={() => <MaterialCommunityIcons name="cart-outline" size={28} color={BASE_COLORS.TEXT_DARK} />}
-            onPress={() => router.push("/ShoppingCart")}
+            onPress={() => router.push("/cart")}
           />
         </View>
       </Appbar.Header>
