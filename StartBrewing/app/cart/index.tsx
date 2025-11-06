@@ -6,6 +6,7 @@ import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useRouter, type Href } from "expo-router";
 import OrderCard from "@/components/ui/OrderCard";
+import { useFonts } from "@/hooks/use-fonts";
 
 interface Order {
   image: any;
@@ -15,6 +16,7 @@ interface Order {
 }
 
 export default function ShoppingCart() {
+  const fontsLoaded = useFonts();
   const router = useRouter();
 
   const initialOrders: Order[] = [
@@ -31,7 +33,6 @@ export default function ShoppingCart() {
       price: "€1,49",
     },
   ];
-
   const [orders, setOrders] = useState<Order[]>(initialOrders);
 
   const parsePrice = (priceStr: string) => {
@@ -60,6 +61,8 @@ export default function ShoppingCart() {
   }, [orders]);
 
   const formatter = useMemo(() => new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' }), []);
+
+  if (!fontsLoaded) return null;
 
   return (
     <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>

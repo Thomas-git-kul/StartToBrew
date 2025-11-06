@@ -18,6 +18,7 @@ interface Item {
 export default function StorePage() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const fontsLoaded = useFonts();
+  const router = useRouter();
 
   // wait for custom fonts to load so title uses the correct font
   if (!fontsLoaded) return null;
@@ -30,8 +31,6 @@ export default function StorePage() {
       item.price.toLowerCase().includes(lower)
     );
   };
-
-  const router = useRouter();
 
   const items: Item[] = [
     { image: require("@/assets/images/Premiumkit.png"), title: "Superior starter kit Base", price: "€299" },
