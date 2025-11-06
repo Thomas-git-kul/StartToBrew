@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, ScrollView } from 'react-native';
 import { Card, Text, Avatar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BASE_COLORS } from '@/constants/Colors';
@@ -73,54 +73,57 @@ export default function OrderCard({
 
   return (
     <Card
-        style ={{
+        style = {{
             marginBottom: 10,
-            backgroundColor: BASE_COLORS.WHITE,
+            backgroundColor: BASE_COLORS.WHITE
         }}
     >
-      <View className='items-center flex-row justify-between pr-5'>
-        <View className='items-center justify-center'>
-          <Avatar.Image source={image} size={80} />
-        </View>
+        <ScrollView>
+            <View className="flex-row items-center px-4 py-2">
+                {/* Image */}
+                <View className="w-20 items-center">
+                    <Avatar.Image source={image} size={80} />
+                </View>
 
-        <View className='flex-1 px-8 min-w-140'>
-          <Text className='text-lg'
-            numberOfLines={2}
-            style={{
-              fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.STONE600,
-            }}
-          >{title}</Text>
-        </View>
+                {/* Title */}
+                <View className="flex-1 px-2">
+                    <Text
+                        numberOfLines={2}
+                        className="text-lg ml-3"
+                        style = {{
+                            fontFamily: FontFamilies.BODY,
+                            color: BASE_COLORS.STONE600
+                        }}
+                    >{title}</Text>
+                </View>
 
-        <View className='flex-row items-center justify-center ml-10'>
-          <Pressable className='p-6' onPress={handleDecrease} accessibilityLabel="Decrease quantity" hitSlop={8}>
-            <MaterialCommunityIcons name="minus-circle-outline" size={20} color={BASE_COLORS.STONE500} />
-          </Pressable>
+                {/* Quantity Controls */}
+                <View className="w-28 flex-row items-center justify-center">
+                    <Pressable onPress={handleDecrease} hitSlop={8}>
+                        <MaterialCommunityIcons name="minus-circle-outline" size={20} color={BASE_COLORS.STONE500} />
+                    </Pressable>
+                    <Text className="mx-2 text-lg"
+                        style = {{
+                            fontFamily: FontFamilies.BODY,
+                            color: BASE_COLORS.STONE600
+                        }}
+                    >{displayedQuantity}</Text>
+                    <Pressable onPress={handleIncrease} hitSlop={8}>
+                        <MaterialCommunityIcons name="plus-circle-outline" size={20} color={BASE_COLORS.STONE500} />
+                    </Pressable>
+                </View>
 
-          <Text className='text-lg mx-3'
-            style={{
-              fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.STONE600,
-            }}
-          >{displayedQuantity}</Text>
-
-          <Pressable className='p-6' onPress={handleIncrease} accessibilityLabel="Increase quantity" hitSlop={8}>
-            <MaterialCommunityIcons name="plus-circle-outline" size={20} color={BASE_COLORS.STONE500} />
-          </Pressable>
-        </View>
-
-        <View className='Items-end w-min-140 pl-8'>
-          <Text
-            style={{
-              fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.STONE500,
-            }}
-          >
-            {formatter.format(displayedPrice)}
-          </Text>
-        </View>
-      </View>
+                {/* Price */}
+                <View className="w-24 items-end mr-5">
+                    <Text className="text-base"
+                        style = {{
+                            fontFamily: FontFamilies.BODY,
+                            color: BASE_COLORS.STONE600
+                        }}
+                    >{formatter.format(displayedPrice)}</Text>
+                </View>
+            </View>
+        </ScrollView>
     </Card>
   );
 };
