@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Image } from "react-native";
+import { View, Image, ScrollView } from "react-native";
 import { Text, Button, TextInput, Appbar } from "react-native-paper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -7,9 +7,34 @@ import { FontFamilies } from "@/constants/Fonts";
 import { useRouter } from "expo-router";
 import OrderCard from "@/components/ui/OrderCard";
 
-const router = useRouter();
+interface Order {
+  image: any;
+  title: string;
+  quantity: number;
+  price: string;
+  onIncrease: () => void;
+  onDecrease: () => void;
+}
 
 export default function ShoppingCart() {
+  const router = useRouter();
+
+  const orders: Order[] = [
+      { image: require("@/assets/images/Premiumkit.png"), 
+        title: "Superior starter kit Base", 
+        quantity: 1,
+        price: "€299",
+        onIncrease: () => console.log("Increase"),
+        onDecrease: () => console.log("Decrease"),
+      },
+      { image: require("@/assets/images/Airlock.png"), 
+        title: "Airlock", 
+        quantity: 1,
+        price: "€1,49", 
+        onIncrease: () => console.log("Increase"), 
+        onDecrease: () => console.log("Decrease") },
+    ];
+
   return (
     <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       {/* Top Appbar */}
@@ -27,29 +52,19 @@ export default function ShoppingCart() {
       </Appbar.Header>
 
       {/* Order Summary */}
-      <View className="mb-4">
-        <Text className="text-lg font-semibold mb-2">Order Summary</Text>
-        <View className="flex-row items-center justify-between mb-3">
-          <Image source={require("@/assets/images/Starterkit.png")} style={{ width: 60, height: 60 }} />
-          <Text>Starter Kit IPA</Text>
-          <View className="flex-row items-center">
-            <MaterialCommunityIcons name="minus-circle-outline" size={24} />
-            <Text className="mx-2">1</Text>
-            <MaterialCommunityIcons name="plus-circle-outline" size={24} />
-          </View>
-          <Text>€32,99</Text>
-        </View>
-        {/* Repeat for other items */}
-        
-        <OrderCard
-          image={require("@/assets/images/Starterkit.png")}
-          title="Starter Kit IPA"
-          quantity={1}
-          price="€32,99"
-          onIncrease={() => console.log("Increase")}
-          onDecrease={() => console.log("Decrease")}
-        />
-
+      <View className="m-5">
+        <Text className="text-lg mb-2"
+          style ={{
+            fontFamily: FontFamilies.BODY,
+            color: BASE_COLORS.STONE700
+          }}
+        >Order Summary</Text>
+        <ScrollView>
+          {/* Order cards */}
+          {orders.map((Order, index) => (
+            <OrderCard key={index} {...Order} />
+          ))}
+        </ScrollView>
       </View>
 
       {/* Shipping Info */}

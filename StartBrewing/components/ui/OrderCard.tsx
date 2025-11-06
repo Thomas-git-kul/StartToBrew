@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { Card, Text, IconButton, Avatar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-interface OrderCardProps {
+type OrderCardProps = {
   image: any;
   title: string;
   quantity: number;
@@ -12,17 +12,17 @@ interface OrderCardProps {
   onDecrease: () => void;
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({
-  image,
-  title,
-  quantity,
-  price,
-  onIncrease,
-  onDecrease,
-}) => {
+export default function OrderCard({ 
+    image, 
+    title,
+    quantity, 
+    price, 
+    onIncrease, 
+    onDecrease 
+}: OrderCardProps) {
+
   return (
     <Card className="mb-4 p-4">
-      <Text className="text-lg font-semibold mb-2">Order Summary</Text>
       <View className="flex-row items-center justify-between">
         <Avatar.Image source={image} size={60} />
         <Text className="flex-1 ml-4">{title}</Text>
@@ -45,4 +45,3 @@ const OrderCard: React.FC<OrderCardProps> = ({
   );
 };
 
-export default OrderCard;

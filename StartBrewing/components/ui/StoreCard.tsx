@@ -1,9 +1,7 @@
-import React from 'react';
 import { View, Image, StyleSheet } from 'react-native';
 import { Card, Text } from 'react-native-paper';
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { useRouter } from "expo-router";
 
 type StoreCardProps = {
   image: any;
