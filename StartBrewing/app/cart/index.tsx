@@ -140,21 +140,22 @@ export default function ShoppingCart() {
       </View>
 
       {/* Proceed */}
+      <View style={{ marginTop: 50, paddingLeft: 20 }}>
       <Button
         mode="contained"
-        style={{ 
-          backgroundColor: BASE_COLORS.TEXT_DARK,
-          marginTop: 50,
-        }}
         onPress={() => console.log("Proceed to payment")}
-        className='w-140 justify-start'
-      >
-        Proceed to payment
-      </Button>
-
-      <Button onPress={() => console.log("Return to store")} style={{ marginTop: 8 }}>
-        Return to store
-      </Button>
+        style={{
+          backgroundColor: BASE_COLORS.TEXT_DARK,
+          alignSelf: "flex-start",
+        }}
+        contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
+        labelStyle={{ 
+          fontSize: 16,
+          color: BASE_COLORS.WHITE,
+          fontFamily: FontFamilies.BODY_BOLD
+        }}
+      >Proceed to payment</Button>
       </View>
+    </View>
   );
 }
