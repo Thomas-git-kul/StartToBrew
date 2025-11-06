@@ -1,11 +1,13 @@
 import { Tabs } from "expo-router";
-import "../../global.css"; 
+import "../../global.css";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { BASE_COLORS } from "@/constants/Colors"; 
+import { BASE_COLORS } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+
+import { MaterialIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -14,7 +16,6 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#78350F',
-        //tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
@@ -26,9 +27,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="HomePage"
         options={{
-          title: "Home",
+          title: "HomePage",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons
+              size={28}
+              name="home"
+              color={BASE_COLORS.TEXT_DARK}
+            />
           ),
         }}
       />
@@ -39,7 +44,11 @@ export default function TabLayout() {
         options={{
           title: "Agenda",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="calendar" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons
+              size={28}
+              name="calendar-month"
+              color={BASE_COLORS.TEXT_DARK}
+            />
           ),
         }}
       />
@@ -50,7 +59,11 @@ export default function TabLayout() {
         options={{
           title: "Store",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="cart.fill" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons
+              size={28}
+              name="shopping-cart"
+              color={BASE_COLORS.TEXT_DARK}
+            />
           ),
         }}
       />
@@ -61,17 +74,26 @@ export default function TabLayout() {
         options={{
           title: "Recipes",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="book.fill" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons
+              size={28}
+              name="menu-book"
+              color={BASE_COLORS.TEXT_DARK}
+            />
           ),
         }}
       />
-    {/* Auth Tab */}
+
+      {/* Auth Tab */}
       <Tabs.Screen
         name="Auth"
         options={{
           title: "Auth",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons
+              size={28}
+              name="person"
+              color={BASE_COLORS.TEXT_DARK}
+            />
           ),
         }}
       />

@@ -124,6 +124,33 @@ exports[`<HomePage /> matches the snapshot 1`] = `
         }
       >
         <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={false}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
           style={
             {
               "backgroundColor": "#fff",
@@ -131,6 +158,7 @@ exports[`<HomePage /> matches the snapshot 1`] = `
               "elevation": 3,
               "flexDirection": "row",
               "marginVertical": 8,
+              "opacity": 1,
               "padding": 12,
               "shadowColor": "#000",
               "shadowOffset": {
@@ -236,6 +264,33 @@ exports[`<HomePage /> matches the snapshot 1`] = `
           </View>
         </View>
         <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={false}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
           style={
             {
               "backgroundColor": "#fff",
@@ -243,6 +298,7 @@ exports[`<HomePage /> matches the snapshot 1`] = `
               "elevation": 3,
               "flexDirection": "row",
               "marginVertical": 8,
+              "opacity": 1,
               "padding": 12,
               "shadowColor": "#000",
               "shadowOffset": {
@@ -348,6 +404,33 @@ exports[`<HomePage /> matches the snapshot 1`] = `
           </View>
         </View>
         <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={false}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
           style={
             {
               "backgroundColor": "#fff",
@@ -355,6 +438,7 @@ exports[`<HomePage /> matches the snapshot 1`] = `
               "elevation": 3,
               "flexDirection": "row",
               "marginVertical": 8,
+              "opacity": 1,
               "padding": 12,
               "shadowColor": "#000",
               "shadowOffset": {

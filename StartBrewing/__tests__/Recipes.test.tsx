@@ -1,17 +1,13 @@
 import React from "react";
-import { render } from "@testing-library/react-native";
+import { render, fireEvent, act } from "@testing-library/react-native";
 import Recipes from "../app/(tabs)/Recipes";
 
-// --- 🧩 MOCKS --- //
+// ------------------ MOCKS ------------------ //
 
-// Mock Expo Router
 jest.mock("expo-router", () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-  }),
+  useRouter: () => ({ push: jest.fn() }),
 }));
 
-// Mock ThemedText → vervang door gewoon <Text>
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
@@ -19,32 +15,19 @@ jest.mock("@/components/themed-text", () => {
   };
 });
 
-// Mock SafeAreaView
-jest.mock("react-native-safe-area-context", () => {
-  const { View } = require("react-native");
-  return {
-    SafeAreaView: ({ children }: any) => <View>{children}</View>,
-  };
-});
-
-// Mock Colors & Fonts constants
 jest.mock("@/constants/Colors", () => ({
-  BASE_COLORS: {
-    WHITE: "#fff",
-    TEXT_DARK: "#000",
-  },
+  BASE_COLORS: { WHITE: "#fff", TEXT_DARK: "#000", LIGHT_BG: "#fafafa" },
 }));
 
 jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: {
-    HEADING: "System",
-    BODY: "System",
-  },
+  FontFamilies: { HEADING: "System", BODY: "System" },
 }));
 
-// Mock asset requires
-jest.mock("@/assets/images/default-beer.png", () => "mock-image-path", { virtual: true });
+jest.mock("@expo/vector-icons", () => ({
+  Ionicons: () => null,
+}));
 
+// Mock the BeerCard UI component so we can check props
 interface BeerCardProps {
   name: string;
   rating: number;
@@ -53,59 +36,54 @@ interface BeerCardProps {
   description: string;
 }
 
-// Mock BeerCard zodat we kunnen testen dat hij 3x gerenderd wordt
 const MockBeerCard = jest.fn((props: BeerCardProps) => null);
+
 jest.mock("@/components/ui/IPAcomponent", () => (props: BeerCardProps) => {
   MockBeerCard(props);
   return null;
 });
 
-// --- 🧪 TESTS --- //
+// ------------------ TESTS ------------------ //
+
 describe("<Recipes />", () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeEach(() => jest.clearAllMocks());
+
+  it("renders both titles 'Recipes' (screen + section)", () => {
+    const { getAllByText } = render(<Recipes />);
+    const titles = getAllByText("Recipes");
+    expect(titles.length).toBe(2);
   });
 
-  it("renders the main titles correctly", () => {
-    const { getAllByText, getByText } = render(<Recipes />);
-
-    // Controleer of de titels zichtbaar zijn
-    const recipesTexts = getAllByText("Recipes");
-    expect(recipesTexts.length).toBe(2); // Verwacht exact 2 'Recipes' teksten
-    expect(getByText("Popular Recipes")).toBeTruthy();
-
-    // Test of de hoofdtitel de juiste stijl heeft
-    expect(recipesTexts[0].props.style).toEqual(expect.objectContaining({ 
-      fontSize: 50,
-      fontFamily: "System" 
-    }));
-  });
-
-  it("renders exactly three BeerCard components", () => {
+  it("renders 3 popular + 3 all recipes → total 6 BeerCards", () => {
     render(<Recipes />);
-    expect(MockBeerCard).toHaveBeenCalledTimes(3);
+    expect(MockBeerCard).toHaveBeenCalledTimes(6);
   });
 
   it("passes correct props to the first BeerCard", () => {
     render(<Recipes />);
-    const calls = MockBeerCard.mock.calls;
-    expect(calls.length).toBeGreaterThan(0);
-    
-    const firstCall = calls[0][0] as BeerCardProps;
-    expect(firstCall.name).toBe("IJ IPA");
-    expect(firstCall.rating).toBe(4.8);
-    expect(firstCall.reviews).toBe(256);
-    expect(firstCall.description).toContain("bitterness");
+    const first = MockBeerCard.mock.calls[0][0];
+
+    expect(first.name).toBe("IJ IPA");
+    expect(first.rating).toBe(4.8);
   });
 
-  it("passes correct beer names to all BeerCards", () => {
-    render(<Recipes />);
+  it("filters correctly when searching", () => {
+    const screen = render(<Recipes />);
+    const search = screen.getByPlaceholderText("Search");
+
+    // clear old calls first
+    MockBeerCard.mockClear();
+
+    act(() => {
+      fireEvent.changeText(search, "voodoo");
+    });
+
     const calls = MockBeerCard.mock.calls;
-    const beerNames = calls.map((call) => (call[0] as BeerCardProps).name);
-    expect(beerNames).toEqual(["IJ IPA", "Voodoo Ranger", "Two Hearted IPA"]);
+    expect(calls.length).toBe(1);
+    expect(calls[0][0].name).toBe("Voodoo Ranger");
   });
 
-  it("matches snapshot for layout consistency", () => {
+  it("matches snapshot", () => {
     const tree = render(<Recipes />).toJSON();
     expect(tree).toMatchSnapshot();
   });

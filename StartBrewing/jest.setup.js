@@ -15,6 +15,11 @@ jest.mock('expo-router', () => {
   };
 });
 
-jest.mock("@expo/vector-icons", () => ({
-  MaterialCommunityIcons: () => null,
-}));
+jest.mock("@expo/vector-icons", () => {
+  const React = require("react");
+  return {
+    MaterialCommunityIcons: (props) => React.createElement("Icon", props),
+    Ionicons: (props) => React.createElement("Icon", props),
+    FontAwesome: (props) => React.createElement("Icon", props),
+  };
+});
