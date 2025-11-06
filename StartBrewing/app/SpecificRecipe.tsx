@@ -55,7 +55,7 @@ export default function SpecificRecipe() {
 
         {/* Rating row */}
         <View style={styles.ratingRow}>
-          <IconSymbol name="star" size={22} color={BASE_COLORS.ACCENT_PRIMARY} />
+          <IconSymbol name="star.fill" size={22} color={BASE_COLORS.ACCENT_PRIMARY} />
           <Text style={styles.rating}>4.8 / 5 </Text>
           <Text style={styles.ratingText}>(265 reviews)</Text>
         </View>
@@ -83,7 +83,7 @@ export default function SpecificRecipe() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/HomePage")}
+          onPress={() => router.push("../progress")}
         >
           <Text style={styles.buttonText}>Start Brewing</Text>
         </TouchableOpacity>

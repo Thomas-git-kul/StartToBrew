@@ -51,6 +51,13 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
+jest.mock("@/components/ui/icon-symbol", () => {
+  const { Text } = require("react-native");
+  return {
+    IconSymbol: ({ name }: any) => <Text testID="mock-icon">icon-{name}</Text>,
+  };
+});
+
 // --- Tests --- //
 describe("<SpecificRecipe />", () => {
   afterEach(() => {
@@ -78,14 +85,14 @@ describe("<SpecificRecipe />", () => {
     expect(getByText("Start Brewing")).toBeTruthy();
   });
 
-  it("navigates to /HomePage when Start Brewing is pressed", () => {
+  it("navigates to /progress when Start Brewing is pressed", () => {
     const { getByText } = render(<SpecificRecipe />);
     const button = getByText("Start Brewing");
 
     fireEvent.press(button);
 
     expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith("/HomePage");
+    expect(mockPush).toHaveBeenCalledWith("../progress");
   });
 
   it("matches the snapshot", () => {

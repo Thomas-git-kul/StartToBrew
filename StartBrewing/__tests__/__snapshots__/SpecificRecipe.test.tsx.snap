@@ -88,31 +88,12 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
           }
         }
       >
-        <ViewManagerAdapter_SymbolModule
-          animated={false}
-          colors={[]}
-          name="star"
-          resizeMode="scaleAspectFit"
-          style={
-            [
-              {
-                "height": 24,
-                "width": 24,
-              },
-              [
-                {
-                  "height": 22,
-                  "width": 22,
-                },
-                undefined,
-              ],
-            ]
-          }
-          tint={4290007817}
-          tintColor="#B45309"
-          type="monochrome"
-          weight="regular"
-        />
+        <Text
+          testID="mock-icon"
+        >
+          icon-
+          star.fill
+        </Text>
         <Text
           style={
             {
