@@ -124,7 +124,11 @@ export default function Recipes() {
             <ThemedText style={styles.title2}>Popular Recipes</ThemedText>
               <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
                 {popular_recipes.map((beer, index) => (
-                  <BeerCard key={index} {...beer} />
+                  <BeerCard
+                    key={index} 
+                    {...beer}
+                    onPress={() => router.push("/SpecificRecipe")}
+                  />
                 ))}
               </View>
 
