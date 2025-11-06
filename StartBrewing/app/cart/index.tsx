@@ -55,8 +55,8 @@ export default function ShoppingCart() {
       <View className="m-5">
         <Text className="text-lg mb-2"
           style ={{
-            fontFamily: FontFamilies.BODY,
-            color: BASE_COLORS.STONE700
+            fontFamily: FontFamilies.BODY_BOLD,
+            color: BASE_COLORS.ACCENT_PRIMARY
           }}
         >Order Summary</Text>
         <ScrollView>

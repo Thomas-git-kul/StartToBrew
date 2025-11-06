@@ -2,6 +2,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { Card, Text, IconButton, Avatar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BASE_COLORS } from '@/constants/Colors';
+import { FontFamilies } from '@/constants/Fonts';
 
 type OrderCardProps = {
   image: any;
@@ -22,24 +24,44 @@ export default function OrderCard({
 }: OrderCardProps) {
 
   return (
-    <Card className="mb-4 p-4">
+    <Card
+        style ={{
+            marginBottom: 10,
+            backgroundColor: BASE_COLORS.WHITE,
+        }}
+    >
       <View className="flex-row items-center justify-between">
-        <Avatar.Image source={image} size={60} />
-        <Text className="flex-1 ml-4">{title}</Text>
+        <Avatar.Image source={image} size={80} />
+        <Text className="flex-1 ml-4"
+            style = {{
+                fontFamily: FontFamilies.BODY,
+                color: BASE_COLORS.STONE500
+            }}
+        >{title}</Text>
         <View className="flex-row items-center">
           <IconButton
             icon="minus-circle-outline"
             size={24}
             onPress={onDecrease}
           />
-          <Text className="mx-2">{quantity}</Text>
+          <Text className="mx-2"
+            style = {{
+                fontFamily: FontFamilies.BODY,
+                color: BASE_COLORS.STONE500
+            }}
+          >{quantity}</Text>
           <IconButton
             icon="plus-circle-outline"
             size={24}
             onPress={onIncrease}
           />
         </View>
-        <Text className="ml-4">{price}</Text>
+        <Text className="mx-4"
+            style = {{
+                    fontFamily: FontFamilies.BODY,
+                    color: BASE_COLORS.STONE500
+                }}
+        >{price}</Text>
       </View>
     </Card>
   );
