@@ -1,0 +1,973 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Progress /> matches snapshot 1`] = `
+<RNCSafeAreaView
+  edges={
+    {
+      "bottom": "additive",
+      "left": "additive",
+      "right": "additive",
+      "top": "additive",
+    }
+  }
+  style={
+    {
+      "backgroundColor": "#fff",
+      "flex": 1,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "backgroundColor": "#fff",
+        "elevation": 3,
+        "paddingBottom": 5,
+        "paddingHorizontal": 20,
+        "paddingTop": 20,
+        "shadowColor": "#000",
+        "shadowOffset": {
+          "height": 2,
+          "width": 0,
+        },
+        "shadowOpacity": 0.05,
+        "shadowRadius": 3,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "#000",
+          "fontFamily": "System",
+          "fontSize": 50,
+          "marginHorizontal": 10,
+          "paddingBottom": 25,
+          "paddingTop": 25,
+        }
+      }
+    >
+      Progress
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#000",
+          "fontFamily": "System",
+          "fontSize": 18,
+          "marginBottom": 5,
+          "marginHorizontal": 10,
+        }
+      }
+    >
+      27
+      %
+    </Text>
+    <View
+      style={
+        {
+          "borderRadius": 5,
+          "height": 10,
+        }
+      }
+      testID="progress-bar"
+    />
+    <Text
+      style={
+        {
+          "color": "#000",
+          "fontFamily": "System",
+          "fontSize": 25,
+          "marginTop": 10,
+        }
+      }
+    >
+      To do
+    </Text>
+  </View>
+  <RCTScrollView
+    contentContainerStyle={
+      {
+        "paddingBottom": 20,
+        "paddingHorizontal": 20,
+      }
+    }
+  >
+    <View>
+      <View
+        style={
+          {
+            "marginBottom": 20,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#f00",
+              "fontFamily": "System",
+              "fontSize": 18,
+              "marginBottom": 5,
+              "marginTop": 10,
+            }
+          }
+        >
+          Phase 1: Mash
+        </Text>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                {
+                  "opacity": 0.5,
+                  "textDecorationLine": "line-through",
+                },
+              ]
+            }
+          >
+            Heat strike water
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                {
+                  "opacity": 0.5,
+                  "textDecorationLine": "line-through",
+                },
+              ]
+            }
+          >
+            Mash in
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                {
+                  "opacity": 0.5,
+                  "textDecorationLine": "line-through",
+                },
+              ]
+            }
+          >
+            Saccharification rest
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                {
+                  "opacity": 0.5,
+                  "textDecorationLine": "line-through",
+                },
+              ]
+            }
+          >
+            Mash out
+          </Text>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "marginBottom": 20,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#f00",
+              "fontFamily": "System",
+              "fontSize": 18,
+              "marginBottom": 5,
+              "marginTop": 10,
+            }
+          }
+        >
+          Phase 2: Boil
+        </Text>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            Bring to boil
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            30-min cascade
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            10-min cascade
+          </Text>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "marginBottom": 20,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#f00",
+              "fontFamily": "System",
+              "fontSize": 18,
+              "marginBottom": 5,
+              "marginTop": 10,
+            }
+          }
+        >
+          Phase 3: Whirlpool
+        </Text>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            Cool to 80°C
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            Whirlpool cascade + cascade
+          </Text>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "marginBottom": 20,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#f00",
+              "fontFamily": "System",
+              "fontSize": 18,
+              "marginBottom": 5,
+              "marginTop": 10,
+            }
+          }
+        >
+          Phase 4: Chill
+        </Text>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            Chill to 19°C
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            Transfer to fermenter
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            Pitch yeast
+          </Text>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "marginBottom": 20,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#f00",
+              "fontFamily": "System",
+              "fontSize": 18,
+              "marginBottom": 5,
+              "marginTop": 10,
+            }
+          }
+        >
+          Phase 5: ferment
+        </Text>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            Primary ferment
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            Dry hop (3days)
+          </Text>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "marginBottom": 20,
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#f00",
+              "fontFamily": "System",
+              "fontSize": 18,
+              "marginBottom": 5,
+              "marginTop": 10,
+            }
+          }
+        >
+          Phase 6: package
+        </Text>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontFamily": "System",
+                  "fontSize": 15,
+                  "marginVertical": 5,
+                },
+                false,
+              ]
+            }
+          >
+            package (bottle/keg)
+          </Text>
+        </View>
+      </View>
+    </View>
+  </RCTScrollView>
+</RNCSafeAreaView>
+`;

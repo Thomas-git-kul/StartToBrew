@@ -7,8 +7,17 @@ import { Colors } from "@/constants/theme";
 import { BASE_COLORS } from "@/constants/Colors"; 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
+import { useEffect } from "react";
+import * as Font from "expo-font";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    // Preload Material Icons for web and Android
+    Font.loadAsync(MaterialIcons.font);
+  }, []);
 
   return (
     <Tabs
@@ -28,7 +37,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons size={28} name="home" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
@@ -39,7 +48,7 @@ export default function TabLayout() {
         options={{
           title: "Agenda",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="calendar" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons size={28} name="calendar-month" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
@@ -50,7 +59,7 @@ export default function TabLayout() {
         options={{
           title: "Store",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="cart.fill" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons size={28} name="shopping-cart" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
@@ -61,7 +70,7 @@ export default function TabLayout() {
         options={{
           title: "Recipes",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="book.fill" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons size={28} name="menu-book" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
@@ -71,7 +80,7 @@ export default function TabLayout() {
         options={{
           title: "Auth",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={BASE_COLORS.TEXT_DARK} />
+            <MaterialIcons size={28} name="person" color={BASE_COLORS.TEXT_DARK} />
           ),
         }}
       />
