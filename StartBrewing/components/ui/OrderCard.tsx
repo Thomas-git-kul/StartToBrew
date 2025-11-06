@@ -78,44 +78,39 @@ export default function OrderCard({
             backgroundColor: BASE_COLORS.WHITE,
         }}
     >
-      <View style={styles.row}>
-        <View style={styles.avatarColumn}>
+      <View className='items-center flex-row justify-between pr-5'>
+        <View className='items-center justify-center'>
           <Avatar.Image source={image} size={80} />
         </View>
 
-        <View style={styles.titleColumn}>
-          <Text
+        <View className='flex-1 px-8 min-w-140'>
+          <Text className='text-lg'
             numberOfLines={2}
             style={{
               fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.STONE500,
+              color: BASE_COLORS.STONE600,
             }}
-          >
-            {title}
-          </Text>
+          >{title}</Text>
         </View>
 
-        <View style={styles.controlsColumn}>
-          <Pressable onPress={handleDecrease} style={styles.iconButton} accessibilityLabel="Decrease quantity" hitSlop={8}>
-            <MaterialCommunityIcons name="minus-circle-outline" size={26} color={BASE_COLORS.STONE500} />
+        <View className='flex-row items-center justify-center ml-10'>
+          <Pressable className='p-6' onPress={handleDecrease} accessibilityLabel="Decrease quantity" hitSlop={8}>
+            <MaterialCommunityIcons name="minus-circle-outline" size={20} color={BASE_COLORS.STONE500} />
           </Pressable>
 
-          <Text
+          <Text className='text-lg mx-3'
             style={{
-              marginHorizontal: 8,
               fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.STONE500,
+              color: BASE_COLORS.STONE600,
             }}
-          >
-            {displayedQuantity}
-          </Text>
+          >{displayedQuantity}</Text>
 
-          <Pressable onPress={handleIncrease} style={styles.iconButton} accessibilityLabel="Increase quantity" hitSlop={8}>
-            <MaterialCommunityIcons name="plus-circle-outline" size={26} color={BASE_COLORS.STONE500} />
+          <Pressable className='p-6' onPress={handleIncrease} accessibilityLabel="Increase quantity" hitSlop={8}>
+            <MaterialCommunityIcons name="plus-circle-outline" size={20} color={BASE_COLORS.STONE500} />
           </Pressable>
         </View>
 
-        <View style={styles.priceColumn}>
+        <View className='Items-end w-min-140 pl-8'>
           <Text
             style={{
               fontFamily: FontFamilies.BODY,
@@ -129,38 +124,3 @@ export default function OrderCard({
     </Card>
   );
 };
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-  },
-  avatarColumn: {
-    width: 96,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleColumn: {
-    flex: 1,
-    paddingHorizontal: 8,
-    minWidth: 140,
-  },
-  controlsColumn: {
-    width: 140,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  priceColumn: {
-    width: 80,
-    alignItems: 'flex-end',
-    paddingLeft: 8,
-  },
-  iconButton: {
-    padding: 6,
-    cursor: 'pointer',
-  },
-});
-
