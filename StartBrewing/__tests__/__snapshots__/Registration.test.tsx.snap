@@ -1,0 +1,418 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Registration /> matches the snapshot 1`] = `
+<View>
+  <Text
+    style={
+      {
+        "color": "#000",
+        "fontFamily": "System",
+        "fontSize": 40,
+        "marginBottom": 16,
+        "textAlign": "left",
+      }
+    }
+  >
+    No account yet? Register here!
+  </Text>
+  <View
+    style={
+      {
+        "height": 80,
+        "marginTop": 20,
+        "position": "relative",
+      }
+    }
+  >
+    <Text
+      style={
+        [
+          {
+            "color": "#f00",
+            "fontFamily": "System",
+            "fontSize": 18,
+            "position": "absolute",
+            "top": 0,
+          },
+          {
+            "left": 10,
+          },
+        ]
+      }
+    >
+      Lastname
+    </Text>
+    <TextInput
+      style={
+        [
+          {
+            "backgroundColor": "#fff",
+            "borderColor": "#333",
+            "borderRadius": 6,
+            "borderWidth": 1,
+            "height": 35,
+            "paddingHorizontal": 8,
+            "position": "absolute",
+            "top": 25,
+            "width": "45%",
+          },
+          {
+            "left": 10,
+          },
+        ]
+      }
+    />
+    <Text
+      style={
+        [
+          {
+            "color": "#f00",
+            "fontFamily": "System",
+            "fontSize": 18,
+            "position": "absolute",
+            "top": 0,
+          },
+          {
+            "left": "50%",
+          },
+        ]
+      }
+    >
+      Firstname
+    </Text>
+    <TextInput
+      style={
+        [
+          {
+            "backgroundColor": "#fff",
+            "borderColor": "#333",
+            "borderRadius": 6,
+            "borderWidth": 1,
+            "height": 35,
+            "paddingHorizontal": 8,
+            "position": "absolute",
+            "top": 25,
+            "width": "45%",
+          },
+          {
+            "left": "50%",
+          },
+        ]
+      }
+    />
+  </View>
+  <View
+    style={
+      {
+        "height": 80,
+        "marginTop": 20,
+        "position": "relative",
+      }
+    }
+  >
+    <Text
+      style={
+        [
+          {
+            "color": "#f00",
+            "fontFamily": "System",
+            "fontSize": 18,
+            "position": "absolute",
+            "top": 0,
+          },
+          {
+            "left": 10,
+          },
+        ]
+      }
+    >
+      Day
+    </Text>
+    <TextInput
+      style={
+        [
+          {
+            "backgroundColor": "#fff",
+            "borderColor": "#333",
+            "borderRadius": 6,
+            "borderWidth": 1,
+            "height": 35,
+            "paddingHorizontal": 8,
+            "position": "absolute",
+            "top": 25,
+            "width": 80,
+          },
+          {
+            "left": 10,
+          },
+        ]
+      }
+    />
+    <Text
+      style={
+        [
+          {
+            "color": "#f00",
+            "fontFamily": "System",
+            "fontSize": 18,
+            "position": "absolute",
+            "top": 0,
+          },
+          {
+            "left": "33%",
+          },
+        ]
+      }
+    >
+      Month
+    </Text>
+    <TextInput
+      style={
+        [
+          {
+            "backgroundColor": "#fff",
+            "borderColor": "#333",
+            "borderRadius": 6,
+            "borderWidth": 1,
+            "height": 35,
+            "paddingHorizontal": 8,
+            "position": "absolute",
+            "top": 25,
+            "width": 80,
+          },
+          {
+            "left": "33%",
+          },
+        ]
+      }
+    />
+    <Text
+      style={
+        [
+          {
+            "color": "#f00",
+            "fontFamily": "System",
+            "fontSize": 18,
+            "position": "absolute",
+            "top": 0,
+          },
+          {
+            "left": "66%",
+          },
+        ]
+      }
+    >
+      Year
+    </Text>
+    <TextInput
+      style={
+        [
+          {
+            "backgroundColor": "#fff",
+            "borderColor": "#333",
+            "borderRadius": 6,
+            "borderWidth": 1,
+            "height": 35,
+            "paddingHorizontal": 8,
+            "position": "absolute",
+            "top": 25,
+            "width": 80,
+          },
+          {
+            "left": "66%",
+          },
+        ]
+      }
+    />
+  </View>
+  <Text
+    style={
+      {
+        "color": "#f00",
+        "fontFamily": "System",
+        "fontSize": 18,
+        "marginHorizontal": 10,
+        "paddingTop": 20,
+      }
+    }
+  >
+    Email
+  </Text>
+  <TextInput
+    style={
+      {
+        "backgroundColor": "#fff",
+        "borderColor": "#333",
+        "borderRadius": 6,
+        "borderWidth": 1,
+        "height": 40,
+        "marginHorizontal": 10,
+        "paddingHorizontal": 8,
+      }
+    }
+  />
+  <Text
+    style={
+      {
+        "color": "#f00",
+        "fontFamily": "System",
+        "fontSize": 18,
+        "marginHorizontal": 10,
+        "paddingTop": 20,
+      }
+    }
+  >
+    Username
+  </Text>
+  <TextInput
+    style={
+      {
+        "backgroundColor": "#fff",
+        "borderColor": "#333",
+        "borderRadius": 6,
+        "borderWidth": 1,
+        "height": 40,
+        "marginHorizontal": 10,
+        "paddingHorizontal": 8,
+      }
+    }
+  />
+  <Text
+    style={
+      {
+        "color": "#f00",
+        "fontFamily": "System",
+        "fontSize": 18,
+        "marginHorizontal": 10,
+        "paddingTop": 20,
+      }
+    }
+  >
+    Password
+  </Text>
+  <TextInput
+    secureTextEntry={true}
+    style={
+      {
+        "backgroundColor": "#fff",
+        "borderColor": "#333",
+        "borderRadius": 6,
+        "borderWidth": 1,
+        "height": 40,
+        "marginHorizontal": 10,
+        "paddingHorizontal": 8,
+      }
+    }
+  />
+  <Text
+    style={
+      {
+        "color": "#f00",
+        "fontFamily": "System",
+        "fontSize": 18,
+        "marginHorizontal": 10,
+        "paddingTop": 20,
+      }
+    }
+  >
+    Confirm Password
+  </Text>
+  <TextInput
+    secureTextEntry={true}
+    style={
+      {
+        "backgroundColor": "#fff",
+        "borderColor": "#333",
+        "borderRadius": 6,
+        "borderWidth": 1,
+        "height": 40,
+        "marginHorizontal": 10,
+        "paddingHorizontal": 8,
+      }
+    }
+  />
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "flexDirection": "row",
+        "gap": 10,
+        "marginHorizontal": 10,
+        "marginTop": 10,
+      }
+    }
+  >
+    <Text
+      onPress={[Function]}
+    >
+      checkbox-
+      unchecked
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#111",
+          "fontFamily": "System",
+          "fontSize": 16,
+        }
+      }
+    >
+      I agree to the terms and conditions
+    </Text>
+  </View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={false}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "alignItems": "center",
+        "backgroundColor": "#000",
+        "borderRadius": 8,
+        "height": 45,
+        "justifyContent": "center",
+        "marginLeft": 10,
+        "marginTop": 25,
+        "opacity": 1,
+        "width": "60%",
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "#fff",
+          "fontFamily": "System",
+          "fontSize": 16,
+        }
+      }
+    >
+      Create account
+    </Text>
+  </View>
+</View>
+`;
