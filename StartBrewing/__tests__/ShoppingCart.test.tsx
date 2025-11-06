@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, waitFor } from "@testing-library/react-native";
 import ShoppingCart from "../app/cart";
 
 // --- 🧩 MOCKS --- //
@@ -64,17 +64,23 @@ describe("<ShoppingCart />", () => {
     jest.clearAllMocks();
   });
 
-  it("renders main headers correctly", () => {
-    const { getByText } = render(<ShoppingCart />);
+  it("renders main headers correctly", async () => {
+  const { getByText } = render(<ShoppingCart />);
 
-    expect(getByText("Order Information")).toBeTruthy();
-    expect(getByText("Order Summary")).toBeTruthy();
-    expect(getByText("Shipping Information")).toBeTruthy();
-    expect(getByText("Full Name")).toBeTruthy();
-    expect(getByText("Street name and number")).toBeTruthy();
-    expect(getByText("City")).toBeTruthy();
+  await waitFor(() => {
+    expect(getByText('Order Information')).toBeTruthy();
+    expect(getByText('Order Summary')).toBeTruthy();
+    expect(getByText('Shipping Information')).toBeTruthy();
   });
 
+  expect(getByText("Order Information")).toBeTruthy();
+  expect(getByText("Order Summary")).toBeTruthy();
+  expect(getByText("Shipping Information")).toBeTruthy();
+  expect(getByText("Full Name")).toBeTruthy();
+  expect(getByText("Street name and number")).toBeTruthy();
+  expect(getByText("City")).toBeTruthy();
+  });
+  
   it("renders exactly three CartItem components", () => {
     render(<ShoppingCart />);
     expect(MockCartItem).toHaveBeenCalledTimes(2);
