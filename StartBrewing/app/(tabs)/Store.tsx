@@ -40,7 +40,6 @@ export default function StorePage() {
     { image: require("@/assets/images/PVCtap.png"), title: "Tap PVC with back nut", price: "€2,99" },
   ];
 
- 
   return (
     <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       {/* Top Appbar row: title + cart */}

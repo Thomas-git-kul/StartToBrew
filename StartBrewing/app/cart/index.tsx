@@ -1,16 +1,29 @@
-
 import React from "react";
 import { View, Image } from "react-native";
-import { Text, Button, TextInput } from "react-native-paper";
+import { Text, Button, TextInput, Appbar } from "react-native-paper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
+import { useRouter } from "expo-router";
+
+const router = useRouter();
 
 export default function ShoppingCart() {
   return (
-    <View className="flex-1 bg-light-bg p-5">
-      <Text className="text-2xl font-bold mb-4" style={{ color: BASE_COLORS.TEXT_DARK }}>
-        Order Information
-      </Text>
+    <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+      {/* Top Appbar */}
+      <Appbar.Header className="pt-8 pb-8"
+        style={{
+          backgroundColor: BASE_COLORS.LIGHT_BG,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 16 }}>
+          <Appbar.Content
+            title="Order Information"
+            titleStyle={{ fontSize: 36, fontFamily: FontFamilies.HEADING, color: BASE_COLORS.TEXT_DARK }}
+          />
+        </View>
+      </Appbar.Header>
 
       {/* Order Summary */}
       <View className="mb-4">
