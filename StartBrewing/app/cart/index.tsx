@@ -4,7 +4,7 @@ import { Text, Button, TextInput, Appbar } from "react-native-paper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import OrderCard from "@/components/ui/OrderCard";
 
 interface Order {
@@ -63,57 +63,91 @@ export default function ShoppingCart() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
-      {/* Top Appbar */}
-      <Appbar.Header className="pt-8 pb-8"
-        style={{
-          backgroundColor: BASE_COLORS.LIGHT_BG,
-        }}
+      {/* Header */}
+      <Appbar.Header
+        className="pt-8 pb-4"
+        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 16 }}>
-          <Appbar.Content
-            title="Order Information"
-            titleStyle={{ fontSize: 36, fontFamily: FontFamilies.HEADING, color: BASE_COLORS.TEXT_DARK }}
+        <Appbar.Content
+          title="Order Information"
+          titleStyle={{
+            fontSize: 36,
+            fontFamily: FontFamilies.HEADING,
+            color: BASE_COLORS.TEXT_DARK,
+          }}
+        />
+        <Appbar.Action
+            icon={() => <MaterialCommunityIcons name="arrow-right" size={28} color={BASE_COLORS.TEXT_DARK} />}
+            onPress={() => router.push("./(tabs)/store")}
           />
-        </View>
       </Appbar.Header>
 
       {/* Order Summary */}
-      <View className="m-5">
-        <Text className="text-lg mb-2"
+      <View className="mx-5">
+        <Text className="text-xl mb-2"
           style ={{
             fontFamily: FontFamilies.BODY_BOLD,
             color: BASE_COLORS.ACCENT_PRIMARY
           }}
         >Order Summary</Text>
+        {/* Order cards */}
         <ScrollView>
-          {/* Order cards */}
           {orders.map((Order, index) => (
             <OrderCard key={index} {...Order} onIncrease={() => handleIncrease(index)} onDecrease={() => handleDecrease(index)} />
           ))}
         </ScrollView>
-        {/* Subtotal shown directly under the orders list */}
-        <View style={{ marginTop: 12, alignItems: 'flex-end' }}>
-          <Text style={{ fontFamily: FontFamilies.BODY_BOLD, color: BASE_COLORS.TEXT_DARK }}>
-            Subtotal: {formatter.format(total)}
-          </Text>
+        {/* Subtotal */}
+        <View className='mt-3 items-end'>
+          <Text className="text-lg"
+            style={{ 
+              fontFamily: FontFamilies.BODY_BOLD, 
+              color: BASE_COLORS.TEXT_DARK 
+            }}
+          >Subtotal: {formatter.format(total)}</Text>
         </View>
       </View>
 
       {/* Shipping Info */}
-      <Text className="text-lg font-semibold mb-2">Shipping Information</Text>
-      <TextInput label="Full Name" mode="outlined" className="mb-2" />
-      <TextInput label="Street name and number" mode="outlined" className="mb-2" />
-      <View className="flex-row justify-between">
-        <TextInput label="City" mode="outlined" style={{ flex: 1, marginRight: 8 }} />
-        <TextInput label="City zip code" mode="outlined" style={{ flex: 1 }} />
+      <View className="mx-5 mt-10">
+        <Text className="text-xl mb-2"
+          style ={{
+                fontFamily: FontFamilies.BODY_BOLD,
+                color: BASE_COLORS.ACCENT_PRIMARY
+              }}
+        >Shipping Information</Text>
+        <TextInput label="Full Name" mode="outlined" className="mb-2"
+          style = {{
+            backgroundColor: BASE_COLORS.WHITE
+          }}
+        />
+        <TextInput label="Street name and number" mode="outlined" className="mb-2" 
+          style = {{
+              backgroundColor: BASE_COLORS.WHITE
+            }}
+        />
+        <View className="flex-row justify-between">
+          <TextInput label="City" mode="outlined" className='flex-1' 
+            style = {{
+              backgroundColor: BASE_COLORS.WHITE
+            }}
+          />
+          <TextInput label="City zip code" mode="outlined" className='flex-1'
+            style = {{
+              backgroundColor: BASE_COLORS.WHITE,
+            }}
+          />
+        </View>
       </View>
 
-      {/* Total & Button */}
-  <Text className="text-lg font-semibold mt-4">Total: {formatter.format(total)}</Text>
+      {/* Proceed */}
       <Button
         mode="contained"
-        style={{ backgroundColor: BASE_COLORS.TEXT_DARK, marginTop: 16 }}
+        style={{ 
+          backgroundColor: BASE_COLORS.TEXT_DARK,
+          marginTop: 50,
+        }}
         onPress={() => console.log("Proceed to payment")}
+        className='w-140 justify-start'
       >
         Proceed to payment
       </Button>
@@ -121,6 +155,6 @@ export default function ShoppingCart() {
       <Button onPress={() => console.log("Return to store")} style={{ marginTop: 8 }}>
         Return to store
       </Button>
-    </View>
+      </View>
   );
 }
