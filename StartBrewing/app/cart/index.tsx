@@ -5,6 +5,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useRouter } from "expo-router";
+import OrderCard from "@/components/ui/OrderCard";
 
 const router = useRouter();
 
@@ -39,6 +40,16 @@ export default function ShoppingCart() {
           <Text>€32,99</Text>
         </View>
         {/* Repeat for other items */}
+        
+        <OrderCard
+          image={require("@/assets/images/Starterkit.png")}
+          title="Starter Kit IPA"
+          quantity={1}
+          price="€32,99"
+          onIncrease={() => console.log("Increase")}
+          onDecrease={() => console.log("Decrease")}
+        />
+
       </View>
 
       {/* Shipping Info */}
