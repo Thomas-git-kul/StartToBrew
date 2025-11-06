@@ -1,6 +1,6 @@
 import React from "react";
 import { View, ScrollView, ImageSourcePropType } from "react-native";
-import { Text, Searchbar } from "react-native-paper";
+import { Text, Searchbar, Appbar } from "react-native-paper";
 
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
@@ -17,7 +17,10 @@ interface Item {
 
 export default function StorePage() {
   const [searchQuery, setSearchQuery] = React.useState("");
-  useFonts();
+  const fontsLoaded = useFonts();
+
+  // wait for custom fonts to load so title uses the correct font
+  if (!fontsLoaded) return null;
 
   const filterMatches = (item: Item, q: string) => {
     if (!q) return true;
@@ -37,17 +40,30 @@ export default function StorePage() {
     { image: require("@/assets/images/PVCtap.png"), title: "Tap PVC with back nut", price: "€2,99" },
   ];
 
+ 
   return (
     <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
-      {/* Fixed header */}
-      <View className="w-full px-5 pb-5" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
-        <Text
-          className="mb-4 mt-3"
-          style={{ fontSize: 50, fontFamily: FontFamilies.HEADING, color: BASE_COLORS.TEXT_DARK }}
-        >
-          Store
-        </Text>
+      {/* Top Appbar row: title + cart */}
+      <Appbar.Header className="pt-8 pb-8"
+        style={{
+          backgroundColor: BASE_COLORS.LIGHT_BG,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 16 }}>
+          <Appbar.Content
+            title="Store"
+            titleStyle={{ fontSize: 36, fontFamily: FontFamilies.HEADING, color: BASE_COLORS.TEXT_DARK }}
+          />
 
+          <Appbar.Action
+            icon={() => <MaterialCommunityIcons name="cart-outline" size={28} color={BASE_COLORS.TEXT_DARK} />}
+            onPress={() => router.push("/ShoppingCart")}
+          />
+        </View>
+      </Appbar.Header>
+
+      {/* Searchbar placed under the appbar so it won't be clipped */}
+      <View style={{ backgroundColor: BASE_COLORS.LIGHT_BG, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 }}>
         <Searchbar
           placeholder="Search"
           value={searchQuery}
@@ -60,31 +76,21 @@ export default function StorePage() {
               : undefined
           }
           onClearIconPress={() => setSearchQuery("")}
-          style={{ backgroundColor: BASE_COLORS.WHITE, borderColor: BASE_COLORS.STONE300, borderWidth: 1, fontFamily: FontFamilies.BODY }}
+          style={{ backgroundColor: BASE_COLORS.WHITE, borderColor: BASE_COLORS.STONE300, borderWidth: 1 }}
         />
       </View>
 
-      {/* Scrollable content */}
+      {/* Scrollable Items */}
       <ScrollView className="px-5 pt-2">
-        {!searchQuery ? (
-          <View className="flex-row flex-wrap -mx-2">
-            {items.map((item, index) => (
+        <View className="flex-row flex-wrap -mx-2">
+          {items
+            .filter((item) => filterMatches(item, searchQuery))
+            .map((item, index) => (
               <View key={index} className="w-1/2 px-2">
                 <StoreCard {...item} />
               </View>
             ))}
-          </View>
-        ) : (
-          <View className="flex-row flex-wrap -mx-2">
-            {items
-              .filter((b) => filterMatches(b, searchQuery))
-              .map((item, index) => (
-                <View key={index} className="w-1/2 px-2">
-                  <StoreCard {...item} />
-                </View>
-              ))}
-          </View>
-        )}
+        </View>
       </ScrollView>
     </View>
   );
