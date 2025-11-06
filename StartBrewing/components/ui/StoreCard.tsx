@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Image } from 'react-native';
+import { View, Image, StyleSheet } from 'react-native';
 import { Card, Text } from 'react-native-paper';
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useRouter } from "expo-router";
 
 type StoreCardProps = {
-  image: string;
+  image: any;
   title: string;
   price: string;
 };
@@ -18,15 +18,20 @@ export default function StoreCard({ image, title, price }: StoreCardProps) {
         backgroundColor: BASE_COLORS.WHITE,
         borderColor: BASE_COLORS.WHITE,
         borderWidth: 1,
-        marginBottom: 20
+        marginBottom: 20,
+        minHeight: 260,
+        overflow: 'hidden',
+        justifyContent: 'space-between',
       }}
     >
-      {/* Image */}
-      <Image
-        source={{ uri: image }}
-        className="w-full h-40 rounded-t-lg"
-        resizeMode="contain"
-      />
+      {/* Image container with centered image */}
+      <View style={styles.imageContainer}>
+        <Image
+          source={typeof image === 'string' ? { uri: image } : image}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </View>
 
       {/* Content */}
       <View className="p-3">
@@ -38,10 +43,30 @@ export default function StoreCard({ image, title, price }: StoreCardProps) {
         >
           {title}
         </Text>
-        <Text className="text-base text-[#9c4a00] mt-1">
+        <Text className="text-base mt-5"
+          style={{
+            color: BASE_COLORS.STONE400,
+            fontFamily: FontFamilies.BODY
+          }}
+        >
           {price}
         </Text>
       </View>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  imageContainer: {
+    height: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: BASE_COLORS.WHITE,
+  },
+  image: {
+    width: '80%',
+    height: '100%',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+});
