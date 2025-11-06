@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { View, Image, ScrollView } from "react-native";
 import { Text, Button, TextInput, Appbar } from "react-native-paper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -12,28 +12,54 @@ interface Order {
   title: string;
   quantity: number;
   price: string;
-  onIncrease: () => void;
-  onDecrease: () => void;
 }
 
 export default function ShoppingCart() {
   const router = useRouter();
 
-  const orders: Order[] = [
-      { image: require("@/assets/images/Premiumkit.png"), 
-        title: "Superior starter kit Base", 
-        quantity: 1,
-        price: "€299",
-        onIncrease: () => console.log("Increase"),
-        onDecrease: () => console.log("Decrease"),
-      },
-      { image: require("@/assets/images/Airlock.png"), 
-        title: "Airlock", 
-        quantity: 1,
-        price: "€1,49", 
-        onIncrease: () => console.log("Increase"), 
-        onDecrease: () => console.log("Decrease") },
-    ];
+  const initialOrders: Order[] = [
+    {
+      image: require("@/assets/images/Premiumkit.png"),
+      title: "Superior starter kit Base",
+      quantity: 1,
+      price: "€299",
+    },
+    {
+      image: require("@/assets/images/Airlock.png"),
+      title: "Airlock",
+      quantity: 1,
+      price: "€1,49",
+    },
+  ];
+
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
+
+  const parsePrice = (priceStr: string) => {
+    if (!priceStr) return 0;
+    let s = priceStr.replace(/[^0-9.,-]/g, '');
+    if (s.indexOf('.') > -1 && s.indexOf(',') > -1) {
+      s = s.replace(/\./g, '');
+      s = s.replace(/,/g, '.');
+    } else if (s.indexOf(',') > -1 && s.indexOf('.') === -1) {
+      s = s.replace(/,/g, '.');
+    }
+    const n = parseFloat(s);
+    return Number.isNaN(n) ? 0 : n;
+  };
+
+  const handleIncrease = (index: number) => {
+    setOrders((prev) => prev.map((o, i) => i === index ? { ...o, quantity: o.quantity + 1 } : o));
+  };
+
+  const handleDecrease = (index: number) => {
+    setOrders((prev) => prev.map((o, i) => i === index ? { ...o, quantity: Math.max(0, o.quantity - 1) } : o));
+  };
+
+  const total = useMemo(() => {
+    return orders.reduce((sum, o) => sum + parsePrice(o.price) * o.quantity, 0);
+  }, [orders]);
+
+  const formatter = useMemo(() => new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' }), []);
 
   return (
     <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
@@ -62,9 +88,15 @@ export default function ShoppingCart() {
         <ScrollView>
           {/* Order cards */}
           {orders.map((Order, index) => (
-            <OrderCard key={index} {...Order} />
+            <OrderCard key={index} {...Order} onIncrease={() => handleIncrease(index)} onDecrease={() => handleDecrease(index)} />
           ))}
         </ScrollView>
+        {/* Subtotal shown directly under the orders list */}
+        <View style={{ marginTop: 12, alignItems: 'flex-end' }}>
+          <Text style={{ fontFamily: FontFamilies.BODY_BOLD, color: BASE_COLORS.TEXT_DARK }}>
+            Subtotal: {formatter.format(total)}
+          </Text>
+        </View>
       </View>
 
       {/* Shipping Info */}
@@ -77,7 +109,7 @@ export default function ShoppingCart() {
       </View>
 
       {/* Total & Button */}
-      <Text className="text-lg font-semibold mt-4">Total: €34,48</Text>
+  <Text className="text-lg font-semibold mt-4">Total: {formatter.format(total)}</Text>
       <Button
         mode="contained"
         style={{ backgroundColor: BASE_COLORS.TEXT_DARK, marginTop: 16 }}
