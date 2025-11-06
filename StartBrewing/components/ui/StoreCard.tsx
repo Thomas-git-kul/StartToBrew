@@ -1,7 +1,9 @@
-
 import React from 'react';
 import { View, Image } from 'react-native';
 import { Card, Text } from 'react-native-paper';
+import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
+import { useRouter } from "expo-router";
 
 type StoreCardProps = {
   image: string;
@@ -11,7 +13,14 @@ type StoreCardProps = {
 
 export default function StoreCard({ image, title, price }: StoreCardProps) {
   return (
-    <Card className="bg-white rounded-lg shadow-md m-2">
+    <Card className="rounded-lg shadow-md"
+      style={{
+        backgroundColor: BASE_COLORS.WHITE,
+        borderColor: BASE_COLORS.WHITE,
+        borderWidth: 1,
+        marginBottom: 20
+      }}
+    >
       {/* Image */}
       <Image
         source={{ uri: image }}
@@ -21,7 +30,12 @@ export default function StoreCard({ image, title, price }: StoreCardProps) {
 
       {/* Content */}
       <View className="p-3">
-        <Text className="text-lg font-bold text-[#9c4a00]">
+        <Text className="text-xl"
+          style={{
+            color: BASE_COLORS.ACCENT_PRIMARY,
+            fontFamily: FontFamilies.BODY_BOLD
+          }}
+        >
           {title}
         </Text>
         <Text className="text-base text-[#9c4a00] mt-1">

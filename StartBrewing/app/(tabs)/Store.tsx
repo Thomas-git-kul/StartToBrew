@@ -62,7 +62,12 @@ export default function StorePage() {
           backgroundColor: BASE_COLORS.LIGHT_BG,
         }}
       >
-        <Text className="mb-4"
+        <Text className="mb-4 mt-3"
+          style={{
+            fontSize: 50,
+            fontFamily: FontFamilies.HEADING,
+            color: BASE_COLORS.TEXT_DARK,
+          }}
         >Store</Text>
         <Searchbar
           placeholder="Search"
@@ -87,21 +92,23 @@ export default function StorePage() {
       </View>
     
       {/* Scrollable content */}
-      <ScrollView className="pl-5">
-        {!searchQuery ? ( 
-          <>
-            <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
-              {items.map((item, index) => (
-                <StoreCard key={index} {...item} />
-              ))}
-            </View>
-          </>
+      <ScrollView className="px-5 pt-2">
+        {!searchQuery ? (
+          <View className="flex-row flex-wrap -mx-2">
+            {items.map((item, index) => (
+              <View key={index} className="w-1/2 px-2">
+                <StoreCard {...item} />
+              </View>
+            ))}
+          </View>
         ) : (
-          <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
+          <View className="flex-row flex-wrap -mx-2">
             {items
               .filter((b) => filterMatches(b, searchQuery))
               .map((item, index) => (
-                <StoreCard key={index} {...item} />
+                <View key={index} className="w-1/2 px-2">
+                  <StoreCard {...item} />
+                </View>
               ))}
           </View>
         )}
