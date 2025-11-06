@@ -10,6 +10,12 @@ export const BASE_COLORS = {
   
   // voor de titels
   TEXT_DARK: '#78350F' as HexColor,
+
+  // voor de titels
+  TEXT_BODY: '#44403B' as HexColor,
+
+  // voor de titels
+  STONE_DARK: '#0C0A09' as HexColor,
   
   // voor de gewone tekst
   ACCENT_PRIMARY: '#B45309' as HexColor,
