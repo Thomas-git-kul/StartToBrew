@@ -14,3 +14,7 @@ jest.mock('expo-router', () => {
     Redirect: () => null,
   };
 });
+
+jest.mock("@expo/vector-icons", () => ({
+  MaterialCommunityIcons: () => null,
+}));

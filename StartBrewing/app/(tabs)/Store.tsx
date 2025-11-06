@@ -55,6 +55,7 @@ export default function StorePage() {
           />
 
           <Appbar.Action
+            testID="cart-button"
             icon={() => <MaterialCommunityIcons name="cart-outline" size={28} color={BASE_COLORS.TEXT_DARK} />}
             onPress={() => router.push("/cart" as any)}
           />
