@@ -32,4 +32,3 @@ export const BASE_COLORS = {
   STONE900: '#1c1917',
   STONE950: '#0c0a09',
 };
-
