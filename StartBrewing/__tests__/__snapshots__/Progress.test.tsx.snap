@@ -72,6 +72,16 @@ exports[`<Progress /> matches snapshot 1`] = `
       }
       testID="progress-bar"
     />
+  </View>
+  <View
+    style={
+      {
+        "backgroundColor": "#fff",
+        "paddingHorizontal": 20,
+        "paddingVertical": 10,
+      }
+    }
+  >
     <Text
       style={
         {
