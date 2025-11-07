@@ -86,7 +86,8 @@ export default function StorePage() {
             .filter((item) => filterMatches(item, searchQuery))
             .map((item, index) => (
               <View key={index} className="w-1/2 px-2">
-                <StoreCard {...item} />
+                <StoreCard {...item}
+                onPress={() => router.push(`/StoreItem`)} />
               </View>
             ))}
         </View>

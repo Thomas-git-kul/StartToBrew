@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import Checkbox from "expo-checkbox";
@@ -12,52 +12,54 @@ export default function Registration() {
     <SafeAreaView style={styles.general}>
       <Text style={styles.title}>No account yet? Register here!</Text>
 
-      {/* Name Row */}
-      <View style={styles.row}>
-        <Text style={[styles.label, { left: 10 }]}>Lastname</Text>
-        <TextInput style={[styles.input, { left: 10 }]} />
+      <ScrollView style={{ flex: 1 }}>
+        {/* Name Row */}
+        <View style={styles.row}>
+          <Text style={[styles.label, { left: 10 }]}>Lastname</Text>
+          <TextInput style={[styles.input, { left: 10 }]} />
 
-        <Text style={[styles.label, { left: "50%" }]}>Firstname</Text>
-        <TextInput style={[styles.input, { left: "50%" }]} />
-      </View>
+          <Text style={[styles.label, { left: "50%" }]}>Firstname</Text>
+          <TextInput style={[styles.input, { left: "50%" }]} />
+        </View>
 
-      {/* Birthday */}
-      <View style={styles.row}>
-        <Text style={[styles.label, { left: 10 }]}>Day</Text>
-        <TextInput style={[styles.inputSmall, { left: 10 }]} />
+        {/* Birthday */}
+        <View style={styles.row}>
+          <Text style={[styles.label, { left: 10 }]}>Day</Text>
+          <TextInput style={[styles.inputSmall, { left: 10 }]} />
 
-        <Text style={[styles.label, { left: "33%" }]}>Month</Text>
-        <TextInput style={[styles.inputSmall, { left: "33%" }]} />
+          <Text style={[styles.label, { left: "25%" }]}>Month</Text>
+          <TextInput style={[styles.inputSmall, { left: "25%" }]} />
 
-        <Text style={[styles.label, { left: "66%" }]}>Year</Text>
-        <TextInput style={[styles.inputSmall, { left: "66%" }]} />
-      </View>
+          <Text style={[styles.label, { left: "50%" }]}>Year</Text>
+          <TextInput style={[styles.inputSmall, { left: "50%" }]} />
+        </View>
 
-      {/* Email */}
-      <Text style={styles.subtitle}>Email</Text>
-      <TextInput style={styles.inputFull} />
+        {/* Email */}
+        <Text style={styles.subtitle}>Email</Text>
+        <TextInput style={styles.inputFull} />
 
-      {/* Username */}
-      <Text style={styles.subtitle}>Username</Text>
-      <TextInput style={styles.inputFull} />
+        {/* Username */}
+        <Text style={styles.subtitle}>Username</Text>
+        <TextInput style={styles.inputFull} />
 
-      {/* Password */}
-      <Text style={styles.subtitle}>Password</Text>
-      <TextInput style={styles.inputFull} secureTextEntry />
+        {/* Password */}
+        <Text style={styles.subtitle}>Password</Text>
+        <TextInput style={styles.inputFull} secureTextEntry />
 
-      <Text style={styles.subtitle}>Confirm Password</Text>
-      <TextInput style={styles.inputFull} secureTextEntry />
+        <Text style={styles.subtitle}>Confirm Password</Text>
+        <TextInput style={styles.inputFull} secureTextEntry />
 
-      {/* Terms Checkbox */}
-      <View style={styles.checkboxRow}>
-        <Checkbox value={agree} onValueChange={setAgree} color={agree ? BASE_COLORS.TEXT_DARK : undefined} />
-        <Text style={styles.checkboxLabel}>I agree to the terms and conditions</Text>
-      </View>
+        {/* Terms Checkbox */}
+        <View style={styles.checkboxRow}>
+          <Checkbox value={agree} onValueChange={setAgree} color={agree ? BASE_COLORS.TEXT_DARK : undefined} />
+          <Text style={styles.checkboxLabel}>I agree to the terms and conditions</Text>
+        </View>
 
-      {/* Button */}
-      <TouchableOpacity style={styles.knop}>
-        <Text style={styles.buttonText}>Create account</Text>
-      </TouchableOpacity>
+        {/* Button */}
+        <TouchableOpacity style={styles.knop}>
+          <Text style={styles.buttonText}>Create account</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }

@@ -81,7 +81,7 @@ export default function ShoppingCart() {
         />
         <Appbar.Action
             icon={() => <MaterialCommunityIcons name="arrow-right" size={28} color={BASE_COLORS.TEXT_DARK} />}
-            onPress={() => router.push("./(tabs)/store")}
+            onPress={() => router.push("../Store")}
           />
       </Appbar.Header>
 
