@@ -35,7 +35,20 @@ export default function Auth() {
       return;
     }
 
-    // succesvolle login -> ga direct naar HomePage tab
+    router.replace("/(tabs)/HomePage");
+  }
+
+  async function signInAsTestUser() {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: "test@user.com",
+      password: "testuser",
+    });
+
+    if (error) {
+      Alert.alert(error.message);
+      return;
+    }
+
     router.replace("/(tabs)/HomePage");
   }
 
@@ -92,6 +105,16 @@ export default function Auth() {
           style={styles.buttonPrimary}
         >
           Sign In
+        </Button>
+        <Button
+          mode="contained"
+          onPress={signInAsTestUser}
+          labelStyle={styles.buttonLabel}
+          buttonColor={BASE_COLORS.STONE_DARK}
+          textColor={BASE_COLORS.WHITE}
+          style={styles.buttonPrimary}
+        >
+          Sign In as Test User
         </Button>
         <Button
           mode="outlined"
