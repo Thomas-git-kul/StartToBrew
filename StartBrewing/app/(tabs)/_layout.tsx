@@ -15,7 +15,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#78350F',
+        tabBarActiveTintColor: "#78350F",
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
@@ -83,11 +83,11 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Auth Tab */}
+      {/* Account Tab */}
       <Tabs.Screen
-        name="Auth"
+        name="Account"
         options={{
-          title: "Auth",
+          title: "Account",
           tabBarIcon: ({ color }) => (
             <MaterialIcons
               size={28}
