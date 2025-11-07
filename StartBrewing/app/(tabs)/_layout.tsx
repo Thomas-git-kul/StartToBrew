@@ -6,6 +6,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { BASE_COLORS } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { IconFontLoader } from "@/components/IconFontLoader.web";
 
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -13,7 +14,9 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <Tabs
+    <>
+      <IconFontLoader />
+      <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#78350F',
         headerShown: false,
@@ -98,5 +101,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </>
   );
 }
