@@ -17,6 +17,7 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: '#78350F',
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
           backgroundColor: BASE_COLORS.LIGHT_BG,
@@ -27,7 +28,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="HomePage"
         options={{
-          title: "HomePage",
           tabBarIcon: ({ color }) => (
             <MaterialIcons
               size={28}
