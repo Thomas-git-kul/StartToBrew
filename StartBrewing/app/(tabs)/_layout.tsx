@@ -8,9 +8,29 @@ import { BASE_COLORS } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
 import { MaterialIcons } from "@expo/vector-icons";
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { useCallback } from 'react';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  
+  const [fontsLoaded] = useFonts({
+    ...MaterialIcons.font,
+  });
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <Tabs
