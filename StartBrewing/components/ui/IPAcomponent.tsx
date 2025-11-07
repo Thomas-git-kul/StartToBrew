@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface BeerCardProps {
@@ -8,11 +8,12 @@ interface BeerCardProps {
   rating: number;
   reviews: number;
   description: string;
+  onPress?: () => void;
 }
 
-const BeerCard: React.FC<BeerCardProps> = ({ image, name, rating, reviews, description }) => {
+const BeerCard: React.FC<BeerCardProps> = ({ image, name, rating, reviews, description, onPress }) => {
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
       <Image 
         source={image} 
         style={styles.image} 
@@ -29,7 +30,7 @@ const BeerCard: React.FC<BeerCardProps> = ({ image, name, rating, reviews, descr
           {description}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

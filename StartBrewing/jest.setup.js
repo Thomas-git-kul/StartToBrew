@@ -14,3 +14,12 @@ jest.mock('expo-router', () => {
     Redirect: () => null,
   };
 });
+
+jest.mock("@expo/vector-icons", () => {
+  const React = require("react");
+  return {
+    MaterialCommunityIcons: (props) => React.createElement("Icon", props),
+    Ionicons: (props) => React.createElement("Icon", props),
+    FontAwesome: (props) => React.createElement("Icon", props),
+  };
+});

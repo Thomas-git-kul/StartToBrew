@@ -1,0 +1,77 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<ShoppingCart /> matches snapshot for layout consistency 1`] = `
+<View
+  className="flex-1"
+  style={
+    {
+      "backgroundColor": undefined,
+    }
+  }
+>
+  <Text>
+    Order Information
+  </Text>
+  <button
+    data-testid="header-action"
+    onClick={[Function]}
+  >
+    Icon
+  </button>
+  <View
+    className="mx-5"
+  >
+    <Text>
+      Order Summary
+    </Text>
+    <RCTScrollView>
+      <View />
+    </RCTScrollView>
+    <View
+      className="mt-3 items-end"
+    >
+      <Text>
+        Subtotal: 
+        € 300,49
+      </Text>
+    </View>
+  </View>
+  <View
+    className="mx-5 mt-10"
+  >
+    <Text>
+      Shipping Information
+    </Text>
+    <Text>
+      Full Name
+    </Text>
+    <Text>
+      Street name and number
+    </Text>
+    <View
+      className="flex-row justify-between"
+    >
+      <Text>
+        City
+      </Text>
+      <Text>
+        City zip code
+      </Text>
+    </View>
+  </View>
+  <View
+    style={
+      {
+        "marginTop": 50,
+        "paddingLeft": 20,
+      }
+    }
+  >
+    <button
+      onClick={[Function]}
+    >
+      Proceed to payment
+    </button>
+  </View>
+</View>
+`;
