@@ -46,7 +46,7 @@ export default function HomePage() {
   ];
 
   return (
-    <SafeAreaView style={styles.general}>
+    <View style={styles.general}>
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <ThemedText style={styles.title}>StartToBrew</ThemedText>
 
@@ -78,14 +78,14 @@ export default function HomePage() {
         {/* <Plus color="white" size={24} /> Optioneel icoon */}
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   general: {
     flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
+    backgroundColor: 'transparent'
   },
   title: {
     paddingTop: 25,

@@ -1,7 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<HomePage /> matches the snapshot 1`] = `
-<View>
+<View
+  style={
+    {
+      "backgroundColor": "transparent",
+      "flex": 1,
+    }
+  }
+>
   <RCTScrollView
     contentContainerStyle={
       {
