@@ -37,6 +37,16 @@ export default function TabLayout() {
             />
           ),
         };
+      case "/Agenda":
+        return {
+          title: "Agenda",
+          icon: (
+            <Appbar.Action
+              icon={() => <MaterialCommunityIcons name="tooltip-check-outline" size={28} color={BASE_COLORS.TEXT_DARK} />}
+              onPress={() => router.push("/Agenda?goToToday=true")}
+            />
+          ),
+        };
       default:
         return {
           title: pathname.replace("/", ""),
