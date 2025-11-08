@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Alert, AppState, View, StyleSheet } from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
-import { supabase } from "../../supabase";
-import "../../global.css";
+import { supabase } from "../supabase";
+import "../global.css";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { router, useRouter } from "expo-router";
@@ -11,7 +11,6 @@ export default function Auth() {
   const theme = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
@@ -26,24 +25,51 @@ export default function Auth() {
   }, []);
 
   async function signInWithEmail() {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) Alert.alert(error.message);
-    setLoading(false);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      Alert.alert(error.message);
+      return;
+    }
+
+    router.replace("/(tabs)/HomePage");
   }
 
-  async function signUpWithEmail() {
-    setLoading(true);
-    const { data: { session }, error } = await supabase.auth.signUp({ email, password });
+  async function signInAsTestUser() {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: "test@user.com",
+      password: "testuser",
+    });
 
-    if (error) Alert.alert(error.message);
-    if (!session) Alert.alert("Please check your inbox for email verification!");
-    setLoading(false);
+    if (error) {
+      Alert.alert(error.message);
+      return;
+    }
+
+    router.replace("/(tabs)/HomePage");
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 24, backgroundColor: BASE_COLORS.LIGHT_BG }}>
-      <Text style={{ fontSize: 24, fontFamily: FontFamilies.HEADING, marginBottom: 32, textAlign: "center", color: BASE_COLORS.STONE_DARK }}>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        paddingHorizontal: 24,
+        backgroundColor: BASE_COLORS.LIGHT_BG,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 24,
+          fontFamily: FontFamilies.HEADING,
+          marginBottom: 32,
+          textAlign: "center",
+          color: BASE_COLORS.STONE_DARK,
+        }}
+      >
         Welcome
       </Text>
 
@@ -70,10 +96,34 @@ export default function Auth() {
           activeOutlineColor={BASE_COLORS.TEXT_DARK}
           style={styles.input}
         />
-        <Button mode="contained" loading={loading} onPress={signInWithEmail} labelStyle={styles.buttonLabel} buttonColor={BASE_COLORS.TEXT_DARK} textColor={BASE_COLORS.WHITE} style={styles.buttonPrimary}>
+        <Button
+          mode="contained"
+          onPress={signInWithEmail}
+          labelStyle={styles.buttonLabel}
+          buttonColor={BASE_COLORS.TEXT_DARK}
+          textColor={BASE_COLORS.WHITE}
+          style={styles.buttonPrimary}
+        >
           Sign In
         </Button>
-        <Button mode="outlined" loading={loading} onPress={() => router.push("../Registration")} textColor={BASE_COLORS.WHITE} style={styles.buttonSecondary} labelStyle={styles.buttonLabelSecondary} buttonColor={BASE_COLORS.TEXT_DARK}>
+        <Button
+          mode="contained"
+          onPress={signInAsTestUser}
+          labelStyle={styles.buttonLabel}
+          buttonColor={BASE_COLORS.STONE_DARK}
+          textColor={BASE_COLORS.WHITE}
+          style={styles.buttonPrimary}
+        >
+          Sign In as Test User
+        </Button>
+        <Button
+          mode="outlined"
+          onPress={() => router.push("../Registration")}
+          textColor={BASE_COLORS.WHITE}
+          style={styles.buttonSecondary}
+          labelStyle={styles.buttonLabelSecondary}
+          buttonColor={BASE_COLORS.TEXT_DARK}
+        >
           Sign Up
         </Button>
       </View>
@@ -83,8 +133,8 @@ export default function Auth() {
 
 const styles = StyleSheet.create({
   input: {
-      backgroundColor: BASE_COLORS.WHITE,
-      fontFamily: FontFamilies.BODY,
+    backgroundColor: BASE_COLORS.WHITE,
+    fontFamily: FontFamilies.BODY,
   },
   buttonPrimary: {
     paddingVertical: 8,

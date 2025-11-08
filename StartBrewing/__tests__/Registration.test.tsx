@@ -1,14 +1,43 @@
+// __tests__/Registration.test.tsx
+
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
-import Registration from "../app/Registration";
 
-// --- Mocks --- //
+// 1. AsyncStorage mock zodat client.native geen NativeModule error triggert
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock")
+);
+
+// 2. Supabase mocken zodat createClient NIET met env vars runt
+jest.mock("@/supabase", () => ({
+  supabase: {
+    auth: {
+      signUp: jest.fn().mockResolvedValue({
+        data: { session: null }, // triggert "Check your inbox..." pad
+        error: null,
+      }),
+    },
+  },
+}));
+
+// 3. Router mocken zodat router.replace geen echte navigatie nodig heeft
+jest.mock("expo-router", () => ({
+  router: {
+    replace: jest.fn(),
+    push: jest.fn(),
+    back: jest.fn(),
+  },
+}));
+
+// 4. Andere UI afhankelijke dingen mocken
+
 jest.mock("expo-checkbox", () => {
-  const { View, Text } = require("react-native");
-  return ({ value, onValueChange }: any) =>
+  const { Text } = require("react-native");
+  return ({ value, onValueChange }: any) => (
     <Text onPress={() => onValueChange(!value)}>
       checkbox-{value ? "checked" : "unchecked"}
-    </Text>;
+    </Text>
+  );
 });
 
 jest.mock("react-native-safe-area-context", () => {
@@ -37,7 +66,9 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
-// --- Tests --- //
+// 5. Pas NA alle mocks de component importeren
+import Registration from "../app/Registration";
+
 describe("<Registration />", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -56,7 +87,6 @@ describe("<Registration />", () => {
     expect(getByText("Day")).toBeTruthy();
     expect(getByText("Month")).toBeTruthy();
     expect(getByText("Year")).toBeTruthy();
-
     expect(getByText("Email")).toBeTruthy();
     expect(getByText("Username")).toBeTruthy();
     expect(getByText("Password")).toBeTruthy();
@@ -65,12 +95,8 @@ describe("<Registration />", () => {
 
   it("renders the checkbox and toggles it", () => {
     const { getByText } = render(<Registration />);
-
     const checkbox = getByText("checkbox-unchecked");
-    expect(checkbox).toBeTruthy();
-
     fireEvent.press(checkbox);
-
     expect(getByText("checkbox-checked")).toBeTruthy();
   });
 
