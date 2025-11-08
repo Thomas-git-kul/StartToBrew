@@ -40,7 +40,7 @@ export default function StorePage() {
   ];
 
   return (
-    <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+    <View className="flex-1" style={{ backgroundColor: 'transparent' }}>
       {/* Top Appbar row: title + cart */}
       <Appbar.Header className="pt-8 pb-8"
         style={{

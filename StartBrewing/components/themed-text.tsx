@@ -1,18 +1,26 @@
-import { StyleSheet, Text, type TextProps } from 'react-native';
-
+import { StyleSheet, Text, type TextProps, Dimensions } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
+
+// Get screen width
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Base width that your original font sizes were designed for
+const BASE_SCREEN_WIDTH = 375; 
+// Scale factor
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  type?: 'defaultText' | 'title' | 'beerTitle' | 'subtitle' | 'link';
 };
 
 export function ThemedText({
   style,
   lightColor,
   darkColor,
-  type = 'default',
+  type = 'defaultText',
   ...rest
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
@@ -21,9 +29,9 @@ export function ThemedText({
     <Text
       style={[
         { color },
-        type === 'default' ? styles.default : undefined,
+        type === 'defaultText' ? styles.defaultText : undefined,
         type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
+        type === 'beerTitle' ? styles.beerTitle : undefined,
         type === 'subtitle' ? styles.subtitle : undefined,
         type === 'link' ? styles.link : undefined,
         style,
@@ -34,27 +42,30 @@ export function ThemedText({
 }
 
 const styles = StyleSheet.create({
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  defaultSemiBold: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
+  defaultText: {
+    fontSize: 12 * scale,
+    fontFamily: FontFamilies.HEADING,
+    color: BASE_COLORS.STONE700,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 32,
+    paddingTop: 10,
+    fontSize: 17 * scale,
+    fontFamily: FontFamilies.BODY,
+    color: BASE_COLORS.ACCENT_PRIMARY,
+  },
+  beerTitle: {
+    fontSize: 12 * scale,
+    fontFamily: FontFamilies.BODY_LIGHT,
+    color: BASE_COLORS.STONE950,
   },
   subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 10 * scale,
+    fontFamily: FontFamilies.HEADING,
+    color: BASE_COLORS.STONE500,
   },
   link: {
-    lineHeight: 30,
-    fontSize: 16,
+    lineHeight: 30 * scale,
+    fontSize: 16 * scale,
     color: '#0a7ea4',
   },
 });

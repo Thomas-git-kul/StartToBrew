@@ -1,20 +1,24 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
+import { RenderAPI } from "@testing-library/react-native";
 
 // --- Mocks --- //
-const mockPush = jest.fn();
 
+// Mock navigation
+const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
 }));
 
+// Mock fonts hook
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => true,
 }));
 
+// Mock ThemedText
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
@@ -22,18 +26,22 @@ jest.mock("@/components/themed-text", () => {
   };
 });
 
+// Mock Safe Area Context
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
   return {
     SafeAreaView: ({ children }: any) => <View>{children}</View>,
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   };
 });
 
+// Mock constants
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     WHITE: "#fff",
     TEXT_DARK: "#000",
     ACCENT_PRIMARY: "#f00",
+    LIGHT_BG: "#eee",
   },
 }));
 
@@ -45,7 +53,20 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
+// Mock Header component
+jest.mock("@/components/header", () => {
+  const { Text, View } = require("react-native");
+  return ({ title }: any) => <View><Text>{title}</Text></View>;
+});
+
+// Mock BeerCard component
+jest.mock("@/components/ui/IPAcomponent", () => {
+  const { View, Text } = require("react-native");
+  return ({ name }: any) => <View><Text>{name}</Text></View>;
+});
+
 // --- Tests --- //
+
 describe("<HomePage />", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -56,35 +77,27 @@ describe("<HomePage />", () => {
 
     expect(getByText("StartToBrew")).toBeTruthy();
     expect(getByText("In progress")).toBeTruthy();
-    expect(getByText("Start a new brew")).toBeTruthy();
     expect(getByText("Popular recipes")).toBeTruthy();
   });
 
-  it("renders the button with label 'Here'", () => {
+  it("renders beer cards", () => {
     const { getByText } = render(<HomePage />);
-    const buttonText = getByText("Here");
-    expect(buttonText).toBeTruthy();
+
+    expect(getByText("IJ IPA")).toBeTruthy();
+    expect(getByText("Voodoo Ranger")).toBeTruthy();
+    expect(getByText("Two Hearted IPA")).toBeTruthy();
   });
 
-  it("navigates to /Recipes when the 'Here' button is pressed", () => {
-    const { getByText } = render(<HomePage />);
-    const button = getByText("Here");
+  it("navigates to /Recipes when FAB is pressed", () => {
+    const { getByTestId } = render(<HomePage />);
 
-    fireEvent.press(button);
-
-    expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith("/Recipes");
-  });
-
-  it("navigates to /Recipes when the FAB '+' is pressed", () => {
-    const { getByText } = render(<HomePage />);
-    const fabButton = getByText("+");
-
+    const fabButton = getByTestId("fab");
     fireEvent.press(fabButton);
 
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith("/Recipes");
   });
+
 
   it("matches the snapshot", () => {
     const tree = render(<HomePage />).toJSON();

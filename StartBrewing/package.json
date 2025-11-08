@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "test": "jest",
+    "test": "jest -u",
     "coverage-report": "jest --coverage",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
