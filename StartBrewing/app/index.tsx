@@ -6,12 +6,18 @@ import { View, ActivityIndicator } from "react-native";
 import { supabase } from "@/supabase";
 import type { Session, AuthChangeEvent } from "@supabase/supabase-js";
 
+import { useFonts } from "expo-font";
+import { MaterialIcons } from "@expo/vector-icons";
+
 export default function Index() {
   const [loading, setLoading] = useState<boolean>(true);
   const [session, setSession] = useState<Session | null>(null);
 
+  const [fontsLoaded] = useFonts({
+    MaterialIcons: require("@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf"),
+  });
+
   useEffect(() => {
-    // 1) initiële sessie ophalen (async, zonder .then + any)
     const init = async () => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session ?? null);
@@ -20,7 +26,6 @@ export default function Index() {
 
     init();
 
-    // 2) luisteren naar login / logout / token refresh
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
@@ -34,7 +39,8 @@ export default function Index() {
     };
   }, []);
 
-  if (loading) {
+  // ✅ WAIT FOR FONTS TO LOAD
+  if (!fontsLoaded || loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator />
