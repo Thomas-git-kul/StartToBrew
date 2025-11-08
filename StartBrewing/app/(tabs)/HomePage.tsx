@@ -70,6 +70,7 @@ export default function HomePage() {
         icon={(props) => (
           <MaterialIcons name="add" size={props.size} color={props.color} />
         )}
+        testID="fab"
         style={{
           position: 'absolute',
           right: 10,
@@ -83,59 +84,4 @@ export default function HomePage() {
       />
     </View>
   );
-}
-
-const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-  },
-  title: {
-    paddingTop: 25,
-    fontSize: 50,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  title2: {
-    paddingTop: 20,
-    fontSize: 25,
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  buttonText: {
-    color: BASE_COLORS.WHITE,
-    textAlign: "center",
-    fontFamily: FontFamilies.BODY_BOLD,
-  },
-  button: {
-    backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    height: 30,
-    width: "50%",
-    marginLeft: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 6,
-  },
-  fab: {
-  position: "absolute",
-  right: 20,
-  bottom: 75, // 5px above bottom tab bar ( ~70px tall )
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-  backgroundColor: BASE_COLORS.TEXT_DARK,
-  justifyContent: "center",
-  alignItems: "center",
-
-  // Shadow / elevation
-  elevation: 5,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.25,
-  shadowRadius: 4,
-},
-fabText: {
-  fontSize: 32,
-  color: BASE_COLORS.LIGHT_BG,
-},
-});
+};
