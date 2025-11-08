@@ -2,20 +2,19 @@ import { Appbar } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import React from "react";
 
 interface HeaderBarProps {
   title: string;
-  iconName?: string; // optional icon name
-  onIconPress?: () => void; // optional handler
+  iconName?: string;
+  onIconPress?: () => void;
 }
 
 export default function HeaderBar({ title, iconName, onIconPress }: HeaderBarProps) {
   return (
-    <Appbar.Header style={{ backgroundColor: BASE_COLORS.LIGHT_BG, paddingTop: 8, paddingBottom: 8 }}>
-      <Appbar.Content
+    <Appbar.Header style={{ backgroundColor: BASE_COLORS.LIGHT_BG}} mode="center-aligned">
+      <Appbar.Content  className="text-xl"
         title={title}
-        titleStyle={{ fontSize: 36, fontFamily: FontFamilies.HEADING, color: BASE_COLORS.TEXT_DARK }}
+        titleStyle={{ fontFamily: FontFamilies.BODY_BOLD, color: BASE_COLORS.TEXT_DARK }}
       />
       {iconName && onIconPress && (
         <Appbar.Action

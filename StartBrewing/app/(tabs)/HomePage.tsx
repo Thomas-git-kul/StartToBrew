@@ -6,6 +6,7 @@ import { FontFamilies } from "@/constants/Fonts";
 import { useRouter } from "expo-router"; 
 import { useFonts } from "@/hooks/use-fonts";
 import BeerCard from '@/components/ui/IPAcomponent';
+import Header from '@/components/header';
 
 interface Beer {
   name: string;
@@ -46,10 +47,12 @@ export default function HomePage() {
   ];
 
   return (
-    <View style={styles.general}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <ThemedText style={styles.title}>StartToBrew</ThemedText>
+    <View className="flex-1">
+      <Header
+        title="StartToBrew"
+      />
 
+      <ScrollView style={{backgroundColor: BASE_COLORS.LIGHT_BG}}>
         <ThemedText style={styles.title2}>In progress</ThemedText>
 
         <ThemedText style={styles.title2}>Start a new brew</ThemedText>
@@ -67,7 +70,6 @@ export default function HomePage() {
             <BeerCard key={index} {...beer} />
           ))}
         </View>
-      </ScrollView>
 
       {/* Floating Action Button */}
       <TouchableOpacity
@@ -78,6 +80,7 @@ export default function HomePage() {
         {/* <Plus color="white" size={24} /> Optioneel icoon */}
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }
@@ -85,12 +88,10 @@ export default function HomePage() {
 const styles = StyleSheet.create({
   general: {
     flex: 1,
-    backgroundColor: 'transparent'
   },
   title: {
     paddingTop: 25,
     fontSize: 50,
-    marginHorizontal: 10,
     fontFamily: FontFamilies.HEADING,
     color: BASE_COLORS.TEXT_DARK,
   },

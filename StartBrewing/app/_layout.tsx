@@ -44,7 +44,6 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
         <NavigationThemeProvider value={theme}>
-          <View style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen
@@ -52,7 +51,6 @@ export default function RootLayout() {
                 options={{ presentation: "modal", title: "Modal" }}
               />
             </Stack>
-          </View>
           <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
         </NavigationThemeProvider>
       </PaperProvider>
