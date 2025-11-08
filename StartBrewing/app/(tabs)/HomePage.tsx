@@ -1,13 +1,13 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ThemedText } from "@/components/themed-text";
-import { TouchableOpacity, Text, StyleSheet, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { FAB } from "react-native-paper";
-import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
+
 import { useRouter } from "expo-router"; 
 import { useFonts } from "@/hooks/use-fonts";
 import BeerCard from '@/components/ui/IPAcomponent';
 import Header from '@/components/header';
+import { ThemedText } from "@/components/themed-text";
+import { BASE_COLORS } from "@/constants/Colors";
+
 import { MaterialIcons } from "@expo/vector-icons";
 
 interface Beer {
