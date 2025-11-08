@@ -1,12 +1,14 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { TouchableOpacity, Text, StyleSheet, ScrollView, View } from "react-native";
+import { FAB } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useRouter } from "expo-router"; 
 import { useFonts } from "@/hooks/use-fonts";
 import BeerCard from '@/components/ui/IPAcomponent';
 import Header from '@/components/header';
+import { MaterialIcons } from "@expo/vector-icons";
 
 interface Beer {
   name: string;
@@ -53,34 +55,32 @@ export default function HomePage() {
       />
 
       <ScrollView style={{backgroundColor: BASE_COLORS.LIGHT_BG}}>
-        <ThemedText style={styles.title2}>In progress</ThemedText>
+        <ThemedText type="title">In progress</ThemedText>
+        <ThemedText type="title">Popular recipes</ThemedText>
 
-        <ThemedText style={styles.title2}>Start a new brew</ThemedText>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push("/Recipes")}
-        >
-          <Text style={styles.buttonText}>Here</Text>
-        </TouchableOpacity>
-
-        <ThemedText style={styles.title2}>Popular recipes</ThemedText>
-
-        <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
+        <View>
           {beers.map((beer, index) => (
             <BeerCard key={index} {...beer} />
           ))}
         </View>
+      </ScrollView>
 
       {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/Recipes")}
-        activeOpacity={0.8}
-      >
-        {/* <Plus color="white" size={24} /> Optioneel icoon */}
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
-      </ScrollView>
+      <FAB
+        icon={(props) => (
+          <MaterialIcons name="add" size={props.size} color={props.color} />
+        )}
+        style={{
+          position: 'absolute',
+          right: 10,
+          bottom: 25,
+          backgroundColor: BASE_COLORS.TEXT_DARK,
+        }}
+        color={BASE_COLORS.LIGHT_BG}
+        onPress={() => router.push('/Recipes')}
+        mode="elevated"
+        size="medium"
+      />
     </View>
   );
 }
@@ -117,24 +117,25 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   fab: {
-    position: "absolute",
-    bottom: 25,
-    right: 25,
-    backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5, // schaduw voor Android
-    shadowColor: "#000", // schaduw voor iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  fabText: {
-    color: BASE_COLORS.WHITE,
-    fontSize: 32,
-    marginTop: -3,
-  },
+  position: "absolute",
+  right: 20,
+  bottom: 75, // 5px above bottom tab bar ( ~70px tall )
+  width: 60,
+  height: 60,
+  borderRadius: 30,
+  backgroundColor: BASE_COLORS.TEXT_DARK,
+  justifyContent: "center",
+  alignItems: "center",
+
+  // Shadow / elevation
+  elevation: 5,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+},
+fabText: {
+  fontSize: 32,
+  color: BASE_COLORS.LIGHT_BG,
+},
 });

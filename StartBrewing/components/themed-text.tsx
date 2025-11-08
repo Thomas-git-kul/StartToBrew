@@ -2,6 +2,9 @@ import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 
+import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
+
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
@@ -19,8 +22,7 @@ export function ThemedText({
 
   return (
     <Text
-      style={[
-        { color },
+      style={[ { color },
         type === 'default' ? styles.default : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
@@ -44,9 +46,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 32,
+    paddingTop: 10,
+    fontSize: 17,
+    fontFamily: FontFamilies.BODY,
+    color: BASE_COLORS.STONE800,
   },
   subtitle: {
     fontSize: 20,
