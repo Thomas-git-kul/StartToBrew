@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { supabase } from "@/supabase";
 import type { Session, AuthChangeEvent } from "@supabase/supabase-js";
-import "./fontLoader.web"; // <-- Web-only font injection
 
 export default function Index() {
   const [loading, setLoading] = useState<boolean>(true);
