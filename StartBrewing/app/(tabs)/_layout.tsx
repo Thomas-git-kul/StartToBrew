@@ -22,37 +22,50 @@ export default function TabLayout() {
             headerShown: false,
             tabBarShowLabel: false,
             tabBarButton: HapticTab,
-            tabBarStyle: { backgroundColor: BASE_COLORS.LIGHT_BG },
+            tabBarStyle: {
+              backgroundColor: BASE_COLORS.LIGHT_BG,
+              borderTopWidth: 0,
+            },
           }}
         >
           <Tabs.Screen
             name="HomePage"
             options={{
-              tabBarIcon: () => <MaterialIcons size={28} name="home" color={BASE_COLORS.STONE300} />,
+              tabBarIcon: ({ color }) => (
+                <MaterialIcons name="home" size={28} color={color} />
+              ),
             }}
           />
           <Tabs.Screen
             name="Agenda"
             options={{
-              tabBarIcon: () => <MaterialIcons size={28} name="calendar-month" color={BASE_COLORS.TEXT_DARK} />,
+              tabBarIcon: ({ color }) => (
+                <MaterialIcons name="calendar-month" size={28} color={color} />
+              ),
             }}
           />
           <Tabs.Screen
             name="Store"
             options={{
-              tabBarIcon: () => <MaterialIcons size={28} name="shopping-cart" color={BASE_COLORS.TEXT_DARK} />,
+              tabBarIcon: ({ color }) => (
+                <MaterialIcons name="shopping-cart" size={28} color={color} />
+              ),
             }}
           />
           <Tabs.Screen
             name="Recipes"
             options={{
-              tabBarIcon: () => <MaterialIcons size={28} name="menu-book" color={BASE_COLORS.TEXT_DARK} />,
+              tabBarIcon: ({ color }) => (
+                <MaterialIcons name="sports-bar" size={28} color={color} />
+              ),
             }}
           />
           <Tabs.Screen
             name="Auth"
             options={{
-              tabBarIcon: () => <MaterialIcons size={28} name="person" color={BASE_COLORS.TEXT_DARK} />,
+              tabBarIcon: ({ color }) => (
+                <MaterialIcons name="person" size={28} color={color} />
+              ),
             }}
           />
         </Tabs>
