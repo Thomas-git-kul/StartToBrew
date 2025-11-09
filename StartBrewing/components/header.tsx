@@ -6,6 +6,8 @@ import { FontFamilies } from "@/constants/Fonts";
 
 const iconMap: Record<string, LucideIcon> = {
   ShoppingCart: Icons.ShoppingCart,
+  ArrowBigRight: Icons.ArrowBigRight,
+  ArrowRight: Icons.ArrowRight,
   // Add more icons as needed
   // Example:
   // Search: Icons.Search,
