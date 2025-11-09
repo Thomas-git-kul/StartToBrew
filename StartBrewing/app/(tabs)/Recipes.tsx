@@ -2,7 +2,7 @@ import React from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { Text, Searchbar} from "react-native-paper";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import BeerCard from '@/components/ui/IPAcomponent';
+import BeerCard from '@/components/ui/RecipeCard';
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { ThemedText } from "@/components/themed-text";

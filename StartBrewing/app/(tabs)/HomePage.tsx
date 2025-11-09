@@ -3,7 +3,7 @@ import { FAB } from "react-native-paper";
 
 import { useRouter } from "expo-router"; 
 import { useFonts } from "@/hooks/use-fonts";
-import BeerCard from '@/components/ui/IPAcomponent';
+import BeerCard from '@/components/ui/RecipeCard';
 import Header from '@/components/header';
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";

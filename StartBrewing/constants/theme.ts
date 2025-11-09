@@ -8,8 +8,8 @@ import { Platform } from 'react-native';
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const tintColorLight = BASE_COLORS.ACCENT_PRIMARY;
+const tintColorDark = BASE_COLORS.ACCENT_PRIMARY;
 
 export const Colors = {
   light: {
