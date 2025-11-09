@@ -87,6 +87,9 @@ export default function Progress() {
                 <ThemedText style={styles.title}>Progress</ThemedText>
                 <ThemedText style={styles.percentageText}>{progressPercentage}%</ThemedText>
                 <ProgressBar progress={progress} color={BASE_COLORS.ACCENT_PRIMARY}  style={styles.progressBar} testID="progress-bar" accessible={true}/>
+            </View>
+            
+            <View style={styles.todoSection}>
                 <ThemedText style={styles.title2}>To do</ThemedText>
             </View>
                 
@@ -175,5 +178,10 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         fontFamily: FontFamilies.BODY,
         color: BASE_COLORS.ACCENT_PRIMARY,
+    },
+    todoSection: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        backgroundColor: BASE_COLORS.WHITE,
     },
 });

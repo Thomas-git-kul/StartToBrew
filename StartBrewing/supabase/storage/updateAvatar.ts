@@ -41,14 +41,32 @@ export async function updateAvatar({
   // Base64 → ArrayBuffer voor Supabase
   const bytes = decode(result.base64);
 
-  const path = `${userId}/avatar.webp`; // behoud je bestaande padconventie indien anders
-  const { error } = await supabase.storage
+  const path = `${userId}/avatar.webp`;
+
+  const { error: uploadError } = await supabase.storage
     .from(bucket)
-    .upload(path, bytes, { contentType: 'image/webp', upsert: true });
+    .upload(path, bytes, {
+      contentType: "image/webp",
+      upsert: true,
+    });
 
-  if (error) throw error;
+  if (uploadError) throw uploadError;
 
+  // avatar-pad in profiel opslaan
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .update({
+      avatar_url: path,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (profileError) throw profileError;
+
+  // Publieke URL teruggeven voor directe preview
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 }
+
+
 
