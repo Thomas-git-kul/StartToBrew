@@ -4,18 +4,20 @@ import { NavigationContainer } from "@react-navigation/native";
 import Agenda from "../app/(tabs)/Agenda";
 
 // --- Mocks --- //
-const mockPush = jest.fn();
+jest.mock("@/hooks/use-fonts", () => ({
+  useFonts: () => true, // ✅ Avoided early return
+}));
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({
-    push: mockPush,
+    push: jest.fn(),
   }),
 }));
 
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
-    ThemedText: ({ children, style }: any) => <Text style={style}>{children}</Text>,
+    ThemedText: ({ children }: any) => <Text>{children}</Text>,
   };
 });
 
@@ -26,9 +28,14 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
+// Fix static date for Calendar + hook logic
 const FIXED_DATE = new Date("2025-11-10T12:00:00Z");
-jest.spyOn(global, "Date").mockImplementation(() => FIXED_DATE) as unknown as jest.SpyInstance<Date, []>;
+jest.spyOn(global, "Date").mockImplementation(() => FIXED_DATE) as unknown as jest.SpyInstance<
+  Date,
+  []
+>;
 
+// Calendar mock
 jest.mock("react-native-calendars", () => {
   const { View, Text, TouchableOpacity } = require("react-native");
   return {
@@ -40,130 +47,94 @@ jest.mock("react-native-calendars", () => {
   };
 });
 
-jest.mock("expo-checkbox", () => {
-  const { TouchableOpacity, Text } = require("react-native");
-  return ({ value, onValueChange }: any) => (
-    <TouchableOpacity onPress={onValueChange}>
-      <Text>{value ? "☑️" : "⬜"}</Text>
-    </TouchableOpacity>
-  );
-});
-
+// AsyncStorage mock
 jest.mock("@react-native-async-storage/async-storage", () => ({
-  getItem: jest.fn((key: string) => {
-    return Promise.resolve(JSON.stringify({
-      [key]: [
-        { name: "Phase 1: Mash", done: false },
-        { name: "Phase 2: Boil", done: false },
-      ],
-    }));
-  }),
+  getItem: jest.fn(() => Promise.resolve(null)), // return null = first load uses initialPhases
   setItem: jest.fn(() => Promise.resolve()),
 }));
 
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     WHITE: "#fff",
-    TEXT_DARK: "#000",
     ACCENT_PRIMARY: "#f00",
+    LIGHT_BG: "#eee",
   },
 }));
 
 jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: {
-    HEADING: "System",
-    BODY: "System",
-    BODY_LIGHT: "System",
-  },
+  FontFamilies: {},
 }));
+
+jest.mock("react-native-paper", () => {
+  const { View, Text, TouchableOpacity } = require("react-native");
+
+  return {
+    Appbar: {
+      Header: ({ children, style }: any) => <View style={style}>{children}</View>,
+      Content: ({ title, titleStyle, ...props }: any) => (
+        <View {...props}><Text style={titleStyle}>{title}</Text></View>
+      ),
+      Action: ({ onPress, icon }: any) => (
+        <TouchableOpacity onPress={onPress}>
+          {typeof icon === "function" ? icon() : <Text>{icon}</Text>}
+        </TouchableOpacity>
+      ),
+    },
+    Checkbox: ({ status, onPress }: any) => (
+      <TouchableOpacity onPress={onPress}>
+        <Text>{status === "checked" ? "☑️" : "⬜"}</Text>
+      </TouchableOpacity>
+    ),
+    Surface: ({ children }: any) => <View>{children}</View>,
+    Text: ({ children }: any) => <Text>{children}</Text>,
+  };
+});
 
 global.requestAnimationFrame = (cb) => setTimeout(cb, 0) as unknown as number;
 
-const renderWithNavigation = (ui: React.ReactElement) =>
+const renderWithNav = (ui: React.ReactElement) =>
   render(<NavigationContainer>{ui}</NavigationContainer>);
 
-// --- Tests --- //
+// === TESTS === //
 describe("<Agenda />", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders the title and main sections", async () => {
-    const { getByText } = renderWithNavigation(<Agenda />);
+  it("renders title + todo section", async () => {
+    const { getByText } = renderWithNav(<Agenda />);
 
-    await act(async () => {
-        await waitFor(() => {
-            expect(getByText("Agenda")).toBeTruthy();
-            expect(getByText("Today")).toBeTruthy();
-            expect(getByText("Progress")).toBeTruthy();
-            expect(getByText("To do")).toBeTruthy();
-        });
-    });
-  });
-
-  it("navigates to /progress when Progress button is pressed", async () => {
-    const { getByText } = renderWithNavigation(<Agenda />);
-    const progressButton = getByText("Progress");
-
-    await act(async () => {
-        fireEvent.press(progressButton);
-    });
-    
-
-    expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith("../progress");
-  });
-
-  it("toggles a checkbox when pressed", async () => {
-  const { getAllByText, getByText } = renderWithNavigation(<Agenda />);
-
-  // Wacht tot de fases geladen en gerenderd zijn
-  await waitFor(() => {
-    expect(getByText("Phase 1: Mash")).toBeTruthy();
-  });
-
-  const firstCheckbox = getAllByText("⬜")[0];
-
-  await act(async () => {
-    fireEvent.press(firstCheckbox);
-  });
-
-  // Controleer dat checkbox is veranderd
-  await waitFor(() => {
-    expect(getAllByText("☑️").length).toBeGreaterThanOrEqual(1);
-  });
-});
-
-/*
-  it("toggles a checkbox when pressed", async () => {
-    const { getAllByText, getByText } = renderWithNavigation(<Agenda />);
-
-    // Wacht even tot de fases gerenderd zijn
-    await waitFor(async () => {
-        const phaseText = await getByText("Phase 1: Mash");
-        expect(phaseText).toBeTruthy();
-    });
-
-    const firstCheckbox = getAllByText("⬜")[0];
-    await act(async () => {
-        fireEvent.press(firstCheckbox);
-    });
-    
-
-    // Checkbox zou moeten togglen (waarde verandert in de mock)
     await waitFor(() => {
-      expect(getAllByText("☑️").length).toBeGreaterThanOrEqual(1);
+      expect(getByText("Agenda")).toBeTruthy();
+      expect(getByText("To do")).toBeTruthy();
     });
   });
-  */
 
-  it("renders a mock calendar", async () => {
-    const { getByText } = renderWithNavigation(<Agenda />);
+  it("renders the mock calendar", async () => {
+    const { getByText } = renderWithNav(<Agenda />);
     await waitFor(() => expect(getByText(/Mock Calendar/)).toBeTruthy());
   });
 
+  it("toggles a checkbox when pressed", async () => {
+    const { getByText, getAllByText } = renderWithNav(<Agenda />);
+
+    await waitFor(() => {
+      expect(getByText("Phase 1: Mash")).toBeTruthy();
+    });
+
+    const firstCheckbox = getAllByText("⬜")[0];
+
+    act(() => {
+      fireEvent.press(firstCheckbox);
+    });
+
+    await waitFor(() => {
+      expect(getAllByText("☑️").length).toBeGreaterThan(0);
+    });
+  });
+
   it("matches snapshot", async () => {
-    const tree = renderWithNavigation(<Agenda />).toJSON();
+    const tree = renderWithNav(<Agenda />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });

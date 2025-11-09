@@ -1,17 +1,14 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { View, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "@/hooks/use-fonts";
 
 import { Calendar } from "react-native-calendars";
-import { Checkbox, Surface, Text } from "react-native-paper";
+import { Checkbox } from "react-native-paper";
 import Header from "@/components/header";
 
 import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
 import { ThemedText } from "@/components/themed-text";
 
 export default function Agenda() {
@@ -156,9 +153,9 @@ export default function Agenda() {
         </View>
       )}
 
-      <ThemedText type='title'>To do</ThemedText>
+      <ThemedText type='title' className="ml-1">To do</ThemedText>
 
-      <ScrollView>
+      <ScrollView className="ml-1">
         {phases.map((phase, phaseIndex) => {
           const date = phaseDates[phaseIndex];
           if (currentDate !== date) return null;

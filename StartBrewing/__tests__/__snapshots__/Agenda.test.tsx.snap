@@ -1,84 +1,33 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Agenda /> matches snapshot 1`] = `
-<View>
-  <Text
-    style={
-      {
-        "color": "#000",
-        "fontFamily": "System",
-        "fontSize": 50,
-        "marginHorizontal": 10,
-        "paddingTop": 25,
-      }
+<View
+  className="flex-1"
+  style={
+    {
+      "backgroundColor": "#eee",
     }
-  >
-    Agenda
-  </Text>
+  }
+>
   <View
     style={
       {
-        "flexDirection": "row",
-        "gap": 10,
-        "justifyContent": "flex-start",
-        "marginBottom": 10,
-        "marginHorizontal": 10,
-        "marginTop": 10,
+        "backgroundColor": "#eee",
       }
     }
   >
     <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-      style={
-        {
-          "alignSelf": "flex-start",
-          "backgroundColor": "#f00",
-          "borderRadius": 8,
-          "marginBottom": 10,
-          "marginHorizontal": 10,
-          "marginTop": 10,
-          "opacity": 1,
-          "paddingHorizontal": 15,
-          "paddingVertical": 6,
-        }
-      }
+      className="text-xl"
     >
       <Text
         style={
           {
-            "color": "#fff",
-            "fontFamily": "System",
-            "fontSize": 16,
+            "color": undefined,
+            "fontFamily": undefined,
           }
         }
       >
-        Today
+        Agenda
       </Text>
     </View>
     <View
@@ -111,83 +60,46 @@ exports[`<Agenda /> matches snapshot 1`] = `
       onStartShouldSetResponder={[Function]}
       style={
         {
-          "alignSelf": "flex-start",
-          "backgroundColor": "#f00",
-          "borderRadius": 8,
-          "marginBottom": 10,
-          "marginHorizontal": 10,
-          "marginTop": 10,
           "opacity": 1,
-          "paddingHorizontal": 15,
-          "paddingVertical": 6,
         }
       }
     >
       <Text
+        allowFontScaling={false}
+        selectable={false}
         style={
-          {
-            "color": "#fff",
-            "fontFamily": "System",
-            "fontSize": 16,
-          }
+          [
+            {
+              "color": undefined,
+              "fontSize": 28,
+            },
+            undefined,
+            {
+              "fontFamily": "material",
+              "fontStyle": "normal",
+              "fontWeight": "normal",
+            },
+            {},
+          ]
         }
       >
-        Progress
+        
       </Text>
     </View>
   </View>
-  <Text
-    style={
-      {
-        "color": "#000",
-        "fontFamily": "System",
-        "fontSize": 22,
-        "marginHorizontal": 10,
-        "paddingTop": 10,
-      }
-    }
-  >
+  <Text>
     To do
   </Text>
   <RCTScrollView
-    contentContainerStyle={
-      {
-        "paddingBottom": 20,
-        "paddingHorizontal": 10,
-      }
-    }
+    className="ml-1"
   >
     <View>
-      <View
-        style={
-          {
-            "marginBottom": 20,
-          }
-        }
-      >
-        <Text
-          style={
-            {
-              "color": "#f00",
-              "fontFamily": "System",
-              "fontSize": 18,
-              "marginBottom": 5,
-              "marginHorizontal": 0,
-              "marginTop": 10,
-            }
-          }
-        >
+      <View>
+        <Text>
           Phase 1: Mash
         </Text>
         <View
-          style={
-            {
-              "alignItems": "center",
-              "flexDirection": "row",
-              "marginHorizontal": 10,
-              "marginVertical": 5,
-            }
-          }
+          className="flex-row items-center"
         >
           <View
             accessibilityState={
@@ -227,65 +139,12 @@ exports[`<Agenda /> matches snapshot 1`] = `
               ⬜
             </Text>
           </View>
-          <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-              }
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontFamily": "System",
-                    "fontSize": 15,
-                    "marginLeft": 10,
-                  },
-                  false,
-                ]
-              }
-            >
-              Heat strike water
-            </Text>
-          </View>
+          <Text>
+            Heat strike water
+          </Text>
         </View>
         <View
-          style={
-            {
-              "alignItems": "center",
-              "flexDirection": "row",
-              "marginHorizontal": 10,
-              "marginVertical": 5,
-            }
-          }
+          className="flex-row items-center"
         >
           <View
             accessibilityState={
@@ -325,65 +184,12 @@ exports[`<Agenda /> matches snapshot 1`] = `
               ⬜
             </Text>
           </View>
-          <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-              }
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontFamily": "System",
-                    "fontSize": 15,
-                    "marginLeft": 10,
-                  },
-                  false,
-                ]
-              }
-            >
-              Mash in
-            </Text>
-          </View>
+          <Text>
+            Mash in
+          </Text>
         </View>
         <View
-          style={
-            {
-              "alignItems": "center",
-              "flexDirection": "row",
-              "marginHorizontal": 10,
-              "marginVertical": 5,
-            }
-          }
+          className="flex-row items-center"
         >
           <View
             accessibilityState={
@@ -423,65 +229,12 @@ exports[`<Agenda /> matches snapshot 1`] = `
               ⬜
             </Text>
           </View>
-          <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-              }
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontFamily": "System",
-                    "fontSize": 15,
-                    "marginLeft": 10,
-                  },
-                  false,
-                ]
-              }
-            >
-              Saccharification rest
-            </Text>
-          </View>
+          <Text>
+            Saccharification rest
+          </Text>
         </View>
         <View
-          style={
-            {
-              "alignItems": "center",
-              "flexDirection": "row",
-              "marginHorizontal": 10,
-              "marginVertical": 5,
-            }
-          }
+          className="flex-row items-center"
         >
           <View
             accessibilityState={
@@ -521,55 +274,9 @@ exports[`<Agenda /> matches snapshot 1`] = `
               ⬜
             </Text>
           </View>
-          <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-              }
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontFamily": "System",
-                    "fontSize": 15,
-                    "marginLeft": 10,
-                  },
-                  false,
-                ]
-              }
-            >
-              Mash out
-            </Text>
-          </View>
+          <Text>
+            Mash out
+          </Text>
         </View>
       </View>
     </View>
