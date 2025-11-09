@@ -51,6 +51,7 @@ export default function StorePage() {
         title='Store'
         iconName="ShoppingCart"
         onIconPress={() => router.push("/ShoppingCart" as any)}
+        actionTestID="cart-button"
       />
       <Searchbar
         placeholder="Search"

@@ -8,9 +8,10 @@ interface HeaderBarProps {
   title: string;
   iconName?: keyof typeof Icons;
   onIconPress?: () => void;
+  actionTestID?: string;
 }
 
-export default function HeaderBar({ title, iconName, onIconPress }: HeaderBarProps) {
+export default function HeaderBar({ title, iconName, onIconPress, actionTestID }: HeaderBarProps) {
   const IconComponent: LucideIcon | null = iconName
     ? (Icons[iconName] as LucideIcon)
     : null;
@@ -28,6 +29,7 @@ export default function HeaderBar({ title, iconName, onIconPress }: HeaderBarPro
             <IconComponent size={28} color={BASE_COLORS.TEXT_DARK} strokeWidth={2} />
           )}
           onPress={onIconPress}
+          testID={actionTestID}
         />
       )}
     </Appbar.Header>
