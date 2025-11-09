@@ -71,7 +71,7 @@ export default function Recipes() {
         placeholder="Search"
         value={searchQuery}
         onChangeText={setSearchQuery}
-        inputStyle={{ color: BASE_COLORS.STONE500 }}
+        inputStyle={{ color: BASE_COLORS.STONE700 }}
         icon={() => (
           <Search size={20} color={BASE_COLORS.STONE300} />
         )}
