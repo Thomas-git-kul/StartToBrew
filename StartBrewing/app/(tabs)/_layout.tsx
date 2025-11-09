@@ -34,6 +34,7 @@ export default function TabLayout() {
             tabBarStyle: {
               backgroundColor: BASE_COLORS.LIGHT_BG,
               borderTopWidth: 0,
+              marginTop: 5,
             },
           }}
         >

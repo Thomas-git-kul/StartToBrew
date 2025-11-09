@@ -6,7 +6,7 @@ import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import StoreCard from "@/components/ui/StoreCard";
 import { useRouter } from "expo-router";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { ShoppingCart, Search, X } from "lucide-react-native";
 import { useFonts } from "@/hooks/use-fonts";
 
 interface Item {
@@ -55,7 +55,7 @@ export default function StorePage() {
 
           <Appbar.Action
             testID="cart-button"
-            icon={() => <MaterialCommunityIcons name="cart-outline" size={28} color={BASE_COLORS.TEXT_DARK} />}
+            icon={() => <ShoppingCart size={28} color={BASE_COLORS.TEXT_DARK} />}
             onPress={() => router.push("/cart" as any)}
           />
         </View>
@@ -68,10 +68,10 @@ export default function StorePage() {
           value={searchQuery}
           onChangeText={setSearchQuery}
           inputStyle={{ color: BASE_COLORS.STONE500 }}
-          icon={() => <MaterialCommunityIcons name="magnify" size={20} color={BASE_COLORS.STONE300} />}
+          icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
           clearIcon={
             searchQuery
-              ? () => <MaterialCommunityIcons name="close" size={18} color={BASE_COLORS.STONE500} />
+              ? () => <X size={18} color={BASE_COLORS.STONE500} />
               : undefined
           }
           onClearIconPress={() => setSearchQuery("")}

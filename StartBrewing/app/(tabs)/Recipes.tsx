@@ -1,11 +1,9 @@
 import React from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
-import { Text, Searchbar} from "react-native-paper";
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { View, ScrollView } from "react-native";
+import { Searchbar} from "react-native-paper";
+import { Search, X } from "lucide-react-native";
 import BeerCard from '@/components/ui/RecipeCard';
 import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
-import { ThemedText } from "@/components/themed-text";
 import { useRouter } from "expo-router";
 import Header from '@/components/header';
 import { useFonts } from "@/hooks/use-fonts";
@@ -75,10 +73,10 @@ export default function Recipes() {
         onChangeText={setSearchQuery}
         inputStyle={{ color: BASE_COLORS.STONE500 }}
         icon={() => (
-          <MaterialCommunityIcons name="magnify" size={20} color={BASE_COLORS.STONE300} />
+          <Search size={20} color={BASE_COLORS.STONE300} />
         )}
           clearIcon={searchQuery ? () => (
-            <MaterialCommunityIcons name="close" size={18} color={BASE_COLORS.STONE500} />
+            <X size={18} color={BASE_COLORS.STONE500} />
           ) : undefined}
           onClearIconPress={() => setSearchQuery("")}
         style={{
