@@ -73,14 +73,12 @@ export default function StorePage() {
       />
 
       {/* Scrollable Items */}
-      <ScrollView className="px-5 pt-2">
-        <View className="flex-row flex-wrap -mx-2">
+      <ScrollView>
+        <View className="flex-row flex-wrap justify-between">
           {items
             .filter((item) => filterMatches(item, searchQuery))
             .map((item, index) => (
-              <View key={index} className="w-1/2 px-2">
-                <StoreCard {...item} />
-              </View>
+              <StoreCard key={index} {...item} />
             ))}
         </View>
       </ScrollView>

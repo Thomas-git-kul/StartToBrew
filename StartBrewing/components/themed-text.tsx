@@ -48,7 +48,6 @@ const styles = StyleSheet.create({
     color: BASE_COLORS.STONE700,
   },
   title: {
-    paddingTop: 10,
     fontSize: 17 * scale,
     fontFamily: FontFamilies.BODY_BOLD,
     color: BASE_COLORS.ACCENT_PRIMARY,
