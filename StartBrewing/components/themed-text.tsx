@@ -13,7 +13,7 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'defaultText' | 'title' | 'beerTitle' | 'subtitle' | 'link';
+  type?: 'defaultText' | 'title' | 'subTitle' | 'small' | 'link';
 };
 
 export function ThemedText({
@@ -31,8 +31,8 @@ export function ThemedText({
         { color },
         type === 'defaultText' ? styles.defaultText : undefined,
         type === 'title' ? styles.title : undefined,
-        type === 'beerTitle' ? styles.beerTitle : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
+        type === 'subTitle' ? styles.subTitle : undefined,
+        type === 'small' ? styles.small : undefined,
         type === 'link' ? styles.link : undefined,
         style,
       ]}
@@ -53,12 +53,12 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.ACCENT_PRIMARY,
   },
-  beerTitle: {
+  subTitle: {
     fontSize: 12 * scale,
     fontFamily: FontFamilies.BODY_LIGHT,
     color: BASE_COLORS.STONE950,
   },
-  subtitle: {
+  small: {
     fontSize: 10 * scale,
     fontFamily: FontFamilies.HEADING,
     color: BASE_COLORS.STONE500,
