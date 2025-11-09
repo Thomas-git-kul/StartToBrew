@@ -60,7 +60,7 @@ jest.mock("@/components/header", () => {
 });
 
 // Mock BeerCard component
-jest.mock("@/components/ui/IPAcomponent", () => {
+jest.mock("@/components/ui/RecipeCard", () => {
   const { View, Text } = require("react-native");
   return ({ name }: any) => <View><Text>{name}</Text></View>;
 });
