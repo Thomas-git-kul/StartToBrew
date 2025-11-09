@@ -13,7 +13,7 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'defaultText' | 'title' | 'subTitle' | 'small' | 'link';
+  type?: 'defaultText' | 'title' | 'subTitle' | 'smallText' | 'link';
 };
 
 export function ThemedText({
@@ -32,7 +32,7 @@ export function ThemedText({
         type === 'defaultText' ? styles.defaultText : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'subTitle' ? styles.subTitle : undefined,
-        type === 'small' ? styles.small : undefined,
+        type === 'smallText' ? styles.smallText : undefined,
         type === 'link' ? styles.link : undefined,
         style,
       ]}
@@ -50,17 +50,17 @@ const styles = StyleSheet.create({
   title: {
     paddingTop: 10,
     fontSize: 17 * scale,
-    fontFamily: FontFamilies.BODY,
+    fontFamily: FontFamilies.BODY_BOLD,
     color: BASE_COLORS.ACCENT_PRIMARY,
   },
   subTitle: {
     fontSize: 12 * scale,
-    fontFamily: FontFamilies.BODY_LIGHT,
+    fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.STONE950,
   },
-  small: {
+  smallText: {
     fontSize: 10 * scale,
-    fontFamily: FontFamilies.HEADING,
+    fontFamily: FontFamilies.BODY_LIGHT,
     color: BASE_COLORS.STONE500,
   },
   link: {

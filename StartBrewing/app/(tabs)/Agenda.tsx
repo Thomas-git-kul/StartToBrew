@@ -12,7 +12,7 @@ import { BASE_COLORS } from "@/constants/Colors";
 import { ThemedText } from "@/components/themed-text";
 
 export default function Agenda() {
-  const fontsLoaded = useFonts();
+  useFonts();
 
   const [phasesByDate, setPhasesByDate] = useState<{ [date: string]: typeof initialPhases }>({});
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
@@ -81,11 +81,6 @@ export default function Agenda() {
       steps: [{ text: "Package (bottle/keg)", done: false }],
     },
   ];
-
-   // ✅ Instead of returning early (breaking hook order), show nothing visually until fonts are loaded
-  if (!fontsLoaded) {
-    return <View className="flex-1 bg-white" />; // or splash screen, loader etc.
-  }
 
   const phaseDates: { [phaseIndex: number]: string } = {
     0: "2025-11-10",

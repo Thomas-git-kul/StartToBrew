@@ -1,6 +1,6 @@
 import React from "react";
-import { View, ScrollView, ImageSourcePropType } from "react-native";
-import { Text, Searchbar, Appbar } from "react-native-paper";
+import { View, ScrollView } from "react-native";
+import { Searchbar, Appbar } from "react-native-paper";
 
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";

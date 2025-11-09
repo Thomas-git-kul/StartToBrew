@@ -21,8 +21,7 @@ interface Beer {
 export default function HomePage() {
   const router = useRouter();
 
-  const fontsLoaded = useFonts();
-  if (!fontsLoaded) return null;
+  useFonts();
 
   const beers: Beer[] = [
     {
