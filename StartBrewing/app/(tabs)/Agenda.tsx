@@ -123,7 +123,7 @@ export default function Agenda() {
       
       <Header
         title="Agenda"
-        iconName="today"
+        iconName="Calendar1"
         onIconPress={() => {
             const today = new Date().toISOString().split("T")[0];
             setCurrentDate(today);

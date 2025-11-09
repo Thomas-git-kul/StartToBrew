@@ -5,7 +5,7 @@ import { FontFamilies } from "@/constants/Fonts";
 
 // Get screen width
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// Base width that your original font sizes were designed for
+// Base width that original font sizes were designed for
 const BASE_SCREEN_WIDTH = 375; 
 // Scale factor
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
