@@ -5,7 +5,7 @@ import { FontFamilies } from "@/constants/Fonts";
 
 // Get screen width
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// Base width that your original font sizes were designed for
+// Base width that original font sizes were designed for
 const BASE_SCREEN_WIDTH = 375; 
 // Scale factor
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
@@ -13,7 +13,7 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'defaultText' | 'title' | 'beerTitle' | 'subtitle' | 'link';
+  type?: 'defaultText' | 'title' | 'subTitle' | 'smallText' | 'link';
 };
 
 export function ThemedText({
@@ -31,8 +31,8 @@ export function ThemedText({
         { color },
         type === 'defaultText' ? styles.defaultText : undefined,
         type === 'title' ? styles.title : undefined,
-        type === 'beerTitle' ? styles.beerTitle : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
+        type === 'subTitle' ? styles.subTitle : undefined,
+        type === 'smallText' ? styles.smallText : undefined,
         type === 'link' ? styles.link : undefined,
         style,
       ]}
@@ -48,19 +48,18 @@ const styles = StyleSheet.create({
     color: BASE_COLORS.STONE700,
   },
   title: {
-    paddingTop: 10,
     fontSize: 17 * scale,
-    fontFamily: FontFamilies.BODY,
+    fontFamily: FontFamilies.BODY_BOLD,
     color: BASE_COLORS.ACCENT_PRIMARY,
   },
-  beerTitle: {
+  subTitle: {
     fontSize: 12 * scale,
-    fontFamily: FontFamilies.BODY_LIGHT,
+    fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.STONE950,
   },
-  subtitle: {
+  smallText: {
     fontSize: 10 * scale,
-    fontFamily: FontFamilies.HEADING,
+    fontFamily: FontFamilies.BODY_LIGHT,
     color: BASE_COLORS.STONE500,
   },
   link: {

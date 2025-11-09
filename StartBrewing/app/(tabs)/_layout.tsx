@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Home,
   Calendar,
-  ShoppingCart,
+  Handbag,
   Beer,
   User,
 } from "lucide-react-native";
@@ -34,6 +34,7 @@ export default function TabLayout() {
             tabBarStyle: {
               backgroundColor: BASE_COLORS.LIGHT_BG,
               borderTopWidth: 0,
+              marginTop: 5,
             },
           }}
         >
@@ -52,9 +53,7 @@ export default function TabLayout() {
           <Tabs.Screen
             name="Store"
             options={{
-              tabBarIcon: ({ color }) => (
-                <ShoppingCart color={color} size={28} />
-              ),
+              tabBarIcon: ({ color }) => (<Handbag color={color} size={28} />),
             }}
           />
           <Tabs.Screen
@@ -64,7 +63,7 @@ export default function TabLayout() {
             }}
           />
           <Tabs.Screen
-            name="Auth"
+            name="Account"
             options={{
               tabBarIcon: ({ color }) => <User color={color} size={28} />,
             }}

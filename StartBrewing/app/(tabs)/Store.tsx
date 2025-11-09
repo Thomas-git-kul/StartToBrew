@@ -1,13 +1,15 @@
 import React from "react";
-import { View, ScrollView, ImageSourcePropType } from "react-native";
-import { Text, Searchbar, Appbar } from "react-native-paper";
+import { View, ScrollView } from "react-native";
+import { Searchbar } from "react-native-paper";
+import { Search, X } from "lucide-react-native";
 
 import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
-import StoreCard from "@/components/ui/StoreCard";
+
 import { useRouter } from "expo-router";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useFonts } from "@/hooks/use-fonts";
+
+import StoreCard from "@/components/ui/StoreCard";
+import Header from "@/components/header"
 
 interface Item {
   title: string;
@@ -40,54 +42,44 @@ export default function StorePage() {
   ];
 
   return (
-    <View className="flex-1" style={{ backgroundColor: 'transparent' }}>
-      {/* Top Appbar row: title + cart */}
-      <Appbar.Header className="pt-8 pb-8"
-        style={{
-          backgroundColor: BASE_COLORS.LIGHT_BG,
+    <View className="flex-1"
+      style={{
+        backgroundColor: BASE_COLORS.LIGHT_BG
+      }}
+    >
+      <Header
+        title='Store'
+        iconName="ShoppingCart"
+        onIconPress={() => router.push("/ShoppingCart" as any)}
+        actionTestID="cart-button"
+      />
+      <Searchbar
+        placeholder="Search"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        inputStyle={{ color: BASE_COLORS.STONE700 }}
+        icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+        clearIcon={
+          searchQuery
+            ? () => <X size={18} color={BASE_COLORS.STONE500} />
+            : undefined
+        }
+        onClearIconPress={() => setSearchQuery("")}
+        style={{ 
+          backgroundColor: BASE_COLORS.WHITE, 
+          borderColor: BASE_COLORS.STONE300, 
+          borderWidth: 1,
+          marginBottom: 15
         }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 16 }}>
-          <Appbar.Content
-            title="Store"
-            titleStyle={{ fontSize: 36, fontFamily: FontFamilies.HEADING, color: BASE_COLORS.TEXT_DARK }}
-          />
-
-          <Appbar.Action
-            testID="cart-button"
-            icon={() => <MaterialCommunityIcons name="cart-outline" size={28} color={BASE_COLORS.TEXT_DARK} />}
-            onPress={() => router.push("/cart" as any)}
-          />
-        </View>
-      </Appbar.Header>
-
-      {/* Searchbar placed under the appbar so it won't be clipped */}
-      <View style={{ backgroundColor: BASE_COLORS.LIGHT_BG, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 }}>
-        <Searchbar
-          placeholder="Search"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          inputStyle={{ color: BASE_COLORS.STONE500 }}
-          icon={() => <MaterialCommunityIcons name="magnify" size={20} color={BASE_COLORS.STONE300} />}
-          clearIcon={
-            searchQuery
-              ? () => <MaterialCommunityIcons name="close" size={18} color={BASE_COLORS.STONE500} />
-              : undefined
-          }
-          onClearIconPress={() => setSearchQuery("")}
-          style={{ backgroundColor: BASE_COLORS.WHITE, borderColor: BASE_COLORS.STONE300, borderWidth: 1 }}
-        />
-      </View>
+      />
 
       {/* Scrollable Items */}
-      <ScrollView className="px-5 pt-2">
-        <View className="flex-row flex-wrap -mx-2">
+      <ScrollView>
+        <View className="mt-1 mx-1 flex-row flex-wrap justify-between">
           {items
             .filter((item) => filterMatches(item, searchQuery))
             .map((item, index) => (
-              <View key={index} className="w-1/2 px-2">
-                <StoreCard {...item} />
-              </View>
+              <StoreCard key={index} {...item} />
             ))}
         </View>
       </ScrollView>

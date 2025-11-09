@@ -1,19 +1,40 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ThemedText } from "@/components/themed-text";
-import { View, StyleSheet } from "react-native";
-import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
-import { useRouter } from "expo-router"; 
-import Checkbox from "expo-checkbox";
-import React, { useCallback, useState } from "react";
-import { Calendar } from "react-native-calendars";
+import { useCallback, useState } from "react";
+import { View, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { TouchableOpacity } from "react-native";
-import { ScrollView } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFonts } from "@/hooks/use-fonts";
+
+import { Calendar } from "react-native-calendars";
+import { Checkbox } from "react-native-paper";
+import Header from "@/components/header";
+
+import { BASE_COLORS } from "@/constants/Colors";
+import { ThemedText } from "@/components/themed-text";
 
 export default function Agenda() {
-  const router = useRouter();
+  useFonts();
+
+  const [phasesByDate, setPhasesByDate] = useState<{ [date: string]: typeof initialPhases }>({});
+  const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
+  const [calendarVisible, setCalendarVisible] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadPhases = async () => {
+        const saved = await AsyncStorage.getItem("phasesByDate");
+        if (saved) {
+          setPhasesByDate(JSON.parse(saved));
+        } else {
+          setPhasesByDate({ [currentDate]: initialPhases });
+        }
+      };
+      loadPhases();
+
+      setCalendarVisible(false);
+      requestAnimationFrame(() => setCalendarVisible(true));
+    }, [currentDate])
+  );
+
 
   const initialPhases = [
     {
@@ -57,62 +78,32 @@ export default function Agenda() {
     },
     {
       title: "Phase 6: Package",
-      steps: [
-        { text: "Package (bottle/keg)", done: false },
-      ],
+      steps: [{ text: "Package (bottle/keg)", done: false }],
     },
   ];
 
   const phaseDates: { [phaseIndex: number]: string } = {
-  0: "2025-11-10", // Phase 1
-  1: "2025-11-11", // Phase 2
-  2: "2025-11-12", // Phase 3
-  3: "2025-11-13", // Phase 4
-  4: "2025-11-14", // Phase 5
-  5: "2025-11-15", // Phase 6
-};
-
-
-  const [phasesByDate, setPhasesByDate] = useState<{ [date: string]: typeof initialPhases }>({});
-  const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
-  const [calendarVisible, setCalendarVisible] = useState(true);
-
-  useFocusEffect(
-    useCallback(() => {
-      const loadPhases = async () => {
-        const saved = await AsyncStorage.getItem('phasesByDate');
-        if (saved) {
-          setPhasesByDate(JSON.parse(saved));
-        } else {
-          setPhasesByDate({ [currentDate]: initialPhases });
-        }
-      };
-      loadPhases();
-
-      setCalendarVisible(false);
-      requestAnimationFrame(() => setCalendarVisible(true));
-    }, [currentDate])
-  );
-
-
-  const onDayPress = (day: any) => {
-    setCurrentDate(day.dateString);
+    0: "2025-11-10",
+    1: "2025-11-11",
+    2: "2025-11-12",
+    3: "2025-11-13",
+    4: "2025-11-14",
+    5: "2025-11-15",
   };
 
-
   const toggleStep = async (date: string, phaseIndex: number, stepIndex: number) => {
-    setPhasesByDate(prev => {
+    setPhasesByDate((prev) => {
       const datePhases = prev[date] ? [...prev[date]] : JSON.parse(JSON.stringify(initialPhases));
       datePhases[phaseIndex].steps[stepIndex].done = !datePhases[phaseIndex].steps[stepIndex].done;
       const newState = { ...prev, [date]: datePhases };
-      AsyncStorage.setItem('phasesByDate', JSON.stringify(newState));
+      AsyncStorage.setItem("phasesByDate", JSON.stringify(newState));
       return newState;
     });
   };
 
   const markedDates: { [key: string]: any } = {};
-  for (const date of Object.values(phaseDates)) {
-    markedDates[date] = { marked: true, dotColor: BASE_COLORS.ACCENT_PRIMARY };
+    for (const date of Object.values(phaseDates)) {
+      markedDates[date] = { marked: true, dotColor: BASE_COLORS.ACCENT_PRIMARY };
   }
 
   markedDates[currentDate] = {
@@ -123,142 +114,73 @@ export default function Agenda() {
 
   const phases = phasesByDate[currentDate] || initialPhases;
 
-  const goToToday = () => {
-    const today = new Date().toISOString().split("T")[0];
-    setCurrentDate(today);
-    setCalendarVisible(false);
-    requestAnimationFrame(() => setCalendarVisible(true));
-  };
-
   return (
-    <SafeAreaView style={styles.general}>
-      <ThemedText style={styles.title}>Agenda</ThemedText>
-
-      <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.todayButton} onPress={goToToday}>
-          <ThemedText style={styles.todayButtonText}>Today</ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.todayButton} onPress={() => router.push("../progress")}>
-          <ThemedText style={styles.todayButtonText}>Progress</ThemedText>
-        </TouchableOpacity>
-      </View>
+    <View className="flex-1"
+      style={{
+        backgroundColor: BASE_COLORS.LIGHT_BG
+      }}
+    >
+      
+      <Header
+        title="Agenda"
+        iconName="Calendar1"
+        onIconPress={() => {
+            const today = new Date().toISOString().split("T")[0];
+            setCurrentDate(today);
+          }}
+      />
 
       {calendarVisible && (
-        <Calendar
-          current={currentDate}
-          markedDates={markedDates}
-          onDayPress={(day) => setCurrentDate(day.dateString)}
-          theme={{
-            todayTextColor: BASE_COLORS.ACCENT_PRIMARY,
-            arrowColor: BASE_COLORS.ACCENT_PRIMARY,
-          }}
-        />
+        <View
+          className="mx-1 my-1 rounded-2xl overflow-hidden shadow"
+          style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+        >
+          <Calendar
+            current={currentDate}
+            markedDates={markedDates}
+            onDayPress={(day) => setCurrentDate(day.dateString)}
+            theme={{
+              todayTextColor: BASE_COLORS.ACCENT_PRIMARY,
+              arrowColor: BASE_COLORS.ACCENT_PRIMARY,
+              calendarBackground: BASE_COLORS.WHITE
+            }}
+          />
+        </View>
       )}
 
-      <ThemedText style={styles.title2}>To do</ThemedText>
+      <ThemedText type='title' className="ml-1">To do</ThemedText>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView className="ml-1">
         {phases.map((phase, phaseIndex) => {
           const date = phaseDates[phaseIndex];
-          const steps = phasesByDate[date] ? phasesByDate[date][phaseIndex].steps : phase.steps;
-
           if (currentDate !== date) return null;
 
           return (
-          <View key={phaseIndex} style={{ marginBottom: 20 }}>
-            <ThemedText style={styles.phaseTitle}>{phase.title}</ThemedText>
-            {phase.steps.map((step, stepIndex) => (
-              <View key={stepIndex} style={styles.todoItem}>
-                <Checkbox
-                  value={step.done}
-                  onValueChange={() => toggleStep(date, phaseIndex, stepIndex)}
-                  color={step.done ? BASE_COLORS.ACCENT_PRIMARY : undefined}
-                />
-                <TouchableOpacity onPress={() => toggleStep(date, phaseIndex, stepIndex)}>
-                  <ThemedText
-                    style={[
-                      styles.stepText,
-                      step.done && { textDecorationLine: "line-through", opacity: 0.5 },
-                    ]}
+            <View key={phaseIndex}>
+              <ThemedText type='subTitle'>{phase.title}</ThemedText>
+
+              {phase.steps.map((step, stepIndex) => (
+                <View
+                  key={stepIndex}
+                  className="flex-row items-center"
+                >
+                  <Checkbox
+                    status={step.done ? "checked" : "unchecked"}
+                    onPress={() => toggleStep(date, phaseIndex, stepIndex)}
+                    color={BASE_COLORS.ACCENT_PRIMARY}
+                  />
+
+                  <ThemedText type='defaultText'
+                    onPress={() => toggleStep(date, phaseIndex, stepIndex)}
                   >
                     {step.text}
                   </ThemedText>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        )})}
+                </View>
+              ))}
+            </View>
+          );
+        })}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
-  },
-  title: {
-    paddingTop: 25,
-    fontSize: 50,
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  title2: {
-    paddingTop: 10,
-    fontSize: 22,
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  todoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 5,
-    marginHorizontal: 10,
-  },
-
-  todayButton: {
-    backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    paddingVertical: 6,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-    marginHorizontal: 10,
-    marginTop: 10,
-    marginBottom: 10,
-  },
-todayButtonText: {
-  color: BASE_COLORS.WHITE,
-  fontFamily: FontFamilies.BODY,
-  fontSize: 16,
-},
-buttonRow: {
-  flexDirection: "row",
-  justifyContent: "flex-start",
-  gap: 10,
-  marginHorizontal: 10,
-  marginTop: 10,
-  marginBottom: 10,
-},
-stepText: {
-    fontSize: 15,
-    //color: BASE_COLORS.TEXT_DARK,
-    fontFamily: FontFamilies.BODY_LIGHT,
-    marginLeft: 10,
-  },
-  phaseTitle: {
-    fontSize: 18,
-    marginTop: 10,
-    marginBottom: 5,
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.ACCENT_PRIMARY,
-    marginHorizontal: 0,
-  },
-  scrollContent: {
-    paddingHorizontal: 10,
-    paddingBottom: 20,
-  },
-});

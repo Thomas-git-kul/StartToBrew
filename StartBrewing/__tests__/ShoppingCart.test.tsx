@@ -1,6 +1,6 @@
 import React from "react";
 import { render, waitFor } from "@testing-library/react-native";
-import ShoppingCart from "../app/cart";
+import ShoppingCart from "../app/ShoppingCart";
 
 // --- 🧩 MOCKS --- //
 

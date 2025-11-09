@@ -39,7 +39,8 @@ const BeerCard: React.FC<BeerCardProps> = ({
         style={{ 
           borderRadius: 12,
           backgroundColor: BASE_COLORS.WHITE,
-          marginBlock: 5
+          marginBlock: 3,
+          marginInline: 2
         }}
       >
         <View className="flex-row h-fit">
@@ -58,18 +59,19 @@ const BeerCard: React.FC<BeerCardProps> = ({
 
           {/* Text container */}
           <View className="flex-1 mx-3 my-2">
-            <ThemedText type='beerTitle'>
+            <ThemedText type='subTitle'>
               {name}
             </ThemedText>
 
-            <View className="flex-row">
+            <View className="flex-row my-1">
               <Ionicons name="star" size={14}
                 style={{
                   color: BASE_COLORS.ACCENT_LIGHT,
                   marginRight: 5
+
                 }}
               />
-              <ThemedText type='subtitle' className="mt-2">
+              <ThemedText type='smallText'>
                 {rating}/5 rating ({reviews} reviews)
               </ThemedText>
             </View>

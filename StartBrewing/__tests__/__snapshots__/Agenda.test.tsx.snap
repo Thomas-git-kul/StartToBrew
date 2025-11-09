@@ -1,193 +1,245 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Agenda /> matches snapshot 1`] = `
-<View>
-  <Text
-    style={
-      {
-        "color": "#000",
-        "fontFamily": "System",
-        "fontSize": 50,
-        "marginHorizontal": 10,
-        "paddingTop": 25,
-      }
+<View
+  className="flex-1"
+  style={
+    {
+      "backgroundColor": "#eee",
     }
-  >
-    Agenda
-  </Text>
+  }
+>
   <View
     style={
       {
-        "flexDirection": "row",
-        "gap": 10,
-        "justifyContent": "flex-start",
-        "marginBottom": 10,
-        "marginHorizontal": 10,
-        "marginTop": 10,
-      }
-    }
-  >
-    <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-      style={
-        {
-          "alignSelf": "flex-start",
-          "backgroundColor": "#f00",
-          "borderRadius": 8,
-          "marginBottom": 10,
-          "marginHorizontal": 10,
-          "marginTop": 10,
-          "opacity": 1,
-          "paddingHorizontal": 15,
-          "paddingVertical": 6,
-        }
-      }
-    >
-      <Text
-        style={
-          {
-            "color": "#fff",
-            "fontFamily": "System",
-            "fontSize": 16,
-          }
-        }
-      >
-        Today
-      </Text>
-    </View>
-    <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-      style={
-        {
-          "alignSelf": "flex-start",
-          "backgroundColor": "#f00",
-          "borderRadius": 8,
-          "marginBottom": 10,
-          "marginHorizontal": 10,
-          "marginTop": 10,
-          "opacity": 1,
-          "paddingHorizontal": 15,
-          "paddingVertical": 6,
-        }
-      }
-    >
-      <Text
-        style={
-          {
-            "color": "#fff",
-            "fontFamily": "System",
-            "fontSize": 16,
-          }
-        }
-      >
-        Progress
-      </Text>
-    </View>
-  </View>
-  <Text
-    style={
-      {
-        "color": "#000",
-        "fontFamily": "System",
-        "fontSize": 22,
-        "marginHorizontal": 10,
-        "paddingTop": 10,
-      }
-    }
-  >
-    To do
-  </Text>
-  <RCTScrollView
-    contentContainerStyle={
-      {
-        "paddingBottom": 20,
-        "paddingHorizontal": 10,
+        "backgroundColor": "#eee",
       }
     }
   >
     <View>
-      <View
+      <Text
         style={
           {
-            "marginBottom": 20,
+            "color": undefined,
+            "fontFamily": undefined,
           }
         }
       >
-        <Text
-          style={
+        Agenda
+      </Text>
+    </View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+        }
+      }
+    >
+      <RNSVGSvgView
+        align="xMidYMid"
+        bbHeight={28}
+        bbWidth={28}
+        fill="none"
+        focusable={false}
+        height={28}
+        meetOrSlice={0}
+        minX={0}
+        minY={0}
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        style={
+          [
             {
-              "color": "#f00",
-              "fontFamily": "System",
-              "fontSize": 18,
-              "marginBottom": 5,
-              "marginHorizontal": 0,
-              "marginTop": 10,
+              "backgroundColor": "transparent",
+              "borderWidth": 0,
+            },
+            {
+              "flex": 0,
+              "height": 28,
+              "width": 28,
+            },
+          ]
+        }
+        vbHeight={24}
+        vbWidth={24}
+        width={28}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <RNSVGGroup
+          fill={null}
+          propList={
+            [
+              "fill",
+              "stroke",
+              "strokeWidth",
+              "strokeLinecap",
+              "strokeLinejoin",
+            ]
+          }
+          stroke={
+            {
+              "type": 2,
             }
           }
+          strokeLinecap={1}
+          strokeLinejoin={1}
+          strokeWidth={2}
         >
+          <RNSVGPath
+            d="M11 14h1v4"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "type": 2,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={2}
+          />
+          <RNSVGPath
+            d="M16 2v4"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "type": 2,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={2}
+          />
+          <RNSVGPath
+            d="M3 10h18"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "type": 2,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={2}
+          />
+          <RNSVGPath
+            d="M8 2v4"
+            fill={null}
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "type": 2,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={2}
+          />
+          <RNSVGRect
+            fill={null}
+            height="18"
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            rx="2"
+            stroke={
+              {
+                "type": 2,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={2}
+            width="18"
+            x="3"
+            y="4"
+          />
+        </RNSVGGroup>
+      </RNSVGSvgView>
+    </View>
+  </View>
+  <Text>
+    To do
+  </Text>
+  <RCTScrollView
+    className="ml-1"
+  >
+    <View>
+      <View>
+        <Text>
           Phase 1: Mash
         </Text>
         <View
-          style={
-            {
-              "alignItems": "center",
-              "flexDirection": "row",
-              "marginHorizontal": 10,
-              "marginVertical": 5,
-            }
-          }
+          className="flex-row items-center"
         >
           <View
             accessibilityState={
@@ -227,65 +279,12 @@ exports[`<Agenda /> matches snapshot 1`] = `
               ⬜
             </Text>
           </View>
-          <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-              }
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontFamily": "System",
-                    "fontSize": 15,
-                    "marginLeft": 10,
-                  },
-                  false,
-                ]
-              }
-            >
-              Heat strike water
-            </Text>
-          </View>
+          <Text>
+            Heat strike water
+          </Text>
         </View>
         <View
-          style={
-            {
-              "alignItems": "center",
-              "flexDirection": "row",
-              "marginHorizontal": 10,
-              "marginVertical": 5,
-            }
-          }
+          className="flex-row items-center"
         >
           <View
             accessibilityState={
@@ -325,65 +324,12 @@ exports[`<Agenda /> matches snapshot 1`] = `
               ⬜
             </Text>
           </View>
-          <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-              }
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontFamily": "System",
-                    "fontSize": 15,
-                    "marginLeft": 10,
-                  },
-                  false,
-                ]
-              }
-            >
-              Mash in
-            </Text>
-          </View>
+          <Text>
+            Mash in
+          </Text>
         </View>
         <View
-          style={
-            {
-              "alignItems": "center",
-              "flexDirection": "row",
-              "marginHorizontal": 10,
-              "marginVertical": 5,
-            }
-          }
+          className="flex-row items-center"
         >
           <View
             accessibilityState={
@@ -423,65 +369,12 @@ exports[`<Agenda /> matches snapshot 1`] = `
               ⬜
             </Text>
           </View>
-          <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-              }
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontFamily": "System",
-                    "fontSize": 15,
-                    "marginLeft": 10,
-                  },
-                  false,
-                ]
-              }
-            >
-              Saccharification rest
-            </Text>
-          </View>
+          <Text>
+            Saccharification rest
+          </Text>
         </View>
         <View
-          style={
-            {
-              "alignItems": "center",
-              "flexDirection": "row",
-              "marginHorizontal": 10,
-              "marginVertical": 5,
-            }
-          }
+          className="flex-row items-center"
         >
           <View
             accessibilityState={
@@ -521,55 +414,9 @@ exports[`<Agenda /> matches snapshot 1`] = `
               ⬜
             </Text>
           </View>
-          <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-              }
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontFamily": "System",
-                    "fontSize": 15,
-                    "marginLeft": 10,
-                  },
-                  false,
-                ]
-              }
-            >
-              Mash out
-            </Text>
-          </View>
+          <Text>
+            Mash out
+          </Text>
         </View>
       </View>
     </View>
