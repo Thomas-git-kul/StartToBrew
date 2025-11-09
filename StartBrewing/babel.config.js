@@ -14,7 +14,7 @@ module.exports = function (api) {
     ],
     plugins: [
       // optional Expo/React Native plugins, safely guarded
-      // !isTest && 'react-native-reanimated/plugin',
+      !isTest && 'react-native-reanimated/plugin',
       // !isTest && 'expo-router/babel',
     ].filter(Boolean),
   };
