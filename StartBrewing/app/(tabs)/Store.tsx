@@ -74,7 +74,7 @@ export default function StorePage() {
 
       {/* Scrollable Items */}
       <ScrollView>
-        <View className="flex-row flex-wrap justify-between">
+        <View className="mt-1 mx-1 flex-row flex-wrap justify-between">
           {items
             .filter((item) => filterMatches(item, searchQuery))
             .map((item, index) => (
