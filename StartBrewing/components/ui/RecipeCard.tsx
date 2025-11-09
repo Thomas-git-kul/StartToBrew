@@ -1,9 +1,9 @@
 import React from "react";
 import { Image, View, Dimensions } from "react-native";
-import { Card, Text, TouchableRipple } from "react-native-paper";
-import { Ionicons } from "@expo/vector-icons";
+import { Card, TouchableRipple } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { ThemedText } from "../themed-text";
+import { Star } from "lucide-react-native";
 
 interface BeerCardProps {
   image: any; // require or uri
@@ -64,11 +64,11 @@ const BeerCard: React.FC<BeerCardProps> = ({
             </ThemedText>
 
             <View className="flex-row my-1">
-              <Ionicons name="star" size={14}
+              <Star 
+                color={BASE_COLORS.ACCENT_LIGHT}
+                size={14}
                 style={{
-                  color: BASE_COLORS.ACCENT_LIGHT,
                   marginRight: 5
-
                 }}
               />
               <ThemedText type='smallText'>

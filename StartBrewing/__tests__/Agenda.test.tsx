@@ -80,14 +80,19 @@ jest.mock("react-native-paper", () => {
         </TouchableOpacity>
       ),
     },
-    Checkbox: ({ status, onPress }: any) => (
-      <TouchableOpacity onPress={onPress}>
-        <Text>{status === "checked" ? "☑️" : "⬜"}</Text>
-      </TouchableOpacity>
-    ),
     Surface: ({ children }: any) => <View>{children}</View>,
     Text: ({ children }: any) => <Text>{children}</Text>,
   };
+});
+
+jest.mock("expo-checkbox", () => {
+  const { TouchableOpacity, Text } = require("react-native");
+
+  return ({ value, onValueChange }: any) => (
+    <TouchableOpacity onPress={() => onValueChange(!value)}>
+      <Text>{value ? "☑️" : "⬜"}</Text>
+    </TouchableOpacity>
+  );
 });
 
 global.requestAnimationFrame = (cb) => setTimeout(cb, 0) as unknown as number;
