@@ -5,13 +5,22 @@ import { HapticTab } from "@/components/haptic-tab";
 import { BASE_COLORS } from "@/constants/Colors";
 
 import { View } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// 👉 Lucide icons
+import {
+  Home,
+  Calendar,
+  ShoppingCart,
+  Beer,
+  User,
+} from "lucide-react-native";
 
 export default function TabLayout() {
   return (
-    <SafeAreaView className="flex-1"
-      style={{backgroundColor: BASE_COLORS.LIGHT_BG}}
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
       <View className="flex-1 mx-3">
         {/* Tabs wrapper */}
@@ -31,41 +40,33 @@ export default function TabLayout() {
           <Tabs.Screen
             name="HomePage"
             options={{
-              tabBarIcon: ({ color }) => (
-                <MaterialIcons name="home" size={28} color={color} />
-              ),
+              tabBarIcon: ({ color }) => <Home color={color} size={28} />,
             }}
           />
           <Tabs.Screen
             name="Agenda"
             options={{
-              tabBarIcon: ({ color }) => (
-                <MaterialIcons name="calendar-month" size={28} color={color} />
-              ),
+              tabBarIcon: ({ color }) => <Calendar color={color} size={28} />,
             }}
           />
           <Tabs.Screen
             name="Store"
             options={{
               tabBarIcon: ({ color }) => (
-                <MaterialIcons name="shopping-cart" size={28} color={color} />
+                <ShoppingCart color={color} size={28} />
               ),
             }}
           />
           <Tabs.Screen
             name="Recipes"
             options={{
-              tabBarIcon: ({ color }) => (
-                <MaterialIcons name="sports-bar" size={28} color={color} />
-              ),
+              tabBarIcon: ({ color }) => <Beer color={color} size={28} />,
             }}
           />
           <Tabs.Screen
             name="Account"
             options={{
-              tabBarIcon: ({ color }) => (
-                <MaterialIcons name="person" size={28} color={color} />
-              ),
+              tabBarIcon: ({ color }) => <User color={color} size={28} />,
             }}
           />
         </Tabs>
