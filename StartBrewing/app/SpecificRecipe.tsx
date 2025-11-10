@@ -121,7 +121,11 @@ export default function SpecificRecipe() {
 
           <View className="flex-row justify-center gap-3">
             {[1, 2, 3, 4, 5].map((value) => (
-              <TouchableOpacity key={value} onPress={() => handleStarPress(value)}>
+              <TouchableOpacity 
+                key={value} 
+                onPress={() => handleStarPress(value)}
+                testID={`star-${value}`}
+              >
                 <Star
                   size={36}
                   stroke={value <= rating ? BASE_COLORS.ACCENT_LIGHT : BASE_COLORS.STONE300}

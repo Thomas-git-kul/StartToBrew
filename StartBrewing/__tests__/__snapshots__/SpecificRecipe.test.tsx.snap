@@ -2,377 +2,10 @@
 
 exports[`<SpecificRecipe /> matches the snapshot 1`] = `
 <View>
-  <View
-    style={
-      [
-        {
-          "backgroundColor": "#fafafa",
-          "elevation": 0,
-          "paddingHorizontal": 0,
-          "paddingTop": 0,
-          "zIndex": 0,
-        },
-        {},
-        {},
-      ]
-    }
-    testID="appbar-header-root-layer"
-  >
-    <View
-      collapsable={false}
-      style={
-        {
-          "backgroundColor": "#fafafa",
-          "height": 64,
-          "shadowColor": "#000",
-          "shadowOffset": {
-            "height": 0,
-            "width": 0,
-          },
-          "shadowOpacity": 0,
-          "shadowRadius": 0,
-        }
-      }
-      testID="appbar-header-outer-layer"
-    >
-      <View
-        collapsable={false}
-        style={
-          {
-            "alignItems": "center",
-            "backgroundColor": "#fafafa",
-            "flex": 1,
-            "flexDirection": "row",
-            "paddingBottom": undefined,
-            "paddingHorizontal": 4,
-            "paddingLeft": undefined,
-            "paddingRight": undefined,
-            "paddingTop": undefined,
-            "shadowColor": "#000",
-            "shadowOffset": {
-              "height": 0,
-              "width": 0,
-            },
-            "shadowOpacity": 0,
-            "shadowRadius": 0,
-          }
-        }
-        testID="appbar-header"
-      >
-        <View
-          style={
-            {
-              "width": 52,
-            }
-          }
-        />
-        <View
-          pointerEvents="box-none"
-          style={
-            [
-              {
-                "flex": 1,
-                "paddingHorizontal": 12,
-              },
-              {
-                "paddingHorizontal": 0,
-              },
-              [
-                false,
-                {
-                  "alignItems": "center",
-                },
-                undefined,
-              ],
-            ]
-          }
-          testID="appbar-content"
-        >
-          <Text
-            accessibilityRole="header"
-            accessibilityTraits="header"
-            accessible={true}
-            numberOfLines={1}
-            style={
-              [
-                {
-                  "textAlign": "left",
-                },
-                {
-                  "color": "rgba(28, 27, 31, 1)",
-                  "writingDirection": "ltr",
-                },
-                [
-                  {
-                    "fontFamily": "System",
-                    "fontSize": 22,
-                    "fontWeight": "400",
-                    "letterSpacing": 0,
-                    "lineHeight": 28,
-                  },
-                  [
-                    {
-                      "color": "rgba(28, 27, 31, 1)",
-                      "fontFamily": "System",
-                      "fontSize": 22,
-                      "fontWeight": "400",
-                      "letterSpacing": 0,
-                      "lineHeight": 28,
-                    },
-                    false,
-                    {
-                      "color": "#000000",
-                      "fontFamily": "System",
-                    },
-                  ],
-                ],
-              ]
-            }
-            testID="appbar-content-title-text"
-          >
-            IJ IPA
-          </Text>
-        </View>
-        <View
-          collapsable={false}
-          style={
-            {
-              "backgroundColor": "transparent",
-              "borderRadius": 20,
-              "height": 40,
-              "margin": 6,
-              "shadowColor": "#000",
-              "shadowOffset": {
-                "height": 0,
-                "width": 0,
-              },
-              "shadowOpacity": 0,
-              "shadowRadius": 0,
-              "width": 40,
-            }
-          }
-          testID="cart-button-container-outer-layer"
-        >
-          <View
-            collapsable={false}
-            style={
-              {
-                "backgroundColor": "transparent",
-                "borderColor": "rgba(121, 116, 126, 1)",
-                "borderRadius": 20,
-                "borderWidth": 0,
-                "elevation": 0,
-                "flex": 1,
-                "overflow": "hidden",
-                "shadowColor": "#000",
-                "shadowOffset": {
-                  "height": 0,
-                  "width": 0,
-                },
-                "shadowOpacity": 0,
-                "shadowRadius": 0,
-              }
-            }
-            testID="cart-button-container"
-          >
-            <View
-              accessibilityComponentType="button"
-              accessibilityRole="button"
-              accessibilityState={
-                {
-                  "busy": undefined,
-                  "checked": undefined,
-                  "disabled": false,
-                  "expanded": undefined,
-                  "selected": undefined,
-                }
-              }
-              accessibilityTraits="button"
-              accessibilityValue={
-                {
-                  "max": undefined,
-                  "min": undefined,
-                  "now": undefined,
-                  "text": undefined,
-                }
-              }
-              accessible={true}
-              centered={true}
-              collapsable={false}
-              focusable={true}
-              hitSlop={
-                {
-                  "bottom": 6,
-                  "left": 6,
-                  "right": 6,
-                  "top": 6,
-                }
-              }
-              onBlur={[Function]}
-              onClick={[Function]}
-              onFocus={[Function]}
-              onResponderGrant={[Function]}
-              onResponderMove={[Function]}
-              onResponderRelease={[Function]}
-              onResponderTerminate={[Function]}
-              onResponderTerminationRequest={[Function]}
-              onStartShouldSetResponder={[Function]}
-              style={
-                [
-                  {
-                    "overflow": "hidden",
-                  },
-                  [
-                    {
-                      "alignItems": "center",
-                      "flexGrow": 1,
-                      "justifyContent": "center",
-                    },
-                    undefined,
-                  ],
-                ]
-              }
-              testID="cart-button"
-            >
-              <View
-                style={
-                  [
-                    {
-                      "alignItems": "center",
-                      "justifyContent": "center",
-                    },
-                    {
-                      "height": 24,
-                      "width": 24,
-                    },
-                  ]
-                }
-              >
-                <View
-                  collapsable={false}
-                  style={
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "opacity": 1,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                      "transform": [
-                        {
-                          "rotate": "0deg",
-                        },
-                      ],
-                    }
-                  }
-                  testID="cross-fade-icon-current"
-                >
-                  <RNSVGSvgView
-                    align="xMidYMid"
-                    bbHeight={28}
-                    bbWidth={28}
-                    fill="none"
-                    focusable={false}
-                    height={28}
-                    meetOrSlice={0}
-                    minX={0}
-                    minY={0}
-                    stroke="#000000"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    style={
-                      [
-                        {
-                          "backgroundColor": "transparent",
-                          "borderWidth": 0,
-                        },
-                        {
-                          "flex": 0,
-                          "height": 28,
-                          "width": 28,
-                        },
-                      ]
-                    }
-                    vbHeight={24}
-                    vbWidth={24}
-                    width={28}
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <RNSVGGroup
-                      fill={null}
-                      propList={
-                        [
-                          "fill",
-                          "stroke",
-                          "strokeWidth",
-                          "strokeLinecap",
-                          "strokeLinejoin",
-                        ]
-                      }
-                      stroke={
-                        {
-                          "payload": 4278190080,
-                          "type": 0,
-                        }
-                      }
-                      strokeLinecap={1}
-                      strokeLinejoin={1}
-                      strokeWidth={2}
-                    >
-                      <RNSVGPath
-                        d="M5 12h14"
-                        fill={null}
-                        propList={
-                          [
-                            "fill",
-                            "stroke",
-                            "strokeWidth",
-                            "strokeLinecap",
-                            "strokeLinejoin",
-                          ]
-                        }
-                        stroke={
-                          {
-                            "payload": 4278190080,
-                            "type": 0,
-                          }
-                        }
-                        strokeLinecap={1}
-                        strokeLinejoin={1}
-                        strokeWidth={2}
-                      />
-                      <RNSVGPath
-                        d="m12 5 7 7-7 7"
-                        fill={null}
-                        propList={
-                          [
-                            "fill",
-                            "stroke",
-                            "strokeWidth",
-                            "strokeLinecap",
-                            "strokeLinejoin",
-                          ]
-                        }
-                        stroke={
-                          {
-                            "payload": 4278190080,
-                            "type": 0,
-                          }
-                        }
-                        strokeLinecap={1}
-                        strokeLinejoin={1}
-                        strokeWidth={2}
-                      />
-                    </RNSVGGroup>
-                  </RNSVGSvgView>
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
-    </View>
+  <View>
+    <Text>
+      IJ IPA
+    </Text>
   </View>
   <RCTScrollView
     className="flex-1 mx-3"
@@ -409,13 +42,13 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
           align="xMidYMid"
           bbHeight={22}
           bbWidth={22}
-          fill="none"
+          fill="#B45309"
           focusable={false}
           height={22}
           meetOrSlice={0}
           minX={0}
           minY={0}
-          stroke="currentColor"
+          stroke="#B45309"
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={2}
@@ -438,7 +71,12 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
           xmlns="http://www.w3.org/2000/svg"
         >
           <RNSVGGroup
-            fill={null}
+            fill={
+              {
+                "payload": 4290007817,
+                "type": 0,
+              }
+            }
             propList={
               [
                 "fill",
@@ -450,7 +88,8 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
             }
             stroke={
               {
-                "type": 2,
+                "payload": 4290007817,
+                "type": 0,
               }
             }
             strokeLinecap={1}
@@ -459,7 +98,12 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
           >
             <RNSVGPath
               d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
-              fill={null}
+              fill={
+                {
+                  "payload": 4290007817,
+                  "type": 0,
+                }
+              }
               propList={
                 [
                   "fill",
@@ -471,7 +115,8 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
               }
               stroke={
                 {
-                  "type": 2,
+                  "payload": 4290007817,
+                  "type": 0,
                 }
               }
               strokeLinecap={1}
@@ -486,6 +131,47 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         <Text>
           (265 reviews)
         </Text>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "marginLeft": 8,
+              "opacity": 1,
+              "paddingHorizontal": 10,
+              "paddingVertical": 4,
+            }
+          }
+        >
+          <Text>
+            Add Review
+          </Text>
+        </View>
       </View>
       <Text>
         It features an assertive bitterness that dominates the palate, accompanied by strong aromatic notes that often recall citrus zest, pine, or tropical fruit ...
@@ -647,152 +333,43 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
     }
   >
     <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
       collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
       style={
         {
           "backgroundColor": "#000000",
-          "borderRadius": 16,
           "opacity": 1,
-          "shadowColor": "#000",
-          "shadowOffset": {
-            "height": 4,
-            "width": 0,
-          },
-          "shadowOpacity": 0.15,
-          "shadowRadius": 8,
-          "transform": [
-            {
-              "scale": 1,
-            },
-          ],
         }
       }
-      testID="fab-container-outer-layer"
     >
-      <View
-        collapsable={false}
-        pointerEvents="auto"
-        style={
-          {
-            "backgroundColor": "#000000",
-            "borderRadius": 16,
-            "flex": undefined,
-            "shadowColor": "#000",
-            "shadowOffset": {
-              "height": 1,
-              "width": 0,
-            },
-            "shadowOpacity": 0.3,
-            "shadowRadius": 3,
-          }
-        }
-        testID="fab-container"
-      >
-        <View
-          accessibilityLabel="Start Brewing"
-          accessibilityRole="button"
-          accessibilityState={
-            {
-              "busy": undefined,
-              "checked": undefined,
-              "disabled": false,
-              "expanded": undefined,
-              "selected": undefined,
-            }
-          }
-          accessibilityValue={
-            {
-              "max": undefined,
-              "min": undefined,
-              "now": undefined,
-              "text": undefined,
-            }
-          }
-          accessible={true}
-          collapsable={false}
-          focusable={true}
-          onBlur={[Function]}
-          onClick={[Function]}
-          onFocus={[Function]}
-          onResponderGrant={[Function]}
-          onResponderMove={[Function]}
-          onResponderRelease={[Function]}
-          onResponderTerminate={[Function]}
-          onResponderTerminationRequest={[Function]}
-          onStartShouldSetResponder={[Function]}
-          style={
-            [
-              {
-                "overflow": "hidden",
-              },
-              {
-                "borderRadius": 16,
-              },
-            ]
-          }
-          testID="fab"
-        >
-          <View
-            pointerEvents="none"
-            style={
-              [
-                {
-                  "alignItems": "center",
-                  "flexDirection": "row",
-                  "justifyContent": "center",
-                },
-                {
-                  "borderRadius": 16,
-                  "height": 56,
-                  "paddingHorizontal": 16,
-                },
-              ]
-            }
-            testID="fab-content"
-          >
-            <Text
-              selectable={false}
-              style={
-                [
-                  {
-                    "textAlign": "left",
-                  },
-                  {
-                    "color": "rgba(28, 27, 31, 1)",
-                    "writingDirection": "ltr",
-                  },
-                  [
-                    {
-                      "fontFamily": "System",
-                      "fontSize": 14,
-                      "fontWeight": "500",
-                      "letterSpacing": 0.1,
-                      "lineHeight": 20,
-                    },
-                    [
-                      {
-                        "marginHorizontal": 8,
-                      },
-                      false,
-                      {
-                        "color": "#ffffff",
-                        "fontFamily": "System",
-                        "fontSize": 14,
-                        "fontWeight": "500",
-                        "letterSpacing": 0.1,
-                        "lineHeight": 20,
-                      },
-                    ],
-                  ],
-                ]
-              }
-              testID="fab-text"
-            >
-              Start Brewing
-            </Text>
-          </View>
-        </View>
-      </View>
+      <Text>
+        Start Brewing
+      </Text>
     </View>
   </View>
 </View>
