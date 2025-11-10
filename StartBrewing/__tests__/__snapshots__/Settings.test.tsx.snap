@@ -1,0 +1,266 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Settings /> matches snapshot 1`] = `
+<RNCSafeAreaView
+  className="flex-1"
+  edges={
+    {
+      "bottom": "additive",
+      "left": "additive",
+      "right": "additive",
+      "top": "additive",
+    }
+  }
+  style={
+    {
+      "backgroundColor": "#FAFAF9",
+    }
+  }
+>
+  <RCTScrollView
+    className="px-3"
+    contentContainerStyle={
+      {
+        "paddingBottom": 80,
+      }
+    }
+    showsVerticalScrollIndicator={false}
+  >
+    <View>
+      Full Name
+      <View
+        className="flex-row gap-3 w-full"
+      >
+        <View
+          className="flex-1"
+        >
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="Lastname"
+            testID="Lastname"
+            value=""
+          />
+        </View>
+        <View
+          className="flex-1"
+        >
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="Firstname"
+            testID="Firstname"
+            value=""
+          />
+        </View>
+      </View>
+      Birth Date
+      <View
+        className="flex-row gap-3"
+      >
+        <View
+          className="flex-1"
+        >
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="DD"
+            testID="DD"
+            value=""
+          />
+        </View>
+        <View
+          className="flex-1"
+        >
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="MM"
+            testID="MM"
+            value=""
+          />
+        </View>
+        <View
+          className="flex-1"
+        >
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="YYYY"
+            testID="YYYY"
+            value=""
+          />
+        </View>
+      </View>
+      Contact information
+      <TextInput
+        onChangeText={[Function]}
+        placeholder="Email"
+        testID="Email"
+        value=""
+      />
+      Account
+      <TextInput
+        onChangeText={[Function]}
+        placeholder="Username"
+        testID="Username"
+        value=""
+      />
+      <View
+        className="items-center mt-7"
+      >
+        <View
+          collapsable={false}
+          style={
+            {
+              "backgroundColor": "#78350F",
+              "borderRadius": 20,
+              "shadowColor": "#000",
+              "shadowOffset": {
+                "height": 0,
+                "width": 0,
+              },
+              "shadowOpacity": 0,
+              "shadowRadius": 0,
+            }
+          }
+          testID="button-container-outer-layer"
+        >
+          <View
+            collapsable={false}
+            style={
+              {
+                "backgroundColor": "#78350F",
+                "borderColor": "transparent",
+                "borderRadius": 20,
+                "borderStyle": "solid",
+                "borderWidth": 0,
+                "flex": undefined,
+                "minWidth": 64,
+                "shadowColor": "#000",
+                "shadowOffset": {
+                  "height": 0,
+                  "width": 0,
+                },
+                "shadowOpacity": 0,
+                "shadowRadius": 0,
+              }
+            }
+            testID="button-container"
+          >
+            <View
+              accessibilityRole="button"
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": false,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onBlur={[Function]}
+              onClick={[Function]}
+              onFocus={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                [
+                  {
+                    "overflow": "hidden",
+                  },
+                  {
+                    "borderRadius": 20,
+                  },
+                ]
+              }
+              testID="button"
+            >
+              <View
+                style={
+                  [
+                    {
+                      "alignItems": "center",
+                      "flexDirection": "row",
+                      "justifyContent": "center",
+                    },
+                    {
+                      "paddingHorizontal": 12,
+                      "paddingVertical": 6,
+                    },
+                  ]
+                }
+              >
+                <Text
+                  numberOfLines={1}
+                  selectable={false}
+                  style={
+                    [
+                      {
+                        "textAlign": "left",
+                      },
+                      {
+                        "color": "rgba(28, 27, 31, 1)",
+                        "writingDirection": "ltr",
+                      },
+                      [
+                        {
+                          "fontFamily": "System",
+                          "fontSize": 14,
+                          "fontWeight": "500",
+                          "letterSpacing": 0.1,
+                          "lineHeight": 20,
+                        },
+                        [
+                          {
+                            "marginHorizontal": 16,
+                            "marginVertical": 9,
+                            "textAlign": "center",
+                          },
+                          false,
+                          {
+                            "marginHorizontal": 24,
+                            "marginVertical": 10,
+                          },
+                          undefined,
+                          false,
+                          {
+                            "color": "#FFFFFF",
+                            "fontFamily": "System",
+                            "fontSize": 14,
+                            "fontWeight": "500",
+                            "letterSpacing": 0.1,
+                            "lineHeight": 20,
+                          },
+                          {
+                            "color": "#FFFFFF",
+                            "fontFamily": "Battambang",
+                            "fontSize": 16,
+                          },
+                        ],
+                      ],
+                    ]
+                  }
+                  testID="button-text"
+                >
+                  Change Information
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  </RCTScrollView>
+</RNCSafeAreaView>
+`;

@@ -7,7 +7,7 @@ import { supabase } from "@/supabase";
 import { useFonts } from "@/hooks/use-fonts";
 
 import { ThemedText } from "@/components/themed-text";
-import TextInput from "@/components/textInput"; // your wrapped RN Paper TextInput
+import TextInput from "@/components/textInput";
 import { BASE_COLORS } from "@/constants/Colors";
 import { ScrollView } from "react-native";
 import { FontFamilies } from "@/constants/Fonts";
