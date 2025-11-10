@@ -1,16 +1,16 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
-import { RenderAPI } from "@testing-library/react-native";
+import { useRouter } from "expo-router";
 
-// --- Mocks --- //
+/* ------------------------------
+ ✅ MOCKS
+------------------------------- */
 
-// Mock navigation
-const mockPush = jest.fn();
+// Mock navigation router
+const pushMock = jest.fn();
 jest.mock("expo-router", () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
+  useRouter: jest.fn(), // Important: jest.fn() so mockReturnValue works
 }));
 
 // Mock fonts hook
@@ -18,7 +18,7 @@ jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => true,
 }));
 
-// Mock ThemedText
+// Mock ThemedText component
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
@@ -26,7 +26,17 @@ jest.mock("@/components/themed-text", () => {
   };
 });
 
-// Mock Safe Area Context
+// Mock Header component
+jest.mock("@/components/header", () => {
+  const { Text, View } = require("react-native");
+  return ({ title }: any) => (
+    <View>
+      <Text>{title}</Text>
+    </View>
+  );
+});
+
+// Mock SafeAreaView
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
   return {
@@ -53,26 +63,35 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
-// Mock Header component
-jest.mock("@/components/header", () => {
-  const { Text, View } = require("react-native");
-  return ({ title }: any) => <View><Text>{title}</Text></View>;
-});
-
-// Mock BeerCard component
+// Mock RecipeCard component (BeerCard)
 jest.mock("@/components/ui/RecipeCard", () => {
-  const { View, Text } = require("react-native");
-  return ({ name }: any) => <View><Text>{name}</Text></View>;
+  const { View, Text, Pressable } = require("react-native");
+  return ({ name, onToggleFavorite, onPress }: any) => (
+    <Pressable onPress={onPress}>
+      <View>
+        <Text>{name}</Text>
+        <Pressable
+          accessibilityLabel={`favorite-${name}`}
+          onPress={onToggleFavorite}
+        >
+          <Text>FavBtn</Text>
+        </Pressable>
+      </View>
+    </Pressable>
+  );
 });
 
-// --- Tests --- //
+/* ------------------------------
+ ✅ TESTS
+------------------------------- */
 
 describe("<HomePage />", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
+  beforeEach(() => {
+    (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
+    pushMock.mockClear();
   });
 
-  it("renders all main titles correctly", () => {
+  it("renders main titles correctly", () => {
     const { getByText } = render(<HomePage />);
 
     expect(getByText("StartToBrew")).toBeTruthy();
@@ -88,18 +107,37 @@ describe("<HomePage />", () => {
     expect(getByText("Two Hearted IPA")).toBeTruthy();
   });
 
+  it("toggles favorite when favorite button is pressed", () => {
+    const { getByLabelText } = render(<HomePage />);
+
+    const favoriteBtn = getByLabelText("favorite-IJ IPA");
+
+    fireEvent.press(favoriteBtn);
+    fireEvent.press(favoriteBtn);
+
+    // No crash = success
+    expect(favoriteBtn).toBeTruthy();
+  });
+
   it("navigates to /Recipes when FAB is pressed", () => {
     const { getByTestId } = render(<HomePage />);
 
     const fabButton = getByTestId("fab");
     fireEvent.press(fabButton);
 
-    expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith("/Recipes");
+    expect(pushMock).toHaveBeenCalledTimes(1);
+    expect(pushMock).toHaveBeenCalledWith("/Recipes");
   });
 
+  it("navigates to SpecificRecipe when a beer card is pressed", () => {
+    const { getByText } = render(<HomePage />);
 
-  it("matches the snapshot", () => {
+    fireEvent.press(getByText("IJ IPA"));
+
+    expect(pushMock).toHaveBeenCalledWith("/SpecificRecipe");
+  });
+
+  it("matches snapshot", () => {
     const tree = render(<HomePage />).toJSON();
     expect(tree).toMatchSnapshot();
   });

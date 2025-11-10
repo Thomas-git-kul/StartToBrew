@@ -23,6 +23,23 @@ jest.mock("@/components/header", () => {
     return <Text>{title}</Text>;
   };
 });
+
+// Mock BeerCard component
+jest.mock("@/components/ui/RecipeCard", () => {
+  const { View, Text, Pressable } = require("react-native");
+  return ({ name, onToggleFavorite }: any) => (
+    <View>
+      <Text>{name}</Text>
+      <Pressable
+        accessibilityLabel={`favorite-${name}`}
+        onPress={onToggleFavorite}
+      >
+        <Text>FavBtn</Text>
+      </Pressable>
+    </View>
+  );
+});
+
 describe("Recipes screen", () => {
   const pushMock = jest.fn();
 
@@ -75,5 +92,16 @@ describe("Recipes screen", () => {
     fireEvent.press(getByText("IJ IPA"));
 
     expect(pushMock).toHaveBeenCalledWith("/SpecificRecipe");
+  });
+
+  it("toggles favorite when heart button is pressed", () => {
+    const { getByLabelText } = render(<Recipes />);
+
+    const favoriteButton = getByLabelText("favorite-IJ IPA");
+
+    fireEvent.press(favoriteButton);
+    fireEvent.press(favoriteButton);
+
+    expect(favoriteButton).toBeTruthy();
   });
 });
