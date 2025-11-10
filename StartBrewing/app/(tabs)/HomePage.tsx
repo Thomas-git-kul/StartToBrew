@@ -8,7 +8,7 @@ import Header from '@/components/header';
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 
-import { MaterialIcons } from "@expo/vector-icons";
+import { Plus } from "lucide-react-native";
 
 interface Beer {
   name: string;
@@ -67,7 +67,7 @@ export default function HomePage() {
       {/* Floating Action Button */}
       <FAB
         icon={(props) => (
-          <MaterialIcons name="add" size={props.size} color={props.color} />
+          <Plus size={props.size} color={props.color} />
         )}
         testID="fab"
         style={{
