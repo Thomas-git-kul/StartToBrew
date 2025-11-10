@@ -1,13 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { Alert, AppState, View, StyleSheet } from "react-native";
-import { Button, Text, TextInput, useTheme } from "react-native-paper";
+import { useState, useEffect } from "react";
+import { Alert, AppState, View } from "react-native";
+import { Button, useTheme } from "react-native-paper";
 import { supabase } from "../supabase";
 import "../global.css";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { router, useRouter } from "expo-router";
+import { router } from "expo-router";
+import { useFonts } from "@/hooks/use-fonts";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { ThemedText } from "@/components/themed-text";
+import TextInput from "@/components/textInput"
 
 export default function Auth() {
+  useFonts();
+
   const theme = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,104 +59,73 @@ export default function Auth() {
   }
 
   return (
-    <View
+    <SafeAreaView className="flex-1 justify-center"
       style={{
-        flex: 1,
-        justifyContent: "center",
-        paddingHorizontal: 24,
         backgroundColor: BASE_COLORS.LIGHT_BG,
       }}
     >
-      <Text
-        style={{
-          fontSize: 24,
-          fontFamily: FontFamilies.HEADING,
-          marginBottom: 32,
-          textAlign: "center",
-          color: BASE_COLORS.STONE_DARK,
-        }}
-      >
-        Welcome
-      </Text>
+      <ThemedText type="titleBlack" className="text-center mb-10">Welcome</ThemedText>
 
-      <View style={{ gap: 16 }}>
+      <View className="gap-1 mx-5 mb-5">
         <TextInput
           label="Email"
-          mode="outlined"
           value={email}
           onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          outlineColor={BASE_COLORS.STONE_DARK}
-          activeOutlineColor={BASE_COLORS.TEXT_DARK}
-          style={styles.input}
         />
         <TextInput
           label="Password"
-          mode="outlined"
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
-          autoCapitalize="none"
-          outlineColor={BASE_COLORS.STONE_DARK}
-          activeOutlineColor={BASE_COLORS.TEXT_DARK}
-          style={styles.input}
         />
+      </View>
+
+      <View className="grid grid-col-1 gap-2 mx-5">
         <Button
           mode="contained"
           onPress={signInWithEmail}
-          labelStyle={styles.buttonLabel}
           buttonColor={BASE_COLORS.TEXT_DARK}
           textColor={BASE_COLORS.WHITE}
-          style={styles.buttonPrimary}
-        >
-          Sign In
-        </Button>
+          contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
+          labelStyle={{
+            fontSize: 16,
+            color: BASE_COLORS.WHITE,
+            fontFamily: FontFamilies.BODY
+          }}
+          style={{
+            alignSelf: "flex-start"
+          }}
+        >Sign In</Button>
+        <Button
+          mode="contained"
+          onPress={() => router.push("../Registration")}
+          buttonColor={BASE_COLORS.TEXT_DARK}
+          textColor={BASE_COLORS.WHITE}
+          contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
+          labelStyle={{
+            fontSize: 16,
+            color: BASE_COLORS.WHITE,
+            fontFamily: FontFamilies.BODY
+          }}
+          style={{
+            alignSelf: "flex-start"
+          }}
+        >Sign Up</Button>
         <Button
           mode="contained"
           onPress={signInAsTestUser}
-          labelStyle={styles.buttonLabel}
-          buttonColor={BASE_COLORS.STONE_DARK}
+          buttonColor={BASE_COLORS.STONE950}
           textColor={BASE_COLORS.WHITE}
-          style={styles.buttonPrimary}
-        >
-          Sign In as Test User
-        </Button>
-        <Button
-          mode="outlined"
-          onPress={() => router.push("../Registration")}
-          textColor={BASE_COLORS.WHITE}
-          style={styles.buttonSecondary}
-          labelStyle={styles.buttonLabelSecondary}
-          buttonColor={BASE_COLORS.TEXT_DARK}
-        >
-          Sign Up
-        </Button>
+          contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
+          labelStyle={{
+            fontSize: 16,
+            color: BASE_COLORS.WHITE,
+            fontFamily: FontFamilies.BODY
+          }}
+          style={{
+            alignSelf: "flex-start"
+          }}
+        >Sign In as Test User</Button>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    backgroundColor: BASE_COLORS.WHITE,
-    fontFamily: FontFamilies.BODY,
-  },
-  buttonPrimary: {
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  buttonSecondary: {
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  buttonLabel: {
-    fontFamily: FontFamilies.BODY_BOLD,
-    fontSize: 16,
-  },
-  buttonLabelSecondary: {
-    fontFamily: FontFamilies.BODY_BOLD,
-    fontSize: 16,
-  },
-});

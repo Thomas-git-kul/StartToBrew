@@ -6,12 +6,8 @@ import { FontFamilies } from "@/constants/Fonts";
 
 const iconMap: Record<string, LucideIcon> = {
   ShoppingCart: Icons.ShoppingCart,
-  ArrowBigRight: Icons.ArrowBigRight,
+  Calendar1: Icons.Calendar1,
   ArrowRight: Icons.ArrowRight,
-  // Add more icons as needed
-  // Example:
-  // Search: Icons.Search,
-  // X: Icons.X,
 };
 
 interface HeaderBarProps {

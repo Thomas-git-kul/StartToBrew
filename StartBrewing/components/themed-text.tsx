@@ -13,7 +13,7 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'defaultText' | 'title' | 'subTitle' | 'smallText' | 'darkAccent' | 'numbers';
+  type?: 'defaultText' | 'title' | 'subTitle' | 'smallText' | 'darkAccent' | 'numbers' | 'titleBlack';
 };
 
 export function ThemedText({
@@ -35,6 +35,7 @@ export function ThemedText({
         type === 'smallText' ? styles.smallText : undefined,
         type === 'darkAccent' ? styles.darkAccent : undefined,
         type === 'numbers' ? styles.numbers : undefined,
+        type === 'titleBlack' ? styles.titleBlack : undefined,
         style,
       ]}
       {...rest}
@@ -72,5 +73,10 @@ const styles = StyleSheet.create({
     fontSize: 15 * scale,
     fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.STONE600
+  },
+  titleBlack: {
+    fontSize: 25 * scale,
+    fontFamily: FontFamilies.BODY_BOLD,
+    color: BASE_COLORS.TEXT_DARK
   },
 });

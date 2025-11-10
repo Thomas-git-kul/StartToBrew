@@ -96,7 +96,8 @@ export default function ShoppingCart() {
         {/* Shipping Info */}
         <View className="mt-7">
           <ThemedText type="title">Shipping Information</ThemedText>
-          <TextInput label="Full Name"/>
+          <TextInput 
+            label="Full Name"/>
           <TextInput 
             label="Street name and number"/>
           <View className="flex-row">
