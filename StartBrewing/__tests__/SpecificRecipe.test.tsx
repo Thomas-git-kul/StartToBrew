@@ -58,6 +58,14 @@ jest.mock("@/components/ui/icon-symbol", () => {
   };
 });
 
+jest.mock("react-native-safe-area-context", () => {
+  const { View } = require("react-native");
+  return {
+    SafeAreaView: ({ children }: any) => <View>{children}</View>,
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  };
+});
+
 // --- Tests --- //
 describe("<SpecificRecipe />", () => {
   afterEach(() => {
@@ -71,7 +79,7 @@ describe("<SpecificRecipe />", () => {
 
   it("renders the rating correctly", () => {
     const { getByText } = render(<SpecificRecipe />);
-    expect(getByText("4.8 / 5")).toBeTruthy();
+    expect(getByText("4.8/5")).toBeTruthy();
     expect(getByText("(265 reviews)")).toBeTruthy();
   });
 

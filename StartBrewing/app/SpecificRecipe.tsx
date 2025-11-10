@@ -1,18 +1,17 @@
-import React from "react";
-import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet} from "react-native";
+import { FAB } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Header from "@/components/header";
+import { useFonts } from "@/hooks/use-fonts";
+import { Star } from "lucide-react-native";
+import { ThemedText } from "@/components/themed-text";
 
 export default function SpecificRecipe() {
+  useFonts()
+
   const router = useRouter();
 
   const ingredients = [
@@ -33,166 +32,83 @@ export default function SpecificRecipe() {
   ];
 
   return (
-    <View style={styles.container}>
-        {/* Fixed title */}
-        <View style={styles.fixedTitleContainer}>
-        <Text style={styles.title}>IJ IPA</Text>
-        </View>
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
+    <SafeAreaView
+      className="flex-1"
+      style={{backgroundColor: BASE_COLORS.LIGHT_BG}}
+    >
+      <Header
+        title='IJ IPA'
+        iconName="ArrowRight"
+        onIconPress={() => router.push("/Recipes" as any)}
+        actionTestID="cart-button"
+      />
+      <ScrollView className="flex-1 mx-3"
+        contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
       >
-
         {/* Image */}
-        <View style={styles.imageWrapper}>
+        <View className="items-center mb-5">
           <Image
             source={require("@/assets/images/default-beer.png")}
-            style={styles.image}
+            style={{
+              width: "100%",
+              borderRadius: 16,
+            }}
             resizeMode="cover"
           />
         </View>
 
-        {/* Rating row */}
-        <View style={styles.ratingRow}>
-          <IconSymbol name="star.fill" size={22} color={BASE_COLORS.ACCENT_PRIMARY} />
-          <Text style={styles.rating}>4.8 / 5 </Text>
-          <Text style={styles.ratingText}>(265 reviews)</Text>
+        {/* Rating */}
+        <View className="flex-row items-center justify-center mb-4 gap-2">
+          <Star size={22} color={BASE_COLORS.ACCENT_LIGHT} />
+          <ThemedText type="subTitle">4.8/5 </ThemedText>
+          <ThemedText type="smallText">(265 reviews)</ThemedText>
         </View>
 
         {/* Brew Info */}
-        <Text style={styles.bodyText}>
+        <ThemedText type="defaultText" className="mb-3">
           It features an assertive bitterness that dominates the palate,
           accompanied by strong aromatic notes that often recall citrus zest,
           pine, or tropical fruit ...
-        </Text>
+        </ThemedText>
 
         {/* Ingredients */}
-        <Text style={styles.bodyText}>
-          Ingredients:
-        </Text>
+        <ThemedText type="subTitle">Ingredients:</ThemedText>
         {ingredients.map((item, index) => (
-          <View key={index} style={styles.bulletRow}>
-            <Text style={styles.bullet}>•</Text>
-            <Text style={styles.bodyText}>{item}</Text>
+          <View key={index} className="flex-row items-start mt-2 gap-3">
+            <ThemedText type="defaultText">•</ThemedText>
+            <ThemedText type="defaultText">{item}</ThemedText>
           </View>
         ))}
       </ScrollView>
 
-      {/* Start Brewing Button */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
+      <View
+        style={{
+          position: "absolute",
+          bottom: 10,
+          left: 0,
+          right: 0,
+          alignItems: "center",
+        }}
+      >
+        <FAB
+          mode="elevated"
+          label="Start Brewing"
+          color={BASE_COLORS.WHITE}
           onPress={() => router.push("../progress")}
-        >
-          <Text style={styles.buttonText}>Start Brewing</Text>
-        </TouchableOpacity>
+          style={{
+            backgroundColor: BASE_COLORS.TEXT_DARK,
+          }}
+          theme={{
+            fonts: {
+              labelLarge: {
+                fontSize: 14,
+                fontFamily: FontFamilies.BODY,
+              },
+            },
+          }}
+        />
       </View>
-    </View>
+    </SafeAreaView>
   );
-}
-
-/* -------------------- Styles -------------------- */
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.LIGHT_BG,
-  },
-  scrollContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    marginTop: 110,
-  },
-  scrollContent: {
-    paddingBottom: 180,
-  },
-  title: {
-    fontSize: 50,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-    textAlign: "left",
-    marginBottom: 16,
-  },
-  imageWrapper: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  image: {
-    width: "100%",
-    height: 220,
-    borderRadius: 16,
-  },
-  ratingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  rating: {
-    fontSize: 18,
-    fontFamily: FontFamilies.BODY_BOLD,
-    color: BASE_COLORS.TEXT_BODY,
-    marginLeft: 6,
-  },
-  ratingText: {
-    fontSize: 16,
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.TEXT_BODY,
-    marginLeft: 4,
-  },
-  bodyText: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontFamily: FontFamilies.BODY_LIGHT,
-    color: BASE_COLORS.TEXT_BODY,
-    textAlign: "left",
-    marginBottom: 8,
-  },
-  bulletRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 4,
-  },
-  bullet: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginRight: 6,
-    color: BASE_COLORS.TEXT_BODY,
-  },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    backgroundColor: BASE_COLORS.LIGHT_BG, // solid background behind button
-    paddingBottom: 24,
-    paddingTop: 16, // small top padding to separate button from text area
-  },
-  button: {
-    backgroundColor: BASE_COLORS.TEXT_DARK,
-    paddingVertical: 14,
-    paddingHorizontal: 48,
-    borderRadius: 16,
-    shadowColor: BASE_COLORS.STONE_DARK,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  buttonText: {
-    color: BASE_COLORS.WHITE,
-    fontSize: 18,
-    fontFamily: FontFamilies.BODY_BOLD,
-  },
-    fixedTitleContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: BASE_COLORS.LIGHT_BG,
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 0,
-    zIndex: 10,
-  },
-});
+};
