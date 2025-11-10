@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Image, View, Dimensions, Pressable } from "react-native";
 import { Card, TouchableRipple } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -12,8 +12,7 @@ interface BeerCardProps {
   reviews: number;
   description: string;
   onPress?: () => void;
-  isFavorite: boolean;
-  onToggleFavorite?: () => void;
+  onToggleFavorite?: (isFavorite: boolean) => void;
 }
 
 const BeerCard: React.FC<BeerCardProps> = ({
@@ -23,9 +22,16 @@ const BeerCard: React.FC<BeerCardProps> = ({
   reviews,
   description,
   onPress,
-  isFavorite,
   onToggleFavorite,
 }) => {
+  
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const handleToggleFavorite = () => {
+    const newState = !isFavorite;
+    setIsFavorite(newState);
+    onToggleFavorite?.(newState);
+  };
 
   const { width: screenWidth } = Dimensions.get("window");
   const imageWidth = Math.min(120, screenWidth * 0.20); // max 120px or 25% of screen
@@ -67,11 +73,22 @@ const BeerCard: React.FC<BeerCardProps> = ({
             <View className="flex-row justify-between items-start">
               <ThemedText type="subTitle">{name}</ThemedText>
 
-              <Pressable onPress={onToggleFavorite} hitSlop={8}>
+              <Pressable
+                onPress={handleToggleFavorite}
+                hitSlop={8}
+                accessibilityLabel={`favorite-${name}`}
+              >
                 {isFavorite ? (
-                  <Heart size={20} color={BASE_COLORS.ACCENT_PRIMARY} />
+                  <Heart
+                    size={20}
+                    stroke={BASE_COLORS.ACCENT_PRIMARY}
+                    fill={BASE_COLORS.ACCENT_PRIMARY}  // ✅ fills the heart
+                  />
                 ) : (
-                  <HeartPlus size={20} color={BASE_COLORS.STONE300} />
+                  <HeartPlus
+                    size={20}
+                    stroke={BASE_COLORS.STONE300}
+                  />
                 )}
               </Pressable>
             </View>
@@ -79,6 +96,7 @@ const BeerCard: React.FC<BeerCardProps> = ({
             <View className="flex-row my-1">
               <Star 
                 color={BASE_COLORS.ACCENT_LIGHT}
+                fill={BASE_COLORS.ACCENT_LIGHT}
                 size={14}
                 style={{
                   marginRight: 5

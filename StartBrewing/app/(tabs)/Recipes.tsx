@@ -14,7 +14,6 @@ interface Beer {
   reviews: number;
   image: string;
   description: string;
-  isFavorite: boolean;
 }
 
 export default function Recipes() {
@@ -39,7 +38,6 @@ export default function Recipes() {
       reviews: 256,
       image: require("@/assets/images/default-beer.png"),
       description: "An assertive bitterness that dominates the palate, with citrus and pine notes.",
-      isFavorite: false,
     },
     {
       name: "Voodoo Ranger",
@@ -47,7 +45,6 @@ export default function Recipes() {
       reviews: 98,
       image: require("@/assets/images/default-beer.png"),
       description: "A crystal-clear IPA dominated by citrus and resin hop profile.",
-      isFavorite: false,
     },
     {
       name: "Two Hearted IPA",
@@ -55,14 +52,13 @@ export default function Recipes() {
       reviews: 322,
       image: require("@/assets/images/default-beer.png"),
       description: "A slightly hazy gold color with tropical flavors like mango and orange.",
-      isFavorite: true,
     },
   ]);
 
   const toggleFavorite = (index: number) => {
     setRecipes((prev) =>
       prev.map((beer, i) =>
-        i === index ? { ...beer, isFavorite: !beer.isFavorite } : beer
+        i === index ? { ...beer } : beer
       )
     );
   };

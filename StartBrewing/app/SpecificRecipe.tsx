@@ -60,7 +60,10 @@ export default function SpecificRecipe() {
 
         {/* Rating */}
         <View className="flex-row items-center justify-center mb-4 gap-2">
-          <Star size={22} color={BASE_COLORS.ACCENT_LIGHT} />
+          <Star 
+            size={22} 
+            color={BASE_COLORS.ACCENT_LIGHT} 
+            fill={BASE_COLORS.ACCENT_LIGHT}/>
           <ThemedText type="subTitle">4.8/5 </ThemedText>
           <ThemedText type="smallText">(265 reviews)</ThemedText>
         </View>
