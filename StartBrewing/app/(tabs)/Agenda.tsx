@@ -170,7 +170,7 @@ export default function Agenda() {
                     style={{ 
                       marginRight: 8,
                     }}
-                    color={BASE_COLORS.ACCENT_PRIMARY}
+                    color={BASE_COLORS.ACCENT_LIGHT}
                   />
                   <ThemedText type='defaultText'
                     onPress={() => toggleStep(date, phaseIndex, stepIndex)}

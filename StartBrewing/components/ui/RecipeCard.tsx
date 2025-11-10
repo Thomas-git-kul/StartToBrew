@@ -1,9 +1,9 @@
 import React from "react";
-import { Image, View, Dimensions } from "react-native";
+import { Image, View, Dimensions, Pressable } from "react-native";
 import { Card, TouchableRipple } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { ThemedText } from "../themed-text";
-import { Star } from "lucide-react-native";
+import { Star, Heart, HeartPlus } from "lucide-react-native";
 
 interface BeerCardProps {
   image: any; // require or uri
@@ -12,6 +12,8 @@ interface BeerCardProps {
   reviews: number;
   description: string;
   onPress?: () => void;
+  isFavorite: boolean;
+  onToggleFavorite?: () => void;
 }
 
 const BeerCard: React.FC<BeerCardProps> = ({
@@ -21,6 +23,8 @@ const BeerCard: React.FC<BeerCardProps> = ({
   reviews,
   description,
   onPress,
+  isFavorite,
+  onToggleFavorite,
 }) => {
 
   const { width: screenWidth } = Dimensions.get("window");
@@ -59,9 +63,18 @@ const BeerCard: React.FC<BeerCardProps> = ({
 
           {/* Text container */}
           <View className="flex-1 mx-3 my-2">
-            <ThemedText type='subTitle'>
-              {name}
-            </ThemedText>
+            {/* Title + Favorite button row */}
+            <View className="flex-row justify-between items-start">
+              <ThemedText type="subTitle">{name}</ThemedText>
+
+              <Pressable onPress={onToggleFavorite} hitSlop={8}>
+                {isFavorite ? (
+                  <Heart size={20} color={BASE_COLORS.ACCENT_PRIMARY} />
+                ) : (
+                  <HeartPlus size={20} color={BASE_COLORS.STONE300} />
+                )}
+              </Pressable>
+            </View>
 
             <View className="flex-row my-1">
               <Star 

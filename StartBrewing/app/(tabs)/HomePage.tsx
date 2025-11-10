@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { FAB } from "react-native-paper";
 
@@ -14,22 +15,24 @@ interface Beer {
   name: string;
   rating: number;
   reviews: number;
-  image: any; // for require("...") format
+  image: any;
   description: string;
+  isFavorite: boolean;
 }
 
 export default function HomePage() {
-  const router = useRouter();
-
   useFonts();
 
-  const beers: Beer[] = [
+  const router = useRouter();
+
+  const [beers, setBeers] = useState<Beer[]>([
     {
       name: "IJ IPA",
       rating: 4.8,
       reviews: 256,
       image: require("@/assets/images/default-beer.png"),
-      description: "An assertive bitterness that dominates the palate, with citrus and pine notes."
+      description: "An assertive bitterness that dominates the palate, with citrus and pine notes.",
+      isFavorite: false,
     },
     {
       name: "Voodoo Ranger",
@@ -37,6 +40,7 @@ export default function HomePage() {
       reviews: 98,
       image: require("@/assets/images/default-beer.png"),
       description: "A crystal-clear IPA dominated by citrus and resin hop profile.",
+      isFavorite: true,
     },
     {
       name: "Two Hearted IPA",
@@ -44,8 +48,18 @@ export default function HomePage() {
       reviews: 322,
       image: require("@/assets/images/default-beer.png"),
       description: "A slightly hazy gold color with tropical flavors like mango and orange.",
+      isFavorite: false,
     },
-  ];
+  ]);
+
+  const toggleFavorite = (index: number) => {
+    setBeers((prev) =>
+      prev.map((beer, i) =>
+        i === index ? { ...beer, isFavorite: !beer.isFavorite } : beer
+      )
+    );
+  };
+
 
   return (
     <View className="flex-1">
@@ -59,7 +73,12 @@ export default function HomePage() {
 
         <View>
           {beers.map((beer, index) => (
-            <BeerCard key={index} {...beer} />
+            <BeerCard 
+              key={index}
+              {...beer}
+              onPress={() => router.push("/SpecificRecipe")}
+              onToggleFavorite={() => toggleFavorite(index)}
+            />
           ))}
         </View>
       </ScrollView>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, ScrollView } from "react-native";
 import { Searchbar} from "react-native-paper";
 import { Search, X } from "lucide-react-native";
@@ -14,10 +14,12 @@ interface Beer {
   reviews: number;
   image: string;
   description: string;
+  isFavorite: boolean;
 }
 
 export default function Recipes() {
   useFonts();
+  const router = useRouter();
 
   const [searchQuery, setSearchQuery] = React.useState("");
 
@@ -30,15 +32,14 @@ export default function Recipes() {
     );
   };
 
-  const router = useRouter();
-
-  const recipes: Beer[] = [
+  const [recipes, setRecipes] = useState<Beer[]>([
     {
       name: "IJ IPA",
       rating: 4.8,
       reviews: 256,
       image: require("@/assets/images/default-beer.png"),
-      description: "An assertive bitterness that dominates the palate, with citrus and pine notes."
+      description: "An assertive bitterness that dominates the palate, with citrus and pine notes.",
+      isFavorite: false,
     },
     {
       name: "Voodoo Ranger",
@@ -46,6 +47,7 @@ export default function Recipes() {
       reviews: 98,
       image: require("@/assets/images/default-beer.png"),
       description: "A crystal-clear IPA dominated by citrus and resin hop profile.",
+      isFavorite: false,
     },
     {
       name: "Two Hearted IPA",
@@ -53,8 +55,17 @@ export default function Recipes() {
       reviews: 322,
       image: require("@/assets/images/default-beer.png"),
       description: "A slightly hazy gold color with tropical flavors like mango and orange.",
+      isFavorite: true,
     },
-  ];
+  ]);
+
+  const toggleFavorite = (index: number) => {
+    setRecipes((prev) =>
+      prev.map((beer, i) =>
+        i === index ? { ...beer, isFavorite: !beer.isFavorite } : beer
+      )
+    );
+  };
 
   return (
     <View className="flex-1"
@@ -96,6 +107,7 @@ export default function Recipes() {
               key={index} 
               {...beer}
               onPress={() => router.push("/SpecificRecipe")}
+              onToggleFavorite={() => toggleFavorite(index)}
             />
           ))}
         </View>
