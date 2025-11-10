@@ -1,5 +1,6 @@
-import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet} from "react-native";
-import { FAB } from "react-native-paper";
+import { useState } from "react";
+import { View, Image, ScrollView, TouchableOpacity } from "react-native";
+import { FAB, Modal, Portal, Button } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
@@ -13,6 +14,14 @@ export default function SpecificRecipe() {
   useFonts()
 
   const router = useRouter();
+
+  const [reviewVisible, setReviewVisible] = useState(false);
+  const [rating, setRating] = useState(0);
+
+  const handleStarPress = (value: number) => {
+    setRating(value);
+    setTimeout(() => setReviewVisible(false), 300);
+  };
 
   const ingredients = [
     "6.5 lb (2.95 kg) Pilsner malt",
@@ -42,6 +51,7 @@ export default function SpecificRecipe() {
         onIconPress={() => router.push("/Recipes" as any)}
         actionTestID="cart-button"
       />
+
       <ScrollView className="flex-1 mx-3"
         contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
@@ -66,6 +76,16 @@ export default function SpecificRecipe() {
             fill={BASE_COLORS.ACCENT_LIGHT}/>
           <ThemedText type="subTitle">4.8/5 </ThemedText>
           <ThemedText type="smallText">(265 reviews)</ThemedText>
+          <TouchableOpacity
+            onPress={() => setReviewVisible(true)}
+            style={{
+              marginLeft: 8,
+              paddingVertical: 4,
+              paddingHorizontal: 10,
+            }}
+          >
+            <ThemedText type="smallText">Add Review</ThemedText>
+          </TouchableOpacity>
         </View>
 
         {/* Brew Info */}
@@ -84,6 +104,34 @@ export default function SpecificRecipe() {
           </View>
         ))}
       </ScrollView>
+
+      {/* Modal for reviews */}
+      <Portal>
+        <Modal
+          visible={reviewVisible}
+          onDismiss={() => setReviewVisible(false)}
+          contentContainerStyle={{
+            backgroundColor: BASE_COLORS.WHITE,
+            padding: 20,
+            borderRadius: 12,
+            marginHorizontal: 30,
+          }}
+        >
+          <ThemedText type="title" className="text-center mb-4">Rate this recipe</ThemedText>
+
+          <View className="flex-row justify-center gap-3">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <TouchableOpacity key={value} onPress={() => handleStarPress(value)}>
+                <Star
+                  size={36}
+                  stroke={value <= rating ? BASE_COLORS.ACCENT_LIGHT : BASE_COLORS.STONE300}
+                  fill={value <= rating ? BASE_COLORS.ACCENT_LIGHT : "transparent"}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Modal>
+      </Portal>
 
       <View
         style={{
