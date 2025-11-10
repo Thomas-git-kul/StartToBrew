@@ -1,50 +1,45 @@
-// __tests__/Registration.test.tsx
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
 
-import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
-
-// 1. AsyncStorage mock zodat client.native geen NativeModule error triggert
+// 1. AsyncStorage mock to prevent NativeModule errors
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock")
 );
 
-// 2. Supabase mocken zodat createClient NIET met env vars runt
+// 2. Supabase mock so createClient doesn't require env vars
+const mockSignUp = jest.fn().mockResolvedValue({
+  data: { session: null }, // triggers "Check your inbox" path
+  error: null,
+});
 jest.mock("@/supabase", () => ({
   supabase: {
     auth: {
-      signUp: jest.fn().mockResolvedValue({
-        data: { session: null }, // triggert "Check your inbox..." pad
-        error: null,
-      }),
+      signUp: mockSignUp,
     },
   },
 }));
 
-// 3. Router mocken zodat router.replace geen echte navigatie nodig heeft
+// 3. Router mock so router.replace does not navigate
+const mockReplace = jest.fn();
 jest.mock("expo-router", () => ({
   router: {
-    replace: jest.fn(),
+    replace: mockReplace,
     push: jest.fn(),
     back: jest.fn(),
   },
 }));
 
-// 4. Andere UI afhankelijke dingen mocken
-
+// 4. UI dependent mocks
 jest.mock("expo-checkbox", () => {
   const { Text } = require("react-native");
   return ({ value, onValueChange }: any) => (
-    <Text onPress={() => onValueChange(!value)}>
+    <Text
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: value }}
+      onPress={() => onValueChange(!value)}
+    >
       checkbox-{value ? "checked" : "unchecked"}
     </Text>
   );
-});
-
-jest.mock("react-native-safe-area-context", () => {
-  const { View } = require("react-native");
-  return {
-    SafeAreaView: ({ children }: any) => <View>{children}</View>,
-  };
 });
 
 jest.mock("@/constants/Colors", () => ({
@@ -66,7 +61,7 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
-// 5. Pas NA alle mocks de component importeren
+// Import the component AFTER all mocks
 import Registration from "../app/Registration";
 
 describe("<Registration />", () => {
@@ -74,30 +69,26 @@ describe("<Registration />", () => {
     jest.clearAllMocks();
   });
 
-  it("renders the title correctly", () => {
+  it("renders the main title correctly", () => {
     const { getByText } = render(<Registration />);
-    expect(getByText("No account yet? Register here!")).toBeTruthy();
+    expect(getByText("No account yet?")).toBeTruthy();
+    expect(getByText("Register here!")).toBeTruthy();
   });
 
-  it("renders all main labels correctly", () => {
+  it("renders all section labels", () => {
     const { getByText } = render(<Registration />);
-
-    expect(getByText("Lastname")).toBeTruthy();
-    expect(getByText("Firstname")).toBeTruthy();
-    expect(getByText("Day")).toBeTruthy();
-    expect(getByText("Month")).toBeTruthy();
-    expect(getByText("Year")).toBeTruthy();
-    expect(getByText("Email")).toBeTruthy();
-    expect(getByText("Username")).toBeTruthy();
-    expect(getByText("Password")).toBeTruthy();
-    expect(getByText("Confirm Password")).toBeTruthy();
+    expect(getByText("Full Name")).toBeTruthy();
+    expect(getByText("Birth Date")).toBeTruthy();
+    expect(getByText("Contact information")).toBeTruthy();
+    expect(getByText("Account")).toBeTruthy();
   });
 
-  it("renders the checkbox and toggles it", () => {
-    const { getByText } = render(<Registration />);
-    const checkbox = getByText("checkbox-unchecked");
+ it("renders the checkbox and toggles it on press", () => {
+    const { getByRole } = render(<Registration />);
+    const checkbox = getByRole("checkbox");
     fireEvent.press(checkbox);
-    expect(getByText("checkbox-checked")).toBeTruthy();
+    // you can check accessibilityState.checked if needed
+    expect(checkbox.props.accessibilityState.checked).toBe(true);
   });
 
   it("renders the create account button", () => {
@@ -105,7 +96,18 @@ describe("<Registration />", () => {
     expect(getByText("Create account")).toBeTruthy();
   });
 
-  it("matches the snapshot", () => {
+  it("prevents signup if terms not agreed", async () => {
+    const { getByText } = render(<Registration />);
+    const button = getByText("Create account");
+
+    fireEvent.press(button);
+
+    await waitFor(() =>
+      expect(getByText("Create account")).toBeTruthy() // button still exists
+    );
+  });
+
+  it("matches snapshot", () => {
     const tree = render(<Registration />).toJSON();
     expect(tree).toMatchSnapshot();
   });

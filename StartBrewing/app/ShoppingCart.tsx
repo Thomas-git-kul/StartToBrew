@@ -101,11 +101,9 @@ export default function ShoppingCart() {
           <TextInput 
             label="Street name and number"/>
           <View className="flex-row">
-            <View>
               <TextInput label="City" />
-            </View>
             <View className="flex-1 ml-3">
-              <TextInput label="Zip code" />
+              <TextInput label="Zip code"/>
             </View>
           </View>
         </View>

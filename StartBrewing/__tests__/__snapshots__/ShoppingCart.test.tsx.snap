@@ -104,11 +104,9 @@ exports[`<ShoppingCart /> matches snapshot for layout consistency 1`] = `
         <View
           className="flex-row"
         >
-          <View>
-            <Text>
-              City
-            </Text>
-          </View>
+          <Text>
+            City
+          </Text>
           <View
             className="flex-1 ml-3"
           >
