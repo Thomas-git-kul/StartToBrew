@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { FAB } from "react-native-paper";
 
@@ -8,28 +9,28 @@ import Header from '@/components/header';
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 
-import { MaterialIcons } from "@expo/vector-icons";
+import { Plus } from "lucide-react-native";
 
 interface Beer {
   name: string;
   rating: number;
   reviews: number;
-  image: any; // for require("...") format
+  image: any;
   description: string;
 }
 
 export default function HomePage() {
-  const router = useRouter();
-
   useFonts();
 
-  const beers: Beer[] = [
+  const router = useRouter();
+
+  const [beers, setBeers] = useState<Beer[]>([
     {
       name: "IJ IPA",
       rating: 4.8,
       reviews: 256,
       image: require("@/assets/images/default-beer.png"),
-      description: "An assertive bitterness that dominates the palate, with citrus and pine notes."
+      description: "An assertive bitterness that dominates the palate, with citrus and pine notes.",
     },
     {
       name: "Voodoo Ranger",
@@ -45,7 +46,7 @@ export default function HomePage() {
       image: require("@/assets/images/default-beer.png"),
       description: "A slightly hazy gold color with tropical flavors like mango and orange.",
     },
-  ];
+  ]);
 
   return (
     <View className="flex-1">
@@ -59,7 +60,11 @@ export default function HomePage() {
 
         <View>
           {beers.map((beer, index) => (
-            <BeerCard key={index} {...beer} />
+            <BeerCard 
+              key={index}
+              {...beer}
+              onPress={() => router.push("/SpecificRecipe")}
+            />
           ))}
         </View>
       </ScrollView>
@@ -67,7 +72,7 @@ export default function HomePage() {
       {/* Floating Action Button */}
       <FAB
         icon={(props) => (
-          <MaterialIcons name="add" size={props.size} color={props.color} />
+          <Plus size={props.size} color={props.color} />
         )}
         testID="fab"
         style={{

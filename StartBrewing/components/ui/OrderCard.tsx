@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
 import { Card, Text, Avatar } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BASE_COLORS } from '@/constants/Colors';
 import { FontFamilies } from '@/constants/Fonts';
+import { ThemedText } from "@/components/themed-text";
+import { CirclePlus, CircleMinus } from "lucide-react-native";
 
 type OrderCardProps = {
   image: any;
@@ -78,52 +79,38 @@ export default function OrderCard({
             backgroundColor: BASE_COLORS.WHITE
         }}
     >
-        <ScrollView>
-            <View className="flex-row items-center px-4 py-2">
-                {/* Image */}
-                <View className="w-20 items-center">
-                    <Avatar.Image source={image} size={80} />
-                </View>
+      <View className="flex-row items-center">
+        {/* Image */}
+        <Avatar.Image source={image} size={80} />
 
-                {/* Title */}
-                <View className="flex-1 px-2">
-                    <Text
-                        numberOfLines={2}
-                        className="text-lg ml-3"
-                        style = {{
-                            fontFamily: FontFamilies.BODY,
-                            color: BASE_COLORS.STONE600
-                        }}
-                    >{title}</Text>
-                </View>
+        <View className="flex-1 flex-row ml-3 items-center">
 
-                {/* Quantity Controls */}
-                <View className="w-28 flex-row items-center justify-center">
-                    <Pressable onPress={handleDecrease} hitSlop={8}>
-                        <MaterialCommunityIcons name="minus-circle-outline" size={20} color={BASE_COLORS.STONE500} />
-                    </Pressable>
-                    <Text className="mx-2 text-lg"
-                        style = {{
-                            fontFamily: FontFamilies.BODY,
-                            color: BASE_COLORS.STONE600
-                        }}
-                    >{displayedQuantity}</Text>
-                    <Pressable onPress={handleIncrease} hitSlop={8}>
-                        <MaterialCommunityIcons name="plus-circle-outline" size={20} color={BASE_COLORS.STONE500} />
-                    </Pressable>
-                </View>
+          {/* Title */}
+          <ThemedText 
+            type="subTitle" 
+            style={{ flex: 1 }}
+          >{title}</ThemedText>
 
-                {/* Price */}
-                <View className="w-24 items-end mr-5">
-                    <Text className="text-base"
-                        style = {{
-                            fontFamily: FontFamilies.BODY,
-                            color: BASE_COLORS.STONE600
-                        }}
-                    >{formatter.format(displayedPrice)}</Text>
-                </View>
-            </View>
-        </ScrollView>
+          {/* Quantity */}
+          <View style={{ width: 80 }} className="flex-row items-center justify-center">
+            <Pressable onPress={handleDecrease} hitSlop={8}>
+              <CircleMinus size={20} color={BASE_COLORS.STONE500} />
+            </Pressable>
+            <ThemedText type="numbers" className="mx-2">
+              {displayedQuantity}
+            </ThemedText>
+            <Pressable onPress={handleIncrease} hitSlop={8}>
+              <CirclePlus size={20} color={BASE_COLORS.STONE500} />
+            </Pressable>
+          </View>
+
+          {/* Price */}
+          <View style={{ width: 80, alignItems: "flex-end", marginRight: 5 }}>
+            <ThemedText type="numbers">{formatter.format(displayedPrice)}</ThemedText>
+          </View>
+
+        </View>
+      </View>
     </Card>
   );
 };

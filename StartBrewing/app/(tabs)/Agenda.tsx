@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "@/hooks/use-fonts";
 
 import { Calendar } from "react-native-calendars";
-import { Checkbox } from "react-native-paper";
+import Checkbox from "expo-checkbox";
 import Header from "@/components/header";
 
 import { BASE_COLORS } from "@/constants/Colors";
@@ -162,14 +162,16 @@ export default function Agenda() {
               {phase.steps.map((step, stepIndex) => (
                 <View
                   key={stepIndex}
-                  className="flex-row items-center"
+                  className="flex-row items-center mb-2"
                 >
                   <Checkbox
-                    status={step.done ? "checked" : "unchecked"}
-                    onPress={() => toggleStep(date, phaseIndex, stepIndex)}
-                    color={BASE_COLORS.ACCENT_PRIMARY}
+                    value={step.done}
+                    onValueChange={() => toggleStep(date, phaseIndex, stepIndex)}
+                    style={{ 
+                      marginRight: 8,
+                    }}
+                    color={BASE_COLORS.ACCENT_LIGHT}
                   />
-
                   <ThemedText type='defaultText'
                     onPress={() => toggleStep(date, phaseIndex, stepIndex)}
                   >

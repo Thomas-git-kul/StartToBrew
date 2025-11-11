@@ -13,7 +13,7 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'defaultText' | 'title' | 'subTitle' | 'smallText' | 'link';
+  type?: 'defaultText' | 'title' | 'subTitle' | 'smallText' | 'darkAccent' | 'numbers' | 'titleBlack';
 };
 
 export function ThemedText({
@@ -33,7 +33,9 @@ export function ThemedText({
         type === 'title' ? styles.title : undefined,
         type === 'subTitle' ? styles.subTitle : undefined,
         type === 'smallText' ? styles.smallText : undefined,
-        type === 'link' ? styles.link : undefined,
+        type === 'darkAccent' ? styles.darkAccent : undefined,
+        type === 'numbers' ? styles.numbers : undefined,
+        type === 'titleBlack' ? styles.titleBlack : undefined,
         style,
       ]}
       {...rest}
@@ -62,9 +64,19 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.BODY_LIGHT,
     color: BASE_COLORS.STONE500,
   },
-  link: {
-    lineHeight: 30 * scale,
-    fontSize: 16 * scale,
-    color: '#0a7ea4',
+  darkAccent: {
+    fontSize: 17 * scale,
+    fontFamily: FontFamilies.BODY_BLACK,
+    color: BASE_COLORS.TEXT_DARK,
+  },
+  numbers: {
+    fontSize: 15 * scale,
+    fontFamily: FontFamilies.BODY,
+    color: BASE_COLORS.STONE600
+  },
+  titleBlack: {
+    fontSize: 25 * scale,
+    fontFamily: FontFamilies.BODY_BOLD,
+    color: BASE_COLORS.TEXT_DARK
   },
 });

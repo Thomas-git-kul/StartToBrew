@@ -1,9 +1,9 @@
-import React from "react";
-import { Image, View, Dimensions } from "react-native";
-import { Card, Text, TouchableRipple } from "react-native-paper";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { Image, View, Dimensions, Pressable } from "react-native";
+import { Card, TouchableRipple } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { ThemedText } from "../themed-text";
+import { Star, Heart, HeartPlus } from "lucide-react-native";
 
 interface BeerCardProps {
   image: any; // require or uri
@@ -12,6 +12,7 @@ interface BeerCardProps {
   reviews: number;
   description: string;
   onPress?: () => void;
+  onToggleFavorite?: (isFavorite: boolean) => void;
 }
 
 const BeerCard: React.FC<BeerCardProps> = ({
@@ -21,7 +22,16 @@ const BeerCard: React.FC<BeerCardProps> = ({
   reviews,
   description,
   onPress,
+  onToggleFavorite,
 }) => {
+  
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const handleToggleFavorite = () => {
+    const newState = !isFavorite;
+    setIsFavorite(newState);
+    onToggleFavorite?.(newState);
+  };
 
   const { width: screenWidth } = Dimensions.get("window");
   const imageWidth = Math.min(120, screenWidth * 0.20); // max 120px or 25% of screen
@@ -59,16 +69,37 @@ const BeerCard: React.FC<BeerCardProps> = ({
 
           {/* Text container */}
           <View className="flex-1 mx-3 my-2">
-            <ThemedText type='subTitle'>
-              {name}
-            </ThemedText>
+            {/* Title + Favorite button row */}
+            <View className="flex-row justify-between items-start">
+              <ThemedText type="subTitle">{name}</ThemedText>
+
+              <Pressable
+                onPress={handleToggleFavorite}
+                hitSlop={8}
+                accessibilityLabel={`favorite-${name}`}
+              >
+                {isFavorite ? (
+                  <Heart
+                    size={20}
+                    stroke={BASE_COLORS.ACCENT_PRIMARY}
+                    fill={BASE_COLORS.ACCENT_PRIMARY}  // ✅ fills the heart
+                  />
+                ) : (
+                  <HeartPlus
+                    size={20}
+                    stroke={BASE_COLORS.STONE300}
+                  />
+                )}
+              </Pressable>
+            </View>
 
             <View className="flex-row my-1">
-              <Ionicons name="star" size={14}
+              <Star 
+                color={BASE_COLORS.ACCENT_LIGHT}
+                fill={BASE_COLORS.ACCENT_LIGHT}
+                size={14}
                 style={{
-                  color: BASE_COLORS.ACCENT_LIGHT,
                   marginRight: 5
-
                 }}
               />
               <ThemedText type='smallText'>

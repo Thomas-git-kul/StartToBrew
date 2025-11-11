@@ -239,7 +239,7 @@ exports[`<Agenda /> matches snapshot 1`] = `
           Phase 1: Mash
         </Text>
         <View
-          className="flex-row items-center"
+          className="flex-row items-center mb-2"
         >
           <View
             accessibilityState={
@@ -284,7 +284,7 @@ exports[`<Agenda /> matches snapshot 1`] = `
           </Text>
         </View>
         <View
-          className="flex-row items-center"
+          className="flex-row items-center mb-2"
         >
           <View
             accessibilityState={
@@ -329,7 +329,7 @@ exports[`<Agenda /> matches snapshot 1`] = `
           </Text>
         </View>
         <View
-          className="flex-row items-center"
+          className="flex-row items-center mb-2"
         >
           <View
             accessibilityState={
@@ -374,7 +374,7 @@ exports[`<Agenda /> matches snapshot 1`] = `
           </Text>
         </View>
         <View
-          className="flex-row items-center"
+          className="flex-row items-center mb-2"
         >
           <View
             accessibilityState={
