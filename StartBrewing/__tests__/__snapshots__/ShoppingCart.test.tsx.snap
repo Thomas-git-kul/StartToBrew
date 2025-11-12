@@ -1,16 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<ShoppingCart /> matches snapshot for layout consistency 1`] = `
-<View
-  className="flex-1"
-  style={
-    {
-      "backgroundColor": undefined,
-    }
-  }
->
+<View>
   <Text>
-    Order Information
+    Shopping Cart
   </Text>
   <button
     data-testid="header-action"
@@ -18,60 +11,121 @@ exports[`<ShoppingCart /> matches snapshot for layout consistency 1`] = `
   >
     Icon
   </button>
-  <View
-    className="mx-5"
+  <RCTScrollView
+    className="mx-3"
   >
-    <Text>
-      Order Summary
-    </Text>
-    <RCTScrollView>
-      <View />
-    </RCTScrollView>
-    <View
-      className="mt-3 items-end"
-    >
-      <Text>
-        Subtotal: 
-        € 300,49
+    <View>
+      <Text
+        style={
+          [
+            {
+              "color": "#11181C",
+            },
+            undefined,
+            {
+              "color": undefined,
+              "fontFamily": undefined,
+              "fontSize": 34,
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+          ]
+        }
+      >
+        Order Summary
       </Text>
+      <View
+        className="mx-1"
+      />
+      <View
+        className="mt-3 items-end"
+      >
+        <Text
+          style={
+            [
+              {
+                "color": "#11181C",
+              },
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              {
+                "color": "#000",
+                "fontFamily": undefined,
+                "fontSize": 34,
+              },
+              undefined,
+              undefined,
+              undefined,
+            ]
+          }
+        >
+          Subtotal: 
+          € 300,49
+        </Text>
+      </View>
+      <View
+        className="mt-7"
+      >
+        <Text
+          style={
+            [
+              {
+                "color": "#11181C",
+              },
+              undefined,
+              {
+                "color": undefined,
+                "fontFamily": undefined,
+                "fontSize": 34,
+              },
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+            ]
+          }
+        >
+          Shipping Information
+        </Text>
+        <Text>
+          Full Name
+        </Text>
+        <Text>
+          Street name and number
+        </Text>
+        <View
+          className="flex-row"
+        >
+          <Text>
+            City
+          </Text>
+          <View
+            className="flex-1 ml-3"
+          >
+            <Text>
+              Zip code
+            </Text>
+          </View>
+        </View>
+      </View>
+      <View
+        className="mt-5"
+      >
+        <button
+          onClick={[Function]}
+        >
+          Proceed to payment
+        </button>
+      </View>
     </View>
-  </View>
-  <View
-    className="mx-5 mt-10"
-  >
-    <Text>
-      Shipping Information
-    </Text>
-    <Text>
-      Full Name
-    </Text>
-    <Text>
-      Street name and number
-    </Text>
-    <View
-      className="flex-row justify-between"
-    >
-      <Text>
-        City
-      </Text>
-      <Text>
-        City zip code
-      </Text>
-    </View>
-  </View>
-  <View
-    style={
-      {
-        "marginTop": 50,
-        "paddingLeft": 20,
-      }
-    }
-  >
-    <button
-      onClick={[Function]}
-    >
-      Proceed to payment
-    </button>
-  </View>
+  </RCTScrollView>
 </View>
 `;

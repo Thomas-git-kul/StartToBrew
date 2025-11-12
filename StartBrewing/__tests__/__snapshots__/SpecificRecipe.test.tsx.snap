@@ -1,66 +1,24 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<SpecificRecipe /> matches the snapshot 1`] = `
-<View
-  style={
-    {
-      "backgroundColor": "#fafafa",
-      "flex": 1,
-    }
-  }
->
-  <View
-    style={
-      {
-        "backgroundColor": "#fafafa",
-        "left": 0,
-        "paddingBottom": 0,
-        "paddingHorizontal": 16,
-        "paddingTop": 24,
-        "position": "absolute",
-        "right": 0,
-        "top": 0,
-        "zIndex": 10,
-      }
-    }
-  >
-    <Text
-      style={
-        {
-          "color": "#000000",
-          "fontFamily": "System",
-          "fontSize": 50,
-          "marginBottom": 16,
-          "textAlign": "left",
-        }
-      }
-    >
+<View>
+  <View>
+    <Text>
       IJ IPA
     </Text>
   </View>
   <RCTScrollView
+    className="flex-1 mx-3"
     contentContainerStyle={
       {
-        "paddingBottom": 180,
+        "paddingBottom": 80,
       }
     }
     showsVerticalScrollIndicator={false}
-    style={
-      {
-        "flex": 1,
-        "marginTop": 110,
-        "paddingHorizontal": 16,
-      }
-    }
   >
     <View>
       <View
-        style={
-          {
-            "alignItems": "center",
-            "marginBottom": 24,
-          }
-        }
+        className="items-center mb-5"
       >
         <Image
           resizeMode="cover"
@@ -72,582 +30,292 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
           style={
             {
               "borderRadius": 16,
-              "height": 220,
               "width": "100%",
             }
           }
         />
       </View>
       <View
-        style={
-          {
-            "alignItems": "center",
-            "flexDirection": "row",
-            "justifyContent": "center",
-            "marginBottom": 8,
-          }
-        }
+        className="flex-row items-center justify-center mb-4 gap-2"
       >
-        <Text
-          testID="mock-icon"
-        >
-          icon-
-          star.fill
-        </Text>
-        <Text
+        <RNSVGSvgView
+          align="xMidYMid"
+          bbHeight={22}
+          bbWidth={22}
+          fill="#B45309"
+          focusable={false}
+          height={22}
+          meetOrSlice={0}
+          minX={0}
+          minY={0}
+          stroke="#B45309"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
           style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 18,
-              "marginLeft": 6,
-            }
+            [
+              {
+                "backgroundColor": "transparent",
+                "borderWidth": 0,
+              },
+              {
+                "flex": 0,
+                "height": 22,
+                "width": 22,
+              },
+            ]
           }
+          vbHeight={24}
+          vbWidth={24}
+          width={22}
+          xmlns="http://www.w3.org/2000/svg"
         >
-          4.8 / 5 
+          <RNSVGGroup
+            fill={
+              {
+                "payload": 4290007817,
+                "type": 0,
+              }
+            }
+            propList={
+              [
+                "fill",
+                "stroke",
+                "strokeWidth",
+                "strokeLinecap",
+                "strokeLinejoin",
+              ]
+            }
+            stroke={
+              {
+                "payload": 4290007817,
+                "type": 0,
+              }
+            }
+            strokeLinecap={1}
+            strokeLinejoin={1}
+            strokeWidth={2}
+          >
+            <RNSVGPath
+              d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"
+              fill={
+                {
+                  "payload": 4290007817,
+                  "type": 0,
+                }
+              }
+              propList={
+                [
+                  "fill",
+                  "stroke",
+                  "strokeWidth",
+                  "strokeLinecap",
+                  "strokeLinejoin",
+                ]
+              }
+              stroke={
+                {
+                  "payload": 4290007817,
+                  "type": 0,
+                }
+              }
+              strokeLinecap={1}
+              strokeLinejoin={1}
+              strokeWidth={2}
+            />
+          </RNSVGGroup>
+        </RNSVGSvgView>
+        <Text>
+          4.8/5 
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "marginLeft": 4,
-            }
-          }
-        >
+        <Text>
           (265 reviews)
         </Text>
-      </View>
-      <Text
-        style={
-          {
-            "color": "#44403B",
-            "fontFamily": "System",
-            "fontSize": 16,
-            "lineHeight": 24,
-            "marginBottom": 8,
-            "textAlign": "left",
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
           }
-        }
-      >
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "marginLeft": 8,
+              "opacity": 1,
+              "paddingHorizontal": 10,
+              "paddingVertical": 4,
+            }
+          }
+        >
+          <Text>
+            Add Review
+          </Text>
+        </View>
+      </View>
+      <Text>
         It features an assertive bitterness that dominates the palate, accompanied by strong aromatic notes that often recall citrus zest, pine, or tropical fruit ...
       </Text>
-      <Text
-        style={
-          {
-            "color": "#44403B",
-            "fontFamily": "System",
-            "fontSize": 16,
-            "lineHeight": 24,
-            "marginBottom": 8,
-            "textAlign": "left",
-          }
-        }
-      >
+      <Text>
         Ingredients:
       </Text>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           6.5 lb (2.95 kg) Pilsner malt
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           2.25 lb (1 kg) wheat malt
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           23 oz (652 g) white unmalted wheat flakes
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           5 ml lactic acid
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           0.75 oz (21 g) Bravo pellets, 15% a.a. (60 min)
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           5 oz (141 g) dextrose (30 min)
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           Kettle Finings (30 min)
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           0.12 oz (3 g) fresh ground coriander (5 min)
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           0.34 oz (10 g) fresh ground bitter orange peel (5 min)
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           1.0 oz (28 g) Citra pellets (knockout)
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           1.0 oz (28 g) Centennial pellets (knockout)
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           0.5 oz (14 g) Cascade pellets (knockout)
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           Yeast nutrient (optional)
         </Text>
       </View>
       <View
-        style={
-          {
-            "alignItems": "flex-start",
-            "flexDirection": "row",
-            "marginBottom": 4,
-          }
-        }
+        className="flex-row items-start mt-2 gap-3"
       >
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontSize": 16,
-              "lineHeight": 22,
-              "marginRight": 6,
-            }
-          }
-        >
+        <Text>
           •
         </Text>
-        <Text
-          style={
-            {
-              "color": "#44403B",
-              "fontFamily": "System",
-              "fontSize": 16,
-              "lineHeight": 24,
-              "marginBottom": 8,
-              "textAlign": "left",
-            }
-          }
-        >
+        <Text>
           Wyeast 3787 Trappist High Gravity ale yeast
         </Text>
       </View>
@@ -657,11 +325,8 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
     style={
       {
         "alignItems": "center",
-        "backgroundColor": "#fafafa",
-        "bottom": 0,
+        "bottom": 10,
         "left": 0,
-        "paddingBottom": 24,
-        "paddingTop": 16,
         "position": "absolute",
         "right": 0,
       }
@@ -698,29 +363,11 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
       style={
         {
           "backgroundColor": "#000000",
-          "borderRadius": 16,
           "opacity": 1,
-          "paddingHorizontal": 48,
-          "paddingVertical": 14,
-          "shadowColor": "#0C0A09",
-          "shadowOffset": {
-            "height": 2,
-            "width": 0,
-          },
-          "shadowOpacity": 0.15,
-          "shadowRadius": 4,
         }
       }
     >
-      <Text
-        style={
-          {
-            "color": "#ffffff",
-            "fontFamily": "System",
-            "fontSize": 18,
-          }
-        }
-      >
+      <Text>
         Start Brewing
       </Text>
     </View>

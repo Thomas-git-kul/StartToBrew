@@ -77,6 +77,6 @@ describe("<StorePage />", () => {
   it("navigates to cart when cart button pressed", () => {
     const { getByTestId } = render(<StorePage />);
     fireEvent.press(getByTestId("cart-button"));
-    expect(mockPush).toHaveBeenCalledWith("/cart");
+    expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
   });
 });

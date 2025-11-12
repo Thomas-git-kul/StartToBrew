@@ -2,6 +2,9 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
+import { View } from "react-native";
+import { BASE_COLORS } from "@/constants/Colors";
+
 // React Navigation
 import {
   DarkTheme as NavDarkTheme,
@@ -41,15 +44,13 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
         <NavigationThemeProvider value={theme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            {/* Start with the tabs folder, which contains HomePage.tsx */}
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            {/* Modal screen */}
-            <Stack.Screen
-              name="modal"
-              options={{ presentation: "modal", title: "Modal" }}
-            />
-          </Stack>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="modal"
+                options={{ presentation: "modal", title: "Modal" }}
+              />
+            </Stack>
           <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
         </NavigationThemeProvider>
       </PaperProvider>
