@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  FlatList,
-  Dimensions,
-} from "react-native";
+import { View, ScrollView, Image, TouchableOpacity, FlatList, Dimensions } from "react-native";
 import { FAB } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,11 +26,14 @@ export default function StoreItem() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
-      {/* Header with same back arrow style as SpecificRecipe */}
+    <SafeAreaView 
+      style={{ 
+        flex: 1, 
+        backgroundColor: BASE_COLORS.LIGHT_BG 
+      }}>
       <Header
         title="Starter Brew Kit IPA"
-        iconName="ArrowRight" // same as SpecificRecipe
+        iconName="ArrowRight"
         onIconPress={() => router.push("/Store")}
         actionTestID="back-button"
       />

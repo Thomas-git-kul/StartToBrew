@@ -251,7 +251,7 @@ exports[`<HomePage /> matches snapshot 1`] = `
     style={
       {
         "backgroundColor": "#000",
-        "borderRadius": 16,
+        "borderRadius": 20,
         "bottom": 25,
         "opacity": 1,
         "position": "absolute",
@@ -278,7 +278,7 @@ exports[`<HomePage /> matches snapshot 1`] = `
       style={
         {
           "backgroundColor": "#000",
-          "borderRadius": 16,
+          "borderRadius": 20,
           "flex": undefined,
           "shadowColor": "#000",
           "shadowOffset": {
@@ -328,7 +328,7 @@ exports[`<HomePage /> matches snapshot 1`] = `
               "overflow": "hidden",
             },
             {
-              "borderRadius": 16,
+              "borderRadius": 20,
             },
           ]
         }

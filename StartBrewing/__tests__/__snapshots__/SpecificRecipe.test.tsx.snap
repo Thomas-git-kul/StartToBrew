@@ -363,6 +363,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
       style={
         {
           "backgroundColor": "#000000",
+          "borderRadius": 20,
           "opacity": 1,
         }
       }
