@@ -9,9 +9,11 @@ import { FontFamilies } from "@/constants/Fonts";
 import { useFonts } from "@/hooks/use-fonts";
 import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
+import { nanoid } from 'nanoid/non-secure';
 
 const { width } = Dimensions.get("window");
-const IMAGE_HEIGHT = 300;
+const IMAGE_WIDTH = width - 20;
+const IMAGE_HEIGHT = IMAGE_WIDTH * 0.75;
 
 export default function StoreItem() {
   useFonts();
@@ -21,8 +23,8 @@ export default function StoreItem() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const images = [
-    require("@/assets/images/Starterkit.png"),
-    require("@/assets/images/starterkit2.png"),
+    { id: nanoid(), source: require("@/assets/images/Starterkit.png") },
+    { id: nanoid(), source: require("@/assets/images/starterkit2.png") },
   ];
 
   return (
@@ -39,91 +41,91 @@ export default function StoreItem() {
       />
 
       {/* Scrollable Content */}
-<ScrollView
-  contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 160 }} // extra bottom padding
-  showsVerticalScrollIndicator={false}
->
-  {/* Image Carousel inside ScrollView */}
-  <View style={{ height: IMAGE_HEIGHT, marginBottom: 16 }}>
-    <FlatList
-      data={images}
-      horizontal
-      pagingEnabled
-      showsHorizontalScrollIndicator={false}
-      keyExtractor={(_, index) => index.toString()}
-      renderItem={({ item }) => (
-        <Image
-          source={item}
-          style={{
-            width,
-            height: IMAGE_HEIGHT,
-            borderRadius: 16,
-          }}
-          resizeMode="cover"
-        />
-      )}
-      onMomentumScrollEnd={(ev) => {
-        const index = Math.round(ev.nativeEvent.contentOffset.x / width);
-        setCurrentIndex(index);
-      }}
-    />
+      <ScrollView
+        className="flex-1 mx-3"        
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Image Carousel inside ScrollView */}
+        <View>
+          <FlatList
+            data={images}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Image
+                source={item.source}
+                style={{
+                  borderRadius: 20,
+                  width: IMAGE_WIDTH,
+                  height: IMAGE_HEIGHT,
+                }}
+                resizeMode="cover"
+              />
+            )}
+            onMomentumScrollEnd={(ev) => {
+              const index = Math.round(ev.nativeEvent.contentOffset.x / adjustedWidth);
+              setCurrentIndex(index);
+            }}
+          />
 
-    {/* Dots */}
-    <View
-      style={{
-        position: "absolute",
-        bottom: 8,
-        left: 0,
-        right: 0,
-        flexDirection: "row",
-        justifyContent: "center",
-        gap: 6,
-      }}
-    >
-      {images.map((_, i) => (
+          {/* Dots */}
+          <View
+            style={{
+              position: "absolute",
+              bottom: 8,
+              left: 0,
+              right: 0,
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 6,
+            }}
+          >
+            {images.map((_, i) => (
+              <View
+                key={i}
+                style={{
+                  width: currentIndex === i ? 10 : 8,
+                  height: currentIndex === i ? 10 : 8,
+                  borderRadius: currentIndex === i ? 5 : 4,
+                  backgroundColor:
+                    currentIndex === i
+                      ? BASE_COLORS.ACCENT_PRIMARY
+                      : "rgba(255,255,255,0.65)",
+                  borderWidth: 1,
+                  borderColor: "rgba(0,0,0,0.12)",
+                  marginHorizontal: 2,
+                }}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* Title + Price */}
         <View
-          key={i}
           style={{
-            width: currentIndex === i ? 10 : 8,
-            height: currentIndex === i ? 10 : 8,
-            borderRadius: currentIndex === i ? 5 : 4,
-            backgroundColor:
-              currentIndex === i
-                ? BASE_COLORS.ACCENT_PRIMARY
-                : "rgba(255,255,255,0.65)",
-            borderWidth: 1,
-            borderColor: "rgba(0,0,0,0.12)",
-            marginHorizontal: 2,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 16,
           }}
-        />
-      ))}
-    </View>
-  </View>
+        >
+          <ThemedText type="titleBlack">Starter Brew Kit IPA</ThemedText>
+          <ThemedText
+            type="titleBlack"
+            style={{ color: BASE_COLORS.ACCENT_PRIMARY }}
+          >
+            €32.99
+          </ThemedText>
+        </View>
 
-  {/* Title + Price */}
-  <View
-    style={{
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 16,
-    }}
-  >
-    <ThemedText type="titleBlack">Starter Brew Kit IPA</ThemedText>
-    <ThemedText
-      type="titleBlack"
-      style={{ color: BASE_COLORS.ACCENT_PRIMARY }}
-    >
-      €32.99
-    </ThemedText>
-  </View>
-
-  {/* Description */}
-  <ThemedText type="defaultText" className="mb-3">
-  
-    Slightly bitter with a fruity undertone. This IPA has a moderate alcohol content of 5.1% ABV. Brew 5 liters of your own beer at home in just a few hours. Includes milled all-grain mix and practical brewing guide with tips & tricks. 
-  </ThemedText>
-</ScrollView>
+        {/* Description */}
+        <ThemedText type="defaultText" className="mb-3">
+        
+          Slightly bitter with a fruity undertone. This IPA has a moderate alcohol content of 5.1% ABV. Brew 5 liters of your own beer at home in just a few hours. Includes milled all-grain mix and practical brewing guide with tips & tricks. 
+        </ThemedText>
+      </ScrollView>
 
 
       {/* Bottom Bar with FAB-style Button */}
