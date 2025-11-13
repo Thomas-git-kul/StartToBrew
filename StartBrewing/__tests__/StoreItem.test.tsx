@@ -1,8 +1,8 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, screen } from "@testing-library/react-native";
 import StoreItem from "../app/StoreItem";
 
-// --- 🧩 MOCKS --- //
+// --- MOCKS --- //
 
 // Mock Expo Router
 const mockPush = jest.fn();
@@ -25,7 +25,6 @@ jest.mock("react-native-paper", () => {
   };
 });
 
-
 // Mock SafeAreaView
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
@@ -34,7 +33,6 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
-
 // Mock constants
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
@@ -42,7 +40,7 @@ jest.mock("@/constants/Colors", () => ({
     TEXT_DARK: "#000",
     LIGHT_BG: "#f8f8f8",
     ACCENT_PRIMARY: "#ff9900",
-    STONE_DARK: "#333",
+    STONE500: "#777",
   },
 }));
 
@@ -65,58 +63,83 @@ jest.mock("@/components/header", () => (props: any) => {
   return null;
 });
 
+// Mock ThemedText
+jest.mock("@/components/themed-text", () => {
+  const { Text } = require("react-native");
+  return {
+    ThemedText: ({ children, ...props }: any) => <Text {...props}>{children}</Text>,
+  };
+});
 
-// --- 🧪 TESTS --- //
+// --- TESTS --- //
 describe("<StoreItem />", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("renders main product title and price", async () => {
-    const { getByText } = render(<StoreItem />);
+  it("renders price and description correctly", async () => {
+    render(<StoreItem />);
 
     await waitFor(() => {
-      expect(getByText("Starter Brew Kit IPA")).toBeTruthy();
-      expect(getByText("€32.99")).toBeTruthy();
+      // Price (handles both comma and dot decimal styles)
+      expect(screen.getByText(/€\s?32[,\.]99/)).toBeTruthy();
+      // Description snippet
+      expect(
+        screen.getByText(/Slightly bitter with a fruity undertone/i)
+      ).toBeTruthy();
     });
   });
 
   it("calls router.push('/Store') when back button pressed", async () => {
     render(<StoreItem />);
-
     expect(MockHeader).toHaveBeenCalled();
     const props = MockHeader.mock.calls[0][0];
     props.onIconPress();
-
     expect(mockPush).toHaveBeenCalledWith("/Store");
   });
 
-  it("increments and decrements quantity properly", async () => {
-    const { getByText } = render(<StoreItem />);
+  it("increments and decrements quantity properly and updates total price", async () => {
+    render(<StoreItem />);
 
-    const plusBtn = getByText("+");
-    const minusBtn = getByText("-");
-    const quantityText = getByText("1");
+    const minusBtn = screen.getByTestId("quantity-minus");
+    const plusBtn = screen.getByTestId("quantity-plus");
 
-    // Increase
-    fireEvent.press(plusBtn);
+    // Initial quantity = 1, price = €32.99
     await waitFor(() => {
-      expect(getByText("2")).toBeTruthy();
+      expect(screen.getByText("1")).toBeTruthy();
+      expect(screen.getByText(/€\s?32[,\.]99/)).toBeTruthy();
     });
 
-    // Decrease
+    // Increase quantity
+    fireEvent.press(plusBtn);
+    await waitFor(() => {
+      expect(screen.getByText("2")).toBeTruthy();
+      expect(screen.getByText(/€\s?65[,\.]98/)).toBeTruthy();
+    });
+
+    // Decrease quantity
     fireEvent.press(minusBtn);
     await waitFor(() => {
-      expect(getByText("1")).toBeTruthy();
+      expect(screen.getByText("1")).toBeTruthy();
+      expect(screen.getByText(/€\s?32[,\.]99/)).toBeTruthy();
     });
   });
 
-  it("navigates to /ShoppingCart when 'Add to order' FAB is pressed", () => {
-    const { getByTestId } = render(<StoreItem />);
-    const fab = getByTestId("fab-add-to-order");
-
+  it("navigates with correct params when 'Add to order' FAB is pressed", async () => {
+    render(<StoreItem />);
+    const fab = screen.getByTestId("fab-add-to-order");
     fireEvent.press(fab);
-    expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
+
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathname: "/Store",
+        params: expect.objectContaining({
+          title: "Starter Brew Kit IPA",
+          quantity: 1,
+          price: 32.99,
+        }),
+      })
+    );
   });
 
   it("matches snapshot layout", () => {

@@ -21,7 +21,6 @@ export default function StoreItem() {
 
   const router = useRouter();
 
-  // 🧠 Example product data — could come from an API later
   const [product] = useState({
     id: nanoid(),
     title: "Starter Brew Kit IPA",
@@ -130,7 +129,6 @@ export default function StoreItem() {
               marginTop: 12,
             }}
           >
-            <ThemedText type="titleBlack">{product.title}</ThemedText>
             <ThemedText
               type="titleBlack"
               style={{ color: BASE_COLORS.ACCENT_PRIMARY }}
@@ -159,6 +157,7 @@ export default function StoreItem() {
           {/* Quantity Selector */}
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Pressable
+              testID="quantity-minus"
               onPress={() => setQuantity(Math.max(1, quantity - 1))}
               hitSlop={8}
               style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
@@ -171,6 +170,7 @@ export default function StoreItem() {
             </ThemedText>
 
             <Pressable
+              testID="quantity-plus"
               onPress={() => setQuantity(quantity + 1)}
               hitSlop={8}
               style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
@@ -185,7 +185,7 @@ export default function StoreItem() {
             testID="fab-add-to-order"
             onPress={() =>
               router.push({
-                pathname: "/ShoppingCart",
+                pathname: "/Store",
                 params: {
                   id: product.id,
                   title: product.title,
