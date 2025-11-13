@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Checkbox, FAB } from "react-native-paper";
+import { Checkbox, FAB} from "react-native-paper";
 import { router } from "expo-router";
 import { supabase } from "@/supabase";
 import { useFonts } from "@/hooks/use-fonts";
@@ -94,8 +94,10 @@ export default function Registration() {
           <View className="flex-1">
             <TextInput value={lastname} onChangeText={setLastname} label="Lastname" />
           </View>
-          <View className="flex-1">
-            <TextInput value={firstname} onChangeText={setFirstname} label="Firstname" />
+          <View style={{ width: "50%" }}>
+            <View className="flex-1">
+              <TextInput value={firstname} onChangeText={setFirstname} label="Firstname" />
+            </View>
           </View>
         </View>
 
@@ -105,11 +107,15 @@ export default function Registration() {
           <View className="flex-1">
             <TextInput value={day} onChangeText={setDay} label="DD" />
           </View>
-          <View className="flex-1">
-            <TextInput value={month} onChangeText={setMonth} label="MM" />
+          <View style={{ width: "25%" }}>
+            <View className="flex-1">
+              <TextInput value={month} onChangeText={setMonth} label="MM" />
+            </View>
           </View>
-          <View className="flex-1">
-            <TextInput value={year} onChangeText={setYear} label="YYYY" />
+          <View style={{ width: "50%" }}>
+            <View className="flex-1">
+              <TextInput value={year} onChangeText={setYear} label="YYYY" />
+            </View>
           </View>
         </View>
 

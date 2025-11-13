@@ -1,0 +1,425 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<StoreItem /> matches snapshot layout 1`] = `
+<View>
+  <RCTScrollView
+    contentContainerStyle={
+      {
+        "paddingBottom": 160,
+        "paddingHorizontal": 16,
+      }
+    }
+    showsVerticalScrollIndicator={false}
+  >
+    <View>
+      <View
+        style={
+          {
+            "height": 300,
+            "marginBottom": 16,
+          }
+        }
+      >
+        <RCTScrollView
+          data={
+            [
+              {
+                "testUri": "../../../assets/images/Starterkit.png",
+              },
+              {
+                "testUri": "../../../assets/images/starterkit2.png",
+              },
+            ]
+          }
+          getItem={[Function]}
+          getItemCount={[Function]}
+          horizontal={true}
+          keyExtractor={[Function]}
+          onContentSizeChange={[Function]}
+          onLayout={[Function]}
+          onMomentumScrollBegin={[Function]}
+          onMomentumScrollEnd={[Function]}
+          onScroll={[Function]}
+          onScrollBeginDrag={[Function]}
+          onScrollEndDrag={[Function]}
+          pagingEnabled={true}
+          removeClippedSubviews={false}
+          renderItem={[Function]}
+          scrollEventThrottle={0.0001}
+          showsHorizontalScrollIndicator={false}
+          stickyHeaderIndices={[]}
+          viewabilityConfigCallbackPairs={[]}
+        >
+          <View>
+            <View
+              onFocusCapture={[Function]}
+              onLayout={[Function]}
+              style={
+                [
+                  {
+                    "flexDirection": "row",
+                  },
+                  null,
+                ]
+              }
+            >
+              <Image
+                resizeMode="cover"
+                source={
+                  {
+                    "testUri": "../../../assets/images/Starterkit.png",
+                  }
+                }
+                style={
+                  {
+                    "borderRadius": 16,
+                    "height": 300,
+                    "width": 750,
+                  }
+                }
+              />
+            </View>
+            <View
+              onFocusCapture={[Function]}
+              onLayout={[Function]}
+              style={
+                [
+                  {
+                    "flexDirection": "row",
+                  },
+                  null,
+                ]
+              }
+            >
+              <Image
+                resizeMode="cover"
+                source={
+                  {
+                    "testUri": "../../../assets/images/starterkit2.png",
+                  }
+                }
+                style={
+                  {
+                    "borderRadius": 16,
+                    "height": 300,
+                    "width": 750,
+                  }
+                }
+              />
+            </View>
+          </View>
+        </RCTScrollView>
+        <View
+          style={
+            {
+              "bottom": 8,
+              "flexDirection": "row",
+              "gap": 6,
+              "justifyContent": "center",
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "backgroundColor": "#ff9900",
+                "borderColor": "rgba(0,0,0,0.12)",
+                "borderRadius": 5,
+                "borderWidth": 1,
+                "height": 10,
+                "marginHorizontal": 2,
+                "width": 10,
+              }
+            }
+          />
+          <View
+            style={
+              {
+                "backgroundColor": "rgba(255,255,255,0.65)",
+                "borderColor": "rgba(0,0,0,0.12)",
+                "borderRadius": 4,
+                "borderWidth": 1,
+                "height": 8,
+                "marginHorizontal": 2,
+                "width": 8,
+              }
+            }
+          />
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "justifyContent": "space-between",
+            "marginBottom": 16,
+          }
+        }
+      >
+        <Text
+          style={
+            [
+              {
+                "color": "#11181C",
+              },
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              {
+                "color": "#000",
+                "fontFamily": "System-Bold",
+                "fontSize": 50,
+              },
+              undefined,
+            ]
+          }
+        >
+          Starter Brew Kit IPA
+        </Text>
+        <Text
+          style={
+            [
+              {
+                "color": "#11181C",
+              },
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              {
+                "color": "#000",
+                "fontFamily": "System-Bold",
+                "fontSize": 50,
+              },
+              {
+                "color": "#ff9900",
+              },
+            ]
+          }
+        >
+          €32.99
+        </Text>
+      </View>
+      <Text
+        className="mb-3"
+        style={
+          [
+            {
+              "color": "#11181C",
+            },
+            {
+              "color": undefined,
+              "fontFamily": undefined,
+              "fontSize": 24,
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+          ]
+        }
+      >
+        Slightly bitter with a fruity undertone. This IPA has a moderate alcohol content of 5.1% ABV. Brew 5 liters of your own beer at home in just a few hours. Includes milled all-grain mix and practical brewing guide with tips & tricks.
+      </Text>
+    </View>
+  </RCTScrollView>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "bottom": 16,
+        "flexDirection": "row",
+        "justifyContent": "space-between",
+        "left": 16,
+        "position": "absolute",
+        "right": 16,
+      }
+    }
+  >
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+        }
+      }
+    >
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "alignItems": "center",
+            "backgroundColor": "#fff",
+            "borderColor": "#333",
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "height": 40,
+            "justifyContent": "center",
+            "opacity": 1,
+            "width": 40,
+          }
+        }
+      >
+        <Text
+          style={
+            [
+              {
+                "color": "#11181C",
+              },
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              {
+                "color": undefined,
+                "fontFamily": "System-Regular",
+                "fontSize": 30,
+              },
+              undefined,
+              undefined,
+            ]
+          }
+        >
+          -
+        </Text>
+      </View>
+      <Text
+        style={
+          [
+            {
+              "color": "#11181C",
+            },
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            {
+              "color": undefined,
+              "fontFamily": "System-Regular",
+              "fontSize": 30,
+            },
+            undefined,
+            {
+              "marginHorizontal": 12,
+            },
+          ]
+        }
+      >
+        1
+      </Text>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "alignItems": "center",
+            "backgroundColor": "#fff",
+            "borderColor": "#333",
+            "borderRadius": 8,
+            "borderWidth": 1,
+            "height": 40,
+            "justifyContent": "center",
+            "opacity": 1,
+            "width": 40,
+          }
+        }
+      >
+        <Text
+          style={
+            [
+              {
+                "color": "#11181C",
+              },
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              {
+                "color": undefined,
+                "fontFamily": "System-Regular",
+                "fontSize": 30,
+              },
+              undefined,
+              undefined,
+            ]
+          }
+        >
+          +
+        </Text>
+      </View>
+    </View>
+    <button
+      onClick={[Function]}
+      testID="fab-add-to-order"
+    >
+      Add to order
+    </button>
+  </View>
+</View>
+`;

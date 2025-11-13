@@ -79,7 +79,8 @@ export default function StorePage() {
           {items
             .filter((item) => filterMatches(item, searchQuery))
             .map((item, index) => (
-              <StoreCard key={index} {...item} />
+              <StoreCard key={index} {...item}
+                onPress={() => router.push(`/StoreItem`)} />
             ))}
         </View>
       </ScrollView>
