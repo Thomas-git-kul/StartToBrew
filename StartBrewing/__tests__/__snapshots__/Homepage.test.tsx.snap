@@ -1,60 +1,303 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<HomePage /> matches the snapshot 1`] = `
-<View>
+exports[`<HomePage /> matches snapshot 1`] = `
+<View
+  className="flex-1"
+>
+  <View>
+    <Text>
+      StartToBrew
+    </Text>
+  </View>
   <RCTScrollView
-    contentContainerStyle={
+    style={
       {
-        "paddingBottom": 100,
+        "backgroundColor": "#eee",
       }
     }
   >
     <View>
-      <Text
-        style={
-          {
-            "color": "#000",
-            "fontFamily": "System",
-            "fontSize": 50,
-            "marginHorizontal": 10,
-            "paddingTop": 25,
-          }
-        }
-      >
-        StartToBrew
-      </Text>
-      <Text
-        style={
-          {
-            "color": "#000",
-            "fontFamily": "System",
-            "fontSize": 25,
-            "marginHorizontal": 10,
-            "paddingTop": 20,
-          }
-        }
-      >
+      <Text>
         In progress
       </Text>
-      <Text
-        style={
-          {
-            "color": "#000",
-            "fontFamily": "System",
-            "fontSize": 25,
-            "marginHorizontal": 10,
-            "paddingTop": 20,
-          }
-        }
-      >
-        Start a new brew
+      <Text>
+        Popular recipes
       </Text>
+      <View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+        >
+          <View>
+            <Text>
+              IJ IPA
+            </Text>
+            <View
+              accessibilityLabel="favorite-IJ IPA"
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onBlur={[Function]}
+              onClick={[Function]}
+              onFocus={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+            >
+              <Text>
+                FavBtn
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+        >
+          <View>
+            <Text>
+              Voodoo Ranger
+            </Text>
+            <View
+              accessibilityLabel="favorite-Voodoo Ranger"
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onBlur={[Function]}
+              onClick={[Function]}
+              onFocus={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+            >
+              <Text>
+                FavBtn
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+        >
+          <View>
+            <Text>
+              Two Hearted IPA
+            </Text>
+            <View
+              accessibilityLabel="favorite-Two Hearted IPA"
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onBlur={[Function]}
+              onClick={[Function]}
+              onFocus={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+            >
+              <Text>
+                FavBtn
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  </RCTScrollView>
+  <View
+    collapsable={false}
+    style={
+      {
+        "backgroundColor": "#000",
+        "borderRadius": 16,
+        "bottom": 25,
+        "opacity": 1,
+        "position": "absolute",
+        "right": 10,
+        "shadowColor": "#000",
+        "shadowOffset": {
+          "height": 4,
+          "width": 0,
+        },
+        "shadowOpacity": 0.15,
+        "shadowRadius": 8,
+        "transform": [
+          {
+            "scale": 1,
+          },
+        ],
+      }
+    }
+    testID="fab-container-outer-layer"
+  >
+    <View
+      collapsable={false}
+      pointerEvents="auto"
+      style={
+        {
+          "backgroundColor": "#000",
+          "borderRadius": 16,
+          "flex": undefined,
+          "shadowColor": "#000",
+          "shadowOffset": {
+            "height": 1,
+            "width": 0,
+          },
+          "shadowOpacity": 0.3,
+          "shadowRadius": 3,
+        }
+      }
+      testID="fab-container"
+    >
       <View
+        accessibilityRole="button"
         accessibilityState={
           {
             "busy": undefined,
             "checked": undefined,
-            "disabled": undefined,
+            "disabled": false,
             "expanded": undefined,
             "selected": undefined,
           }
@@ -70,7 +313,9 @@ exports[`<HomePage /> matches the snapshot 1`] = `
         accessible={true}
         collapsable={false}
         focusable={true}
+        onBlur={[Function]}
         onClick={[Function]}
+        onFocus={[Function]}
         onResponderGrant={[Function]}
         onResponderMove={[Function]}
         onResponderRelease={[Function]}
@@ -78,452 +323,172 @@ exports[`<HomePage /> matches the snapshot 1`] = `
         onResponderTerminationRequest={[Function]}
         onStartShouldSetResponder={[Function]}
         style={
-          {
-            "alignItems": "center",
-            "backgroundColor": "#f00",
-            "borderRadius": 6,
-            "height": 30,
-            "justifyContent": "center",
-            "marginLeft": 10,
-            "opacity": 1,
-            "width": "50%",
-          }
-        }
-      >
-        <Text
-          style={
+          [
             {
-              "color": "#fff",
-              "fontFamily": "System",
-              "textAlign": "center",
-            }
-          }
-        >
-          Here
-        </Text>
-      </View>
-      <Text
-        style={
-          {
-            "color": "#000",
-            "fontFamily": "System",
-            "fontSize": 25,
-            "marginHorizontal": 10,
-            "paddingTop": 20,
-          }
+              "overflow": "hidden",
+            },
+            {
+              "borderRadius": 16,
+            },
+          ]
         }
-      >
-        Popular recipes
-      </Text>
-      <View
-        style={
-          {
-            "paddingBottom": 20,
-            "paddingHorizontal": 10,
-          }
-        }
+        testID="fab"
       >
         <View
+          pointerEvents="none"
           style={
-            {
-              "backgroundColor": "#fff",
-              "borderRadius": 12,
-              "elevation": 3,
-              "flexDirection": "row",
-              "marginVertical": 8,
-              "padding": 12,
-              "shadowColor": "#000",
-              "shadowOffset": {
-                "height": 2,
-                "width": 0,
+            [
+              {
+                "alignItems": "center",
+                "flexDirection": "row",
+                "justifyContent": "center",
               },
-              "shadowOpacity": 0.1,
-              "shadowRadius": 4,
-            }
+              {
+                "borderRadius": 16,
+                "height": 56,
+                "width": 56,
+              },
+            ]
           }
+          testID="fab-content"
         >
-          <Image
-            source={
-              {
-                "testUri": "../../../assets/images/default-beer.png",
-              }
-            }
-            style={
-              {
-                "borderRadius": 8,
-                "height": 100,
-                "resizeMode": "contain",
-                "width": 60,
-              }
-            }
-          />
           <View
             style={
-              {
-                "flex": 1,
-                "justifyContent": "center",
-                "marginLeft": 12,
-              }
-            }
-          >
-            <Text
-              style={
-                {
-                  "color": "#7b3f00",
-                  "fontSize": 16,
-                  "fontWeight": "bold",
-                }
-              }
-            >
-              IJ IPA
-            </Text>
-            <View
-              style={
+              [
                 {
                   "alignItems": "center",
-                  "flexDirection": "row",
-                  "marginVertical": 4,
+                  "justifyContent": "center",
+                },
+                {
+                  "height": 24,
+                  "width": 24,
+                },
+              ]
+            }
+          >
+            <View
+              collapsable={false}
+              style={
+                {
+                  "bottom": 0,
+                  "left": 0,
+                  "opacity": 1,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                  "transform": [
+                    {
+                      "rotate": "0deg",
+                    },
+                  ],
                 }
               }
+              testID="cross-fade-icon-current"
             >
-              <Text
-                allowFontScaling={false}
-                selectable={false}
+              <RNSVGSvgView
+                align="xMidYMid"
+                bbHeight={24}
+                bbWidth={24}
+                fill="none"
+                focusable={false}
+                height={24}
+                meetOrSlice={0}
+                minX={0}
+                minY={0}
+                stroke="#eee"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
                 style={
                   [
                     {
-                      "color": "#d97706",
-                      "fontSize": 16,
+                      "backgroundColor": "transparent",
+                      "borderWidth": 0,
                     },
-                    undefined,
                     {
-                      "fontFamily": "ionicons",
-                      "fontStyle": "normal",
-                      "fontWeight": "normal",
+                      "flex": 0,
+                      "height": 24,
+                      "width": 24,
                     },
-                    {},
                   ]
                 }
+                vbHeight={24}
+                vbWidth={24}
+                width={24}
+                xmlns="http://www.w3.org/2000/svg"
               >
-                
-              </Text>
-              <Text
-                style={
-                  {
-                    "color": "#555",
-                    "fontSize": 13,
-                    "marginLeft": 4,
+                <RNSVGGroup
+                  fill={null}
+                  propList={
+                    [
+                      "fill",
+                      "stroke",
+                      "strokeWidth",
+                      "strokeLinecap",
+                      "strokeLinejoin",
+                    ]
                   }
-                }
-              >
-                4.8
-                /5 rating (
-                256
-                 reviews)
-              </Text>
-            </View>
-            <Text
-              numberOfLines={3}
-              style={
-                {
-                  "color": "#444",
-                  "fontSize": 13,
-                }
-              }
-            >
-              An assertive bitterness that dominates the palate, with citrus and pine notes.
-            </Text>
-          </View>
-        </View>
-        <View
-          style={
-            {
-              "backgroundColor": "#fff",
-              "borderRadius": 12,
-              "elevation": 3,
-              "flexDirection": "row",
-              "marginVertical": 8,
-              "padding": 12,
-              "shadowColor": "#000",
-              "shadowOffset": {
-                "height": 2,
-                "width": 0,
-              },
-              "shadowOpacity": 0.1,
-              "shadowRadius": 4,
-            }
-          }
-        >
-          <Image
-            source={
-              {
-                "testUri": "../../../assets/images/default-beer.png",
-              }
-            }
-            style={
-              {
-                "borderRadius": 8,
-                "height": 100,
-                "resizeMode": "contain",
-                "width": 60,
-              }
-            }
-          />
-          <View
-            style={
-              {
-                "flex": 1,
-                "justifyContent": "center",
-                "marginLeft": 12,
-              }
-            }
-          >
-            <Text
-              style={
-                {
-                  "color": "#7b3f00",
-                  "fontSize": 16,
-                  "fontWeight": "bold",
-                }
-              }
-            >
-              Voodoo Ranger
-            </Text>
-            <View
-              style={
-                {
-                  "alignItems": "center",
-                  "flexDirection": "row",
-                  "marginVertical": 4,
-                }
-              }
-            >
-              <Text
-                allowFontScaling={false}
-                selectable={false}
-                style={
-                  [
+                  stroke={
                     {
-                      "color": "#d97706",
-                      "fontSize": 16,
-                    },
-                    undefined,
-                    {
-                      "fontFamily": "ionicons",
-                      "fontStyle": "normal",
-                      "fontWeight": "normal",
-                    },
-                    {},
-                  ]
-                }
-              >
-                
-              </Text>
-              <Text
-                style={
-                  {
-                    "color": "#555",
-                    "fontSize": 13,
-                    "marginLeft": 4,
+                      "payload": 4293848814,
+                      "type": 0,
+                    }
                   }
-                }
-              >
-                4.5
-                /5 rating (
-                98
-                 reviews)
-              </Text>
+                  strokeLinecap={1}
+                  strokeLinejoin={1}
+                  strokeWidth={2}
+                >
+                  <RNSVGPath
+                    d="M5 12h14"
+                    fill={null}
+                    propList={
+                      [
+                        "fill",
+                        "stroke",
+                        "strokeWidth",
+                        "strokeLinecap",
+                        "strokeLinejoin",
+                      ]
+                    }
+                    stroke={
+                      {
+                        "payload": 4293848814,
+                        "type": 0,
+                      }
+                    }
+                    strokeLinecap={1}
+                    strokeLinejoin={1}
+                    strokeWidth={2}
+                  />
+                  <RNSVGPath
+                    d="M12 5v14"
+                    fill={null}
+                    propList={
+                      [
+                        "fill",
+                        "stroke",
+                        "strokeWidth",
+                        "strokeLinecap",
+                        "strokeLinejoin",
+                      ]
+                    }
+                    stroke={
+                      {
+                        "payload": 4293848814,
+                        "type": 0,
+                      }
+                    }
+                    strokeLinecap={1}
+                    strokeLinejoin={1}
+                    strokeWidth={2}
+                  />
+                </RNSVGGroup>
+              </RNSVGSvgView>
             </View>
-            <Text
-              numberOfLines={3}
-              style={
-                {
-                  "color": "#444",
-                  "fontSize": 13,
-                }
-              }
-            >
-              A crystal-clear IPA dominated by citrus and resin hop profile.
-            </Text>
-          </View>
-        </View>
-        <View
-          style={
-            {
-              "backgroundColor": "#fff",
-              "borderRadius": 12,
-              "elevation": 3,
-              "flexDirection": "row",
-              "marginVertical": 8,
-              "padding": 12,
-              "shadowColor": "#000",
-              "shadowOffset": {
-                "height": 2,
-                "width": 0,
-              },
-              "shadowOpacity": 0.1,
-              "shadowRadius": 4,
-            }
-          }
-        >
-          <Image
-            source={
-              {
-                "testUri": "../../../assets/images/default-beer.png",
-              }
-            }
-            style={
-              {
-                "borderRadius": 8,
-                "height": 100,
-                "resizeMode": "contain",
-                "width": 60,
-              }
-            }
-          />
-          <View
-            style={
-              {
-                "flex": 1,
-                "justifyContent": "center",
-                "marginLeft": 12,
-              }
-            }
-          >
-            <Text
-              style={
-                {
-                  "color": "#7b3f00",
-                  "fontSize": 16,
-                  "fontWeight": "bold",
-                }
-              }
-            >
-              Two Hearted IPA
-            </Text>
-            <View
-              style={
-                {
-                  "alignItems": "center",
-                  "flexDirection": "row",
-                  "marginVertical": 4,
-                }
-              }
-            >
-              <Text
-                allowFontScaling={false}
-                selectable={false}
-                style={
-                  [
-                    {
-                      "color": "#d97706",
-                      "fontSize": 16,
-                    },
-                    undefined,
-                    {
-                      "fontFamily": "ionicons",
-                      "fontStyle": "normal",
-                      "fontWeight": "normal",
-                    },
-                    {},
-                  ]
-                }
-              >
-                
-              </Text>
-              <Text
-                style={
-                  {
-                    "color": "#555",
-                    "fontSize": 13,
-                    "marginLeft": 4,
-                  }
-                }
-              >
-                4.9
-                /5 rating (
-                322
-                 reviews)
-              </Text>
-            </View>
-            <Text
-              numberOfLines={3}
-              style={
-                {
-                  "color": "#444",
-                  "fontSize": 13,
-                }
-              }
-            >
-              A slightly hazy gold color with tropical flavors like mango and orange.
-            </Text>
           </View>
         </View>
       </View>
     </View>
-  </RCTScrollView>
-  <View
-    accessibilityState={
-      {
-        "busy": undefined,
-        "checked": undefined,
-        "disabled": undefined,
-        "expanded": undefined,
-        "selected": undefined,
-      }
-    }
-    accessibilityValue={
-      {
-        "max": undefined,
-        "min": undefined,
-        "now": undefined,
-        "text": undefined,
-      }
-    }
-    accessible={true}
-    collapsable={false}
-    focusable={true}
-    onClick={[Function]}
-    onResponderGrant={[Function]}
-    onResponderMove={[Function]}
-    onResponderRelease={[Function]}
-    onResponderTerminate={[Function]}
-    onResponderTerminationRequest={[Function]}
-    onStartShouldSetResponder={[Function]}
-    style={
-      {
-        "alignItems": "center",
-        "backgroundColor": "#f00",
-        "borderRadius": 30,
-        "bottom": 25,
-        "elevation": 5,
-        "height": 60,
-        "justifyContent": "center",
-        "opacity": 1,
-        "position": "absolute",
-        "right": 25,
-        "shadowColor": "#000",
-        "shadowOffset": {
-          "height": 2,
-          "width": 0,
-        },
-        "shadowOpacity": 0.3,
-        "shadowRadius": 3,
-        "width": 60,
-      }
-    }
-  >
-    <Text
-      style={
-        {
-          "color": "#fff",
-          "fontSize": 32,
-          "marginTop": -3,
-        }
-      }
-    >
-      +
-    </Text>
   </View>
 </View>
 `;

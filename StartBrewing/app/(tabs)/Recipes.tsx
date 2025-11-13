@@ -1,13 +1,12 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ThemedText } from "@/components/themed-text";
-import { StyleSheet, ScrollView, View } from "react-native";
-import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
-import { useRouter } from "expo-router"; 
-import Checkbox from "expo-checkbox";
 import React, { useState } from "react";
-import BeerCard from '@/components/ui/IPAcomponent';
-
+import { View, ScrollView } from "react-native";
+import { Searchbar} from "react-native-paper";
+import { Search, X } from "lucide-react-native";
+import BeerCard from '@/components/ui/RecipeCard';
+import { BASE_COLORS } from "@/constants/Colors";
+import { useRouter } from "expo-router";
+import Header from '@/components/header';
+import { useFonts } from "@/hooks/use-fonts";
 
 interface Beer {
   name: string;
@@ -18,14 +17,27 @@ interface Beer {
 }
 
 export default function Recipes() {
+  useFonts();
   const router = useRouter();
-  const beers: Beer[] = [
+
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  // helper to check whether an item matches the query
+  const filterMatches = (item: Beer, q: string) => {
+    if (!q) return true;
+    const lower = q.toLowerCase();
+    return (
+      item.name.toLowerCase().includes(lower)
+    );
+  };
+
+  const [recipes, setRecipes] = useState<Beer[]>([
     {
       name: "IJ IPA",
       rating: 4.8,
       reviews: 256,
       image: require("@/assets/images/default-beer.png"),
-      description: "An assertive bitterness that dominates the palate, with citrus and pine notes."
+      description: "An assertive bitterness that dominates the palate, with citrus and pine notes.",
     },
     {
       name: "Voodoo Ranger",
@@ -41,43 +53,70 @@ export default function Recipes() {
       image: require("@/assets/images/default-beer.png"),
       description: "A slightly hazy gold color with tropical flavors like mango and orange.",
     },
-  ];
+  ]);
+
+  const toggleFavorite = (index: number) => {
+    setRecipes((prev) =>
+      prev.map((beer, i) =>
+        i === index ? { ...beer } : beer
+      )
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.general}>
+    <View className="flex-1"
+      style={{
+          backgroundColor: BASE_COLORS.LIGHT_BG,
+      }}
+    >
+      <Header
+        title="Recipes"
+      />
+
+      {/* Searchbar */}
+      <Searchbar
+        placeholder="Search"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        inputStyle={{ color: BASE_COLORS.STONE700 }}
+        icon={() => (
+          <Search size={20} color={BASE_COLORS.STONE300} />
+        )}
+          clearIcon={searchQuery ? () => (
+            <X size={18} color={BASE_COLORS.STONE500} />
+          ) : undefined}
+          onClearIconPress={() => setSearchQuery("")}
+        style={{
+          backgroundColor: BASE_COLORS.WHITE,
+          borderColor: BASE_COLORS.STONE300,
+          borderWidth: 1,
+          marginBottom: 15
+        }}
+      />
+
+      {/* Recipes */}
       <ScrollView>
-        <ThemedText style={styles.title}>Recipes</ThemedText>
-        <ThemedText style={styles.title2}>Popular Recipes</ThemedText>
-        <ThemedText style={styles.title2}>Recipes</ThemedText>
-        <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
-          {beers.map((beer, index) => (
-            <BeerCard key={index} {...beer} />
+      {!searchQuery ? ( 
+        <View>
+          {recipes.map((beer, index) => (
+            <BeerCard
+              key={index} 
+              {...beer}
+              onPress={() => router.push("/SpecificRecipe")}
+              onToggleFavorite={() => toggleFavorite(index)}
+            />
           ))}
         </View>
+      ) : (
+        <View>
+          {recipes
+            .filter((b) => filterMatches(b, searchQuery))
+            .map((beer, index) => (
+              <BeerCard key={index} {...beer} />
+            ))}
+        </View>
+      )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
-  },
-  title: {
-    paddingTop: 25,
-    fontSize: 50,
-    //fontWeight: 'bold',
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  title2: {
-    paddingTop: 10,
-    fontSize: 25,
-    //fontWeight: 'bold',
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-});

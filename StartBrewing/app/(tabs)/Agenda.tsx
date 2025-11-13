@@ -1,114 +1,188 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ThemedText } from "@/components/themed-text";
-import { View, StyleSheet } from "react-native";
-import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
-import { useRouter } from "expo-router"; 
-import Checkbox from "expo-checkbox";
-import React, { useState } from "react";
+import { useCallback, useState } from "react";
+import { View, ScrollView } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFonts } from "@/hooks/use-fonts";
+
 import { Calendar } from "react-native-calendars";
+import Checkbox from "expo-checkbox";
+import Header from "@/components/header";
+
+import { BASE_COLORS } from "@/constants/Colors";
+import { ThemedText } from "@/components/themed-text";
 
 export default function Agenda() {
-  const router = useRouter();
+  useFonts();
 
-  const [checked1, setChecked1] = useState(false);
-  const [checked2, setChecked2] = useState(false);
+  const [phasesByDate, setPhasesByDate] = useState<{ [date: string]: typeof initialPhases }>({});
+  const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
+  const [calendarVisible, setCalendarVisible] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadPhases = async () => {
+        const saved = await AsyncStorage.getItem("phasesByDate");
+        if (saved) {
+          setPhasesByDate(JSON.parse(saved));
+        } else {
+          setPhasesByDate({ [currentDate]: initialPhases });
+        }
+      };
+      loadPhases();
+
+      setCalendarVisible(false);
+      requestAnimationFrame(() => setCalendarVisible(true));
+    }, [currentDate])
+  );
+
+
+  const initialPhases = [
+    {
+      title: "Phase 1: Mash",
+      steps: [
+        { text: "Heat strike water", done: false },
+        { text: "Mash in", done: false },
+        { text: "Saccharification rest", done: false },
+        { text: "Mash out", done: false },
+      ],
+    },
+    {
+      title: "Phase 2: Boil",
+      steps: [
+        { text: "Bring to boil", done: false },
+        { text: "30-min cascade", done: false },
+        { text: "10-min cascade", done: false },
+      ],
+    },
+    {
+      title: "Phase 3: Whirlpool",
+      steps: [
+        { text: "Cool to 80°C", done: false },
+        { text: "Whirlpool cascade + cascade", done: false },
+      ],
+    },
+    {
+      title: "Phase 4: Chill",
+      steps: [
+        { text: "Chill to 19°C", done: false },
+        { text: "Transfer to fermenter", done: false },
+        { text: "Pitch yeast", done: false },
+      ],
+    },
+    {
+      title: "Phase 5: Ferment",
+      steps: [
+        { text: "Primary ferment", done: false },
+        { text: "Dry hop (3days)", done: false },
+      ],
+    },
+    {
+      title: "Phase 6: Package",
+      steps: [{ text: "Package (bottle/keg)", done: false }],
+    },
+  ];
+
+  const phaseDates: { [phaseIndex: number]: string } = {
+    0: "2025-11-10",
+    1: "2025-11-11",
+    2: "2025-11-12",
+    3: "2025-11-13",
+    4: "2025-11-14",
+    5: "2025-11-15",
+  };
+
+  const toggleStep = async (date: string, phaseIndex: number, stepIndex: number) => {
+    setPhasesByDate((prev) => {
+      const datePhases = prev[date] ? [...prev[date]] : JSON.parse(JSON.stringify(initialPhases));
+      datePhases[phaseIndex].steps[stepIndex].done = !datePhases[phaseIndex].steps[stepIndex].done;
+      const newState = { ...prev, [date]: datePhases };
+      AsyncStorage.setItem("phasesByDate", JSON.stringify(newState));
+      return newState;
+    });
+  };
+
+  const markedDates: { [key: string]: any } = {};
+    for (const date of Object.values(phaseDates)) {
+      markedDates[date] = { marked: true, dotColor: BASE_COLORS.ACCENT_PRIMARY };
+  }
+
+  markedDates[currentDate] = {
+    ...(markedDates[currentDate] || {}),
+    selected: true,
+    selectedColor: BASE_COLORS.ACCENT_PRIMARY,
+  };
+
+  const phases = phasesByDate[currentDate] || initialPhases;
 
   return (
-    <SafeAreaView style={styles.general}>
-      <ThemedText style={styles.title}>Agenda</ThemedText>
-      <ThemedText style={styles.title3}>Januari</ThemedText>
-
-      {/* Hier voegen we de kalender toe */}
-      <Calendar
-        // start met de huidige maand
-        current={'2025-01-01'}
-        // markeer specifieke dagen
-        markedDates={{
-          '2025-01-10': { marked: true, dotColor: BASE_COLORS.ACCENT_PRIMARY },
-          '2025-01-15': { marked: true, dotColor: BASE_COLORS.ACCENT_PRIMARY },
-        }}
-        theme={{
-          todayTextColor: BASE_COLORS.ACCENT_PRIMARY,
-          arrowColor: BASE_COLORS.ACCENT_PRIMARY,
-        }}
+    <View className="flex-1"
+      style={{
+        backgroundColor: BASE_COLORS.LIGHT_BG
+      }}
+    >
+      
+      <Header
+        title="Agenda"
+        iconName="Calendar1"
+        onIconPress={() => {
+            const today = new Date().toISOString().split("T")[0];
+            setCurrentDate(today);
+          }}
       />
 
-      <ThemedText style={styles.title2}>To do</ThemedText>
-
-      <View style={styles.todoItem}>
-        <Checkbox
-          value={checked1}
-          onValueChange={setChecked1}
-          color={checked1 ? BASE_COLORS.ACCENT_PRIMARY : undefined}
-        />
-        <ThemedText
-          style={[
-            styles.text,
-            checked1 && { textDecorationLine: "line-through", opacity: 0.5 },
-          ]}
+      {calendarVisible && (
+        <View
+          className="mx-1 my-1 rounded-2xl overflow-hidden shadow"
+          style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
         >
-          Measure the pH of your brew
-        </ThemedText>
-      </View>
+          <Calendar
+            current={currentDate}
+            markedDates={markedDates}
+            onDayPress={(day) => setCurrentDate(day.dateString)}
+            theme={{
+              todayTextColor: BASE_COLORS.ACCENT_PRIMARY,
+              arrowColor: BASE_COLORS.ACCENT_PRIMARY,
+              calendarBackground: BASE_COLORS.WHITE
+            }}
+          />
+        </View>
+      )}
 
-      <View style={styles.todoItem}>
-        <Checkbox
-          value={checked2}
-          onValueChange={setChecked2}
-          color={checked2 ? BASE_COLORS.ACCENT_PRIMARY : undefined}
-        />
-        <ThemedText
-          style={[
-            styles.text,
-            checked2 && { textDecorationLine: "line-through", opacity: 0.5 },
-          ]}
-        >
-          Step 8: add 2 liters of water
-        </ThemedText>
-      </View>
-    </SafeAreaView>
+      <ThemedText type='title' className="ml-1">To do</ThemedText>
+
+      <ScrollView className="ml-1">
+        {phases.map((phase, phaseIndex) => {
+          const date = phaseDates[phaseIndex];
+          if (currentDate !== date) return null;
+
+          return (
+            <View key={phaseIndex}>
+              <ThemedText type='subTitle'>{phase.title}</ThemedText>
+
+              {phase.steps.map((step, stepIndex) => (
+                <View
+                  key={stepIndex}
+                  className="flex-row items-center mb-2"
+                >
+                  <Checkbox
+                    value={step.done}
+                    onValueChange={() => toggleStep(date, phaseIndex, stepIndex)}
+                    style={{ 
+                      marginRight: 8,
+                    }}
+                    color={BASE_COLORS.ACCENT_LIGHT}
+                  />
+                  <ThemedText type='defaultText'
+                    onPress={() => toggleStep(date, phaseIndex, stepIndex)}
+                  >
+                    {step.text}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
-  },
-  title: {
-    paddingTop: 25,
-    fontSize: 50,
-    //fontWeight: 'bold',
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  title2: {
-    paddingTop: 10,
-    fontSize: 22,
-    //fontWeight: 'bold',
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  title3: {
-    paddingTop: 10,
-    fontSize: 25,
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  text: {
-    fontSize: 15,
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.BODY_LIGHT,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  todoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 5,
-    marginHorizontal: 10,
-  },
-});

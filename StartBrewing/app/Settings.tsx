@@ -1,146 +1,102 @@
+import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { View, ScrollView, Alert } from "react-native";
+import { Button } from "react-native-paper";
+import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
-import { TouchableOpacity, Text, Alert, StyleSheet, View, TextInput } from "react-native";
 import { BASE_COLORS } from "@/constants/Colors";
+import { useFonts } from "@/hooks/use-fonts";
+import TextInput from "@/components/textInput";
+import Header from '@/components/header';
 import { FontFamilies } from "@/constants/Fonts";
-import { useRouter } from "expo-router"; 
 
 export default function Settings() {
+  useFonts();
+
   const router = useRouter();
+
+  const [lastname, setLastname] = useState("");
+  const [firstname, setFirstname] = useState("");
+  const [day, setDay] = useState("");
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChangeInformation = () => {
+    Alert.alert("Button Pressed!", "Information would be saved here.");
+  };
+
   return (
-    <SafeAreaView style={styles.general}>
-      <ThemedText style={styles.title}>Settings</ThemedText>
-      <ThemedText style={styles.title2}>Profile information</ThemedText>
+    <SafeAreaView className="flex-1"
+      style={{
+        backgroundColor: BASE_COLORS.LIGHT_BG
+      }}
+    >
+      <Header
+        title='Settings'
+        iconName="ArrowRight"
+        onIconPress={() => router.push("/Account" as any)}
+        actionTestID="account-button"
+      />
 
-      {/* Name row */}
-      <View style={styles.row}>
-        <ThemedText style={[styles.label, { left: 10 }]}>Lastname</ThemedText>
-        <TextInput style={[styles.input, { left: 10 }]} />
+      <ScrollView
+        className="px-3"
+        contentContainerStyle={{ paddingBottom: 80 }} // make space for FAB
+        showsVerticalScrollIndicator={false}
+      >        
+        {/* Full Name */}
+        <ThemedText type="subTitle">Full Name</ThemedText>
+        <View className="flex-row gap-3 w-full">
+          <View className="flex-1">
+            <TextInput value={lastname} onChangeText={setLastname} label="Lastname" />
+          </View>
+          <View className="flex-1">
+            <TextInput value={firstname} onChangeText={setFirstname} label="Firstname" />
+          </View>
+        </View>
 
-        <ThemedText style={[styles.label, { left: "50%" }]}>Firstname</ThemedText>
-        <TextInput style={[styles.input, { left: "50%" }]} />
-      </View>
+        {/* Birthday */}
+        <ThemedText type="subTitle" className="mt-6">Birth Date</ThemedText>
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <TextInput value={day} onChangeText={setDay} label="DD" />
+          </View>
+          <View className="flex-1">
+            <TextInput value={month} onChangeText={setMonth} label="MM" />
+          </View>
+          <View className="flex-1">
+            <TextInput value={year} onChangeText={setYear} label="YYYY" />
+          </View>
+        </View>
 
-      {/* Birthday row */}
-      <View style={styles.row}>
-        <ThemedText style={[styles.label, { left: 10 }]}>Day</ThemedText>
-        <TextInput style={[styles.inputSmall, { left: 10 }]} />
+        {/* Contact */}
+        <ThemedText type="subTitle" className="mt-6">Contact information</ThemedText>
+        <TextInput value={email} onChangeText={setEmail} label="Email" />
 
-        <ThemedText style={[styles.label, { left: "25%" }]}>Month</ThemedText>
-        <TextInput style={[styles.inputSmall, { left: "25%" }]} />
+        {/* Account */}
+        <ThemedText type="subTitle" className="mt-6">Account</ThemedText>
+        <TextInput value={username} onChangeText={setUsername} label="Username" />
 
-        <ThemedText style={[styles.label, { left: "50%" }]}>Year</ThemedText>
-        <TextInput style={[styles.inputSmall, { left: "50%" }]} />
-      </View>
-
-      <ThemedText style={styles.title3}>Email</ThemedText>
-      <TextInput style={styles.inputFull} />
-
-      <ThemedText style={styles.title3}>Username</ThemedText>
-      <TextInput style={styles.inputFull} />
-
-      <TouchableOpacity
-        style={styles.knop}
-        onPress={() => Alert.alert("Button Pressed!")}>
-        <Text style={styles.buttonText}>Change information</Text>
-      </TouchableOpacity>
-
-      <ThemedText style={styles.text}>Return to profile</ThemedText>
+        <View className="items-center mt-7">
+          <Button
+            mode="contained"
+            onPress={handleChangeInformation}
+            loading={loading}
+            buttonColor={BASE_COLORS.TEXT_DARK}
+            textColor={BASE_COLORS.WHITE}
+            contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
+            labelStyle={{
+              fontSize: 16,
+              color: BASE_COLORS.WHITE,
+              fontFamily: FontFamilies.BODY
+            }}
+          >
+            Change Information
+          </Button>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
-  },
-  title: {
-    paddingTop: 25,
-    fontSize: 50,
-    fontWeight: "bold",
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  title2: {
-    paddingTop: 20,
-    fontSize: 25,
-    fontWeight: "bold",
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  title3: {
-    paddingTop: 20,
-    fontSize: 20,
-    fontWeight: "bold",
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.ACCENT_PRIMARY,
-  },
-  text: {
-    paddingTop: 20,
-    fontSize: 15,
-    fontWeight: "bold",
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.ACCENT_PRIMARY,
-    textDecorationLine: "underline",
-  },
-  label: {
-    position: "absolute",
-    top: 0,
-    fontSize: 18,
-    fontWeight: "bold",
-    color: BASE_COLORS.ACCENT_PRIMARY,
-  },
-  input: {
-    position: "absolute",
-    top: 25,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    height: 35,
-    width: "45%",
-    paddingHorizontal: 8,
-  },
-  inputSmall: {
-    position: "absolute",
-    top: 25,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    height: 35,
-    width: 80,
-    paddingHorizontal: 8,
-  },
-  inputFull: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    height: 35,
-    marginHorizontal: 10,
-    marginBottom: 20,
-    paddingHorizontal: 8,
-  },
-  knop: {
-    backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    height: 40,
-    width: "50%",
-    marginLeft: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 6,
-  },
-  buttonText: {
-    color: BASE_COLORS.WHITE,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  row: {
-    position: "relative",
-    marginTop: 20, // ruimte zodat de absolute velden niet overlappen
-    height: 80, // ruimte voor label + input
-  },
-});

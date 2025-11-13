@@ -1,80 +1,75 @@
+import "../../global.css";
 import { Tabs } from "expo-router";
-import "../../global.css"; 
 
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { BASE_COLORS } from "@/constants/Colors"; 
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { BASE_COLORS } from "@/constants/Colors";
+
+import { View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+// 👉 Lucide icons
+import {
+  Home,
+  Calendar,
+  Handbag,
+  Beer,
+  User,
+} from "lucide-react-native";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: '#78350F',
-        //tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarStyle: {
-          backgroundColor: BASE_COLORS.LIGHT_BG,
-        },
-      }}
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
-      {/* Home Page Tab */}
-      <Tabs.Screen
-        name="HomePage"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={BASE_COLORS.TEXT_DARK} />
-          ),
-        }}
-      />
-
-      {/* Agenda Tab */}
-      <Tabs.Screen
-        name="Agenda"
-        options={{
-          title: "Agenda",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="calendar" color={BASE_COLORS.TEXT_DARK} />
-          ),
-        }}
-      />
-
-      {/* Store Tab */}
-      <Tabs.Screen
-        name="Store"
-        options={{
-          title: "Store",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="cart.fill" color={BASE_COLORS.TEXT_DARK} />
-          ),
-        }}
-      />
-
-      {/* Recipes Tab */}
-      <Tabs.Screen
-        name="Recipes"
-        options={{
-          title: "Recipes",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="book.fill" color={BASE_COLORS.TEXT_DARK} />
-          ),
-        }}
-      />
-    {/* Auth Tab */}
-      <Tabs.Screen
-        name="Auth"
-        options={{
-          title: "Auth",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={BASE_COLORS.TEXT_DARK} />
-          ),
-        }}
-      />
-    </Tabs>
+      <View className="flex-1 mx-3">
+        {/* Tabs wrapper */}
+        <Tabs
+          screenOptions={{
+            tabBarActiveTintColor: BASE_COLORS.TEXT_DARK,
+            tabBarInactiveTintColor: BASE_COLORS.STONE400,
+            headerShown: false,
+            tabBarShowLabel: false,
+            tabBarButton: HapticTab,
+            tabBarStyle: {
+              backgroundColor: BASE_COLORS.LIGHT_BG,
+              borderTopWidth: 0,
+              marginTop: 5,
+            },
+          }}
+        >
+          <Tabs.Screen
+            name="HomePage"
+            options={{
+              tabBarIcon: ({ color }) => <Home color={color} size={28} />,
+            }}
+          />
+          <Tabs.Screen
+            name="Agenda"
+            options={{
+              tabBarIcon: ({ color }) => <Calendar color={color} size={28} />,
+            }}
+          />
+          <Tabs.Screen
+            name="Store"
+            options={{
+              tabBarIcon: ({ color }) => (<Handbag color={color} size={28} />),
+            }}
+          />
+          <Tabs.Screen
+            name="Recipes"
+            options={{
+              tabBarIcon: ({ color }) => <Beer color={color} size={28} />,
+            }}
+          />
+          <Tabs.Screen
+            name="Account"
+            options={{
+              tabBarIcon: ({ color }) => <User color={color} size={28} />,
+            }}
+          />
+        </Tabs>
+      </View>
+    </SafeAreaView>
   );
 }

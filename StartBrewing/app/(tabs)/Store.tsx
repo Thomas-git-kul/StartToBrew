@@ -1,69 +1,89 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ThemedText } from "@/components/themed-text";
-import { TextInput, StyleSheet, View } from "react-native";
+import React from "react";
+import { View, ScrollView } from "react-native";
+import { Searchbar } from "react-native-paper";
+import { Search, X } from "lucide-react-native";
+
 import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
 
-export default function StorePage() {
-  return (
-    <SafeAreaView style={styles.general}>
-      <ThemedText style={styles.title}>Store</ThemedText>
+import { useRouter } from "expo-router";
+import { useFonts } from "@/hooks/use-fonts";
 
-      {/* Eerste rij */}
-      <View style={styles.row}>
-        <TextInput style={[styles.input, { left: 10 }]} />
-        <ThemedText style={[styles.label, { left: 10 }]}>Airlock</ThemedText>
+import StoreCard from "@/components/ui/StoreCard";
+import Header from "@/components/header"
 
-        <TextInput style={[styles.input, { left: "50%" }]} />
-        <ThemedText style={[styles.label, { left: "50%" }]}>Starter Kit IPA</ThemedText>
-      </View>
-
-      <View style={styles.row}>
-        <TextInput style={[styles.input, { left: 10 }]} />
-        <ThemedText style={[styles.label, { left: 10 }]}>Superior starter kit </ThemedText>
-
-        <TextInput style={[styles.input, { left: "50%" }]} />
-        <ThemedText style={[styles.label, { left: "50%" }]}>Tap PVC with back nut </ThemedText>
-      </View>
-    </SafeAreaView>
-  );
+interface Item {
+  title: string;
+  price: string;
+  image: string;
 }
 
-const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
-  },
-  title: {
-    paddingTop: 25,
-    fontSize: 50,
-    //fontWeight: "bold",
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  label: {
-    position: "absolute",
-    top: 65, 
-    fontSize: 14,
-    marginTop: 55,
-    //fontWeight: "bold",
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.ACCENT_PRIMARY,
-  },
-  input: {
-    position: "absolute",
-    top: 20, 
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    height: 100,
-    width: "45%",
-    paddingHorizontal: 8,
-  },
-  row: {
-    position: "relative",
-    marginTop: 20,
-    height: 100,
-  },
-});
+export default function StorePage() {
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const fontsLoaded = useFonts();
+  const router = useRouter();
+
+  // wait for custom fonts to load so title uses the correct font
+  if (!fontsLoaded) return null;
+
+  const filterMatches = (item: Item, q: string) => {
+    if (!q) return true;
+    const lower = q.toLowerCase();
+    return (
+      item.title.toLowerCase().includes(lower) ||
+      item.price.toLowerCase().includes(lower)
+    );
+  };
+
+  const items: Item[] = [
+    { image: require("@/assets/images/Premiumkit.png"), title: "Superior starter kit Base", price: "€299" },
+    { image: require("@/assets/images/Airlock.png"), title: "Airlock", price: "€1,49" },
+    { image: require("@/assets/images/Starterkit.png"), title: "Starter Kit IPA", price: "€32,99" },
+    { image: require("@/assets/images/PVCtap.png"), title: "Tap PVC with back nut", price: "€2,99" },
+  ];
+
+  return (
+    <View className="flex-1"
+      style={{
+        backgroundColor: BASE_COLORS.LIGHT_BG
+      }}
+    >
+      <Header
+        title='Store'
+        iconName="ShoppingCart"
+        onIconPress={() => router.push("/ShoppingCart" as any)}
+        actionTestID="cart-button"
+      />
+      <Searchbar
+        placeholder="Search"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        inputStyle={{ color: BASE_COLORS.STONE700 }}
+        icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+        clearIcon={
+          searchQuery
+            ? () => <X size={18} color={BASE_COLORS.STONE500} />
+            : undefined
+        }
+        onClearIconPress={() => setSearchQuery("")}
+        style={{ 
+          backgroundColor: BASE_COLORS.WHITE, 
+          borderColor: BASE_COLORS.STONE300, 
+          borderWidth: 1,
+          marginBottom: 15
+        }}
+      />
+
+      {/* Scrollable Items */}
+      <ScrollView>
+        <View className="mt-1 mx-1 flex-row flex-wrap justify-between">
+          {items
+            .filter((item) => filterMatches(item, searchQuery))
+            .map((item, index) => (
+              <StoreCard key={index} {...item}
+                onPress={() => router.push(`/StoreItem`)} />
+            ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
