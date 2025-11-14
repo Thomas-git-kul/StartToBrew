@@ -1,44 +1,42 @@
-import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, act } from "@testing-library/react-native";
 import SpecificRecipe from "../app/SpecificRecipe";
 
-// --- Mocks --- //
+// --- Mock router --- //
 const mockPush = jest.fn();
-
 jest.mock("expo-router", () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
+  useRouter: () => ({ push: mockPush }),
 }));
 
+// --- Mock fonts --- //
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => true,
 }));
 
+// --- Mock ThemedText --- //
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
-    ThemedText: ({ children, style }: any) => (
-      <Text style={style}>{children}</Text>
-    ),
+    ThemedText: ({ children, style }: any) => <Text style={style}>{children}</Text>,
   };
 });
 
+// --- Mock SafeAreaView --- //
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
   return {
     SafeAreaView: ({ children }: any) => <View>{children}</View>,
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   };
 });
 
+// --- Mock Colors & Fonts --- //
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     LIGHT_BG: "#fafafa",
     WHITE: "#ffffff",
     TEXT_DARK: "#000000",
-    TEXT_BODY: "#44403B",
-    ACCENT_PRIMARY: "#B45309",
-    STONE_DARK: "#0C0A09",
+    ACCENT_LIGHT: "#B45309",
+    STONE300: "#E5E7EB",
   },
 }));
 
@@ -51,17 +49,45 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
-jest.mock("@/components/ui/icon-symbol", () => {
-  const { Text } = require("react-native");
+// --- Mock Header component --- //
+jest.mock("@/components/header", () => {
+  const { View, Text } = require("react-native");
+  return ({ title }: any) => (
+    <View>
+      <Text>{title}</Text>
+    </View>
+  );
+});
+
+// --- Mock react-native-paper --- //
+jest.mock("react-native-paper", () => {
+  const { View, Text, TouchableOpacity } = require("react-native");
   return {
-    IconSymbol: ({ name }: any) => <Text testID="mock-icon">icon-{name}</Text>,
+    FAB: ({ label, onPress, style }: any) => (
+      <TouchableOpacity onPress={onPress} style={style}>
+        <Text>{label}</Text>
+      </TouchableOpacity>
+    ),
+    Portal: ({ children }: any) => <>{children}</>,
+    Modal: ({ visible, children }: any) => (visible ? <View>{children}</View> : null),
+    Button: ({ children, onPress }: any) => (
+      <TouchableOpacity onPress={onPress}>
+        <Text>{children}</Text>
+      </TouchableOpacity>
+    ),
   };
 });
 
 // --- Tests --- //
 describe("<SpecificRecipe />", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
   });
 
   it("renders the title correctly", () => {
@@ -71,7 +97,7 @@ describe("<SpecificRecipe />", () => {
 
   it("renders the rating correctly", () => {
     const { getByText } = render(<SpecificRecipe />);
-    expect(getByText("4.8 / 5")).toBeTruthy();
+    expect(getByText("4.8/5")).toBeTruthy();
     expect(getByText("(265 reviews)")).toBeTruthy();
   });
 
@@ -87,12 +113,34 @@ describe("<SpecificRecipe />", () => {
 
   it("navigates to /progress when Start Brewing is pressed", () => {
     const { getByText } = render(<SpecificRecipe />);
-    const button = getByText("Start Brewing");
-
-    fireEvent.press(button);
-
+    fireEvent.press(getByText("Start Brewing"));
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith("../progress");
+  });
+
+  jest.useFakeTimers();
+  it("opens the review modal and sets rating when a star is pressed", () => {
+    const { getByText, queryByText, getAllByTestId } = render(<SpecificRecipe />);
+
+    // Modal should not be visible initially
+    expect(queryByText("Rate this recipe")).toBeNull();
+
+    // Open modal
+    const addReviewButton = getByText("Add Review");
+    fireEvent.press(addReviewButton);
+    expect(getByText("Rate this recipe")).toBeTruthy();
+
+    // Press 3rd star wrapped in act
+    const stars = getAllByTestId(/star-/);
+    act(() => {
+      fireEvent.press(stars[2]);
+
+      // Advance fake timers so setTimeout runs
+      jest.advanceTimersByTime(300);
+    });
+
+    // Modal should now be closed
+    expect(queryByText("Rate this recipe")).toBeNull();
   });
 
   it("matches the snapshot", () => {

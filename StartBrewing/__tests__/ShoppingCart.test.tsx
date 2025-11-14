@@ -1,6 +1,6 @@
 import React from "react";
 import { render, waitFor } from "@testing-library/react-native";
-import ShoppingCart from "../app/cart";
+import ShoppingCart from "../app/ShoppingCart";
 
 // --- 🧩 MOCKS --- //
 
@@ -68,12 +68,12 @@ describe("<ShoppingCart />", () => {
   const { getByText } = render(<ShoppingCart />);
 
   await waitFor(() => {
-    expect(getByText('Order Information')).toBeTruthy();
+    expect(getByText('Shopping Cart')).toBeTruthy();
     expect(getByText('Order Summary')).toBeTruthy();
     expect(getByText('Shipping Information')).toBeTruthy();
   });
 
-  expect(getByText("Order Information")).toBeTruthy();
+  expect(getByText("Shopping Cart")).toBeTruthy();
   expect(getByText("Order Summary")).toBeTruthy();
   expect(getByText("Shipping Information")).toBeTruthy();
   expect(getByText("Full Name")).toBeTruthy();

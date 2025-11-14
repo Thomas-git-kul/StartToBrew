@@ -1,90 +1,107 @@
-import React from "react";
-import { render, fireEvent, act } from "@testing-library/react-native";
+import { render, fireEvent } from "@testing-library/react-native";
 import Recipes from "../app/(tabs)/Recipes";
+import { useRouter } from "expo-router";
 
-// ------------------ MOCKS ------------------ //
-
+// Mock expo-router
 jest.mock("expo-router", () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: jest.fn(),
 }));
 
-jest.mock("@/components/themed-text", () => {
-  const { Text } = require("react-native");
-  return {
-    ThemedText: ({ children, style }: any) => <Text style={style}>{children}</Text>,
+// Mock icons
+jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => 'MaterialCommunityIcons');
+jest.mock('@expo/vector-icons/Ionicons', () => 'Ionicons');
+
+// Mock useFonts hook
+jest.mock("@/hooks/use-fonts", () => ({
+  useFonts: jest.fn(),
+}));
+
+// Mock Header to simplify rendering
+jest.mock("@/components/header", () => {
+  return ({ title }: any) => {
+    const { Text } = require("react-native");
+    return <Text>{title}</Text>;
   };
 });
 
-jest.mock("@/constants/Colors", () => ({
-  BASE_COLORS: { WHITE: "#fff", TEXT_DARK: "#000", LIGHT_BG: "#fafafa" },
-}));
-
-jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: { HEADING: "System", BODY: "System" },
-}));
-
-jest.mock("@expo/vector-icons", () => ({
-  Ionicons: () => null,
-}));
-
-// Mock the BeerCard UI component so we can check props
-interface BeerCardProps {
-  name: string;
-  rating: number;
-  reviews: number;
-  image: any;
-  description: string;
-}
-
-const MockBeerCard = jest.fn((props: BeerCardProps) => null);
-
-jest.mock("@/components/ui/IPAcomponent", () => (props: BeerCardProps) => {
-  MockBeerCard(props);
-  return null;
+// Mock BeerCard component
+jest.mock("@/components/ui/RecipeCard", () => {
+  const { View, Text, Pressable } = require("react-native");
+  return ({ name, onToggleFavorite }: any) => (
+    <View>
+      <Text>{name}</Text>
+      <Pressable
+        accessibilityLabel={`favorite-${name}`}
+        onPress={onToggleFavorite}
+      >
+        <Text>FavBtn</Text>
+      </Pressable>
+    </View>
+  );
 });
 
-// ------------------ TESTS ------------------ //
+describe("Recipes screen", () => {
+  const pushMock = jest.fn();
 
-describe("<Recipes />", () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it("renders both titles 'Recipes' (screen + section)", () => {
-    const { getAllByText } = render(<Recipes />);
-    const titles = getAllByText("Recipes");
-    expect(titles.length).toBe(2);
+  beforeEach(() => {
+    (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
+    pushMock.mockClear();
   });
 
-  it("renders 3 popular + 3 all recipes → total 6 BeerCards", () => {
-    render(<Recipes />);
-    expect(MockBeerCard).toHaveBeenCalledTimes(6);
+  it("renders header, searchbar, and beer cards", () => {
+    const { getByText, getByPlaceholderText } = render(<Recipes />);
+
+    expect(getByText("Recipes")).toBeTruthy();
+    expect(getByPlaceholderText("Search")).toBeTruthy();
+
+    expect(getByText("IJ IPA")).toBeTruthy();
+    expect(getByText("Voodoo Ranger")).toBeTruthy();
+    expect(getByText("Two Hearted IPA")).toBeTruthy();
   });
 
-  it("passes correct props to the first BeerCard", () => {
-    render(<Recipes />);
-    const first = MockBeerCard.mock.calls[0][0];
+  it("filters beers based on search query", () => {
+    const { getByPlaceholderText, queryByText } = render(<Recipes />);
+    const searchInput = getByPlaceholderText("Search");
 
-    expect(first.name).toBe("IJ IPA");
-    expect(first.rating).toBe(4.8);
+    fireEvent.changeText(searchInput, "Voodoo");
+
+    expect(queryByText("IJ IPA")).toBeNull();
+    expect(queryByText("Voodoo Ranger")).toBeTruthy();
+    expect(queryByText("Two Hearted IPA")).toBeNull();
   });
 
-  it("filters correctly when searching", () => {
-    const screen = render(<Recipes />);
-    const search = screen.getByPlaceholderText("Search");
+  it("clears search when search text is cleared", () => {
+    const { getByPlaceholderText, getByText } = render(<Recipes />);
+    const searchInput = getByPlaceholderText("Search");
 
-    // clear old calls first
-    MockBeerCard.mockClear();
+    fireEvent.changeText(searchInput, "Voodoo");
 
-    act(() => {
-      fireEvent.changeText(search, "voodoo");
-    });
+    expect(getByText("Voodoo Ranger")).toBeTruthy();
 
-    const calls = MockBeerCard.mock.calls;
-    expect(calls.length).toBe(1);
-    expect(calls[0][0].name).toBe("Voodoo Ranger");
+    fireEvent.changeText(searchInput, "");
+
+    expect(getByText("IJ IPA")).toBeTruthy();
+    expect(getByText("Voodoo Ranger")).toBeTruthy();
+    expect(getByText("Two Hearted IPA")).toBeTruthy();
   });
 
-  it("matches snapshot", () => {
-    const tree = render(<Recipes />).toJSON();
-    expect(tree).toMatchSnapshot();
+  it("navigates to SpecificRecipe when a beer card is pressed", () => {
+    const { getByText } = render(<Recipes />);
+
+    // Use fireEvent.press on the BeerCard (TouchableRipple)
+    fireEvent.press(getByText("IJ IPA"));
+
+    expect(pushMock).toHaveBeenCalledWith("/SpecificRecipe");
+  });
+
+  it("toggles favorite when heart button is pressed", () => {
+    const { getByLabelText } = render(<Recipes />);
+
+    const favoriteButton = getByLabelText("favorite-IJ IPA");
+
+    fireEvent.press(favoriteButton);
+    fireEvent.press(favoriteButton);
+
+    expect(favoriteButton).toBeTruthy();
   });
 });

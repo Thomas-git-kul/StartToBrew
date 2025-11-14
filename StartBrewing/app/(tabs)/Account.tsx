@@ -16,6 +16,9 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "@/supabase";
 import { updateAvatar } from "@/supabase/storage/updateAvatar";
 import { Image } from "expo-image";
+import { router, useRouter } from "expo-router";
+import Header from "@/components/header";
+
 type Profile = {
   id: string;
   username: string | null;
@@ -47,10 +50,12 @@ export default function Account() {
       data: { user },
       error: uErr,
     } = await supabase.auth.getUser();
+
     if (uErr || !user) {
       setLoading(false);
       return;
     }
+
     setUserId(user.id);
 
     const { data, error } = await supabase
@@ -66,15 +71,27 @@ export default function Account() {
     }
 
     const p = data as Profile;
+
     setUsername(p?.username ?? "");
     setFullName(p?.full_name ?? "");
     setBio(p?.bio ?? "");
 
+    // avatar_url kan pad of volledige URL zijn
     if (p?.avatar_url) {
-      const { data: pub } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(p.avatar_url);
-      setAvatarUrl(`${pub.publicUrl}?v=${Date.now()}`);
+      let url: string;
+
+      if (p.avatar_url.startsWith("http")) {
+        // al een volledige URL
+        url = p.avatar_url;
+      } else {
+        // pad -> public url
+        const { data: pub } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(p.avatar_url);
+        url = pub.publicUrl;
+      }
+
+      setAvatarUrl(`${url}?v=${Date.now()}`); // cache-buster
     } else {
       setAvatarUrl(null);
     }
@@ -151,19 +168,29 @@ export default function Account() {
   const onSignOut = useCallback(async () => {
     await supabase.auth.signOut();
     Alert.alert("Afgemeld");
+    router.replace("/Auth");
   }, []);
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.general, styles.center]}>
+      <SafeAreaView>
         <ActivityIndicator />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.general}>
-      <ThemedText style={styles.title}>Account</ThemedText>
+    <View className="flex-1"
+      style={{
+        backgroundColor: BASE_COLORS.LIGHT_BG
+      }}
+    >
+      <Header
+        title="Account"
+        iconName="ArrowRight"
+        onIconPress={() => router.push("/HomePage")}
+        actionTestID="account-button"
+      />
 
       <View style={styles.section}>
         <View style={styles.avatarRow}>
@@ -174,7 +201,11 @@ export default function Account() {
             style={styles.avatarTouch}
           >
             {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+              <Image
+                source={{ uri: avatarUrl }}
+                style={styles.avatar}
+                onError={() => setAvatarUrl(null)} // bij fout -> placeholder
+              />
             ) : (
               <View style={[styles.avatar, styles.avatarFallback]}>
                 <Text style={styles.initials}>{initials || "?"}</Text>
@@ -237,16 +268,11 @@ export default function Account() {
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
-    paddingHorizontal: 10,
-  },
   center: { alignItems: "center", justifyContent: "center" },
   title: {
     paddingTop: 25,

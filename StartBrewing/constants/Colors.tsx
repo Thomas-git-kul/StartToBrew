@@ -20,6 +20,8 @@ export const BASE_COLORS = {
   // voor de gewone tekst
   ACCENT_PRIMARY: '#B45309' as HexColor,
 
+   ACCENT_LIGHT: '#d97706' as HexColor,
+
   STONE50:  '#fafaf9',
   STONE100: '#f5f5f4',
   STONE200: '#e7e5e4',

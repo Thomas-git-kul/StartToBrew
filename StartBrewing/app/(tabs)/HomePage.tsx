@@ -1,33 +1,36 @@
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ThemedText } from "@/components/themed-text";
-import { TouchableOpacity, Text, StyleSheet, ScrollView, View } from "react-native";
-import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
+import { useState } from "react";
+import { ScrollView, View } from "react-native";
+import { FAB } from "react-native-paper";
+
 import { useRouter } from "expo-router"; 
 import { useFonts } from "@/hooks/use-fonts";
-import BeerCard from '@/components/ui/IPAcomponent';
+import BeerCard from '@/components/ui/RecipeCard';
+import Header from '@/components/header';
+import { ThemedText } from "@/components/themed-text";
+import { BASE_COLORS } from "@/constants/Colors";
+
+import { Plus } from "lucide-react-native";
 
 interface Beer {
   name: string;
   rating: number;
   reviews: number;
-  image: any; // for require("...") format
+  image: any;
   description: string;
 }
 
 export default function HomePage() {
+  useFonts();
+
   const router = useRouter();
-  const fontsLoaded = useFonts();
 
-  if (!fontsLoaded) return null;
-
-  const beers: Beer[] = [
+  const [beers, setBeers] = useState<Beer[]>([
     {
       name: "IJ IPA",
       rating: 4.8,
       reviews: 256,
       image: require("@/assets/images/default-beer.png"),
-      description: "An assertive bitterness that dominates the palate, with citrus and pine notes."
+      description: "An assertive bitterness that dominates the palate, with citrus and pine notes.",
     },
     {
       name: "Voodoo Ranger",
@@ -43,97 +46,47 @@ export default function HomePage() {
       image: require("@/assets/images/default-beer.png"),
       description: "A slightly hazy gold color with tropical flavors like mango and orange.",
     },
-  ];
+  ]);
 
   return (
-    <SafeAreaView style={styles.general}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <ThemedText style={styles.title}>StartToBrew</ThemedText>
+    <View className="flex-1">
+      <Header
+        title="StartToBrew"
+      />
 
-        <ThemedText style={styles.title2}>In progress</ThemedText>
+      <ScrollView style={{backgroundColor: BASE_COLORS.LIGHT_BG}}>
+        <ThemedText type="title">In progress</ThemedText>
+        <ThemedText type="title">Popular recipes</ThemedText>
 
-        <ThemedText style={styles.title2}>Start a new brew</ThemedText>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push("/Recipes")}
-        >
-          <Text style={styles.buttonText}>Here</Text>
-        </TouchableOpacity>
-
-        <ThemedText style={styles.title2}>Popular recipes</ThemedText>
-
-        <View style={{ paddingHorizontal: 10, paddingBottom: 20 }}>
+        <View>
           {beers.map((beer, index) => (
-            <BeerCard key={index} {...beer} />
+            <BeerCard 
+              key={index}
+              {...beer}
+              onPress={() => router.push("/SpecificRecipe")}
+            />
           ))}
         </View>
       </ScrollView>
 
       {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push("/Recipes")}
-        activeOpacity={0.8}
-      >
-        {/* <Plus color="white" size={24} /> Optioneel icoon */}
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+      <FAB
+        icon={(props) => (
+          <Plus size={props.size} color={props.color} />
+        )}
+        testID="fab"
+        style={{
+          position: 'absolute',
+          right: 10,
+          bottom: 25,
+          backgroundColor: BASE_COLORS.TEXT_DARK,
+          borderRadius: 20
+        }}
+        color={BASE_COLORS.LIGHT_BG}
+        onPress={() => router.push('/Recipes')}
+        mode="elevated"
+        size="medium"
+      />
+    </View>
   );
-}
-
-const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
-  },
-  title: {
-    paddingTop: 25,
-    fontSize: 50,
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  title2: {
-    paddingTop: 20,
-    fontSize: 25,
-    marginHorizontal: 10,
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  buttonText: {
-    color: BASE_COLORS.WHITE,
-    textAlign: "center",
-    fontFamily: FontFamilies.BODY_BOLD,
-  },
-  button: {
-    backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    height: 30,
-    width: "50%",
-    marginLeft: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 6,
-  },
-  fab: {
-    position: "absolute",
-    bottom: 25,
-    right: 25,
-    backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5, // schaduw voor Android
-    shadowColor: "#000", // schaduw voor iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  fabText: {
-    color: BASE_COLORS.WHITE,
-    fontSize: 32,
-    marginTop: -3,
-  },
-});
+};
