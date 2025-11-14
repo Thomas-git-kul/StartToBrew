@@ -17,6 +17,7 @@ import { supabase } from "@/supabase";
 import { updateAvatar } from "@/supabase/storage/updateAvatar";
 import { Image } from "expo-image";
 import { router, useRouter } from "expo-router";
+import Header from "@/components/header";
 
 type Profile = {
   id: string;
@@ -172,15 +173,24 @@ export default function Account() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.general, styles.center]}>
+      <SafeAreaView>
         <ActivityIndicator />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.general}>
-      <ThemedText style={styles.title}>Account</ThemedText>
+    <View className="flex-1"
+      style={{
+        backgroundColor: BASE_COLORS.LIGHT_BG
+      }}
+    >
+      <Header
+        title="Account"
+        iconName="ArrowRight"
+        onIconPress={() => router.push("/HomePage")}
+        actionTestID="account-button"
+      />
 
       <View style={styles.section}>
         <View style={styles.avatarRow}>
@@ -258,16 +268,11 @@ export default function Account() {
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  general: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.WHITE,
-    paddingHorizontal: 10,
-  },
   center: { alignItems: "center", justifyContent: "center" },
   title: {
     paddingTop: 25,

@@ -61,6 +61,14 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
+jest.mock("react-native-safe-area-context", () => {
+  return {
+    SafeAreaProvider: ({ children }: any) => children,
+    SafeAreaView: ({ children }: any) => children,
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  };
+});
+
 // Import the component AFTER all mocks
 import Registration from "../app/Registration";
 
@@ -69,10 +77,9 @@ describe("<Registration />", () => {
     jest.clearAllMocks();
   });
 
-  it("renders the main title correctly", () => {
+  it("renders the main header correctly", () => {
     const { getByText } = render(<Registration />);
     expect(getByText("No account yet?")).toBeTruthy();
-    expect(getByText("Register here!")).toBeTruthy();
   });
 
   it("renders all section labels", () => {
@@ -83,7 +90,7 @@ describe("<Registration />", () => {
     expect(getByText("Account")).toBeTruthy();
   });
 
- it("renders the checkbox and toggles it on press", () => {
+  it("renders the checkbox and toggles it on press", () => {
     const { getByRole } = render(<Registration />);
     const checkbox = getByRole("checkbox");
     fireEvent.press(checkbox);

@@ -66,7 +66,7 @@ export default function Auth() {
     >
       <ThemedText type="titleBlack" className="text-center mb-10">Welcome</ThemedText>
 
-      <View className="gap-1 mx-5 mb-5">
+      <View className="gap-1 mx-5 mb-8">
         <TextInput
           label="Email"
           value={email}
@@ -79,7 +79,7 @@ export default function Auth() {
         />
       </View>
 
-      <View className="grid grid-col-1 gap-2 mx-5">
+      <View className="items-center gap-2">
         <Button
           mode="contained"
           onPress={signInWithEmail}
@@ -92,7 +92,8 @@ export default function Auth() {
             fontFamily: FontFamilies.BODY
           }}
           style={{
-            alignSelf: "flex-start"
+            borderRadius: 20,
+            width: "65%"
           }}
         >Sign In</Button>
         <Button
@@ -107,7 +108,8 @@ export default function Auth() {
             fontFamily: FontFamilies.BODY
           }}
           style={{
-            alignSelf: "flex-start"
+            borderRadius: 20,
+            width: "65%"
           }}
         >Sign Up</Button>
         <Button
@@ -122,7 +124,8 @@ export default function Auth() {
             fontFamily: FontFamilies.BODY
           }}
           style={{
-            alignSelf: "flex-start"
+            borderRadius: 20,
+            width: "65%"
           }}
         >Sign In as Test User</Button>
       </View>

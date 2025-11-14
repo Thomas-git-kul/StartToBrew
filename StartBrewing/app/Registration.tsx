@@ -11,6 +11,7 @@ import TextInput from "@/components/textInput";
 import { BASE_COLORS } from "@/constants/Colors";
 import { ScrollView } from "react-native";
 import { FontFamilies } from "@/constants/Fonts";
+import Header from "@/components/header";
 
 export default function Registration() {
   useFonts();
@@ -80,14 +81,17 @@ export default function Registration() {
         backgroundColor: BASE_COLORS.LIGHT_BG
       }}
     >
+      <Header
+        title="No account yet?"
+        iconName="ArrowRight"
+        onIconPress={() => router.push("/Auth")}
+        actionTestID="registration-button"
+      />
       <ScrollView
         className="px-3"
-        contentContainerStyle={{ paddingBottom: 80 }} // make space for FAB
+        contentContainerStyle={{ paddingBottom: 120 }} // make space for FAB
         showsVerticalScrollIndicator={false}
       >
-        <ThemedText type="titleBlack" className="mt-4">No account yet?</ThemedText>
-        <ThemedText type="titleBlack" className="mb-3">Register here!</ThemedText>
-
         {/* Full Name */}
         <ThemedText type="subTitle">Full Name</ThemedText>
         <View className="flex-row gap-3 w-full">
@@ -158,6 +162,7 @@ export default function Registration() {
           color={BASE_COLORS.WHITE}
           style={{
             backgroundColor: BASE_COLORS.TEXT_DARK,
+            borderRadius: 20
           }}
           theme={{
             fonts: {

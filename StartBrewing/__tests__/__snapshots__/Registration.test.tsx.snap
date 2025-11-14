@@ -1,80 +1,389 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Registration /> matches snapshot 1`] = `
-<RNCSafeAreaView
-  className="flex-1"
-  edges={
-    {
-      "bottom": "additive",
-      "left": "additive",
-      "right": "additive",
-      "top": "additive",
+[
+  <View
+    style={
+      [
+        {
+          "backgroundColor": "#fafafa",
+          "elevation": 0,
+          "paddingHorizontal": 0,
+          "paddingTop": 0,
+          "zIndex": 0,
+        },
+        {},
+        {},
+      ]
     }
-  }
-  style={
-    {
-      "backgroundColor": "#fafafa",
-    }
-  }
->
+    testID="appbar-header-root-layer"
+  >
+    <View
+      collapsable={false}
+      style={
+        {
+          "backgroundColor": "#fafafa",
+          "height": 64,
+          "shadowColor": "#000",
+          "shadowOffset": {
+            "height": 0,
+            "width": 0,
+          },
+          "shadowOpacity": 0,
+          "shadowRadius": 0,
+        }
+      }
+      testID="appbar-header-outer-layer"
+    >
+      <View
+        collapsable={false}
+        style={
+          {
+            "alignItems": "center",
+            "backgroundColor": "#fafafa",
+            "flex": 1,
+            "flexDirection": "row",
+            "paddingBottom": undefined,
+            "paddingHorizontal": 4,
+            "paddingLeft": undefined,
+            "paddingRight": undefined,
+            "paddingTop": undefined,
+            "shadowColor": "#000",
+            "shadowOffset": {
+              "height": 0,
+              "width": 0,
+            },
+            "shadowOpacity": 0,
+            "shadowRadius": 0,
+          }
+        }
+        testID="appbar-header"
+      >
+        <View
+          style={
+            {
+              "width": 52,
+            }
+          }
+        />
+        <View
+          pointerEvents="box-none"
+          style={
+            [
+              {
+                "flex": 1,
+                "paddingHorizontal": 12,
+              },
+              {
+                "paddingHorizontal": 0,
+              },
+              [
+                false,
+                {
+                  "alignItems": "center",
+                },
+                undefined,
+              ],
+            ]
+          }
+          testID="appbar-content"
+        >
+          <Text
+            accessibilityRole="header"
+            accessibilityTraits="header"
+            accessible={true}
+            numberOfLines={1}
+            style={
+              [
+                {
+                  "textAlign": "left",
+                },
+                {
+                  "color": "rgba(28, 27, 31, 1)",
+                  "writingDirection": "ltr",
+                },
+                [
+                  {
+                    "fontFamily": "System",
+                    "fontSize": 22,
+                    "fontWeight": "400",
+                    "letterSpacing": 0,
+                    "lineHeight": 28,
+                  },
+                  [
+                    {
+                      "color": "rgba(28, 27, 31, 1)",
+                      "fontFamily": "System",
+                      "fontSize": 22,
+                      "fontWeight": "400",
+                      "letterSpacing": 0,
+                      "lineHeight": 28,
+                    },
+                    false,
+                    {
+                      "color": "#000",
+                      "fontFamily": "System",
+                    },
+                  ],
+                ],
+              ]
+            }
+            testID="appbar-content-title-text"
+          >
+            No account yet?
+          </Text>
+        </View>
+        <View
+          collapsable={false}
+          style={
+            {
+              "backgroundColor": "transparent",
+              "borderRadius": 20,
+              "height": 40,
+              "margin": 6,
+              "shadowColor": "#000",
+              "shadowOffset": {
+                "height": 0,
+                "width": 0,
+              },
+              "shadowOpacity": 0,
+              "shadowRadius": 0,
+              "width": 40,
+            }
+          }
+          testID="registration-button-container-outer-layer"
+        >
+          <View
+            collapsable={false}
+            style={
+              {
+                "backgroundColor": "transparent",
+                "borderColor": "rgba(121, 116, 126, 1)",
+                "borderRadius": 20,
+                "borderWidth": 0,
+                "elevation": 0,
+                "flex": 1,
+                "overflow": "hidden",
+                "shadowColor": "#000",
+                "shadowOffset": {
+                  "height": 0,
+                  "width": 0,
+                },
+                "shadowOpacity": 0,
+                "shadowRadius": 0,
+              }
+            }
+            testID="registration-button-container"
+          >
+            <View
+              accessibilityComponentType="button"
+              accessibilityRole="button"
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": false,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityTraits="button"
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              centered={true}
+              collapsable={false}
+              focusable={true}
+              hitSlop={
+                {
+                  "bottom": 6,
+                  "left": 6,
+                  "right": 6,
+                  "top": 6,
+                }
+              }
+              onBlur={[Function]}
+              onClick={[Function]}
+              onFocus={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                [
+                  {
+                    "overflow": "hidden",
+                  },
+                  [
+                    {
+                      "alignItems": "center",
+                      "flexGrow": 1,
+                      "justifyContent": "center",
+                    },
+                    undefined,
+                  ],
+                ]
+              }
+              testID="registration-button"
+            >
+              <View
+                style={
+                  [
+                    {
+                      "alignItems": "center",
+                      "justifyContent": "center",
+                    },
+                    {
+                      "height": 24,
+                      "width": 24,
+                    },
+                  ]
+                }
+              >
+                <View
+                  collapsable={false}
+                  style={
+                    {
+                      "bottom": 0,
+                      "left": 0,
+                      "opacity": 1,
+                      "position": "absolute",
+                      "right": 0,
+                      "top": 0,
+                      "transform": [
+                        {
+                          "rotate": "0deg",
+                        },
+                      ],
+                    }
+                  }
+                  testID="cross-fade-icon-current"
+                >
+                  <RNSVGSvgView
+                    align="xMidYMid"
+                    bbHeight={28}
+                    bbWidth={28}
+                    fill="none"
+                    focusable={false}
+                    height={28}
+                    meetOrSlice={0}
+                    minX={0}
+                    minY={0}
+                    stroke="#000"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    style={
+                      [
+                        {
+                          "backgroundColor": "transparent",
+                          "borderWidth": 0,
+                        },
+                        {
+                          "flex": 0,
+                          "height": 28,
+                          "width": 28,
+                        },
+                      ]
+                    }
+                    vbHeight={24}
+                    vbWidth={24}
+                    width={28}
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <RNSVGGroup
+                      fill={null}
+                      propList={
+                        [
+                          "fill",
+                          "stroke",
+                          "strokeWidth",
+                          "strokeLinecap",
+                          "strokeLinejoin",
+                        ]
+                      }
+                      stroke={
+                        {
+                          "payload": 4278190080,
+                          "type": 0,
+                        }
+                      }
+                      strokeLinecap={1}
+                      strokeLinejoin={1}
+                      strokeWidth={2}
+                    >
+                      <RNSVGPath
+                        d="M5 12h14"
+                        fill={null}
+                        propList={
+                          [
+                            "fill",
+                            "stroke",
+                            "strokeWidth",
+                            "strokeLinecap",
+                            "strokeLinejoin",
+                          ]
+                        }
+                        stroke={
+                          {
+                            "payload": 4278190080,
+                            "type": 0,
+                          }
+                        }
+                        strokeLinecap={1}
+                        strokeLinejoin={1}
+                        strokeWidth={2}
+                      />
+                      <RNSVGPath
+                        d="m12 5 7 7-7 7"
+                        fill={null}
+                        propList={
+                          [
+                            "fill",
+                            "stroke",
+                            "strokeWidth",
+                            "strokeLinecap",
+                            "strokeLinejoin",
+                          ]
+                        }
+                        stroke={
+                          {
+                            "payload": 4278190080,
+                            "type": 0,
+                          }
+                        }
+                        strokeLinecap={1}
+                        strokeLinejoin={1}
+                        strokeWidth={2}
+                      />
+                    </RNSVGGroup>
+                  </RNSVGSvgView>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  </View>,
   <RCTScrollView
     className="px-3"
     contentContainerStyle={
       {
-        "paddingBottom": 80,
+        "paddingBottom": 120,
       }
     }
     showsVerticalScrollIndicator={false}
   >
     <View>
-      <Text
-        className="mt-4"
-        style={
-          [
-            {
-              "color": "#11181C",
-            },
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            {
-              "color": "#000",
-              "fontFamily": "System",
-              "fontSize": 50,
-            },
-            undefined,
-          ]
-        }
-      >
-        No account yet?
-      </Text>
-      <Text
-        className="mb-3"
-        style={
-          [
-            {
-              "color": "#11181C",
-            },
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            {
-              "color": "#000",
-              "fontFamily": "System",
-              "fontSize": 50,
-            },
-            undefined,
-          ]
-        }
-      >
-        Register here!
-      </Text>
       <Text
         style={
           [
@@ -2645,7 +2954,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         </Text>
       </View>
     </View>
-  </RCTScrollView>
+  </RCTScrollView>,
   <View
     style={
       {
@@ -2662,7 +2971,7 @@ exports[`<Registration /> matches snapshot 1`] = `
       style={
         {
           "backgroundColor": "#000",
-          "borderRadius": 16,
+          "borderRadius": 20,
           "opacity": 1,
           "shadowColor": "#000",
           "shadowOffset": {
@@ -2686,7 +2995,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         style={
           {
             "backgroundColor": "#000",
-            "borderRadius": 16,
+            "borderRadius": 20,
             "flex": undefined,
             "shadowColor": "#000",
             "shadowOffset": {
@@ -2737,7 +3046,7 @@ exports[`<Registration /> matches snapshot 1`] = `
                 "overflow": "hidden",
               },
               {
-                "borderRadius": 16,
+                "borderRadius": 20,
               },
             ]
           }
@@ -2805,6 +3114,6 @@ exports[`<Registration /> matches snapshot 1`] = `
         </View>
       </View>
     </View>
-  </View>
-</RNCSafeAreaView>
+  </View>,
+]
 `;

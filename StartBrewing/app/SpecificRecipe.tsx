@@ -153,6 +153,7 @@ export default function SpecificRecipe() {
           onPress={() => router.push("../progress")}
           style={{
             backgroundColor: BASE_COLORS.TEXT_DARK,
+            borderRadius: 20,
           }}
           theme={{
             fonts: {
