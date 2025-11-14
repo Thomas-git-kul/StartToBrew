@@ -1,69 +1,70 @@
+import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useRouter } from "expo-router"; 
 import { useFonts } from "@/hooks/use-fonts";
 import { ProgressBar } from "react-native-paper";
-import { useState } from "react";
+import Checkbox from "expo-checkbox";
 import { ScrollView } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect } from 'react';
+import Header from '@/components/header';
+import { Button } from "react-native-paper";
+import { AlarmClock, AlarmClockCheck } from "lucide-react-native";
 
-export default function Progress() {
-    const router = useRouter();
-    const fontsLoaded = useFonts();
+type Step = {
+    text: string;
+    time: number;
+    done: boolean;
+};
 
-    const initialPhases = [
+type Phase = {
+    title: string;
+    phase: string;
+    steps: Step[];
+};
+
+const fetchProgressData = async (): Promise<Phase[]> => {
+    return [
         {
-            title: "Phase 1: Mash",
+            title: "IJ IPA",
+            phase: "Phase 1: Mash",
             steps: [
-            { text: "Heat strike water", done: true },
-            { text: "Mash in", done: true },
-            { text: "Saccharification rest", done: true },
-            { text: "Mash out", done: true },
-            ],
-        },
-        {
-            title: "Phase 2: Boil",
-            steps: [
-            { text: "Bring to boil", done: false },
-            { text: "30-min cascade", done: false },
-            { text: "10-min cascade", done: false },
-            ],
-        },
-        {
-            title: "Phase 3: Whirlpool",
-            steps: [
-            { text: "Cool to 80°C", done: false },
-            { text: "Whirlpool cascade + cascade", done: false },
-            ],
-        },
-        {
-            title: "Phase 4: Chill",
-            steps: [
-            { text: "Chill to 19°C", done: false },
-            { text: "Transfer to fermenter", done: false },
-            { text: "Pitch yeast", done: false },
-            ],
-        },
-        {
-            title: "Phase 5: ferment",
-            steps: [
-            { text: "Primary ferment", done: false },
-            { text: "Dry hop (3days)", done: false },
-            ],
-        },
-        {
-            title: "Phase 6: package",
-            steps: [
-            { text: "package (bottle/keg)", done: false },
+                { text: "Heat strike water", time: 60, done: false },
+                { text: "Mash in", time: 30, done: false },
+                { text: "Saccharification rest", time: 20, done: false },
+                { text: "Mash out", time: 10, done: false },
             ],
         },
     ];
+};
 
-    const [phases, setPhases] = useState(initialPhases);
+export default function Progress() {
+    useFonts();
+    const router = useRouter();
+
+    const [phases, setPhases] = useState<Phase[]>([]);
+    const [activeTimer, setActiveTimer] = useState<{ phaseIndex: number; stepIndex: number } | null>(null);
+    const [remainingTime, setRemainingTime] = useState<number | null>(null);
+
+    useEffect(() => {
+        const loadProgressData = async () => {
+            const data = await fetchProgressData();
+            setPhases(data);
+        };
+        loadProgressData();
+    }, []);
+
+    useEffect(() => {
+        let timer: ReturnType<typeof setInterval>;
+        if (activeTimer && remainingTime !== null && remainingTime > 0) {
+            timer = setInterval(() => {
+                setRemainingTime((prev) => (prev !== null ? prev - 1 : null));
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [activeTimer, remainingTime]);
 
     const toggleStep = (phaseIndex: number, stepIndex: number) => {
         const newPhases = [...phases];
@@ -72,70 +73,105 @@ export default function Progress() {
         setPhases(newPhases);
     };
 
+    const startTimer = (phaseIndex: number, stepIndex: number, time: number) => {
+        setActiveTimer({ phaseIndex, stepIndex });
+        setRemainingTime(time);
+    };
+
     const totalSteps = phases.reduce((sum, p) => sum + p.steps.length, 0);
     const doneSteps = phases.reduce(
-        (sum, p) => sum + p.steps.filter(s => s.done).length, 0);
+        (sum, p) => sum + p.steps.filter((s: Step) => s.done).length, 0
+    );
     const progress = doneSteps / totalSteps;
     const progressPercentage = Math.round(progress * 100);
 
-
-    if (!fontsLoaded) {return null;}
-
     return (
-        <SafeAreaView style={styles.general}>
-            <View style={styles.headerSection}>
-                <ThemedText style={styles.title}>Progress</ThemedText>
-                <ThemedText style={styles.percentageText}>{progressPercentage}%</ThemedText>
-                <ProgressBar progress={progress} color={BASE_COLORS.ACCENT_PRIMARY}  style={styles.progressBar} testID="progress-bar" accessible={true}/>
-            </View>
-            
-            <View style={styles.todoSection}>
-                <ThemedText style={styles.title2}>To do</ThemedText>
-            </View>
-                
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+        <SafeAreaView
+            className="flex-1"
+            style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+        >
+            {phases.map((phase, phaseIndex) => (
+                <Header
+                    title={`${phase.title} progress`}
+                    iconName="ArrowRight"
+                    onIconPress={() => router.push("/HomePage" as any)}
+                    actionTestID="store-button"
+                />
+            ))}
+
+            <View className="my-7 px-5">
+                    <ThemedText type="title">{progressPercentage}%</ThemedText>
+                        <ProgressBar
+                            progress={progress}
+                            color={BASE_COLORS.ACCENT_PRIMARY}
+                            style={styles.progressBar}
+                            testID="progress-bar"
+                            accessible={true}
+                        />
+                </View>
+
+            <ScrollView
+            className="mx-5"
+                showsVerticalScrollIndicator={false}
+            >
                 {phases.map((phase, phaseIndex) => (
                     <View key={phaseIndex} style={{ marginBottom: 20 }}>
-                        <ThemedText style={styles.phaseTitle}>{phase.title}</ThemedText>
-                        {phase.steps.map((step, stepIndex) => (
-                            <TouchableOpacity
-                                key={stepIndex}
-                                onPress={() => toggleStep(phaseIndex, stepIndex)}
-                            >
+                        <ThemedText type="subTitle">{phase.phase}</ThemedText>
+                        {phase.steps.map((step: Step, stepIndex: number) => (
+                            <View key={stepIndex} className="flex-row items-center gap-3">
+                                <Checkbox
+                                    value={step.done}
+                                    disabled={stepIndex > 0 && !phase.steps[stepIndex - 1].done}
+                                    onValueChange={() => toggleStep(phaseIndex, stepIndex)}
+                                    color={BASE_COLORS.ACCENT_PRIMARY}
+                                />
                                 <ThemedText
                                     style={[
                                         styles.stepText,
-                                        step.done && { textDecorationLine: "line-through", opacity: 0.5 },
+                                        step.done && {
+                                            textDecorationLine: "line-through",
+                                            opacity: 0.5,
+                                        },
                                     ]}
                                 >
                                     {step.text}
                                 </ThemedText>
-                            </TouchableOpacity>
+                                <View style={{ flexDirection: "row", alignItems: "center", marginLeft: 10 }}>
+                                    {activeTimer?.phaseIndex === phaseIndex && activeTimer?.stepIndex === stepIndex && remainingTime === 0 ? (
+                                        <AlarmClockCheck color={BASE_COLORS.ACCENT_PRIMARY} size={20} />
+                                    ) : (
+                                        <AlarmClock color={BASE_COLORS.ACCENT_PRIMARY} size={20} />
+                                    )}
+                                    <ThemedText style={{ marginLeft: 5 }}>
+                                        {activeTimer?.phaseIndex === phaseIndex && activeTimer?.stepIndex === stepIndex
+                                            ? `${remainingTime}s`
+                                            : `${step.time}s`}
+                                    </ThemedText>
+                                </View>
+                                {!step.done && stepIndex === phase.steps.findIndex((s) => !s.done) && (
+                                    <View style={{ marginLeft: 10 }}>
+                                        {activeTimer?.phaseIndex === phaseIndex && activeTimer?.stepIndex === stepIndex ? (
+                                            <ThemedText>{`Time remaining: ${remainingTime}s`}</ThemedText>
+                                        ) : (
+                                            <Button
+                                                mode="contained"
+                                                onPress={() => startTimer(phaseIndex, stepIndex, step.time)}
+                                            >
+                                                Start
+                                            </Button>
+                                        )}
+                                    </View>
+                                )}
+                            </View>
                         ))}
                     </View>
                 ))}
             </ScrollView>
         </SafeAreaView>
-        
     );
 }
 
 const styles = StyleSheet.create({
-    general: {
-        flex: 1,
-        backgroundColor: BASE_COLORS.WHITE,
-    },
-    headerSection: {        
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 5,
-        backgroundColor: BASE_COLORS.WHITE,
-        elevation: 3,        // 👈 subtiele schaduw (Android)
-        shadowColor: "#000", // 👈 subtiele schaduw (iOS)
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        shadowOffset: { width: 0, height: 2 },
-    },
     scrollContent: {
         paddingHorizontal: 20,
         paddingBottom: 20,

@@ -35,7 +35,6 @@ export default function Agenda() {
     }, [currentDate])
   );
 
-
   const initialPhases = [
     {
       title: "Phase 1: Mash",
