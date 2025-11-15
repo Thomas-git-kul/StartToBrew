@@ -1,8 +1,6 @@
 // firebase/firebaseConfig.js
 import { initializeApp } from "firebase/app";
-import { getAnalytics, isSupported } from "firebase/analytics";
-import { Analytics } from "firebase/analytics";
-import { logEvent } from "firebase/analytics";
+import { getAnalytics, isSupported, logEvent, Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -16,27 +14,15 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-// Initialize Analytics (but only in supported environments)
+
 let analytics: Analytics | null = null;
 
-// Debug: Log Firebase config and analytics status
-console.log("Firebase Config:", firebaseConfig);
-console.log("Analytics initialized:", analytics !== null);
+if (typeof window !== "undefined") {
+  isSupported().then((supported) => {
+    if (supported) {
+      analytics = getAnalytics(app);
+    }
+  });
+}
 
-isSupported().then((supported) => {
-  if (supported) {
-    analytics = getAnalytics(app);
-    console.log("Analytics enabled");
-
-    // Example: track page view
-    logEvent(analytics, "page_view", { page: "HomePage" });
-  } else {
-    console.log("Analytics not supported in this environment");
-  }
-});
-
-const getAnalyticsInstance = (): Analytics | null => {
-  return analytics;
-};
-
-export { app, getAnalyticsInstance };
+export { app, analytics, logEvent };
