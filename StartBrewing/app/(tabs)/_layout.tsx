@@ -100,5 +100,3 @@ function TabLayout() {
 TabLayout.displayName = "TabLayout";
 
 export default TabLayout;
-
-
