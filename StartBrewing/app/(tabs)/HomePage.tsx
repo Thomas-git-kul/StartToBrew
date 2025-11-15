@@ -55,9 +55,9 @@ export default function HomePage() {
       />
 
       <ScrollView style={{backgroundColor: BASE_COLORS.LIGHT_BG}}>
-        <ThemedText type="title">Recipe(s) In progress</ThemedText>
+        <ThemedText type="title">In progress</ThemedText>
         <ThemedText type="title">Popular recipes</ThemedText>
-
+        <ThemedText type="title">Test</ThemedText>
         <View>
           {beers.map((beer, index) => (
             <BeerCard 
