@@ -17,10 +17,10 @@ import {
   User,
 } from "lucide-react-native";
 
-export default function TabLayout() {
+function TabLayout() {
   // Custom tabBarButton to log analytics event
-  const createTabBarButton = (eventName: string, DefaultButton: any) =>
-    (props: any) => {
+  const createTabBarButton = (eventName: string, DefaultButton: any) => {
+    const WrappedButton = (props: any) => {
       const handlePress = (event: any) => {
         if (analytics) {
           logEvent(analytics, eventName);
@@ -31,6 +31,10 @@ export default function TabLayout() {
       };
       return <DefaultButton {...props} onPress={handlePress} />;
     };
+
+    WrappedButton.displayName = `${eventName}_TabButton`;
+    return WrappedButton;
+  };
 
   return (
     <SafeAreaView
@@ -69,7 +73,7 @@ export default function TabLayout() {
           <Tabs.Screen
             name="Store"
             options={{
-              tabBarIcon: ({ color }) => (<Handbag color={color} size={28} />),
+              tabBarIcon: ({ color }) => <Handbag color={color} size={28} />,
               tabBarButton: createTabBarButton("store_tab_pressed", HapticTab),
             }}
           />
@@ -93,3 +97,6 @@ export default function TabLayout() {
   );
 }
 
+TabLayout.displayName = "TabLayout";
+
+export default TabLayout;
