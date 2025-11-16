@@ -20,8 +20,571 @@ exports[`<HomePage /> matches snapshot 1`] = `
       <Text>
         In progress
       </Text>
+      <View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": false,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          className="mb-3 rounded-xl overflow-hidden"
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              false,
+              undefined,
+            ]
+          }
+        >
+          <View
+            collapsable={false}
+            style={
+              {
+                "backgroundColor": "#fff",
+                "borderRadius": 12,
+                "marginBlock": 3,
+                "marginInline": 2,
+                "shadowColor": "#000",
+                "shadowOffset": {
+                  "height": 1,
+                  "width": 0,
+                },
+                "shadowOpacity": 0.15,
+                "shadowRadius": 3,
+              }
+            }
+            testID="card-container-outer-layer"
+          >
+            <View
+              collapsable={false}
+              style={
+                {
+                  "backgroundColor": "#fff",
+                  "borderRadius": 12,
+                  "flex": undefined,
+                  "padding": 16,
+                  "shadowColor": "#000",
+                  "shadowOffset": {
+                    "height": 1,
+                    "width": 0,
+                  },
+                  "shadowOpacity": 0.3,
+                  "shadowRadius": 1,
+                }
+              }
+              testID="card-container"
+            >
+              <View
+                style={
+                  [
+                    {
+                      "flexShrink": 1,
+                    },
+                    undefined,
+                  ]
+                }
+                testID="card"
+              >
+                <Text
+                  borderRadiusStyles={
+                    {
+                      "borderRadius": 12,
+                    }
+                  }
+                  index={0}
+                  siblings={
+                    [
+                      "Text",
+                      "Text",
+                    ]
+                  }
+                  style={
+                    {
+                      "color": undefined,
+                      "fontFamily": "System",
+                      "fontSize": 24,
+                      "marginBottom": 6,
+                    }
+                  }
+                  total={3}
+                >
+                  Hazy IPA
+                </Text>
+                <Text
+                  borderRadiusStyles={
+                    {
+                      "borderRadius": 12,
+                    }
+                  }
+                  index={1}
+                  siblings={
+                    [
+                      "Text",
+                      "Text",
+                    ]
+                  }
+                  style={
+                    {
+                      "color": "#f00",
+                      "fontFamily": "System",
+                      "fontSize": 18,
+                    }
+                  }
+                  total={3}
+                >
+                  30
+                  %
+                </Text>
+                <View
+                  accessibilityRole="progressbar"
+                  accessibilityState={
+                    {
+                      "busy": true,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": 100,
+                      "min": 0,
+                      "now": 30,
+                    }
+                  }
+                  accessible={true}
+                  borderRadiusStyles={
+                    {
+                      "borderRadius": 12,
+                    }
+                  }
+                  index={2}
+                  onLayout={[Function]}
+                  siblings={
+                    [
+                      "Text",
+                      "Text",
+                    ]
+                  }
+                  style={false}
+                  testID="progress-bar"
+                  total={3}
+                >
+                  <View
+                    collapsable={false}
+                    style={
+                      {
+                        "backgroundColor": "rgba(231, 224, 236, 1)",
+                        "borderRadius": 6,
+                        "height": 12,
+                        "opacity": 0,
+                        "overflow": "hidden",
+                      }
+                    }
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": false,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          className="mb-3 rounded-xl overflow-hidden"
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              false,
+              undefined,
+            ]
+          }
+        >
+          <View
+            collapsable={false}
+            style={
+              {
+                "backgroundColor": "#fff",
+                "borderRadius": 12,
+                "marginBlock": 3,
+                "marginInline": 2,
+                "shadowColor": "#000",
+                "shadowOffset": {
+                  "height": 1,
+                  "width": 0,
+                },
+                "shadowOpacity": 0.15,
+                "shadowRadius": 3,
+              }
+            }
+            testID="card-container-outer-layer"
+          >
+            <View
+              collapsable={false}
+              style={
+                {
+                  "backgroundColor": "#fff",
+                  "borderRadius": 12,
+                  "flex": undefined,
+                  "padding": 16,
+                  "shadowColor": "#000",
+                  "shadowOffset": {
+                    "height": 1,
+                    "width": 0,
+                  },
+                  "shadowOpacity": 0.3,
+                  "shadowRadius": 1,
+                }
+              }
+              testID="card-container"
+            >
+              <View
+                style={
+                  [
+                    {
+                      "flexShrink": 1,
+                    },
+                    undefined,
+                  ]
+                }
+                testID="card"
+              >
+                <Text
+                  borderRadiusStyles={
+                    {
+                      "borderRadius": 12,
+                    }
+                  }
+                  index={0}
+                  siblings={
+                    [
+                      "Text",
+                      "Text",
+                    ]
+                  }
+                  style={
+                    {
+                      "color": undefined,
+                      "fontFamily": "System",
+                      "fontSize": 24,
+                      "marginBottom": 6,
+                    }
+                  }
+                  total={3}
+                >
+                  Belgian Tripel
+                </Text>
+                <Text
+                  borderRadiusStyles={
+                    {
+                      "borderRadius": 12,
+                    }
+                  }
+                  index={1}
+                  siblings={
+                    [
+                      "Text",
+                      "Text",
+                    ]
+                  }
+                  style={
+                    {
+                      "color": "#f00",
+                      "fontFamily": "System",
+                      "fontSize": 18,
+                    }
+                  }
+                  total={3}
+                >
+                  65
+                  %
+                </Text>
+                <View
+                  accessibilityRole="progressbar"
+                  accessibilityState={
+                    {
+                      "busy": true,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": 100,
+                      "min": 0,
+                      "now": 65,
+                    }
+                  }
+                  accessible={true}
+                  borderRadiusStyles={
+                    {
+                      "borderRadius": 12,
+                    }
+                  }
+                  index={2}
+                  onLayout={[Function]}
+                  siblings={
+                    [
+                      "Text",
+                      "Text",
+                    ]
+                  }
+                  style={false}
+                  testID="progress-bar"
+                  total={3}
+                >
+                  <View
+                    collapsable={false}
+                    style={
+                      {
+                        "backgroundColor": "rgba(231, 224, 236, 1)",
+                        "borderRadius": 6,
+                        "height": 12,
+                        "opacity": 0,
+                        "overflow": "hidden",
+                      }
+                    }
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": false,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          className="mb-3 rounded-xl overflow-hidden"
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              false,
+              undefined,
+            ]
+          }
+        >
+          <View
+            collapsable={false}
+            style={
+              {
+                "backgroundColor": "#fff",
+                "borderRadius": 12,
+                "marginBlock": 3,
+                "marginInline": 2,
+                "shadowColor": "#000",
+                "shadowOffset": {
+                  "height": 1,
+                  "width": 0,
+                },
+                "shadowOpacity": 0.15,
+                "shadowRadius": 3,
+              }
+            }
+            testID="card-container-outer-layer"
+          >
+            <View
+              collapsable={false}
+              style={
+                {
+                  "backgroundColor": "#fff",
+                  "borderRadius": 12,
+                  "flex": undefined,
+                  "padding": 16,
+                  "shadowColor": "#000",
+                  "shadowOffset": {
+                    "height": 1,
+                    "width": 0,
+                  },
+                  "shadowOpacity": 0.3,
+                  "shadowRadius": 1,
+                }
+              }
+              testID="card-container"
+            >
+              <View
+                style={
+                  [
+                    {
+                      "flexShrink": 1,
+                    },
+                    undefined,
+                  ]
+                }
+                testID="card"
+              >
+                <Text
+                  borderRadiusStyles={
+                    {
+                      "borderRadius": 12,
+                    }
+                  }
+                  index={0}
+                  siblings={
+                    [
+                      "Text",
+                      "Text",
+                    ]
+                  }
+                  style={
+                    {
+                      "color": undefined,
+                      "fontFamily": "System",
+                      "fontSize": 24,
+                      "marginBottom": 6,
+                    }
+                  }
+                  total={3}
+                >
+                  American Pale Ale
+                </Text>
+                <Text
+                  borderRadiusStyles={
+                    {
+                      "borderRadius": 12,
+                    }
+                  }
+                  index={1}
+                  siblings={
+                    [
+                      "Text",
+                      "Text",
+                    ]
+                  }
+                  style={
+                    {
+                      "color": "#f00",
+                      "fontFamily": "System",
+                      "fontSize": 18,
+                    }
+                  }
+                  total={3}
+                >
+                  85
+                  %
+                </Text>
+                <View
+                  accessibilityRole="progressbar"
+                  accessibilityState={
+                    {
+                      "busy": true,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": 100,
+                      "min": 0,
+                      "now": 85,
+                    }
+                  }
+                  accessible={true}
+                  borderRadiusStyles={
+                    {
+                      "borderRadius": 12,
+                    }
+                  }
+                  index={2}
+                  onLayout={[Function]}
+                  siblings={
+                    [
+                      "Text",
+                      "Text",
+                    ]
+                  }
+                  style={false}
+                  testID="progress-bar"
+                  total={3}
+                >
+                  <View
+                    collapsable={false}
+                    style={
+                      {
+                        "backgroundColor": "rgba(231, 224, 236, 1)",
+                        "borderRadius": 6,
+                        "height": 12,
+                        "opacity": 0,
+                        "overflow": "hidden",
+                      }
+                    }
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
       <Text>
         Popular recipes
+      </Text>
+      <Text>
+        Test
       </Text>
       <View>
         <View
@@ -251,7 +814,7 @@ exports[`<HomePage /> matches snapshot 1`] = `
     style={
       {
         "backgroundColor": "#000",
-        "borderRadius": 16,
+        "borderRadius": 20,
         "bottom": 25,
         "opacity": 1,
         "position": "absolute",
@@ -278,7 +841,7 @@ exports[`<HomePage /> matches snapshot 1`] = `
       style={
         {
           "backgroundColor": "#000",
-          "borderRadius": 16,
+          "borderRadius": 20,
           "flex": undefined,
           "shadowColor": "#000",
           "shadowOffset": {
@@ -328,7 +891,7 @@ exports[`<HomePage /> matches snapshot 1`] = `
               "overflow": "hidden",
             },
             {
-              "borderRadius": 16,
+              "borderRadius": 20,
             },
           ]
         }

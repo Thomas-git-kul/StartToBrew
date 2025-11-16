@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { FAB } from "react-native-paper";
-
 import { useRouter } from "expo-router"; 
 import { useFonts } from "@/hooks/use-fonts";
 import BeerCard from '@/components/ui/RecipeCard';
 import Header from '@/components/header';
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
-
 import { Plus } from "lucide-react-native";
+import ProgressCard from "@/components/ui/ProgressCard";
 
 interface Beer {
   name: string;
@@ -56,8 +55,13 @@ export default function HomePage() {
 
       <ScrollView style={{backgroundColor: BASE_COLORS.LIGHT_BG}}>
         <ThemedText type="title">In progress</ThemedText>
-        <ThemedText type="title">Popular recipes</ThemedText>
+        <View>
+          <ProgressCard title="Hazy IPA" progress={0.3} onPress={() => router.push("/progress")}/>
+          <ProgressCard title="Belgian Tripel" progress={0.65} onPress={() => router.push("/progress")}/>
+          <ProgressCard title="American Pale Ale" progress={0.85} onPress={() => router.push("/progress")}/>
+        </View>
 
+        <ThemedText type="title">Popular recipes</ThemedText>
         <View>
           {beers.map((beer, index) => (
             <BeerCard 
@@ -80,6 +84,7 @@ export default function HomePage() {
           right: 10,
           bottom: 25,
           backgroundColor: BASE_COLORS.TEXT_DARK,
+          borderRadius: 20
         }}
         color={BASE_COLORS.LIGHT_BG}
         onPress={() => router.push('/Recipes')}

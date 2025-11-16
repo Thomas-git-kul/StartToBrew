@@ -1,12 +1,5 @@
-import React, { useState } from "react";
-import {
-  View,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  FlatList,
-  Dimensions,
-} from "react-native";
+import React, { useState, useMemo } from "react";
+import { View, ScrollView, Image, Pressable, FlatList, Dimensions } from "react-native";
 import { FAB } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,191 +9,205 @@ import { FontFamilies } from "@/constants/Fonts";
 import { useFonts } from "@/hooks/use-fonts";
 import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
+import { nanoid } from 'nanoid/non-secure';
+import { CirclePlus, CircleMinus } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
-const IMAGE_HEIGHT = 300;
+const IMAGE_WIDTH = width - 20;
+const IMAGE_HEIGHT = IMAGE_WIDTH * 0.75;
 
 export default function StoreItem() {
   useFonts();
 
   const router = useRouter();
+
+  const [product] = useState({
+    id: nanoid(),
+    title: "Starter Brew Kit IPA",
+    description:
+      "Slightly bitter with a fruity undertone. This IPA has a moderate alcohol content of 5.1% ABV. Brew 5 liters of your own beer at home in just a few hours. Includes milled all-grain mix and practical brewing guide with tips & tricks.",
+    basePrice: 32.99,
+    images: [
+      { id: nanoid(), source: require("@/assets/images/Starterkit.png") },
+      { id: nanoid(), source: require("@/assets/images/starterkit2.png") },
+    ],
+  });
+
   const [quantity, setQuantity] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const images = [
-    require("@/assets/images/Starterkit.png"),
-    require("@/assets/images/starterkit2.png"),
-  ];
+  // Format price in Euro
+  const formatter = useMemo(
+    () => new Intl.NumberFormat("nl-BE", { style: "currency", currency: "EUR" }),
+    []
+  );
+
+  // Calculate total price dynamically
+  const totalPrice = useMemo(
+    () => product.basePrice * quantity,
+    [product.basePrice, quantity]
+  );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
-      {/* Header with same back arrow style as SpecificRecipe */}
-      <Header
-        title="Starter Brew Kit IPA"
-        iconName="ArrowRight" // same as SpecificRecipe
-        onIconPress={() => router.push("/Store")}
-        actionTestID="back-button"
-      />
-
-      {/* Scrollable Content */}
-<ScrollView
-  contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 160 }} // extra bottom padding
-  showsVerticalScrollIndicator={false}
->
-  {/* Image Carousel inside ScrollView */}
-  <View style={{ height: IMAGE_HEIGHT, marginBottom: 16 }}>
-    <FlatList
-      data={images}
-      horizontal
-      pagingEnabled
-      showsHorizontalScrollIndicator={false}
-      keyExtractor={(_, index) => index.toString()}
-      renderItem={({ item }) => (
-        <Image
-          source={item}
-          style={{
-            width,
-            height: IMAGE_HEIGHT,
-            borderRadius: 16,
-          }}
-          resizeMode="cover"
+      <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
+        {/* Header */}
+        <Header
+          title={product.title}
+          iconName="ArrowRight"
+          onIconPress={() => router.push("/Store")}
+          actionTestID="back-button"
         />
-      )}
-      onMomentumScrollEnd={(ev) => {
-        const index = Math.round(ev.nativeEvent.contentOffset.x / width);
-        setCurrentIndex(index);
-      }}
-    />
 
-    {/* Dots */}
-    <View
-      style={{
-        position: "absolute",
-        bottom: 8,
-        left: 0,
-        right: 0,
-        flexDirection: "row",
-        justifyContent: "center",
-        gap: 6,
-      }}
-    >
-      {images.map((_, i) => (
-        <View
-          key={i}
-          style={{
-            width: currentIndex === i ? 10 : 8,
-            height: currentIndex === i ? 10 : 8,
-            borderRadius: currentIndex === i ? 5 : 4,
-            backgroundColor:
-              currentIndex === i
-                ? BASE_COLORS.ACCENT_PRIMARY
-                : "rgba(255,255,255,0.65)",
-            borderWidth: 1,
-            borderColor: "rgba(0,0,0,0.12)",
-            marginHorizontal: 2,
-          }}
-        />
-      ))}
-    </View>
-  </View>
+        {/* Scrollable Content */}
+        <ScrollView className="flex-1 mx-3" showsVerticalScrollIndicator={false}>
+          {/* Image Carousel */}
+          <View>
+            <FlatList
+              data={product.images}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <Image
+                  source={item.source}
+                  style={{
+                    borderRadius: 20,
+                    width: IMAGE_WIDTH,
+                    height: IMAGE_HEIGHT,
+                  }}
+                  resizeMode="cover"
+                />
+              )}
+              onMomentumScrollEnd={(ev) => {
+                const index = Math.round(
+                  ev.nativeEvent.contentOffset.x / ev.nativeEvent.layoutMeasurement.width
+                );
+                setCurrentIndex(index);
+              }}
+            />
 
-  {/* Title + Price */}
-  <View
-    style={{
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 16,
-    }}
-  >
-    <ThemedText type="titleBlack">Starter Brew Kit IPA</ThemedText>
-    <ThemedText
-      type="titleBlack"
-      style={{ color: BASE_COLORS.ACCENT_PRIMARY }}
-    >
-      €32.99
-    </ThemedText>
-  </View>
-
-  {/* Description */}
-  <ThemedText type="defaultText" className="mb-3">
-  
-    Slightly bitter with a fruity undertone. This IPA has a moderate alcohol content of 5.1% ABV. Brew 5 liters of your own beer at home in just a few hours. Includes milled all-grain mix and practical brewing guide with tips & tricks. 
-  </ThemedText>
-</ScrollView>
-
-
-      {/* Bottom Bar with FAB-style Button */}
-      <View
-        style={{
-          position: "absolute",
-          bottom: 16,
-          left: 16,
-          right: 16,
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        {/* Quantity selector */}
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <TouchableOpacity
-            onPress={() => setQuantity(Math.max(1, quantity - 1))}
+            {/* Pagination Dots */}
+            <View
+              style={{
+                position: "absolute",
+                bottom: 8,
+                left: 0,
+                right: 0,
+                flexDirection: "row",
+                justifyContent: "center",
+                gap: 6,
+              }}
+            >
+              {product.images.map((_, i) => (
+                <View
+                  key={i}
+                  style={{
+                    width: currentIndex === i ? 10 : 8,
+                    height: currentIndex === i ? 10 : 8,
+                    borderRadius: currentIndex === i ? 5 : 4,
+                    backgroundColor:
+                      currentIndex === i
+                        ? BASE_COLORS.ACCENT_PRIMARY
+                        : "rgba(255,255,255,0.65)",
+                    borderWidth: 1,
+                    borderColor: "rgba(0,0,0,0.12)",
+                    marginHorizontal: 2,
+                  }}
+                />
+              ))}
+            </View>
+          </View>
+          
+          {/* Product information */}
+          <View
             style={{
-              backgroundColor: BASE_COLORS.WHITE,
-              borderRadius: 8,
-              width: 40,
-              height: 40,
-              justifyContent: "center",
+              flexDirection: "row",
+              justifyContent: "space-between",
               alignItems: "center",
-              borderWidth: 1,
-              borderColor: BASE_COLORS.STONE_DARK,
+              marginBottom: 16,
+              marginTop: 12,
             }}
           >
-            <ThemedText type="numbers">-</ThemedText>
-          </TouchableOpacity>
+            <ThemedText
+              type="titleBlack"
+              style={{ color: BASE_COLORS.ACCENT_PRIMARY }}
+            >
+              {formatter.format(totalPrice)}
+            </ThemedText>
+          </View>
 
-          <ThemedText type="numbers" style={{ marginHorizontal: 12 }}>
-            {quantity}
+          <ThemedText type="defaultText" className="mb-3">
+            {product.description}
           </ThemedText>
+        </ScrollView>
 
-          <TouchableOpacity
-            onPress={() => setQuantity(quantity + 1)}
-            style={{
-              backgroundColor: BASE_COLORS.WHITE,
-              borderRadius: 8,
-              width: 40,
-              height: 40,
-              justifyContent: "center",
-              alignItems: "center",
-              borderWidth: 1,
-              borderColor: BASE_COLORS.STONE_DARK,
-            }}
-          >
-            <ThemedText type="numbers">+</ThemedText>
-          </TouchableOpacity>
-        </View>
-
-        {/* Add to Order Button */}
-        <FAB
-          label="Add to order"
-          mode="elevated"
-          testID="fab-add-to-order"
-          onPress={() => router.push("/ShoppingCart")}
+        {/* Bottom Bar */}
+        <View
           style={{
-            backgroundColor: BASE_COLORS.TEXT_DARK,
-            paddingHorizontal: 24,
-            paddingVertical: 12,
-            borderRadius: 12,
+            position: "absolute",
+            bottom: 16,
+            left: 16,
+            right: 16,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
-          color={BASE_COLORS.WHITE}
-          theme={{
-            fonts: {
-              labelLarge: { fontFamily: FontFamilies.BODY_BOLD, fontSize: 16 },
-            },
-          }}
-        />
-      </View>
-    </SafeAreaView>
-  );
+        >
+          {/* Quantity Selector */}
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Pressable
+              testID="quantity-minus"
+              onPress={() => setQuantity(Math.max(1, quantity - 1))}
+              hitSlop={8}
+              style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
+            >
+              <CircleMinus size={20} color={BASE_COLORS.STONE500} />
+            </Pressable>
+
+            <ThemedText type="numbers" style={{ marginHorizontal: 12 }}>
+              {quantity}
+            </ThemedText>
+
+            <Pressable
+              testID="quantity-plus"
+              onPress={() => setQuantity(quantity + 1)}
+              hitSlop={8}
+              style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
+            >
+              <CirclePlus size={20} color={BASE_COLORS.STONE500} />
+            </Pressable>
+          </View>
+
+          <FAB
+            label="Add to order"
+            mode="elevated"
+            testID="fab-add-to-order"
+            onPress={() =>
+              router.push({
+                pathname: "/Store",
+                params: {
+                  id: product.id,
+                  title: product.title,
+                  quantity,
+                  price: totalPrice,
+                },
+              })
+            }
+            style={{
+              backgroundColor: BASE_COLORS.TEXT_DARK,
+              paddingHorizontal: 24,
+              paddingVertical: 12,
+              borderRadius: 12,
+            }}
+            color={BASE_COLORS.WHITE}
+            theme={{
+              fonts: {
+                labelLarge: { fontFamily: FontFamilies.BODY_BOLD, fontSize: 16 },
+              },
+            }}
+          />
+        </View>
+      </SafeAreaView>
+    );
 }

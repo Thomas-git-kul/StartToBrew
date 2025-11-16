@@ -89,8 +89,8 @@ export default function ShoppingCart() {
         </View>
 
         {/* Subtotal */}
-        <View className='mt-3 items-end'>
-          <ThemedText type="darkAccent">Subtotal: {formatter.format(total)}</ThemedText>
+        <View className='mt-3 mr-2 items-end'>
+          <ThemedText type="accentDark">Subtotal: {formatter.format(total)}</ThemedText>
         </View>
 
         {/* Shipping Info */}
@@ -119,7 +119,7 @@ export default function ShoppingCart() {
             }}
             contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
             labelStyle={{ 
-              fontSize: 14,
+              fontSize: 15,
               color: BASE_COLORS.WHITE,
               fontFamily: FontFamilies.BODY
             }}

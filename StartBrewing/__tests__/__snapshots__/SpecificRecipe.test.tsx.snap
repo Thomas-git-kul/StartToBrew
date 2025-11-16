@@ -126,7 +126,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
           </RNSVGGroup>
         </RNSVGSvgView>
         <Text>
-          4.8/5 
+          4.8 / 5
         </Text>
         <Text>
           (265 reviews)
@@ -176,11 +176,8 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
       <Text>
         It features an assertive bitterness that dominates the palate, accompanied by strong aromatic notes that often recall citrus zest, pine, or tropical fruit ...
       </Text>
-      <Text>
-        Ingredients:
-      </Text>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -190,7 +187,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -200,7 +197,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -210,7 +207,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -220,7 +217,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -230,7 +227,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -240,7 +237,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -250,7 +247,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -260,7 +257,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -270,7 +267,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -280,7 +277,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -290,7 +287,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -300,7 +297,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -310,7 +307,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
         </Text>
       </View>
       <View
-        className="flex-row items-start mt-2 gap-3"
+        className="flex-row items-start mt-2 ml-3 gap-3"
       >
         <Text>
           •
@@ -363,6 +360,7 @@ exports[`<SpecificRecipe /> matches the snapshot 1`] = `
       style={
         {
           "backgroundColor": "#000000",
+          "borderRadius": 20,
           "opacity": 1,
         }
       }
