@@ -9,6 +9,7 @@ import { BASE_COLORS } from '@/constants/Colors';
 import { ThemedText } from '@/components/themed-text';
 import { useFonts } from "@/hooks/use-fonts";
 import { FontFamilies } from "@/constants/Fonts";
+import ConfettiCannon from 'react-native-confetti-cannon';
 
 const testStep = {
   beer: "black IPA",
@@ -16,8 +17,8 @@ const testStep = {
   title2: "15-min Mosaic",
   description1: "At T-60: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
   description2: "At T-15: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
-  duration_offset: 15,
-  duration_total: 20,
+  duration_offset: 5,
+  duration_total: 10,
   temp: 100,
   tips1: "Lower the heat briefly before adding hops to prevent sudden foaming.",
   tips2: "Lower the heat briefly before adding hops to prevent sudden foaming.",
@@ -26,6 +27,15 @@ const testStep = {
 export default function Progress({ step = testStep }: { step?: any }) {
   useFonts();
   const router = useRouter();
+
+  const [showConfetti, setShowConfetti] = useState(false);
+  const handleNextStep = () => {
+    setShowConfetti(true);
+
+    setTimeout(() => {
+      goToNextStep();
+    }, 1500);
+  };
 
   const hasTimer = step?.duration_total && step.duration_total > 0;
   const hasPhase2 = step?.title2 && step?.description2; // second phase exists
@@ -50,15 +60,14 @@ export default function Progress({ step = testStep }: { step?: any }) {
         setRemainingTime((prev: number) => prev - 1);
       }, 1000);
     } else if (timerActive && remainingTime === 0) {
-      if (phase === 1 && hasPhase2 && step.duration_offset) {
-        // Phase 1 finished: setup phase 2
+      if (phase === 1 && hasPhase2 && step.duration_offset) { // Phase 1 finished: setup phase 2
         setTimerActive(false);
         setPhase(2);
         setRemainingTime(step.duration_total - step.duration_offset);
-      } else {
-        // Phase 2 finished OR single-phase step
+      } else { // Phase 2 finished OR single-phase step
         setTimerActive(false);
         setPhaseDone(true);
+        setShowConfetti(true);
       }
     }
 
@@ -145,7 +154,16 @@ export default function Progress({ step = testStep }: { step?: any }) {
         )}
       </ScrollView>
 
-      {/* FAB */}
+      {/* Confetti */}
+      {showConfetti && (
+        <ConfettiCannon
+          count={200} 
+          origin={{ x: -10, y: 0 }}
+          fadeOut={true}
+          autoStart={true}
+        />
+      )}
+
       <FAB
         mode="elevated"
         icon={(props) => {
@@ -158,7 +176,7 @@ export default function Progress({ step = testStep }: { step?: any }) {
           if (!phaseDone && hasTimer) {
             if (!timerActive) setTimerActive(true);
           } else {
-            goToNextStep();
+            handleNextStep();
           }
         }}
         disabled={(!phaseDone && hasTimer && timerActive) || false}
