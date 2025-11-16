@@ -583,6 +583,9 @@ exports[`<HomePage /> matches snapshot 1`] = `
       <Text>
         Popular recipes
       </Text>
+      <Text>
+        Test
+      </Text>
       <View>
         <View
           accessibilityState={
