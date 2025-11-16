@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from "react-native";
-import { ProgressBar } from "react-native-paper";
+import { ProgressBar, TouchableRipple, Card } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useNavigation } from '@react-navigation/native';
@@ -24,46 +24,47 @@ const percentage = Math.round(progress * 100);
 
 
 return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-      <View 
+  <TouchableRipple
+      onPress={onPress}
+      rippleColor="rgba(0,0,0,0.08)"
+      className="mb-3 rounded-xl overflow-hidden"
+  >
+    <Card
+      mode="elevated"
+      elevation={1}
+      style={{ 
+        borderRadius: 12,
+        padding: 16,
+        backgroundColor: BASE_COLORS.WHITE,
+        marginBlock: 3,
+        marginInline: 2
+      }}
+    >
+      <Text 
           style={{
-              backgroundColor: BASE_COLORS.WHITE,
-              padding: 16,
-              borderRadius: 12,
-              elevation: 3,
-              shadowColor: "#000",
-              shadowOpacity: 0.05,
-              shadowRadius: 3,
-              shadowOffset: { width: 0, height: 2 },
-              marginVertical: 10,
+              fontSize: Math.min(16 * scale, 24),
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.STONE700,
+              marginBottom: 6,
           }}
-      >
-        <Text 
-            style={{
-                fontSize: Math.min(20 * scale, 24),
-                fontFamily: FontFamilies.HEADING,
-                color: BASE_COLORS.TEXT_DARK,
-                marginBottom: 6,
-            }}
-        >{title}</Text>
-        <Text 
-            style={{
-                fontSize: Math.min(14 * scale, 18),
-                fontFamily: FontFamilies.BODY,
-                color: BASE_COLORS.TEXT_DARK,
-                marginBottom: 8,
-            }}
-        >{percentage}%</Text>
-        <ProgressBar
-            progress={progress}
-            color={BASE_COLORS.ACCENT_PRIMARY}
-            style={{
-                height: Math.min(10 * scale, 12),
-                borderRadius: 6,
-            }}
-        />
-      </View>
-    </TouchableOpacity>
+      >{title}</Text>
+      <Text 
+          style={{
+              fontSize: Math.min(14 * scale, 18),
+              fontFamily: FontFamilies.BODY_BOLD,
+              color: BASE_COLORS.ACCENT_PRIMARY,
+          }}
+      >{percentage}%</Text>
+      <ProgressBar
+          progress={progress}
+          color={BASE_COLORS.ACCENT_PRIMARY}
+          style={{
+              height: Math.min(10 * scale, 12),
+              borderRadius: 6,
+          }}
+      />
+    </Card>
+    </TouchableRipple>
   );
 }
 

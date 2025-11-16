@@ -17,25 +17,18 @@ const testStep = {
   title2: "15-min Mosaic",
   description1: "At T-60: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
   description2: "At T-15: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
-  duration_offset: 5,
+  duration_offset: 6,
   duration_total: 10,
   temp: 100,
   tips1: "Lower the heat briefly before adding hops to prevent sudden foaming.",
   tips2: "Lower the heat briefly before adding hops to prevent sudden foaming.",
 };
 
-export default function Progress({ step = testStep }: { step?: any }) {
+function Progress({ step = testStep }: { step?: any }) {
   useFonts();
   const router = useRouter();
 
   const [showConfetti, setShowConfetti] = useState(false);
-  const handleNextStep = () => {
-    setShowConfetti(true);
-
-    setTimeout(() => {
-      goToNextStep();
-    }, 1500);
-  };
 
   const hasTimer = step?.duration_total && step.duration_total > 0;
   const hasPhase2 = step?.title2 && step?.description2; // second phase exists
@@ -92,7 +85,7 @@ export default function Progress({ step = testStep }: { step?: any }) {
         {/* Timer & Temperature card */}
         <Card
           style={{
-            marginHorizontal: 10,
+            marginHorizontal: 40,
             padding: 20,
             borderRadius: 16,
             backgroundColor: BASE_COLORS.WHITE,
@@ -138,7 +131,7 @@ export default function Progress({ step = testStep }: { step?: any }) {
 
         {((phase === 1 && step.tips1) || (phase === 2 && step.tips2)) && (
           <View className="mt-2 flex-row items-start">
-            <Pressable onPress={() => setTipsVisible(!tipsVisible)}>
+            <Pressable testID="lightbulb-button" onPress={() => setTipsVisible(!tipsVisible)}>
               <Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />
             </Pressable>
             {tipsVisible && (
@@ -157,6 +150,7 @@ export default function Progress({ step = testStep }: { step?: any }) {
       {/* Confetti */}
       {showConfetti && (
         <ConfettiCannon
+          testID="confetti-cannon"
           count={200} 
           origin={{ x: -10, y: 0 }}
           fadeOut={true}
@@ -165,6 +159,7 @@ export default function Progress({ step = testStep }: { step?: any }) {
       )}
 
       <FAB
+        testID="fab-button"
         mode="elevated"
         icon={(props) => {
           if (phaseDone) return <CheckCheck {...props} />;
@@ -176,7 +171,7 @@ export default function Progress({ step = testStep }: { step?: any }) {
           if (!phaseDone && hasTimer) {
             if (!timerActive) setTimerActive(true);
           } else {
-            handleNextStep();
+            goToNextStep();
           }
         }}
         disabled={(!phaseDone && hasTimer && timerActive) || false}
@@ -199,3 +194,5 @@ export default function Progress({ step = testStep }: { step?: any }) {
     </SafeAreaView>
   );
 }
+
+export default Progress; // Ensure Progress is exported as default

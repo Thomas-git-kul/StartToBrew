@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
 import { useRouter } from "expo-router";
+import { NavigationContainer } from "@react-navigation/native";
 
 /* ------------------------------
  ✅ MOCKS
@@ -85,6 +86,11 @@ jest.mock("@/components/ui/RecipeCard", () => {
  ✅ TESTS
 ------------------------------- */
 
+// Wrap HomePage in NavigationContainer for tests
+const renderWithNavigation = (ui: React.ReactElement) => {
+  return render(<NavigationContainer>{ui}</NavigationContainer>);
+};
+
 describe("<HomePage />", () => {
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
@@ -92,7 +98,7 @@ describe("<HomePage />", () => {
   });
 
   it("renders main titles correctly", () => {
-    const { getByText } = render(<HomePage />);
+    const { getByText } = renderWithNavigation(<HomePage />);
 
     expect(getByText("StartToBrew")).toBeTruthy();
     expect(getByText("In progress")).toBeTruthy();
@@ -100,7 +106,7 @@ describe("<HomePage />", () => {
   });
 
   it("renders beer cards", () => {
-    const { getByText } = render(<HomePage />);
+    const { getByText } = renderWithNavigation(<HomePage />);
 
     expect(getByText("IJ IPA")).toBeTruthy();
     expect(getByText("Voodoo Ranger")).toBeTruthy();
@@ -108,7 +114,7 @@ describe("<HomePage />", () => {
   });
 
   it("toggles favorite when favorite button is pressed", () => {
-    const { getByLabelText } = render(<HomePage />);
+    const { getByLabelText } = renderWithNavigation(<HomePage />);
 
     const favoriteBtn = getByLabelText("favorite-IJ IPA");
 
@@ -120,7 +126,7 @@ describe("<HomePage />", () => {
   });
 
   it("navigates to /Recipes when FAB is pressed", () => {
-    const { getByTestId } = render(<HomePage />);
+    const { getByTestId } = renderWithNavigation(<HomePage />);
 
     const fabButton = getByTestId("fab");
     fireEvent.press(fabButton);
@@ -130,15 +136,36 @@ describe("<HomePage />", () => {
   });
 
   it("navigates to SpecificRecipe when a beer card is pressed", () => {
-    const { getByText } = render(<HomePage />);
+    const { getByText } = renderWithNavigation(<HomePage />);
 
     fireEvent.press(getByText("IJ IPA"));
 
     expect(pushMock).toHaveBeenCalledWith("/SpecificRecipe");
   });
 
+  it("renders progress cards", () => {
+    const { getByText } = renderWithNavigation(<HomePage />);
+
+    expect(getByText("Hazy IPA")).toBeTruthy();
+    expect(getByText("Belgian Tripel")).toBeTruthy();
+    expect(getByText("American Pale Ale")).toBeTruthy();
+  });
+
+  it("navigates to /progress when a progress card is pressed", () => {
+    const { getByText } = renderWithNavigation(<HomePage />);
+
+    fireEvent.press(getByText("Hazy IPA"));
+    expect(pushMock).toHaveBeenCalledWith("/progress");
+
+    fireEvent.press(getByText("Belgian Tripel"));
+    expect(pushMock).toHaveBeenCalledWith("/progress");
+
+    fireEvent.press(getByText("American Pale Ale"));
+    expect(pushMock).toHaveBeenCalledWith("/progress");
+  });
+
   it("matches snapshot", () => {
-    const tree = render(<HomePage />).toJSON();
+    const tree = renderWithNavigation(<HomePage />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });
