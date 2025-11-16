@@ -1,15 +1,15 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { StyleSheet, View, TouchableOpacity , ScrollView } from "react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useRouter } from "expo-router"; 
 import { useFonts } from "@/hooks/use-fonts";
 import { ProgressBar } from "react-native-paper";
-import { useState } from "react";
-import { ScrollView } from "react-native";
+import { useState , useEffect } from "react";
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect } from 'react';
+
 
 export default function Progress() {
     const router = useRouter();
