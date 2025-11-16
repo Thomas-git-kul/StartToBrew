@@ -74,8 +74,8 @@ export default function SpecificRecipe() {
             size={22} 
             color={BASE_COLORS.ACCENT_LIGHT} 
             fill={BASE_COLORS.ACCENT_LIGHT}/>
-          <ThemedText type="subTitle">4.8/5 </ThemedText>
-          <ThemedText type="smallText">(265 reviews)</ThemedText>
+          <ThemedText type="subTitle">4.8 / 5</ThemedText>
+          <ThemedText type="subTitle">(265 reviews)</ThemedText>
           <TouchableOpacity
             onPress={() => setReviewVisible(true)}
             style={{
@@ -84,7 +84,7 @@ export default function SpecificRecipe() {
               paddingHorizontal: 10,
             }}
           >
-            <ThemedText type="smallText">Add Review</ThemedText>
+            <ThemedText type="subTitle">Add Review</ThemedText>
           </TouchableOpacity>
         </View>
 
@@ -96,9 +96,8 @@ export default function SpecificRecipe() {
         </ThemedText>
 
         {/* Ingredients */}
-        <ThemedText type="subTitle">Ingredients:</ThemedText>
         {ingredients.map((item, index) => (
-          <View key={index} className="flex-row items-start mt-2 gap-3">
+          <View key={index} className="flex-row items-start mt-2 ml-3 gap-3">
             <ThemedText type="defaultText">•</ThemedText>
             <ThemedText type="defaultText">{item}</ThemedText>
           </View>
@@ -158,7 +157,7 @@ export default function SpecificRecipe() {
           theme={{
             fonts: {
               labelLarge: {
-                fontSize: 14,
+                fontSize: 16,
                 fontFamily: FontFamilies.BODY,
               },
             },

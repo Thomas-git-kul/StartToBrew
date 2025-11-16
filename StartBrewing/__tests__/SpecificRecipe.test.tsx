@@ -1,4 +1,5 @@
 import { render, fireEvent, act } from "@testing-library/react-native";
+import { NavigationContainer } from "@react-navigation/native";
 import SpecificRecipe from "../app/SpecificRecipe";
 
 // --- Mock router --- //
@@ -78,6 +79,11 @@ jest.mock("react-native-paper", () => {
   };
 });
 
+// Helper function to wrap components in NavigationContainer
+const renderWithNavigation = (ui: React.ReactElement) => {
+  return render(<NavigationContainer>{ui}</NavigationContainer>);
+};
+
 // --- Tests --- //
 describe("<SpecificRecipe />", () => {
   beforeEach(() => {
@@ -91,36 +97,30 @@ describe("<SpecificRecipe />", () => {
   });
 
   it("renders the title correctly", () => {
-    const { getByText } = render(<SpecificRecipe />);
+    const { getByText } = renderWithNavigation(<SpecificRecipe />);
     expect(getByText("IJ IPA")).toBeTruthy();
   });
 
   it("renders the rating correctly", () => {
-    const { getByText } = render(<SpecificRecipe />);
-    expect(getByText("4.8/5")).toBeTruthy();
+    const { getByText } = renderWithNavigation(<SpecificRecipe />);
+    expect(getByText("4.8 / 5")).toBeTruthy();
     expect(getByText("(265 reviews)")).toBeTruthy();
   });
 
-  it("renders the 'Ingredients:' section", () => {
-    const { getByText } = render(<SpecificRecipe />);
-    expect(getByText("Ingredients:")).toBeTruthy();
-  });
-
   it("renders the Start Brewing button", () => {
-    const { getByText } = render(<SpecificRecipe />);
+    const { getByText } = renderWithNavigation(<SpecificRecipe />);
     expect(getByText("Start Brewing")).toBeTruthy();
   });
 
   it("navigates to /progress when Start Brewing is pressed", () => {
-    const { getByText } = render(<SpecificRecipe />);
+    const { getByText } = renderWithNavigation(<SpecificRecipe />);
     fireEvent.press(getByText("Start Brewing"));
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith("../progress");
   });
 
-  jest.useFakeTimers();
   it("opens the review modal and sets rating when a star is pressed", () => {
-    const { getByText, queryByText, getAllByTestId } = render(<SpecificRecipe />);
+    const { getByText, queryByText, getAllByTestId } = renderWithNavigation(<SpecificRecipe />);
 
     // Modal should not be visible initially
     expect(queryByText("Rate this recipe")).toBeNull();
@@ -144,7 +144,7 @@ describe("<SpecificRecipe />", () => {
   });
 
   it("matches the snapshot", () => {
-    const tree = render(<SpecificRecipe />).toJSON();
+    const tree = renderWithNavigation(<SpecificRecipe />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });
