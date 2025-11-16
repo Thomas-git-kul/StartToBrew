@@ -1,9 +1,16 @@
 import React, { useState } from "react";
-import { Image, View, Dimensions, Pressable } from "react-native";
+import { Image, View, Dimensions, Pressable, Text } from "react-native";
 import { Card, TouchableRipple } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
-import { ThemedText } from "../themed-text";
+import { FontFamilies } from "@/constants/Fonts";
 import { Star, Heart, HeartPlus } from "lucide-react-native";
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BASE_SCREEN_WIDTH = 375; 
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
+
+const IMAGE_WIDTH = Math.min(120, SCREEN_WIDTH * 0.20);
+const IMAGE_HEIGHT = IMAGE_WIDTH * 1.5;
 
 interface BeerCardProps {
   image: any; // require or uri
@@ -33,10 +40,6 @@ const BeerCard: React.FC<BeerCardProps> = ({
     onToggleFavorite?.(newState);
   };
 
-  const { width: screenWidth } = Dimensions.get("window");
-  const imageWidth = Math.min(120, screenWidth * 0.20); // max 120px or 25% of screen
-  const imageHeight = imageWidth * 1.5;
-
   return (
     <TouchableRipple
       onPress={onPress}
@@ -59,8 +62,8 @@ const BeerCard: React.FC<BeerCardProps> = ({
             <Image
               source={image}
               style={{
-                width: imageWidth,
-                height: imageHeight,
+                width: Math.min(IMAGE_WIDTH, 150),
+                height: Math.min(IMAGE_HEIGHT, 225),
                 borderRadius: 12,
               }}
               resizeMode="cover"
@@ -71,7 +74,13 @@ const BeerCard: React.FC<BeerCardProps> = ({
           <View className="flex-1 mx-3 my-2">
             {/* Title + Favorite button row */}
             <View className="flex-row justify-between items-start">
-              <ThemedText type="subTitle">{name}</ThemedText>
+              <Text
+                style={{
+                  fontSize: Math.min(12 * scale, 18),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.STONE950,
+                }}
+              >{name}</Text>
 
               <Pressable
                 onPress={handleToggleFavorite}
@@ -82,7 +91,7 @@ const BeerCard: React.FC<BeerCardProps> = ({
                   <Heart
                     size={20}
                     stroke={BASE_COLORS.ACCENT_PRIMARY}
-                    fill={BASE_COLORS.ACCENT_PRIMARY}  // ✅ fills the heart
+                    fill={BASE_COLORS.ACCENT_PRIMARY}
                   />
                 ) : (
                   <HeartPlus
@@ -102,14 +111,23 @@ const BeerCard: React.FC<BeerCardProps> = ({
                   marginRight: 5
                 }}
               />
-              <ThemedText type='smallText'>
-                {rating}/5 rating ({reviews} reviews)
-              </ThemedText>
+              <Text
+                style={{
+                  fontSize: Math.min(10 * scale, 14),
+                  fontFamily: FontFamilies.BODY_LIGHT,
+                  color: BASE_COLORS.STONE500,
+                }}
+              >{rating}/5 rating ({reviews} reviews)</Text>
             </View>
 
-            <ThemedText type='defaultText' numberOfLines={3}>
-              {description}
-            </ThemedText>
+            <Text 
+              numberOfLines={3}
+              style={{
+                fontSize: Math.min(12 * scale, 18),
+                fontFamily: FontFamilies.HEADING,
+                color: BASE_COLORS.STONE700,
+              }}
+            >{description}</Text>
           </View>
         </View>
       </Card>
