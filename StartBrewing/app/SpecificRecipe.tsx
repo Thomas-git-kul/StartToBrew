@@ -74,7 +74,7 @@ export default function SpecificRecipe() {
             size={22} 
             color={BASE_COLORS.ACCENT_LIGHT} 
             fill={BASE_COLORS.ACCENT_LIGHT}/>
-          <ThemedText type="subTitle">4.8/5 </ThemedText>
+          <ThemedText type="subTitle">4.8 / 5</ThemedText>
           <ThemedText type="subTitle">(265 reviews)</ThemedText>
           <TouchableOpacity
             onPress={() => setReviewVisible(true)}
@@ -157,12 +157,11 @@ export default function SpecificRecipe() {
           theme={{
             fonts: {
               labelLarge: {
-                fontSize: 14,
+                fontSize: 16,
                 fontFamily: FontFamilies.BODY,
               },
             },
           }}
-          uppercase={true}
         />
       </View>
     </SafeAreaView>

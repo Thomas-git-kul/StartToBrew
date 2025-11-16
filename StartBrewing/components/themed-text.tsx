@@ -53,9 +53,9 @@ const styles = StyleSheet.create({
     color: BASE_COLORS.STONE600
   },
   subTitle: {
-    fontSize: Math.min(12 * scale, 16), 
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.STONE950,
+    fontSize: Math.min(14 * scale, 16), 
+    fontFamily: FontFamilies.BODY_LIGHT,
+    color: BASE_COLORS.STONE700,
   },
   accentPrimary: {
     fontSize: Math.min(10 * scale, 14), 
