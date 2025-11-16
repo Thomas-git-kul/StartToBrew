@@ -103,7 +103,7 @@ describe("<SpecificRecipe />", () => {
 
   it("renders the rating correctly", () => {
     const { getByText } = renderWithNavigation(<SpecificRecipe />);
-    expect(getByText("4.8/5")).toBeTruthy();
+    expect(getByText("4.8 / 5")).toBeTruthy();
     expect(getByText("(265 reviews)")).toBeTruthy();
   });
 

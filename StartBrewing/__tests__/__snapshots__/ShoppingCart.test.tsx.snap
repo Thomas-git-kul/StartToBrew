@@ -43,7 +43,7 @@ exports[`<ShoppingCart /> matches snapshot for layout consistency 1`] = `
         className="mx-1"
       />
       <View
-        className="mt-3 items-end"
+        className="mt-3 mr-2 items-end"
       >
         <Text
           style={
