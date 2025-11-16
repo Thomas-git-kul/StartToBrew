@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, ScrollView, Modal, Pressable } from "react-native";
 import { Text, Button, Card, FAB } from "react-native-paper";
-import { Timer, Thermometer } from "lucide-react-native";
+import { Timer, Thermometer, Play, CheckCheck, Lightbulb } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import Header from '@/components/header';
 import { BASE_COLORS } from '@/constants/Colors';
@@ -16,7 +16,7 @@ const testStep = {
   title2: "15-min Mosaic",
   description1: "At T-60: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
   description2: "At T-15: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
-  duration_offset: 10,
+  duration_offset: 15,
   duration_total: 20,
   temp: 100,
   tips1: "Lower the heat briefly before adding hops to prevent sudden foaming.",
@@ -73,8 +73,8 @@ export default function Progress({ step = testStep }: { step?: any }) {
     <SafeAreaView className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
         title={`${step.beer} Progress`}
-        iconName="ArrowRight"
-        onIconPress={() => router.back()}
+        iconName="House"
+        onIconPress={() => router.push("/HomePage" as any)}
       />
 
       <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
@@ -104,7 +104,7 @@ export default function Progress({ step = testStep }: { step?: any }) {
           </View>
 
           {/* Timer */}
-          <View className="flex-row items-center justify-center">
+          <View className="flex-row items-center">
             <Timer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
             <ThemedText type="title" className="ml-2 mr-4">
               {hasTimer ? `${Math.floor(remainingTime / 60)}m ${remainingTime % 60}s` : "No timer"}
@@ -127,31 +127,33 @@ export default function Progress({ step = testStep }: { step?: any }) {
             })}
         </View>
 
-        {/* Tips */}
         {((phase === 1 && step.tips1) || (phase === 2 && step.tips2)) && (
-          <Button mode="outlined" onPress={() => setTipsVisible(true)}>
-            Show Tips
-          </Button>
+          <View className="mt-2 flex-row items-start">
+            <Pressable onPress={() => setTipsVisible(!tipsVisible)}>
+              <Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />
+            </Pressable>
+            {tipsVisible && (
+              <ThemedText
+                type="tips"
+                className="ml-2 flex-shrink"
+                style={{ flexShrink: 1 }}
+              >
+                {phase === 1 ? step.tips1 : step.tips2 ?? "No tips available."}
+              </ThemedText>
+            )}
+          </View>
         )}
       </ScrollView>
 
-      {/* Tips Modal */}
-      <Modal visible={tipsVisible} transparent animationType="fade">
-        <View className="flex-1 bg-black/40 justify-center items-center p-6">
-          <Card className="p-6 w-full rounded-2xl">
-            <Text className="text-lg mb-3">Tips</Text>
-            <Text>{phase === 1 ? step.tips1 : step.tips2 ?? "No tips available for this step."}</Text>
-            <Pressable onPress={() => setTipsVisible(false)} className="mt-4">
-              <Button mode="contained">Close</Button>
-            </Pressable>
-          </Card>
-        </View>
-      </Modal>
-
       {/* FAB */}
       <FAB
-        icon={phaseDone ? "arrow-right" : hasTimer ? "timer" : "arrow-right"}
+        mode="elevated"
+        icon={(props) => {
+          if (phaseDone) return <CheckCheck {...props} />;
+          if (hasTimer) return <Play {...props} />;
+        }}
         label={phaseDone ? "Next Step" : hasTimer ? "Start Timer" : "Next Step"}
+        color={BASE_COLORS.WHITE}
         onPress={() => {
           if (!phaseDone && hasTimer) {
             if (!timerActive) setTimerActive(true);
@@ -160,7 +162,21 @@ export default function Progress({ step = testStep }: { step?: any }) {
           }
         }}
         disabled={(!phaseDone && hasTimer && timerActive) || false}
-        style={{ position: 'absolute', bottom: 30, right: 20 }}
+        style={{ 
+          position: 'absolute',
+          bottom: 30, 
+          right: 20,
+          backgroundColor: timerActive && !phaseDone ? BASE_COLORS.STONE400 : BASE_COLORS.TEXT_DARK,
+          borderRadius: 20,
+        }}
+        theme={{
+            fonts: {
+              labelLarge: {
+                fontSize: 16,
+                fontFamily: FontFamilies.BODY,
+              },
+            },
+          }}
       />
     </SafeAreaView>
   );
