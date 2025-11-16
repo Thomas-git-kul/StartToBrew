@@ -395,7 +395,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             {
               "color": undefined,
               "fontFamily": "System",
-              "fontSize": 24,
+              "fontSize": 16,
             },
             undefined,
             undefined,
@@ -951,7 +951,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             {
               "color": undefined,
               "fontFamily": "System",
-              "fontSize": 24,
+              "fontSize": 16,
             },
             undefined,
             undefined,
@@ -1775,7 +1775,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             {
               "color": undefined,
               "fontFamily": "System",
-              "fontSize": 24,
+              "fontSize": 16,
             },
             undefined,
             undefined,
@@ -2055,7 +2055,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             {
               "color": undefined,
               "fontFamily": "System",
-              "fontSize": 24,
+              "fontSize": 16,
             },
             undefined,
             undefined,
@@ -2938,7 +2938,7 @@ exports[`<Registration /> matches snapshot 1`] = `
               {
                 "color": undefined,
                 "fontFamily": "System",
-                "fontSize": 24,
+                "fontSize": 16,
               },
               undefined,
               undefined,

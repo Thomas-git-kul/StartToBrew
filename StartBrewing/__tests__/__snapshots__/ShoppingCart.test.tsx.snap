@@ -25,7 +25,7 @@ exports[`<ShoppingCart /> matches snapshot for layout consistency 1`] = `
             {
               "color": undefined,
               "fontFamily": undefined,
-              "fontSize": 34,
+              "fontSize": 22,
             },
             undefined,
             undefined,
@@ -57,7 +57,7 @@ exports[`<ShoppingCart /> matches snapshot for layout consistency 1`] = `
               {
                 "color": "#000",
                 "fontFamily": undefined,
-                "fontSize": 34,
+                "fontSize": 22,
               },
               undefined,
               undefined,
@@ -82,7 +82,7 @@ exports[`<ShoppingCart /> matches snapshot for layout consistency 1`] = `
               {
                 "color": undefined,
                 "fontFamily": undefined,
-                "fontSize": 34,
+                "fontSize": 22,
               },
               undefined,
               undefined,
