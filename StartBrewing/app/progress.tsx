@@ -1,187 +1,158 @@
+import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ThemedText } from "@/components/themed-text";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
-import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
-import { useRouter } from "expo-router"; 
+import { View, ScrollView, Modal, Pressable } from "react-native";
+import { Text, Button, Card, FAB, Dialog } from "react-native-paper";
+import { Timer, Thermometer } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import Header from '@/components/header';
+import { BASE_COLORS } from '@/constants/Colors';
+import { ThemedText } from '@/components/themed-text';
 import { useFonts } from "@/hooks/use-fonts";
-import { ProgressBar } from "react-native-paper";
-import { useState } from "react";
-import { ScrollView } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect } from 'react';
+import { FontFamilies } from "@/constants/Fonts";
 
-export default function Progress() {
-    const router = useRouter();
-    const fontsLoaded = useFonts();
+const testStep = {
+  beer: "black IPA",
+  title1: "60-min Citra",
+  title2: "15-min Mosaic",
+  description1: "At T-60: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
+  description2: "At T-15: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
+  duration_offset: 10, // seconds
+  duration_total: 20, // seconds
+  temp: 100,
+  tips1: "Lower the heat briefly before adding hops to prevent sudden foaming.",
+  tips2: "Lower the heat briefly before adding hops to prevent sudden foaming.",
+};
 
-    const initialPhases = [
-        {
-            title: "Phase 1: Mash",
-            steps: [
-            { text: "Heat strike water", done: true },
-            { text: "Mash in", done: true },
-            { text: "Saccharification rest", done: true },
-            { text: "Mash out", done: true },
-            ],
-        },
-        {
-            title: "Phase 2: Boil",
-            steps: [
-            { text: "Bring to boil", done: false },
-            { text: "30-min cascade", done: false },
-            { text: "10-min cascade", done: false },
-            ],
-        },
-        {
-            title: "Phase 3: Whirlpool",
-            steps: [
-            { text: "Cool to 80°C", done: false },
-            { text: "Whirlpool cascade + cascade", done: false },
-            ],
-        },
-        {
-            title: "Phase 4: Chill",
-            steps: [
-            { text: "Chill to 19°C", done: false },
-            { text: "Transfer to fermenter", done: false },
-            { text: "Pitch yeast", done: false },
-            ],
-        },
-        {
-            title: "Phase 5: ferment",
-            steps: [
-            { text: "Primary ferment", done: false },
-            { text: "Dry hop (3days)", done: false },
-            ],
-        },
-        {
-            title: "Phase 6: package",
-            steps: [
-            { text: "package (bottle/keg)", done: false },
-            ],
-        },
-    ];
+export default function Progress({ step = testStep }: { step?: any }) {
+  useFonts();
+  const router = useRouter();
 
-    const [phases, setPhases] = useState(initialPhases);
+  const [phase, setPhase] = useState(1);
+  const [remainingTime, setRemainingTime] = useState(step.duration_offset);
+  const [timerActive, setTimerActive] = useState(false);
+  const [tipsVisible, setTipsVisible] = useState(false);
+  const [phase2Done, setPhase2Done] = useState(false);
 
-    const toggleStep = (phaseIndex: number, stepIndex: number) => {
-        const newPhases = [...phases];
-        newPhases[phaseIndex].steps[stepIndex].done =
-            !newPhases[phaseIndex].steps[stepIndex].done;
-        setPhases(newPhases);
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    if (timerActive && remainingTime > 0) {
+      interval = setInterval(() => {
+        setRemainingTime((prev: number) => prev - 1);
+      }, 1000);
+    } else if (timerActive && remainingTime === 0) {
+      if (phase === 1) {
+        // Phase 1 finished
+        setTimerActive(false);
+        setPhase(2);
+        setRemainingTime(step.duration_total - step.duration_offset);
+      } else if (phase === 2) {
+        // Phase 2 finished
+        setTimerActive(false);
+        setPhase2Done(true); // Unlock Next Step FAB
+      }
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
     };
+  }, [timerActive, remainingTime, phase]);
 
-    const totalSteps = phases.reduce((sum, p) => sum + p.steps.length, 0);
-    const doneSteps = phases.reduce(
-        (sum, p) => sum + p.steps.filter(s => s.done).length, 0);
-    const progress = doneSteps / totalSteps;
-    const progressPercentage = Math.round(progress * 100);
+  const goToNextStep = () => {
+    router.push('/progress?step=nextStep');
+  };
 
+  return (
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+    >
+      <Header
+        title={`${step.beer} Progress`}
+        iconName="ArrowRight"
+        onIconPress={() => router.back()}
+      />
 
-    if (!fontsLoaded) {return null;}
+      <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
+        <ThemedText type="titleBlack">{phase === 1 ? step.title1 : step.title2}</ThemedText>
 
-    return (
-        <SafeAreaView style={styles.general}>
-            <View style={styles.headerSection}>
-                <ThemedText style={styles.title}>Progress</ThemedText>
-                <ThemedText style={styles.percentageText}>{progressPercentage}%</ThemedText>
-                <ProgressBar progress={progress} color={BASE_COLORS.ACCENT_PRIMARY}  style={styles.progressBar} testID="progress-bar" accessible={true}/>
-            </View>
-            
-            <View style={styles.todoSection}>
-                <ThemedText style={styles.title2}>To do</ThemedText>
-            </View>
-                
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                {phases.map((phase, phaseIndex) => (
-                    <View key={phaseIndex} style={{ marginBottom: 20 }}>
-                        <ThemedText style={styles.phaseTitle}>{phase.title}</ThemedText>
-                        {phase.steps.map((step, stepIndex) => (
-                            <TouchableOpacity
-                                key={stepIndex}
-                                onPress={() => toggleStep(phaseIndex, stepIndex)}
-                            >
-                                <ThemedText
-                                    style={[
-                                        styles.stepText,
-                                        step.done && { textDecorationLine: "line-through", opacity: 0.5 },
-                                    ]}
-                                >
-                                    {step.text}
-                                </ThemedText>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                ))}
-            </ScrollView>
-        </SafeAreaView>
-        
-    );
+        <Card
+          style={{
+            marginHorizontal: 10,
+            padding: 20,
+            borderRadius: 16,
+            backgroundColor: BASE_COLORS.WHITE,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 5,
+            alignItems: "center",
+          }}
+        >
+          {/* Temperature */}
+          <View className="flex-row items-center mb-4">
+            <Thermometer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
+            <ThemedText type="title" className="ml-2">
+              {step.temp}°C
+            </ThemedText>
+          </View>
+
+          {/* Timer + Start Button */}
+          <View className="flex-row items-center justify-center">
+            <Timer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
+            <ThemedText type="title" className="ml-2 mr-4">
+              {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
+            </ThemedText>
+          </View>
+        </Card>
+
+        <View className="mt-4">
+          {(phase === 1 ? step.description1 : step.description2)
+            .split(".")
+            .map((sentence: string, index: number) => {
+              const clean = sentence.trim();
+              if (!clean) return null;
+              return (
+                <ThemedText key={index} type="defaultText" className="mb-2">
+                  {clean}.
+                </ThemedText>
+              );
+            })}
+        </View>
+
+        <Button mode="outlined" onPress={() => setTipsVisible(true)}>
+          Show Tips
+        </Button>
+      </ScrollView>
+
+      <Modal visible={tipsVisible} transparent animationType="fade">
+        <View className="flex-1 bg-black/40 justify-center items-center p-6">
+          <Card className="p-6 w-full rounded-2xl">
+            <Text className="text-lg mb-3">Tips</Text>
+            <Text>{phase === 1 ? step.tips1 : step.tips2 || 'No tips available for this step.'}</Text>
+            <Pressable onPress={() => setTipsVisible(false)} className="mt-4">
+              <Button mode="contained">Close</Button>
+            </Pressable>
+          </Card>
+        </View>
+      </Modal>
+
+      <FAB
+        icon={phase2Done ? "arrow-right" : "timer"} // show arrow after phase 2 done, timer otherwise
+        label={phase2Done ? "Next Step" : "Start Timer"}
+        onPress={() => {
+          if (!phase2Done) {
+            // Start timer for current phase
+            if (!timerActive) setTimerActive(true);
+          } else {
+            // Navigate to next step
+            goToNextStep();
+          }
+        }}
+        disabled={phase2Done ? false : timerActive} // disable FAB when timer is running
+        style={{ position: 'absolute', bottom: 30, right: 20 }}
+      />
+    </SafeAreaView>
+  );
 }
-
-const styles = StyleSheet.create({
-    general: {
-        flex: 1,
-        backgroundColor: BASE_COLORS.WHITE,
-    },
-    headerSection: {        
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 5,
-        backgroundColor: BASE_COLORS.WHITE,
-        elevation: 3,        // 👈 subtiele schaduw (Android)
-        shadowColor: "#000", // 👈 subtiele schaduw (iOS)
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        shadowOffset: { width: 0, height: 2 },
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-    },
-    title: {
-        paddingTop: 25,
-        fontSize: 50,
-        paddingBottom: 25,
-        marginHorizontal: 10,
-        fontFamily: FontFamilies.HEADING,
-        color: BASE_COLORS.TEXT_DARK,
-    },
-    title2: {
-        fontSize: 25,
-        fontFamily: FontFamilies.BODY,
-        color: BASE_COLORS.TEXT_DARK,
-        marginTop: 10,
-    },
-    stepText: {
-        fontSize: 15,
-        //color: BASE_COLORS.TEXT_DARK,
-        fontFamily: FontFamilies.BODY_LIGHT,
-        marginVertical: 5,
-    },
-
-    percentageText: {
-        fontSize: 18,
-        fontFamily: FontFamilies.BODY,
-        color: BASE_COLORS.TEXT_DARK,
-        marginHorizontal: 10,
-        marginBottom: 5,
-    },
-    progressBar: {
-        height: 10,
-        borderRadius: 5,
-    },
-    phaseTitle: {
-        fontSize: 18,
-        marginTop: 10,
-        marginBottom: 5,
-        fontFamily: FontFamilies.BODY,
-        color: BASE_COLORS.ACCENT_PRIMARY,
-    },
-    todoSection: {
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        backgroundColor: BASE_COLORS.WHITE,
-    },
-});

@@ -90,7 +90,7 @@ export default function ShoppingCart() {
 
         {/* Subtotal */}
         <View className='mt-3 items-end'>
-          <ThemedText type="darkAccent">Subtotal: {formatter.format(total)}</ThemedText>
+          <ThemedText type="accentDark">Subtotal: {formatter.format(total)}</ThemedText>
         </View>
 
         {/* Shipping Info */}
