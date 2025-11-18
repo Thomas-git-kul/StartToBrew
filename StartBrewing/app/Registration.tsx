@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Alert } from "react-native";
+import { View, Alert , ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Checkbox, FAB} from "react-native-paper";
 import { router } from "expo-router";
@@ -9,7 +9,7 @@ import { useFonts } from "@/hooks/use-fonts";
 import { ThemedText } from "@/components/themed-text";
 import TextInput from "@/components/textInput";
 import { BASE_COLORS } from "@/constants/Colors";
-import { ScrollView } from "react-native";
+
 import { FontFamilies } from "@/constants/Fonts";
 import Header from "@/components/header";
 

@@ -8,6 +8,7 @@ const iconMap: Record<string, LucideIcon> = {
   ShoppingCart: Icons.ShoppingCart,
   Calendar1: Icons.Calendar1,
   ArrowRight: Icons.ArrowRight,
+  House: Icons.House,
 };
 
 interface HeaderBarProps {

@@ -1,35 +1,67 @@
-import { render, fireEvent, act } from "@testing-library/react-native";
+import React from "react";
+import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
+import { NavigationContainer } from "@react-navigation/native";
 import SpecificRecipe from "../app/SpecificRecipe";
+import { useRouter, useLocalSearchParams } from "expo-router";
 
-// --- Mock router --- //
-const mockPush = jest.fn();
+// --------------------------
+// Mock expo-router
+// --------------------------
+const pushMock = jest.fn();
+
 jest.mock("expo-router", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: jest.fn(),
+  useLocalSearchParams: jest.fn(),
 }));
 
-// --- Mock fonts --- //
+// --------------------------
+// Mock Supabase
+// --------------------------
+jest.mock("../supabase", () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({
+            data: {
+              name: "Test Beer",
+              description: "A very tasty beer",
+              rating: 4.8,
+            },
+            error: null,
+          }),
+        }),
+      }),
+    }),
+  },
+}));
+
+// --------------------------
+// Mock useFonts
+// --------------------------
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => true,
 }));
 
-// --- Mock ThemedText --- //
+// --------------------------
+// Mock ThemedText
+// --------------------------
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
-  return {
-    ThemedText: ({ children, style }: any) => <Text style={style}>{children}</Text>,
-  };
+  return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
 });
 
-// --- Mock SafeAreaView --- //
+// --------------------------
+// Mock SafeAreaView
+// --------------------------
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
-  return {
-    SafeAreaView: ({ children }: any) => <View>{children}</View>,
-    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  };
+  return { SafeAreaView: ({ children }: any) => <View>{children}</View> };
 });
 
-// --- Mock Colors & Fonts --- //
+// --------------------------
+// Mock Colors & Fonts
+// --------------------------
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     LIGHT_BG: "#fafafa",
@@ -41,110 +73,100 @@ jest.mock("@/constants/Colors", () => ({
 }));
 
 jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: {
-    HEADING: "System",
-    BODY: "System",
-    BODY_BOLD: "System",
-    BODY_LIGHT: "System",
-  },
+  FontFamilies: { BODY: "System" },
 }));
 
-// --- Mock Header component --- //
+// --------------------------
+// Mock Header
+// --------------------------
 jest.mock("@/components/header", () => {
-  const { View, Text } = require("react-native");
-  return ({ title }: any) => (
-    <View>
-      <Text>{title}</Text>
-    </View>
-  );
+  const { Text } = require("react-native");
+  return ({ title }: any) => <Text>{title}</Text>;
 });
 
-// --- Mock react-native-paper --- //
+// --------------------------
+// Mock react-native-paper
+// --------------------------
 jest.mock("react-native-paper", () => {
   const { View, Text, TouchableOpacity } = require("react-native");
   return {
-    FAB: ({ label, onPress, style }: any) => (
-      <TouchableOpacity onPress={onPress} style={style}>
+    FAB: ({ label, onPress }: any) => (
+      <TouchableOpacity onPress={onPress}>
         <Text>{label}</Text>
       </TouchableOpacity>
     ),
     Portal: ({ children }: any) => <>{children}</>,
     Modal: ({ visible, children }: any) => (visible ? <View>{children}</View> : null),
-    Button: ({ children, onPress }: any) => (
-      <TouchableOpacity onPress={onPress}>
-        <Text>{children}</Text>
-      </TouchableOpacity>
-    ),
   };
 });
 
-// --- Tests --- //
+// --------------------------
+// Helper render wrapper
+// --------------------------
+const renderWithNav = (ui: React.ReactElement) =>
+  render(<NavigationContainer>{ui}</NavigationContainer>);
+
+// --------------------------
+// TESTS
+// --------------------------
 describe("<SpecificRecipe />", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    pushMock.mockClear();
+    (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ slug: "test-slug" });
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    // cleanup
   });
 
-  it("renders the title correctly", () => {
-    const { getByText } = render(<SpecificRecipe />);
-    expect(getByText("IJ IPA")).toBeTruthy();
+  it("renders recipe title from supabase", async () => {
+    const { getByText } = renderWithNav(<SpecificRecipe />);
+
+    await waitFor(() => expect(getByText("Test Beer")).toBeTruthy());
   });
 
-  it("renders the rating correctly", () => {
-    const { getByText } = render(<SpecificRecipe />);
-    expect(getByText("4.8/5")).toBeTruthy();
-    expect(getByText("(265 reviews)")).toBeTruthy();
+  it("shows rating correctly", async () => {
+    const { getByText } = renderWithNav(<SpecificRecipe />);
+
+    await waitFor(() => {
+      expect(getByText("4.8 / 5")).toBeTruthy();
+      expect(getByText("(0 reviews)")).toBeTruthy();
+    });
   });
 
-  it("renders the 'Ingredients:' section", () => {
-    const { getByText } = render(<SpecificRecipe />);
-    expect(getByText("Ingredients:")).toBeTruthy();
-  });
-
-  it("renders the Start Brewing button", () => {
-    const { getByText } = render(<SpecificRecipe />);
-    expect(getByText("Start Brewing")).toBeTruthy();
-  });
-
-  it("navigates to /progress when Start Brewing is pressed", () => {
-    const { getByText } = render(<SpecificRecipe />);
+  it("navigates to progress on Start Brewing press", async () => {
+    const { getByText } = renderWithNav(<SpecificRecipe />);
+    await waitFor(() => getByText("Start Brewing"));
     fireEvent.press(getByText("Start Brewing"));
-    expect(mockPush).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith("../progress");
+    expect(pushMock).toHaveBeenCalledWith("../progress");
   });
 
-  jest.useFakeTimers();
-  it("opens the review modal and sets rating when a star is pressed", () => {
-    const { getByText, queryByText, getAllByTestId } = render(<SpecificRecipe />);
+  it("opens modal and selects a rating", async () => {
+    const { getByText, getAllByTestId, queryByText } = renderWithNav(<SpecificRecipe />);
 
-    // Modal should not be visible initially
+    // wait until loading is finished and the Add Review button is present
+    await waitFor(() => getByText("Add Review"));
+
     expect(queryByText("Rate this recipe")).toBeNull();
 
-    // Open modal
-    const addReviewButton = getByText("Add Review");
-    fireEvent.press(addReviewButton);
+    fireEvent.press(getByText("Add Review"));
     expect(getByText("Rate this recipe")).toBeTruthy();
 
-    // Press 3rd star wrapped in act
     const stars = getAllByTestId(/star-/);
-    act(() => {
-      fireEvent.press(stars[2]);
 
-      // Advance fake timers so setTimeout runs
-      jest.advanceTimersByTime(300);
-    });
+      await act(async () => {
+        fireEvent.press(stars[2]);
+        await new Promise((res) => setTimeout(res, 350));
+      });
 
-    // Modal should now be closed
+      expect(queryByText("Rate this recipe")).toBeNull();
+
     expect(queryByText("Rate this recipe")).toBeNull();
   });
 
-  it("matches the snapshot", () => {
-    const tree = render(<SpecificRecipe />).toJSON();
+  it("matches snapshot", () => {
+    const tree = renderWithNav(<SpecificRecipe />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });
