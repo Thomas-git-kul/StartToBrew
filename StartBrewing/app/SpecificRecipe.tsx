@@ -34,6 +34,86 @@ export default function SpecificRecipe() {
     setTimeout(() => setReviewVisible(false), 300);
   };
 
+  const brewRecipe = async () => {
+    if (!slug || !recipe?.name) {
+      console.warn("Cannot start brew: missing slug or recipe name.");
+      return;
+    }
+    console.log("Starting brewing brewRecipe");
+
+    try {
+      // 1. Haal de gebruikerssessie op om de user_id te krijgen
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log("User:", user);
+
+      if (userError || !user) {
+        console.error("Error fetching user for brew:", userError?.message);
+        return;
+      }
+
+      // Zoek de fase met de laagste positie (de eerste fase)
+      const { data: phasesData, error: phaseError } = await supabase
+        .from("phases")
+        .select("phase_id")
+        .eq("recipe_slug", slug)
+        .order("position", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (phaseError || !phasesData) {
+        console.error("Error finding first phase:", phaseError?.message || "No phases found.");
+        return;
+      }
+
+      const firstPhaseId = phasesData.phase_id;
+      console.log("First phase:", firstPhaseId);
+
+      // Zoek de eerste stap van die fase (step waar after_step_id NULL is)
+      const { data: stepData, error: stepError } = await supabase
+        .from("steps")
+        .select("step_id")
+        .eq("phase_id", firstPhaseId)
+        .is("after_step_id", null) // Dit markeert de startstap van een flow
+        .limit(1)
+        .maybeSingle();
+        
+      if (stepError || !stepData) {
+        console.error("Error finding first step:", stepError?.message || "No starting step found.");
+        return;
+      }
+
+      const firstStepId = stepData.step_id;
+      console.log("First step:", firstStepId);
+
+      // 2. Bepaal de waarden voor de INSERT
+      const newBrew = {
+        user_id: user.id,
+        name: recipe.name, // Gebruik de naam van het recept
+        start_date: new Date().toISOString(), // Huidige tijd in ISO-formaat
+        status_id: 1, // Standaardstatus ID (bv. 'Started', aannemend dat 1 de ID voor 'Started' is)
+        recipe_slug: slug, // De slug van het geselecteerde recept
+        last_step_id : firstStepId, // De eerste stap van de eerste fase
+      };
+
+      // 3. Voer de INSERT uit
+      const { data: brewData, error: insertError } = await supabase
+        .from("brews")
+        .insert([newBrew])
+        .select(); // Selecteer het ingevoegde record om te bevestigen
+
+      if (insertError) {
+        console.error("Supabase insert brew error:", insertError.message);
+        // Optioneel: toon een foutmelding aan de gebruiker
+      } else {
+        console.log("New brew started successfully:", brewData[0].id_brew);
+        // 4. Navigeer naar het volgende scherm
+        router.push("../progress");
+      }
+    } catch (e: any) {
+      console.error("Exception during brew start:", e.message ?? e);
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -183,7 +263,7 @@ export default function SpecificRecipe() {
           mode="elevated"
           label="Start Brewing"
           color={BASE_COLORS.WHITE}
-          onPress={() => router.push("../progress")}
+          onPress={brewRecipe}
           style={{
             backgroundColor: BASE_COLORS.TEXT_DARK,
             borderRadius: 20,
