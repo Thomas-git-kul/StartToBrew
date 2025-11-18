@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { View, Image, ScrollView, TouchableOpacity } from "react-native";
+import { useState, useEffect } from "react";
+import { View, Image, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { FAB, Modal, Portal, Button } from "react-native-paper";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { supabase } from "../supabase";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,6 +16,16 @@ export default function SpecificRecipe() {
 
   const router = useRouter();
 
+  const { slug } = useLocalSearchParams() as { slug?: string };
+
+  const [loading, setLoading] = useState(true);
+  const [recipe, setRecipe] = useState<{
+    name: string;
+    description: string;
+    rating: number;
+    reviews?: number;
+  } | null>(null);
+
   const [reviewVisible, setReviewVisible] = useState(false);
   const [rating, setRating] = useState(0);
 
@@ -23,21 +34,47 @@ export default function SpecificRecipe() {
     setTimeout(() => setReviewVisible(false), 300);
   };
 
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (!slug) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from("recipes")
+          .select("name,description,rating")
+          .eq("recipe_slug", String(slug))
+          .maybeSingle();
+
+        if (error) {
+          console.warn("Supabase fetch recipe error:", error.message);
+          if (mounted) setRecipe(null);
+        } else if (data) {
+          if (mounted)
+            setRecipe({
+              name: data.name ?? "Untitled Recipe",
+              description: data.description ?? "",
+              rating: typeof data.rating === "number" ? data.rating : Number(data.rating ?? 0),
+              reviews: 0,
+            });
+        }
+      } catch (e: any) {
+        console.warn("Supabase fetch exception:", e?.message ?? e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
+
   const ingredients = [
-    "6.5 lb (2.95 kg) Pilsner malt",
-    "2.25 lb (1 kg) wheat malt",
-    "23 oz (652 g) white unmalted wheat flakes",
-    "5 ml lactic acid",
-    "0.75 oz (21 g) Bravo pellets, 15% a.a. (60 min)",
-    "5 oz (141 g) dextrose (30 min)",
-    "Kettle Finings (30 min)",
-    "0.12 oz (3 g) fresh ground coriander (5 min)",
-    "0.34 oz (10 g) fresh ground bitter orange peel (5 min)",
-    "1.0 oz (28 g) Citra pellets (knockout)",
-    "1.0 oz (28 g) Centennial pellets (knockout)",
-    "0.5 oz (14 g) Cascade pellets (knockout)",
-    "Yeast nutrient (optional)",
-    "Wyeast 3787 Trappist High Gravity ale yeast",
+    "not yet implemented",
   ];
 
   return (
@@ -46,7 +83,7 @@ export default function SpecificRecipe() {
       style={{backgroundColor: BASE_COLORS.LIGHT_BG}}
     >
       <Header
-        title='IJ IPA'
+        title={recipe?.name ?? (loading ? "Loading…" : "Recipe")}
         iconName="ArrowRight"
         onIconPress={() => router.push("/Recipes" as any)}
         actionTestID="cart-button"
@@ -69,30 +106,27 @@ export default function SpecificRecipe() {
         </View>
 
         {/* Rating */}
-        <View className="flex-row items-center justify-center mb-4 gap-2">
-          <Star 
-            size={22} 
-            color={BASE_COLORS.ACCENT_LIGHT} 
-            fill={BASE_COLORS.ACCENT_LIGHT}/>
-          <ThemedText type="subTitle">4.8 / 5</ThemedText>
-          <ThemedText type="subTitle">(265 reviews)</ThemedText>
-          <TouchableOpacity
-            onPress={() => setReviewVisible(true)}
-            style={{
-              marginLeft: 8,
-              paddingVertical: 4,
-              paddingHorizontal: 10,
-            }}
-          >
-            <ThemedText type="subTitle">Add Review</ThemedText>
-          </TouchableOpacity>
-        </View>
+        {loading ? (
+          <View style={{ alignItems: "center", marginVertical: 16 }}>
+            <ActivityIndicator />
+          </View>
+        ) : (
+          <View className="flex-row items-center justify-center mb-4 gap-2">
+            <Star size={22} color={BASE_COLORS.ACCENT_LIGHT} fill={BASE_COLORS.ACCENT_LIGHT} />
+            <ThemedText type="subTitle">{(recipe?.rating ?? 0).toFixed(1)} / 5</ThemedText>
+            <ThemedText type="subTitle">({recipe?.reviews ?? 0} reviews)</ThemedText>
+            <TouchableOpacity
+              onPress={() => setReviewVisible(true)}
+              style={{ marginLeft: 8, paddingVertical: 4, paddingHorizontal: 10 }}
+            >
+              <ThemedText type="subTitle">Add Review</ThemedText>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Brew Info */}
         <ThemedText type="defaultText" className="mb-3">
-          It features an assertive bitterness that dominates the palate,
-          accompanied by strong aromatic notes that often recall citrus zest,
-          pine, or tropical fruit ...
+          {loading ? "" : recipe?.description ?? ""}
         </ThemedText>
 
         {/* Ingredients */}
