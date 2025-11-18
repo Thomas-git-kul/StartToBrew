@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { View, Alert , ScrollView } from "react-native";
+import { View, Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Checkbox, FAB} from "react-native-paper";
+import { Checkbox, FAB } from "react-native-paper";
 import { router } from "expo-router";
 import { supabase } from "@/supabase";
 import { useFonts } from "@/hooks/use-fonts";
@@ -44,27 +44,65 @@ export default function Registration() {
       return;
     }
 
+    if (!day || !month || !year) {
+      Alert.alert("Please enter your full birth date.");
+      return;
+    }
+
+    const birthdate = `${year}-${month}-${day}`; // YYYY-MM-DD, Postgres kan dit parsen
+
     setLoading(true);
 
-    const { data: { session }, error } = await supabase.auth.signUp({
+    // 1) User in auth.users
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          username,
-          first_name: firstname,
-          last_name: lastname,
-          birthdate: `${year}-${month}-${day}`,
-        },
-      },
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       Alert.alert(error.message);
       return;
     }
+
+    const { user, session } = data;
+
+    if (!user) {
+      setLoading(false);
+      Alert.alert("User could not be created.");
+      return;
+    }
+
+    const fullName = `${firstname} ${lastname}`.trim();
+
+    // 2) Profiel bijwerken / aanmaken in public.profiles
+    //    Gebruik upsert zodat we NIET tegen profiles_pkey botsen
+    const { error: profileError } = await supabase.from("profiles").upsert(
+      {
+        id: user.id, // PK + FK naar auth.users
+        username: username || null,
+        full_name: fullName || null,
+        firstname: firstname || null,
+        lastname: lastname || null,
+        mail: email,
+        date_of_birth: birthdate, // kolom is timestamptz
+        avatar_url: null,
+        updated_at: new Date().toISOString(),
+        // level en bio laten we via defaults/null
+      },
+      {
+        // niet strikt nodig, want PK = id, maar expliciet kan geen kwaad
+        onConflict: "id",
+      }
+    );
+
+    if (profileError) {
+      setLoading(false);
+      Alert.alert(profileError.message);
+      return;
+    }
+
+    setLoading(false);
 
     if (!session) {
       Alert.alert("Check your inbox to verify your email.");
@@ -76,9 +114,10 @@ export default function Registration() {
   }
 
   return (
-    <SafeAreaView className="flex-1"
+    <SafeAreaView
+      className="flex-1"
       style={{
-        backgroundColor: BASE_COLORS.LIGHT_BG
+        backgroundColor: BASE_COLORS.LIGHT_BG,
       }}
     >
       <Header
@@ -89,24 +128,32 @@ export default function Registration() {
       />
       <ScrollView
         className="px-3"
-        contentContainerStyle={{ paddingBottom: 120 }} // make space for FAB
+        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Full Name */}
         <ThemedText type="subTitle">Full Name</ThemedText>
         <View className="flex-row gap-3 w-full">
           <View className="flex-1">
-            <TextInput value={lastname} onChangeText={setLastname} label="Lastname" />
+            <TextInput
+              value={lastname}
+              onChangeText={setLastname}
+              label="Lastname"
+            />
           </View>
           <View style={{ width: "50%" }}>
             <View className="flex-1">
-              <TextInput value={firstname} onChangeText={setFirstname} label="Firstname" />
+              <TextInput
+                value={firstname}
+                onChangeText={setFirstname}
+                label="Firstname"
+              />
             </View>
           </View>
         </View>
 
-        {/* Birthday */}
-        <ThemedText type="subTitle" className="mt-6">Birth Date</ThemedText>
+        <ThemedText type="subTitle" className="mt-6">
+          Birth Date
+        </ThemedText>
         <View className="flex-row gap-3">
           <View className="flex-1">
             <TextInput value={day} onChangeText={setDay} label="DD" />
@@ -123,28 +170,42 @@ export default function Registration() {
           </View>
         </View>
 
-        {/* Contact */}
-        <ThemedText type="subTitle" className="mt-6">Contact information</ThemedText>
+        <ThemedText type="subTitle" className="mt-6">
+          Contact information
+        </ThemedText>
         <TextInput value={email} onChangeText={setEmail} label="Email" />
 
-        {/* Account */}
-        <ThemedText type="subTitle" className="mt-6">Account</ThemedText>
-        <TextInput value={username} onChangeText={setUsername} label="Username" />
-        <TextInput value={password} onChangeText={setPassword} label="Password" />
-        <TextInput value={confirmPassword} onChangeText={setConfirmPassword} label="Confirm Password" />
+        <ThemedText type="subTitle" className="mt-6">
+          Account
+        </ThemedText>
+        <TextInput
+          value={username}
+          onChangeText={setUsername}
+          label="Username"
+        />
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          label="Password"
+        />
+        <TextInput
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          label="Confirm Password"
+        />
 
-        {/* Terms */}
         <View className="flex-row items-center my-4">
           <Checkbox
             status={agree ? "checked" : "unchecked"}
             onPress={() => setAgree(!agree)}
             color={BASE_COLORS.ACCENT_PRIMARY}
           />
-          <ThemedText className="defaultText">I agree to the terms and conditions</ThemedText>
+          <ThemedText className="defaultText">
+            I agree to the terms and conditions
+          </ThemedText>
         </View>
       </ScrollView>
 
-      {/* FAB overlay at bottom */}
       <View
         style={{
           position: "absolute",
@@ -162,7 +223,7 @@ export default function Registration() {
           color={BASE_COLORS.WHITE}
           style={{
             backgroundColor: BASE_COLORS.TEXT_DARK,
-            borderRadius: 20
+            borderRadius: 20,
           }}
           theme={{
             fonts: {
