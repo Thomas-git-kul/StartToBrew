@@ -34,6 +34,138 @@ export default function SpecificRecipe() {
     setTimeout(() => setReviewVisible(false), 300);
   };
 
+  const brewRecipe = async () => {
+  if (!slug || !recipe?.name) {
+    console.warn("Cannot start brew: missing slug or recipe name.");
+    return;
+  }
+  console.log("Start brewing brewRecipe");
+
+  try {
+    // 1. Haal de gebruikerssessie op om de user_id te krijgen
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log("User:", user);
+
+    if (userError || !user) {
+      console.error("Error fetching user for brew:", userError?.message);
+      return;
+    }
+
+    // 2. Zoek de fase met de laagste positie (de eerste fase)
+    const { data: phasesData, error: phasesError } = await supabase
+      .from("phases")
+      .select("phase_id")
+      .eq("recipe_slug", slug)
+      .order("position", { ascending: true });
+
+    if (phasesError || !phasesData?.length) {
+      console.error("Error fetching phases:", phasesError?.message || "No phases found.");
+      return;
+    }
+
+    interface Phase {
+      phase_id: string;
+    }
+
+    const phaseIds = phasesData.map((p: Phase) => p.phase_id);
+
+    // 3. Haal de eerste stap van de eerste fase
+    const { data: firstStepData, error: firstStepError } = await supabase
+      .from("steps")
+      .select("step_id")
+      .eq("phase_id", phaseIds[0])
+      .is("after_step_id", null) // startstap
+      .limit(1)
+      .single();
+
+    if (firstStepError || !firstStepData) {
+      console.error("Error finding first step:", firstStepError?.message || "No starting step found.");
+      return;
+    }
+
+    const firstStepId = firstStepData.step_id;
+    console.log("First step:", firstStepId);
+
+    // 4. Voer INSERT uit in brews
+    const newBrew = {
+      user_id: user.id,
+      name: recipe.name,
+      start_date: new Date().toISOString(),
+      status_id: 1,
+      recipe_slug: slug,
+      last_step_id: firstStepId,
+    };
+
+    const { data: brewData, error: insertError } = await supabase
+      .from("brews")
+      .insert([newBrew])
+      .select();
+
+    if (insertError || !brewData?.length) {
+      console.error("Error inserting brew:", insertError?.message);
+      return;
+    }
+
+    const brewId = brewData[0].id_brew;
+    console.log("New brew started successfully:", brewId);
+
+    // 5. Haal alle stappen van alle fases
+    const { data: allSteps, error: stepsError } = await supabase
+      .from("steps")
+      .select("step_id, after_step_id")
+      .in("phase_id", phaseIds)
+
+    if (stepsError || !allSteps?.length) {
+      console.error("Error fetching steps:", stepsError?.message || "No steps found.");
+      return;
+    }
+
+    interface Step {
+      step_id: string;
+      after_step_id: string | null;
+    }
+
+    const orderedSteps: Step[] = [];
+    let currentStep = allSteps.find((s: Step) => s.after_step_id === null);
+
+    while (currentStep) {
+      // Voeg zowel step_id als after_step_id toe
+      orderedSteps.push({ 
+        step_id: currentStep.step_id, 
+        after_step_id: currentStep.after_step_id 
+      });
+      
+      currentStep = allSteps.find((s: Step) => s.after_step_id === currentStep.step_id);
+    }
+
+
+    // 6. Voeg alle stappen toe aan brew_steps
+    const brewSteps = allSteps.map((step: { step_id: string }) => ({
+      id_brew: brewId,
+      step_id: step.step_id,
+      status: "pending",
+      completed_at: null,
+    }));
+
+    const { error: brewStepsError } = await supabase
+      .from("brew_steps")
+      .insert(brewSteps);
+
+    if (brewStepsError) {
+      console.error("Error inserting brew_steps:", brewStepsError.message);
+    } else {
+      console.log("All brew steps added successfully!");
+    }
+
+    // 7. Navigeer naar progress
+    router.push("../progress");
+
+  } catch (e: any) {
+    console.error("Exception during brew start:", e.message ?? e);
+  }
+};
+
+
   useEffect(() => {
     let mounted = true;
     const load = async () => {
@@ -46,7 +178,7 @@ export default function SpecificRecipe() {
           .from("recipes")
           .select("name,description,rating")
           .eq("recipe_slug", String(slug))
-          .maybeSingle();
+          .single();
 
         if (error) {
           console.warn("Supabase fetch recipe error:", error.message);
@@ -183,7 +315,7 @@ export default function SpecificRecipe() {
           mode="elevated"
           label="Start Brewing"
           color={BASE_COLORS.WHITE}
-          onPress={() => router.push("../progress")}
+          onPress={brewRecipe}
           style={{
             backgroundColor: BASE_COLORS.TEXT_DARK,
             borderRadius: 20,
