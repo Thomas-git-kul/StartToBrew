@@ -62,7 +62,6 @@ export default function HomePage() {
         </View>
 
         <ThemedText type="title">Popular recipes</ThemedText>
-
         <View>
           {beers.map((beer, index) => (
             <BeerCard 
