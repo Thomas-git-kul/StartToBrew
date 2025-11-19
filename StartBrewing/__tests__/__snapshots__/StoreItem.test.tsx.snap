@@ -12,13 +12,13 @@ exports[`<StoreItem /> matches snapshot layout 1`] = `
           data={
             [
               {
-                "id": "HNloP84WIXHns2XOpn2k1",
+                "id": "LmWE7TMlvTxiQy_tbdvZA",
                 "source": {
                   "testUri": "../../../assets/images/Starterkit.png",
                 },
               },
               {
-                "id": "x-XCzqbe2sKaEyZ9NXjU_",
+                "id": "lQE9D41ut_tUAe_ciXQP4",
                 "source": {
                   "testUri": "../../../assets/images/starterkit2.png",
                 },

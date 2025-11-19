@@ -2864,7 +2864,7 @@ exports[`<Registration /> matches snapshot 1`] = `
           }
           accessible={true}
           collapsable={false}
-          color="#f00"
+          color="#000"
           focusable={true}
           onBlur={[Function]}
           onClick={[Function]}
@@ -2903,7 +2903,7 @@ exports[`<Registration /> matches snapshot 1`] = `
               style={
                 [
                   {
-                    "color": "#f00",
+                    "color": "#000",
                     "fontSize": 24,
                   },
                   [
