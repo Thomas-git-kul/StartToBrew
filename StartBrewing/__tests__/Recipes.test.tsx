@@ -1,44 +1,69 @@
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import Recipes from "../app/(tabs)/Recipes";
 import { useRouter } from "expo-router";
 
-// Mock expo-router
+/* --------------------------------
+   MOCKS
+-------------------------------- */
+
+// Mock router
 jest.mock("expo-router", () => ({
   useRouter: jest.fn(),
 }));
 
-// Mock icons
-jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => 'MaterialCommunityIcons');
-jest.mock('@expo/vector-icons/Ionicons', () => 'Ionicons');
-
-// Mock useFonts hook
+// Mock useFonts
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: jest.fn(),
 }));
 
-// Mock Header to simplify rendering
+// Mock Header
 jest.mock("@/components/header", () => {
-  return ({ title }: any) => {
-    const { Text } = require("react-native");
-    return <Text>{title}</Text>;
-  };
+  const { Text } = require("react-native");
+  return ({ title }: any) => <Text>{title}</Text>;
 });
 
-// Mock BeerCard component
+// Mock BeerCard with onPress
 jest.mock("@/components/ui/RecipeCard", () => {
-  const { View, Text, Pressable } = require("react-native");
-  return ({ name, onToggleFavorite }: any) => (
-    <View>
+  const { Text, Pressable } = require("react-native");
+  return ({ name, onPress }: any) => (
+    <Pressable onPress={onPress}>
       <Text>{name}</Text>
-      <Pressable
-        accessibilityLabel={`favorite-${name}`}
-        onPress={onToggleFavorite}
-      >
-        <Text>FavBtn</Text>
-      </Pressable>
-    </View>
+    </Pressable>
   );
 });
+
+// Mock Supabase data
+jest.mock("../supabase", () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({
+        limit: () => ({
+          data: [
+            {
+              recipe_slug: "citra-rye",
+              name: "CalIPA - Citra Rye",
+              description: "Desc",
+              rating: 4,
+            },
+            {
+              recipe_slug: "city-of-sun",
+              name: "City of the Sun IPA",
+              description: "Desc",
+              rating: 5,
+            },
+            {
+              recipe_slug: "black-nitro",
+              name: "Black Nitro IPA",
+              description: "Desc",
+              rating: 3,
+            }
+          ],
+          error: null
+        }),
+      }),
+    }),
+  },
+}));
 
 describe("Recipes screen", () => {
   const pushMock = jest.fn();
@@ -48,60 +73,66 @@ describe("Recipes screen", () => {
     pushMock.mockClear();
   });
 
-  it("renders header, searchbar, and beer cards", () => {
+  it("renders header, searchbar, and recipes", async () => {
     const { getByText, getByPlaceholderText } = render(<Recipes />);
 
     expect(getByText("Recipes")).toBeTruthy();
     expect(getByPlaceholderText("Search")).toBeTruthy();
 
-    expect(getByText("IJ IPA")).toBeTruthy();
-    expect(getByText("Voodoo Ranger")).toBeTruthy();
-    expect(getByText("Two Hearted IPA")).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText("CalIPA - Citra Rye")).toBeTruthy();
+      expect(getByText("City of the Sun IPA")).toBeTruthy();
+      expect(getByText("Black Nitro IPA")).toBeTruthy();
+    });
   });
 
-  it("filters beers based on search query", () => {
+  it("filters recipes based on search query", async () => {
     const { getByPlaceholderText, queryByText } = render(<Recipes />);
+
+    await waitFor(() => queryByText("CalIPA - Citra Rye"));
+
     const searchInput = getByPlaceholderText("Search");
 
-    fireEvent.changeText(searchInput, "Voodoo");
+    fireEvent.changeText(searchInput, "Black");
 
-    expect(queryByText("IJ IPA")).toBeNull();
-    expect(queryByText("Voodoo Ranger")).toBeTruthy();
-    expect(queryByText("Two Hearted IPA")).toBeNull();
+    expect(queryByText("CalIPA - Citra Rye")).toBeNull();
+    expect(queryByText("City of the Sun IPA")).toBeNull();
+    expect(queryByText("Black Nitro IPA")).toBeTruthy();
   });
 
-  it("clears search when search text is cleared", () => {
+  it("clears search when empty string is typed", async () => {
     const { getByPlaceholderText, getByText } = render(<Recipes />);
+
     const searchInput = getByPlaceholderText("Search");
 
-    fireEvent.changeText(searchInput, "Voodoo");
+    await waitFor(() => getByText("CalIPA - Citra Rye"));
 
-    expect(getByText("Voodoo Ranger")).toBeTruthy();
+    fireEvent.changeText(searchInput, "City");
+
+    expect(getByText("City of the Sun IPA")).toBeTruthy();
 
     fireEvent.changeText(searchInput, "");
 
-    expect(getByText("IJ IPA")).toBeTruthy();
-    expect(getByText("Voodoo Ranger")).toBeTruthy();
-    expect(getByText("Two Hearted IPA")).toBeTruthy();
+    expect(getByText("CalIPA - Citra Rye")).toBeTruthy();
+    expect(getByText("City of the Sun IPA")).toBeTruthy();
+    expect(getByText("Black Nitro IPA")).toBeTruthy();
   });
 
-  it("navigates to SpecificRecipe when a beer card is pressed", () => {
+  it("navigates to SpecificRecipe when a beer card is pressed", async () => {
     const { getByText } = render(<Recipes />);
 
-    // Use fireEvent.press on the BeerCard (TouchableRipple)
-    fireEvent.press(getByText("IJ IPA"));
+    await waitFor(() => getByText("CalIPA - Citra Rye"));
 
-    expect(pushMock).toHaveBeenCalledWith("/SpecificRecipe");
+    fireEvent.press(getByText("CalIPA - Citra Rye"));
+
+    expect(pushMock).toHaveBeenCalledWith({
+      pathname: "/SpecificRecipe",
+      params: { slug: "citra-rye" }
+    });
   });
 
-  it("toggles favorite when heart button is pressed", () => {
-    const { getByLabelText } = render(<Recipes />);
-
-    const favoriteButton = getByLabelText("favorite-IJ IPA");
-
-    fireEvent.press(favoriteButton);
-    fireEvent.press(favoriteButton);
-
-    expect(favoriteButton).toBeTruthy();
+  it("matches snapshot", async () => {
+    const tree = render(<Recipes />).toJSON();
+    expect(tree).toMatchSnapshot();
   });
 });
