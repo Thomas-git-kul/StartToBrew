@@ -1,5 +1,5 @@
 import React from "react";
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, Dimensions } from "react-native";
 import { Searchbar, Chip } from "react-native-paper";
 import { Search, X, Check } from "lucide-react-native";
 
@@ -11,6 +11,10 @@ import { useFonts } from "@/hooks/use-fonts";
 import StoreCard from "@/components/ui/StoreCard";
 import Header from "@/components/header"
 import { FontFamilies } from "@/constants/Fonts";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const BASE_SCREEN_WIDTH = 375;
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 interface Category {
   id: number;
@@ -89,53 +93,55 @@ export default function StorePage() {
       />
 
       {/* Horizontal scrollable category chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="mx-1 mb-2"
-      >
-        {orderedCategories.map((cat) => {
-          const isSelected = selectedCategories.includes(cat.id);
-          return (
-            <Chip
-              key={cat.id}
-              mode="outlined"
-              selected={isSelected}
-              onPress={() => toggleCategory(cat.id)}
-              icon={
-                isSelected
-                  ? () => (
-                      <Check
-                        size={14}
-                        color={BASE_COLORS.WHITE}
-                        style={{ marginRight: 4 }}
-                      />
-                    )
-                  : undefined
-              }
-              style={{
-                marginRight: 6,
-                marginBottom: 10,
-                backgroundColor: isSelected
-                  ? BASE_COLORS.ACCENT_PRIMARY
-                  : BASE_COLORS.WHITE,
-                borderColor: BASE_COLORS.STONE300,
-                borderWidth: 1,
-                paddingHorizontal: 10,
-                alignItems: "center",
-              }}
-              textStyle={{
-                color: isSelected
-                  ? BASE_COLORS.WHITE
-                  : BASE_COLORS.STONE500,
-                fontFamily: FontFamilies.BODY
-              }}
-            >
-              {cat.name}
-            </Chip>
-          );
-        })}
-      </ScrollView>
+      <View style={{ height: 60 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 15, paddingLeft: 10 }}
+        >
+          {orderedCategories.map((cat) => {
+            const isSelected = selectedCategories.includes(cat.id);
+            return (
+              <Chip
+                key={cat.id}
+                mode="flat"
+                selected={isSelected}
+                onPress={() => toggleCategory(cat.id)}
+                icon={
+                  isSelected
+                    ? () => (
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                          <Check size={Math.min(14 * scale, 20)} color={BASE_COLORS.WHITE} />
+                        </View>
+                      )
+                    : undefined
+                }
+                textStyle={{
+                  color: isSelected ? BASE_COLORS.WHITE : BASE_COLORS.STONE500,
+                  fontFamily: FontFamilies.BODY,
+                  fontSize: Math.min(14 * scale, 16),
+                }}
+                style={{
+                  marginRight: 10,
+                  backgroundColor: isSelected
+                    ? BASE_COLORS.ACCENT_PRIMARY
+                    : BASE_COLORS.WHITE,
+                  borderColor: isSelected
+                    ? BASE_COLORS.WHITE
+                    : BASE_COLORS.STONE300,
+                  borderWidth: 1,
+                  height: Math.min(40 * scale, 50),
+                  paddingVertical: 0,
+                  marginVertical: 5,
+                  alignItems: "center",
+                }}
+              >
+                {cat.name}
+              </Chip>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* Items List */}
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -144,7 +150,10 @@ export default function StorePage() {
           placeholder="Search"
           value={searchQuery}
           onChangeText={setSearchQuery}
-          inputStyle={{ color: BASE_COLORS.STONE700 }}
+          inputStyle={{ 
+            color: BASE_COLORS.STONE700, 
+            fontFamily: FontFamilies.BODY
+          }}
           icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
           clearIcon={
             searchQuery
