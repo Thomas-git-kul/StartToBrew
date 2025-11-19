@@ -9,13 +9,15 @@ import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { ThemedText } from "@/components/themed-text";
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, ArrowBigRight } from 'lucide-react-native';
+import { useRouter } from "expo-router";
 
 const BASE_SCREEN_WIDTH = 375;
 const scale = Dimensions.get('window').width / BASE_SCREEN_WIDTH;
 
 export default function Agenda() {
   useFonts();
+  const router = useRouter();
 
   const [phasesByDate, setPhasesByDate] = useState<{ [date: string]: typeof todo }>({});
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
@@ -26,9 +28,9 @@ export default function Agenda() {
       beer: "IJ IPA", 
       title: "Phase 1: Mash", 
       steps: [
-        { text: "Heat strike water" },
+        { text: "Heat strike water", time: "60", next: true },
         { text: "Mash in" },
-        { text: "Saccharification rest" },
+        { text: "Saccharification rest", time:"40" },
         { text: "Mash out" },
     ]},
     { date: "2025-11-10", 
@@ -41,7 +43,7 @@ export default function Agenda() {
     ]},
     { date: "2025-11-12", beer: "IJ IPA", title: "Phase 3: Whirlpool", steps: [
       { text: "Cool to 80°C" },
-      { text: "Whirlpool cascade + cascade" },
+      { text: "Whirlpool cascade + cascade", time: "60" },
     ]},
     { date: "2025-11-14", 
       beer: "black IPA", 
@@ -49,7 +51,7 @@ export default function Agenda() {
       steps: [
         { text: "Chill to 19°C" },
         { text: "Transfer to fermenter" },
-        { text: "Pitch yeast" },
+        { text: "Pitch yeast", time: "60" },
     ]},
     { date: "2025-11-14", 
       beer: "IJ IPA", 
@@ -139,10 +141,12 @@ export default function Agenda() {
           const today = new Date().toISOString().split("T")[0];
           setCurrentDate(today);
         }}
+        actionTestID="header-calendar1"
       />
 
       {calendarVisible && (
         <View
+          testID="calendar-container"
           className="mx-1 my-1 rounded-2xl overflow-hidden shadow"
           style={{
             backgroundColor: BASE_COLORS.LIGHT_BG,
@@ -194,23 +198,33 @@ export default function Agenda() {
               }}
             >
               <List.Accordion
+                testID={`accordion-${index}`}
                 title={phase.beer}
                 titleStyle={{ fontFamily: FontFamilies.BODY_BOLD, fontSize: Math.min(18 * scale, 22), color: BASE_COLORS.ACCENT_PRIMARY }}
                 style={{ backgroundColor: BASE_COLORS.WHITE }}
                 left={undefined}
                 expanded={expandedStates[index]}
                 onPress={() => toggleAccordion(index)}
-                right={(props) => expandedStates[index] ? <ChevronUp {...props} color={BASE_COLORS.TEXT_DARK} /> : <ChevronDown {...props} color={BASE_COLORS.TEXT_DARK} />}
+                right={(props) => expandedStates[index] ? <ChevronUp {...props} color={BASE_COLORS.ACCENT_PRIMARY} /> : <ChevronDown {...props} color={BASE_COLORS.ACCENT_PRIMARY} />}
               >
-                {/* Phase title */}
-                <ThemedText type="defaultText" className="ml-4 mb-1 mt-2">
-                  {phase.title}
-                </ThemedText>
-
-                {/* Steps */}
+                <ThemedText
+                  testID={`phase-title-${index}`} 
+                  type="subTitle" 
+                  className="ml-4 mb-1"
+                >{phase.title}</ThemedText>
                 {phase.steps.map((step, stepIndex) => (
-                  <View key={stepIndex} className="flex-row items-center mb-1 ml-6">
-                    <ThemedText type="defaultText">• {step.text}</ThemedText>
+                  <View key={stepIndex} className="flex-row items-center ml-6">
+                    <ThemedText testID={`phase-${index}-step-${stepIndex}`} type="defaultText">
+                      • {step.text}{step.time ? ` (${step.time} min)` : ""}
+                    </ThemedText>
+                    {step.next && (
+                      <ArrowBigRight
+                        testID={`step-arrow-${index}-${stepIndex}`}
+                        onPress={() => router.push("../progress")}
+                        color={BASE_COLORS.ACCENT_PRIMARY}
+                        style={{ marginLeft: 8 }}
+                      />
+                    )}
                   </View>
                 ))}
               </List.Accordion>
