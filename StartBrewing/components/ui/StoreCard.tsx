@@ -27,7 +27,12 @@ export default function StoreCard({ image, title, price, onPress }: StoreCardPro
           marginBottom: 18,
           backgroundColor: BASE_COLORS.WHITE,
           borderRadius: 16,
-          overflow: "hidden"
+          overflow: "hidden",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
         }}
       >
         <View style={{ flexGrow: 1 }} className="flex-col px-3 pt-3">

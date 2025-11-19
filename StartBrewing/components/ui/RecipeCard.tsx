@@ -48,12 +48,16 @@ const BeerCard: React.FC<BeerCardProps> = ({
     >
       <Card
         mode="elevated"
-        elevation={1}
         style={{ 
           borderRadius: 12,
           backgroundColor: BASE_COLORS.WHITE,
           marginBlock: 3,
-          marginInline: 2
+          marginInline: 2,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
         }}
       >
         <View className="flex-row h-fit">
