@@ -20,6 +20,7 @@ interface Category {
 }
 
 interface Item {
+  id: number;
   title: string;
   price: string;
   image: any;
@@ -68,7 +69,7 @@ export default function StorePage() {
   const orderedCategories = [
     ...categories.filter((c) => selectedCategories.includes(c.id)),
     ...categories.filter((c) => !selectedCategories.includes(c.id)),
-  ];
+  ]
 
   useEffect(() => {
     let mounted = true;
@@ -78,7 +79,6 @@ export default function StorePage() {
           .from("category")
           .select("id_category,name")
           .limit(10);
-
         if (categoryError) {
           console.warn("Supabase categories(fetch) error:", categoryError.message);
           if (mounted) setCategories([]);
@@ -92,25 +92,35 @@ export default function StorePage() {
 
         const { data: storeItemsData, error: storeItemsError } = await supabase
           .from("store_items")
-          .select("name, category_id, price")
+          .select("id_store_item, name, category_id, price")
           .limit(50);
-
-        if (storeItemsError) {
-          console.warn("Supabase store_items(fetch) error:", storeItemsError.message);
+        const { data: starterkitItemsData, error: starterkitItemsError } = await supabase
+          .from("starter_kits")
+          .select("id_starter_kit, name, price")
+          .limit(50);
+        if (storeItemsError || starterkitItemsError) {
+          console.warn("Supabase fetch error:", storeItemsError?.message || starterkitItemsError?.message);
           if (mounted) setItems([]);
         } else {
-          const mappedItems: Item[] = (storeItemsData ?? []).map((row: any) => ({
+          const mappedStoreItems: Item[] = (storeItemsData ?? []).map((row: any) => ({
+            id: row.id_store_item ?? undefined,
             title: row.name ?? "Untitled Item",
             categoryId: row.category_id ?? undefined,
             price: row.price ? `€${row.price}` : "N/A",
             image: exampleImages[row.category_id] || require("@/assets/images/Premiumkit.png"),
           }));
-
-          // Sort items alphabetically by title
-          mappedItems.sort((a, b) => a.title.localeCompare(b.title));
-
-          if (mounted) setItems(mappedItems);
+          const mappedStarterKits: Item[] = (starterkitItemsData ?? []).map((row: any) => ({
+            id: row.id_starter_kit ?? undefined,
+            title: row.name ?? "Untitled Starter Kit",
+            categoryId: 4,
+            price: row.price ? `from €${row.price}` : "N/A",
+            image: require("@/assets/images/starterkit2.png"),
+          }));
+          const combinedItems = [...mappedStoreItems, ...mappedStarterKits];
+          combinedItems.sort((a, b) => a.title.localeCompare(b.title));
+          if (mounted) setItems(combinedItems);
         }
+
       } catch (e: any) {
         console.warn("Supabase fetch exception:", e?.message ?? e);
       } finally {
@@ -123,6 +133,11 @@ export default function StorePage() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    console.log("Categories:", categories);
+    console.log("Items:", items);
+  }, [categories, items]);
 
   return (
     <View
