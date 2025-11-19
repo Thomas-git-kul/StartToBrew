@@ -198,7 +198,7 @@ export default function Registration() {
           <Checkbox
             status={agree ? "checked" : "unchecked"}
             onPress={() => setAgree(!agree)}
-            color={BASE_COLORS.ACCENT_PRIMARY}
+            color={BASE_COLORS.TEXT_DARK}
           />
           <ThemedText className="defaultText">
             I agree to the terms and conditions
