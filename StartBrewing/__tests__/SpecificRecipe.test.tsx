@@ -1,9 +1,7 @@
 import React from "react";
 import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import SpecificRecipe from "../app/SpecificRecipe";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "../supabase";
 
 // --------------------------
 // Mock expo-router
@@ -21,81 +19,107 @@ jest.mock("expo-router", () => ({
 jest.mock("../supabase", () => ({
   supabase: {
     auth: {
-      getUser: jest.fn(),
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      }),
     },
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => ({
-          maybeSingle: jest.fn(async () => ({
-            data: {
-              name: "Test Beer",
-              description: "A very tasty beer",
-              rating: 4.8,
-            },
-            error: null,
-          })),
-        })),
-      })),
-    })),
+    from: jest.fn((table) => {
+      switch (table) {
+        case "recipes":
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                single: jest.fn(async () => ({
+                  data: { name: "Test Beer", description: "A very tasty beer", rating: 4.8 },
+                  error: null,
+                })),
+              })),
+            })),
+          };
+
+        case "phases":
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                order: jest.fn(async () => ({
+                  data: [
+                    { phase_id: "phase-1" },
+                    { phase_id: "phase-2" },
+                  ],
+                  error: null,
+                })),
+              })),
+            })),
+          };
+
+        case "steps":
+          const steps = [
+            { step_id: "step-1", after_step_id: null, phase_id: "phase-1" },
+            { step_id: "step-2", after_step_id: "step-1", phase_id: "phase-1" },
+            { step_id: "step-3", after_step_id: null, phase_id: "phase-2" },
+          ];
+          return {
+            select: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                is: jest.fn(() => ({
+                  limit: jest.fn(() => ({
+                    single: jest.fn(async () => ({
+                      data: { step_id: "step-1" },
+                      error: null,
+                    })),
+                  })),
+                })),
+              })),
+              in: jest.fn(async () => ({
+                data: steps,
+                error: null,
+              })),
+            })),
+          };
+
+        case "brews":
+          return {
+            insert: jest.fn(() => ({
+              select: jest.fn(async () => ({ data: [{ id_brew: 123 }], error: null })),
+            })),
+          };
+
+        case "brew_steps":
+          return { insert: jest.fn(() => ({ error: null })) };
+
+        default:
+          return { select: jest.fn() };
+      }
+    }),
   },
 }));
 
 // --------------------------
-// Mock useFonts
+// Mock andere dependencies
 // --------------------------
-jest.mock("@/hooks/use-fonts", () => ({
-  useFonts: () => true,
-}));
-
-// --------------------------
-// Mock ThemedText
-// --------------------------
+jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
 });
-
-// --------------------------
-// Mock SafeAreaView
-// --------------------------
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
   return { SafeAreaView: ({ children }: any) => <View>{children}</View> };
 });
-
-// --------------------------
-// Mock Colors & Fonts
-// --------------------------
 jest.mock("@/constants/Colors", () => ({
-  BASE_COLORS: {
-    LIGHT_BG: "#fafafa",
-    WHITE: "#ffffff",
-    TEXT_DARK: "#000000",
-    ACCENT_LIGHT: "#B45309",
-    STONE300: "#E5E7EB",
-  },
+  BASE_COLORS: { LIGHT_BG: "#fafafa", WHITE: "#fff", TEXT_DARK: "#000", ACCENT_LIGHT: "#B45309", STONE300: "#E5E7EB" },
 }));
-
-jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: { BODY: "System" },
-}));
-
-// --------------------------
-// Mock Header
-// --------------------------
+jest.mock("@/constants/Fonts", () => ({ FontFamilies: { BODY: "System" } }));
 jest.mock("@/components/header", () => {
   const { Text } = require("react-native");
   return ({ title }: any) => <Text>{title}</Text>;
 });
-
-// --------------------------
-// Mock react-native-paper
-// --------------------------
 jest.mock("react-native-paper", () => {
   const { View, Text, TouchableOpacity } = require("react-native");
   return {
     FAB: ({ label, onPress }: any) => (
-      <TouchableOpacity onPress={onPress}>
+      <TouchableOpacity onPress={() => { console.log("FAB pressed!"); onPress(); }}>
         <Text>{label}</Text>
       </TouchableOpacity>
     ),
@@ -105,8 +129,10 @@ jest.mock("react-native-paper", () => {
 });
 
 // --------------------------
-// Helper render wrapper
+// Component import
 // --------------------------
+const SpecificRecipe = require("../app/SpecificRecipe").default;
+
 const renderWithNav = (ui: React.ReactElement) =>
   render(<NavigationContainer>{ui}</NavigationContainer>);
 
@@ -115,73 +141,10 @@ const renderWithNav = (ui: React.ReactElement) =>
 // --------------------------
 describe("<SpecificRecipe />", () => {
   beforeEach(() => {
-  pushMock.mockClear();
-  (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
-  (useLocalSearchParams as jest.Mock).mockReturnValue({ slug: "test-slug" });
-
-  // Auth mock
-  (supabase.auth.getUser as jest.Mock) = jest.fn().mockResolvedValue({
-    data: { user: { id: "user-1" } },
-    error: null,
+    pushMock.mockClear();
+    (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ slug: "test-slug" });
   });
-
-  // Table mocks
-  (supabase.from as jest.Mock).mockImplementation((table) => {
-    if (table === "recipes") {
-      return {
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            maybeSingle: jest.fn(async () => ({
-              data: { name: "Test Beer", description: "A very tasty beer", rating: 4.8 },
-              error: null,
-            })),
-          })),
-        })),
-      };
-    }
-
-    if (table === "phases") {
-      return {
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            order: jest.fn(() => ({
-              limit: jest.fn(() => ({
-                maybeSingle: jest.fn(async () => ({ data: { phase_id: 1 }, error: null })),
-              })),
-            })),
-          })),
-        })),
-      };
-    }
-
-    if (table === "steps") {
-      return {
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            is: jest.fn(() => ({
-              limit: jest.fn(() => ({
-                maybeSingle: jest.fn(async () => ({ data: { step_id: 1 }, error: null })),
-              })),
-            })),
-          })),
-        })),
-      };
-    }
-
-    if (table === "brews") {
-      return {
-        insert: jest.fn(() => ({
-          select: jest.fn(async () => ({
-            data: [{ id_brew: 123 }],
-            error: null,
-          })),
-        })),
-      };
-    }
-
-    return { select: jest.fn() };
-  });
-});
 
   it("renders recipe title from supabase", async () => {
     const { getByText } = renderWithNav(<SpecificRecipe />);
@@ -197,24 +160,17 @@ describe("<SpecificRecipe />", () => {
   });
 
   it("navigates to progress on Start Brewing press", async () => {
-  const { getByText } = renderWithNav(<SpecificRecipe />);
-  await waitFor(() => getByText("Start Brewing"));
+    const { getByText } = renderWithNav(<SpecificRecipe />);
+    await waitFor(() => getByText("Start Brewing"));
 
-  console.log(">>> Pressing Start Brewing button <<<");
+    await act(async () => {
+      fireEvent.press(getByText("Start Brewing"));
+      // wacht even voor de async Supabase calls
+      await new Promise((res) => setTimeout(res, 10));
+    });
 
-  await act(async () => {
-    fireEvent.press(getByText("Start Brewing"));
-  });
-
-  console.log(">>> After press, checking pushMock <<<");
-
-  await waitFor(() => {
     expect(pushMock).toHaveBeenCalledWith("../progress");
-    console.log(">>> pushMock was called <<<");
   });
-});
-
-
 
   it("opens modal and selects a rating", async () => {
     const { getByText, getAllByTestId, queryByText } = renderWithNav(<SpecificRecipe />);
