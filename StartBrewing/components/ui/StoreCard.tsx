@@ -35,15 +35,14 @@ export default function StoreCard({ image, title, price, onPress }: StoreCardPro
           elevation: 3,
         }}
       >
-        <View style={{ flexGrow: 1 }} className="flex-col px-3 pt-3">
+        <View style={{ flexGrow: 1 }} className="flex-col mx-3 mt-3">
           {/* Image */}
           <Image
             source={typeof image === "string" ? { uri: image } : image}
             style={{
               width: "100%",
               height: Math.min(CARD_HEIGHT * 0.55, 160),
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
+              borderRadius: 16,
               marginBottom: 3
             }}
             resizeMode="cover"
@@ -56,6 +55,7 @@ export default function StoreCard({ image, title, price, onPress }: StoreCardPro
               fontFamily: FontFamilies.BODY_BOLD,
               color: BASE_COLORS.ACCENT_PRIMARY,
             }}
+            numberOfLines={2}
           >{title}</Text>
 
           {/* Price */}

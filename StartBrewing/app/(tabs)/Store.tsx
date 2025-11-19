@@ -1,16 +1,14 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import { View, ScrollView, Dimensions } from "react-native";
 import { Searchbar, Chip } from "react-native-paper";
 import { Search, X, Check } from "lucide-react-native";
-
 import { BASE_COLORS } from "@/constants/Colors";
-
 import { useRouter } from "expo-router";
 import { useFonts } from "@/hooks/use-fonts";
-
 import StoreCard from "@/components/ui/StoreCard";
 import Header from "@/components/header"
 import { FontFamilies } from "@/constants/Fonts";
+import { supabase } from "../../supabase";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -29,30 +27,23 @@ interface Item {
 }
 
 export default function StorePage() {
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [selectedCategories, setSelectedCategories] = React.useState<number[]>([]);
-  const fontsLoaded = useFonts();
+  useFonts();
   const router = useRouter();
 
-  if (!fontsLoaded) return null;
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = React.useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Item[]>([]);
 
-  // Example categories (these will come from DB)
-  const categories: Category[] = [
-    { id: 1, name: "Malts" },
-    { id: 2, name: "Hops" },
-    { id: 3, name: "Yeast" },
-    { id: 4, name: "Kits" },
-    { id: 5, name: "Equipment" },
-    { id: 6, name: "Measurement" },
-  ];
-
-  // Example store items (categoryId matches DB category IDs)
-  const items: Item[] = [
-    { image: require("@/assets/images/Premiumkit.png"), title: "Superior starter kit Base", price: "€299", categoryId: 4 },
-    { image: require("@/assets/images/Airlock.png"), title: "Airlock", price: "€1,49", categoryId: 5 },
-    { image: require("@/assets/images/Starterkit.png"), title: "Starter Kit IPA", price: "€32,99", categoryId: 4 },
-    { image: require("@/assets/images/PVCtap.png"), title: "Tap PVC with back nut", price: "€2,99", categoryId: 5 },
-  ];
+  const exampleImages: Record<number, any> = {
+    1: require("@/assets/images/malt.png"),
+    2: require("@/assets/images/hop.png"),
+    3: require("@/assets/images/yeast.png"),
+    4: require("@/assets/images/starterkit2.png"),
+    5: require("@/assets/images/Airlock.png"),
+    6: require("@/assets/images/measurement.png"),
+  }
 
   const toggleCategory = (id: number) => {
     setSelectedCategories((prev) =>
@@ -65,9 +56,8 @@ export default function StorePage() {
 
     const matchSearch =
       item.title.toLowerCase().includes(q) ||
-      item.price.toLowerCase().includes(q);
+      (typeof item.price === "string" && item.price.toLowerCase().includes(q));
 
-    // If no categories selected → show all
     const matchCategory =
       selectedCategories.length === 0 ||
       selectedCategories.includes(item.categoryId);
@@ -79,6 +69,60 @@ export default function StorePage() {
     ...categories.filter((c) => selectedCategories.includes(c.id)),
     ...categories.filter((c) => !selectedCategories.includes(c.id)),
   ];
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const { data: categoryData, error: categoryError } = await supabase
+          .from("category")
+          .select("id_category,name")
+          .limit(10);
+
+        if (categoryError) {
+          console.warn("Supabase categories(fetch) error:", categoryError.message);
+          if (mounted) setCategories([]);
+        } else {
+          const mappedCategories: Category[] = (categoryData ?? []).map((row: any) => ({
+            id: row.id_category ?? undefined,
+            name: row.name ?? "Untitled Category",
+          }));
+          if (mounted) setCategories(mappedCategories);
+        }
+
+        const { data: storeItemsData, error: storeItemsError } = await supabase
+          .from("store_items")
+          .select("name, category_id, price")
+          .limit(50);
+
+        if (storeItemsError) {
+          console.warn("Supabase store_items(fetch) error:", storeItemsError.message);
+          if (mounted) setItems([]);
+        } else {
+          const mappedItems: Item[] = (storeItemsData ?? []).map((row: any) => ({
+            title: row.name ?? "Untitled Item",
+            categoryId: row.category_id ?? undefined,
+            price: row.price ? `€${row.price}` : "N/A",
+            image: exampleImages[row.category_id] || require("@/assets/images/Premiumkit.png"),
+          }));
+
+          // Sort items alphabetically by title
+          mappedItems.sort((a, b) => a.title.localeCompare(b.title));
+
+          if (mounted) setItems(mappedItems);
+        }
+      } catch (e: any) {
+        console.warn("Supabase fetch exception:", e?.message ?? e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <View
@@ -97,7 +141,6 @@ export default function StorePage() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={{ marginBottom: 15, paddingLeft: 10 }}
         >
           {orderedCategories.map((cat) => {
             const isSelected = selectedCategories.includes(cat.id);
