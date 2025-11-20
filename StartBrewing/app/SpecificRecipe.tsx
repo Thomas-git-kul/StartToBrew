@@ -214,7 +214,7 @@ export default function SpecificRecipe() {
                   key={chip.key}
                   mode="flat"
                   style={{
-                    backgroundColor: BASE_COLORS.WHITE,
+                    backgroundColor: BASE_COLORS.STONE300,
                     borderRadius: 999,
                     borderWidth: 0,
                   }}
