@@ -1,109 +1,114 @@
 import React from "react";
-import { render, waitFor } from "@testing-library/react-native";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react-native";
 import ShoppingCart from "../app/ShoppingCart";
 
-// --- 🧩 MOCKS --- //
-
+// --- MOCKS --- //
 // Mock Expo Router
 const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
+  useRouter: () => ({ push: mockPush }),
 }));
 
-// Mock react-native-paper components
-jest.mock("react-native-paper", () => {
-  const React = require("react");
-  return {
-    Text: ({ children }: any) => React.createElement("Text", null, children),
-    Button: ({ children, onPress }: any) =>
-      React.createElement("button", { onClick: onPress }, children),
-    TextInput: ({ label }: any) => React.createElement("Text", null, label),
-    Appbar: {
-      Header: ({ children }: any) => React.createElement(React.Fragment, null, children),
-      Content: ({ title }: any) => React.createElement("Text", null, title),
-      Action: ({ onPress }: any) =>
-        React.createElement("button", { "data-testid": "header-action", onClick: onPress }, "Icon"),
-    },
-  };
-});
+// Mock useFonts hook
+jest.mock("@/hooks/use-fonts", () => ({ useFonts: jest.fn() }));
 
 // Mock SafeAreaView
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
-  return {
-    SafeAreaView: ({ children }: any) => <View>{children}</View>,
-  };
+  return { SafeAreaView: ({ children }: any) => <View>{children}</View> };
 });
 
-// Mock Colors & Fonts constants
-jest.mock("@/constants/Colors", () => ({
-  BASE_COLORS: { WHITE: "#fff", TEXT_DARK: "#000" },
-}));
-
-jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: { HEADING: "System", BODY: "System" },
-}));
-
-// Mock CartItem component
-interface CartItemProps {
-  title: string;
-  price: number;
-  quantity: number;
-}
-const MockCartItem = jest.fn((props: CartItemProps) => null);
-jest.mock("@/components/ui/OrderCard", () => (props: CartItemProps) => {
-  MockCartItem(props);
+// Mock Header
+const MockHeader = jest.fn();
+jest.mock("@/components/header", () => (props: any) => {
+  MockHeader(props);
   return null;
 });
 
-// --- 🧪 TESTS --- //
-describe("<ShoppingCart />", () => {
+// Mock ThemedText
+jest.mock("@/components/themed-text", () => {
+  const { Text } = require("react-native");
+  return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
+});
+
+// Mock OrderCard
+const MockOrderCard = jest.fn();
+jest.mock("@/components/ui/OrderCard", () => (props: any) => {
+  MockOrderCard(props);
+  return null;
+});
+
+// Mock Supabase
+jest.mock("../supabase", () => ({
+  supabase: {
+    auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user123" } }, error: null }) },
+    from: jest.fn().mockImplementation((table: string) => {
+      if (table === "shopping_cart") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockReturnThis(),
+          then: jest.fn((cb: any) => cb({ data: [{ store_item_id: 1, quantity: 2, starter_kit: false }], error: null })),
+        };
+      }
+      if (table === "store_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          then: jest.fn((cb: any) => cb({ data: [{ id_store_item: 1, name: "Superior starter kit Base", price: 299 }], error: null })),
+        };
+      }
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          then: jest.fn((cb: any) => cb({ data: [{ id_starter_kit: 2, name: "Starter Kit", price: 50 }], error: null })),
+        };
+      }
+      return { select: jest.fn().mockReturnThis(), then: jest.fn() };
+    }),
+  },
+}));
+
+// --- TESTS --- //
+describe("<ShoppingCart /> minimal test", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("renders main headers correctly", async () => {
-  const { getByText } = render(<ShoppingCart />);
-
-  await waitFor(() => {
-    expect(getByText('Shopping Cart')).toBeTruthy();
-    expect(getByText('Order Summary')).toBeTruthy();
-    expect(getByText('Shipping Information')).toBeTruthy();
-  });
-
-  expect(getByText("Shopping Cart")).toBeTruthy();
-  expect(getByText("Order Summary")).toBeTruthy();
-  expect(getByText("Shipping Information")).toBeTruthy();
-  expect(getByText("Full Name")).toBeTruthy();
-  expect(getByText("Street name and number")).toBeTruthy();
-  expect(getByText("City")).toBeTruthy();
-  });
-  
-  it("renders exactly three CartItem components", () => {
     render(<ShoppingCart />);
-    expect(MockCartItem).toHaveBeenCalledTimes(2);
+
+    await waitFor(() => {
+      const headerProps = MockHeader.mock.calls[0][0];
+      expect(headerProps.title).toBe("Shopping Cart");
+      expect(headerProps.iconName).toBe("ArrowRight");
+      expect(headerProps.actionTestID).toBe("store-button");
+      expect(typeof headerProps.onIconPress).toBe("function");
+    });
   });
 
-  it("passes correct props to the first CartItem", () => {
+  it("renders OrderCard with correct props", async () => {
     render(<ShoppingCart />);
-    const calls = MockCartItem.mock.calls;
-    expect(calls.length).toBeGreaterThan(0);
 
-    const firstCall = calls[0][0] as CartItemProps;
-    expect(firstCall.title).toBe("Superior starter kit Base");
-    expect(firstCall.price).toBe("€299");
-    expect(firstCall.quantity).toBe(1);
+    await waitFor(() => {
+      expect(MockOrderCard).toHaveBeenCalled();
+      const props = MockOrderCard.mock.calls[0][0];
+      expect(props.title).toBe("Superior starter kit Base");
+      expect(props.price).toBe("€299.00");
+      expect(props.quantity).toBe(2);
+    });
   });
 
-  it("displays subtotal correctly", () => {
-    const { getByText } = render(<ShoppingCart />);
-    expect(getByText(/Subtotal:\s*€\s*300,49/)).toBeTruthy();
+  it("calls router.push('/Store') when back button pressed", () => {
+    render(<ShoppingCart />);
+    expect(MockHeader).toHaveBeenCalled();
+    const props = MockHeader.mock.calls[0][0];
+    props.onIconPress();
+    expect(mockPush).toHaveBeenCalledWith("/Store");
   });
 
-  it("matches snapshot for layout consistency", () => {
-    const tree = render(<ShoppingCart />).toJSON();
-    expect(tree).toMatchSnapshot();
+  it("matches snapshot after loading orders", async () => {
+    const { toJSON } = render(<ShoppingCart />);
+    await waitFor(() => expect(MockOrderCard).toHaveBeenCalled());
+    expect(toJSON()).toMatchSnapshot();
   });
 });

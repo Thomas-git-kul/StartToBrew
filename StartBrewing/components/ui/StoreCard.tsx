@@ -27,19 +27,25 @@ export default function StoreCard({ image, title, price, onPress }: StoreCardPro
           marginBottom: 18,
           backgroundColor: BASE_COLORS.WHITE,
           borderRadius: 16,
-          overflow: "hidden"
+          overflow: "hidden",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
         }}
       >
-        <View style={{ flexGrow: 1 }} className="flex-col px-3 pt-3">
+        <View style={{ flexGrow: 1 }} className="flex-col m-3">
           {/* Image */}
           <Image
             source={typeof image === "string" ? { uri: image } : image}
             style={{
               width: "100%",
-              height: Math.min(CARD_HEIGHT * 0.55, 160),
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              marginBottom: 3
+              height: Math.min(CARD_HEIGHT * 0.5, 160),
+              borderRadius: 16,
+              marginBottom: 3,
+              borderColor: BASE_COLORS.STONE100,
+              borderWidth: 1 
             }}
             resizeMode="cover"
           />
@@ -51,15 +57,16 @@ export default function StoreCard({ image, title, price, onPress }: StoreCardPro
               fontFamily: FontFamilies.BODY_BOLD,
               color: BASE_COLORS.ACCENT_PRIMARY,
             }}
+            numberOfLines={2}
           >{title}</Text>
 
           {/* Price */}
           <Text
-          style={{
-            fontSize: Math.min(15 * scale, 18),
-            fontFamily: FontFamilies.BODY,
-            color: BASE_COLORS.STONE600
-          }}
+            style={{
+              fontSize: Math.min(15 * scale, 18),
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.STONE600
+            }}
           >{price}</Text>
         </View>
       </Card>
