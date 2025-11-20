@@ -113,7 +113,7 @@ export default function StorePage() {
             id: row.id_starter_kit ?? undefined,
             title: row.name ?? "Untitled Starter Kit",
             categoryId: 4,
-            price: row.price ? `from €${row.price}` : "N/A",
+            price: row.price ? `€${row.price}` : "N/A",
             image: require("@/assets/images/starterkit2.png"),
           }));
           const combinedItems = [...mappedStoreItems, ...mappedStarterKits];
@@ -226,7 +226,9 @@ export default function StorePage() {
             <StoreCard
               key={index}
               {...item}
-              onPress={() => router.push(({ pathname: "/StoreItem", params: { id: item.id } } as any))}
+              onPress={() => router.push(({ 
+                pathname: "/StoreItem", 
+                params: { id: item.id, categoryNumber: item.categoryId } } as any))}
             />
           ))}
         </View>
