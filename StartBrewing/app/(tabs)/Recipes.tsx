@@ -50,24 +50,50 @@ export default function Recipes() {
         setLoading(true);
         setError(null);
 
-        const { data, error } = await supabase
+        const { data: recipesData, error: recipesError } = await supabase
           .from("recipes")
           .select(
             "recipe_slug, name, description, rating, haze_level, srm_target, style"
           );
 
-        if (error) throw error;
+        if (recipesError) throw recipesError;
 
-        const mapped: Beer[] = (data || []).map((r: any) => ({
-          recipe_slug: r.recipe_slug,
-          name: r.name,
-          // pas dit eventueel aan als je rating als 1-5 of als 0-100 opslaat
-          rating: r.rating ?? 0,
-          reviews: 0, // later kun je dit vullen met een count uit recipe_reviews
-          image: getBeerImageSource(r.haze_level, r.srm_target),
-          description: r.description ?? null,
-          style: r.style ?? null,
-        }));
+        const slugs = (recipesData || []).map((r: any) => r.recipe_slug);
+
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from("recipe_reviews")
+          .select("recipe_slug, rating")
+          .in("recipe_slug", slugs.length ? slugs : [""]);
+
+        if (reviewsError) throw reviewsError;
+
+        // aggregate
+        const agg: Record<string, { count: number; avg: number }> = {};
+        (reviewsData || []).forEach((r: any) => {
+          const slug = r.recipe_slug;
+          if (!agg[slug]) agg[slug] = { count: 0, avg: 0 };
+          agg[slug].count += 1;
+          agg[slug].avg += (r.rating ?? 0);
+        });
+        Object.keys(agg).forEach((k) => {
+          agg[k].avg = agg[k].count ? agg[k].avg / agg[k].count : 0;
+        });
+
+        const mapped: Beer[] = (recipesData || []).map((r: any) => {
+          const a = agg[r.recipe_slug];
+          const avgRating = a ? a.avg : r.rating ?? 0;
+          // twee decimalen precisie
+          const rating = parseFloat(avgRating.toFixed(2));
+          return {
+            recipe_slug: r.recipe_slug,
+            name: r.name,
+            rating,
+            reviews: a ? a.count : 0,
+            image: getBeerImageSource(r.haze_level, r.srm_target),
+            description: r.description ?? null,
+            style: r.style ?? null,
+          };
+        });
 
         setRecipes(mapped);
       } catch (e: any) {
