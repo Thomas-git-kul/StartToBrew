@@ -66,6 +66,7 @@ export default function SpecificRecipe() {
   const [rating, setRating] = useState(0);
 
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
+  const [reviewCount, setReviewCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
 
   const handleStarPress = (value: number) => {
@@ -104,8 +105,28 @@ export default function SpecificRecipe() {
           throw ingredientError;
         }
 
-        setRecipe(recipeData);
+        // fetch reviews for this recipe and compute average + count
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from("recipe_reviews")
+          .select("rating")
+          .eq("recipe_slug", recipe_slug);
+
+        if (reviewsError) throw reviewsError;
+
+        const count = (reviewsData || []).length;
+        const avg = count
+          ? (reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) /
+              count)
+          : null;
+
+        // Aggregated average rating (0-5) met twee decimalen precisie
+        const recipeWithRating = recipeData
+          ? { ...recipeData, rating: avg != null ? parseFloat(avg.toFixed(2)) : recipeData.rating }
+          : null;
+
+        setRecipe(recipeWithRating);
         setIngredients((ingredientData || []) as IngredientRow[]);
+        setReviewCount(count);
       } catch (e: any) {
         setError(e.message ?? "Something went wrong");
       } finally {
@@ -135,9 +156,11 @@ export default function SpecificRecipe() {
     chips.push({ key: "difficulty", label: `Difficulty ${stars}` });
   }
 
+  
   const displayedRating =
-    recipe?.rating != null ? (recipe.rating / 10).toFixed(1) : "4.8"; // pas aan naar jouw logica
-  const reviewCount = 265; // later te vervangen door echte count uit recipe_reviews
+    recipe?.rating != null && !Number.isNaN(recipe.rating)
+      ? recipe.rating.toFixed(2)
+      : "0.00";
 
   // Bepaal image source o.b.v. haze + srm (valt terug op default-image in util)
   const beerImageSource =

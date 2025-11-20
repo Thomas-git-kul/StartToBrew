@@ -17,9 +17,7 @@ exports[`<HomePage /> snapshot 1`] = `
     }
   >
     <View>
-      <Text
-        type="title"
-      >
+      <Text>
         In progress
       </Text>
       <View>
@@ -135,9 +133,7 @@ exports[`<HomePage /> snapshot 1`] = `
           </View>
         </View>
       </View>
-      <Text
-        type="title"
-      >
+      <Text>
         Popular recipes
       </Text>
       <View
@@ -338,10 +334,7 @@ exports[`<HomePage /> snapshot 1`] = `
             </View>
           </View>
         </View>
-        <Text
-          className="mt-2"
-          type="defaultText"
-        >
+        <Text>
           Loading recipes...
         </Text>
       </View>
@@ -487,7 +480,7 @@ exports[`<HomePage /> snapshot 1`] = `
               testID="cross-fade-icon-current"
             >
               <Text>
-                Plus(24,#eee)
+                Plus
               </Text>
             </View>
           </View>

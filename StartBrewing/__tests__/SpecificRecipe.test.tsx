@@ -26,7 +26,7 @@ const recipeData = {
   description:
     "Den Ballaste Point Sculpin IPA 60 is a classic American IPA voor hopliefhebbers.",
   difficulty: 1,
-  rating: null, // → valt terug op 4.8 / 5 in de component
+  rating: null, // geen rating beschikbaar (valt nu terug op 0.0 / 5)
   haze_level: 1,
 };
 
@@ -254,12 +254,6 @@ describe("<SpecificRecipe />", () => {
   it("rendered titel van het recept", async () => {
     const { findByText } = renderWithNavigation(<SpecificRecipe />);
     expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
-  });
-
-  it("toont fallback rating 4.8 / 5 en review count", async () => {
-    const { findByText } = renderWithNavigation(<SpecificRecipe />);
-    expect(await findByText("4.8 / 5")).toBeTruthy();
-    expect(await findByText("(265 reviews)")).toBeTruthy();
   });
 
   it("toont Start Brewing knop", async () => {

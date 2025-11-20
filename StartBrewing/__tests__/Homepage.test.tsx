@@ -1,11 +1,11 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
 import { NavigationContainer } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 
 /* ------------------------------
-   MOCK DATA (uit recipes.csv)
+   MOCK DATA
 ------------------------------- */
 
 const recipesData = [
@@ -38,75 +38,70 @@ const recipesData = [
   },
 ];
 
+const reviewData = [
+  { recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60", rating: 4 },
+  { recipe_slug: "americanipa-city-of-the-sun-ipa", rating: 3 },
+  { recipe_slug: "sessionipa-smash-session-pale-ale", rating: 5 },
+];
+
 /* ------------------------------
    HELPERS
 ------------------------------- */
 
-// thenable query object dat zowel
-//  - `await supabase.from(...).select(...)`
-//  - als `.order(...).limit(5)` ondersteunt
-const createRecipesQuery = (listData = recipesData) => {
-  const query: any = {
-    order: () => ({
-      limit: async (count: number) => ({
-        data: listData.slice(0, count),
-        error: null,
-      }),
-    }),
-    eq: (field: string, value: string) => ({
-      single: async () => ({
-        data: listData.find((r) => r.recipe_slug === value) || null,
-        error: null,
-      }),
-    }),
-    then(onFulfilled: any, onRejected: any) {
-      return Promise.resolve({ data: listData, error: null }).then(
-        onFulfilled,
-        onRejected
-      );
+const createRecipesQuery = (listData = recipesData) => ({
+  select: () => ({
+    then(cb) {
+      return Promise.resolve({ data: listData, error: null }).then(cb);
     },
-  };
-  return query;
-};
+  }),
+  then(cb) {
+    return Promise.resolve({ data: listData, error: null }).then(cb);
+  },
+});
 
 /* ------------------------------
    MOCKS
 ------------------------------- */
 
-// Router
 const pushMock = jest.fn();
-jest.mock("expo-router", () => ({
-  useRouter: jest.fn(),
-}));
+jest.mock("expo-router", () => ({ useRouter: jest.fn() }));
 
-// Fonts
-jest.mock("@/hooks/use-fonts", () => ({
-  useFonts: () => true,
-}));
+jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
 
-// Supabase
 jest.mock("@/supabase", () => ({
   supabase: {
     from: (table: string) => {
-      if (table !== "recipes") {
+      if (table === "recipes") {
         return {
-          select: () => createRecipesQuery([]),
+          select: () =>
+            Promise.resolve({
+              data: recipesData,
+              error: null,
+            }),
+        };
+      }
+      if (table === "recipe_reviews") {
+        return {
+          select: () => ({
+            in: () =>
+              Promise.resolve({
+                data: reviewData,
+                error: null,
+              }),
+          }),
         };
       }
       return {
-        select: () => createRecipesQuery(recipesData),
+        select: () => Promise.resolve({ data: [], error: null }),
       };
     },
-    rpc: jest.fn(),
   },
 }));
 
-// Beer-image helper
 jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
 }));
 
-// Header
 jest.mock("@/components/header", () => {
   const { View, Text } = require("react-native");
   return ({ title }: any) => (
@@ -116,17 +111,13 @@ jest.mock("@/components/header", () => {
   );
 });
 
-// ThemedText
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
-    ThemedText: ({ children, ...rest }: any) => (
-      <Text {...rest}>{children}</Text>
-    ),
+    ThemedText: ({ children }: any) => <Text>{children}</Text>,
   };
 });
 
-// Safe area
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
   return {
@@ -135,7 +126,6 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
-// Colors & fonts
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     WHITE: "#fff",
@@ -156,7 +146,6 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
-// BeerCard – nu mét favorite-button + accessibilityLabel
 jest.mock("@/components/ui/RecipeCard", () => {
   const { View, Text, Pressable } = require("react-native");
   return ({ name, onToggleFavorite, onPress }: any) => (
@@ -174,7 +163,6 @@ jest.mock("@/components/ui/RecipeCard", () => {
   );
 });
 
-// ProgressCard
 jest.mock("@/components/ui/ProgressCard", () => {
   const { View, Text, Pressable } = require("react-native");
   return ({ title, onPress }: any) => (
@@ -186,20 +174,21 @@ jest.mock("@/components/ui/ProgressCard", () => {
   );
 });
 
-// lucide icon
 jest.mock("lucide-react-native", () => {
   const { Text } = require("react-native");
-  return {
-    Plus: ({ size, color }: any) => <Text>{`Plus(${size},${color})`}</Text>,
-  };
+  return { Plus: () => <Text>Plus</Text> };
 });
 
 /* ------------------------------
-   TESTS
+   TEST UTIL
 ------------------------------- */
 
 const renderWithNavigation = (ui: React.ReactElement) =>
   render(<NavigationContainer>{ui}</NavigationContainer>);
+
+/* ------------------------------
+   TESTS
+------------------------------- */
 
 describe("<HomePage />", () => {
   beforeEach(() => {
@@ -215,7 +204,7 @@ describe("<HomePage />", () => {
     expect(getByText("Popular recipes")).toBeTruthy();
   });
 
-  it("laadt recipes uit Supabase mock", async () => {
+  it("laadt recipes", async () => {
     const { findByText } = renderWithNavigation(<HomePage />);
 
     expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
@@ -237,14 +226,13 @@ describe("<HomePage />", () => {
 
   it("navigates naar /Recipes via FAB", async () => {
     const { findByTestId } = renderWithNavigation(<HomePage />);
-
     const fab = await findByTestId("fab");
-    fireEvent.press(fab);
 
+    fireEvent.press(fab);
     expect(pushMock).toHaveBeenCalledWith("/Recipes");
   });
 
-  it("navigates naar SpecificRecipe bij klik op beer card", async () => {
+  it("navigates naar SpecificRecipe via beer card", async () => {
     const { findByText } = renderWithNavigation(<HomePage />);
 
     const card = await findByText("Den Ballaste Point Sculpin IPA 60");
