@@ -1,5 +1,5 @@
 import { render, fireEvent } from "@testing-library/react-native";
-import Recipes from "../app/(tabs)/Recipes";
+import Recipes from "@/app/(tabs)/Recipes";
 import { useRouter } from "expo-router";
 
 // Mock expo-router
@@ -8,8 +8,11 @@ jest.mock("expo-router", () => ({
 }));
 
 // Mock icons
-jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => 'MaterialCommunityIcons');
-jest.mock('@expo/vector-icons/Ionicons', () => 'Ionicons');
+jest.mock(
+  "@expo/vector-icons/MaterialCommunityIcons",
+  () => "MaterialCommunityIcons"
+);
+jest.mock("@expo/vector-icons/Ionicons", () => "Ionicons");
 
 // Mock useFonts hook
 jest.mock("@/hooks/use-fonts", () => ({
