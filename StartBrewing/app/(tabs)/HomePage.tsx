@@ -10,7 +10,7 @@ import { BASE_COLORS } from "@/constants/Colors";
 import { Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
 import { supabase } from "@/supabase";
-import { getBeerImageSource } from "@/hooks/beer-image"; // <<< zelfde util als SpecificRecipe/Recipes
+import { getBeerImageSource } from "@/hooks/beer-image";
 
 interface Beer {
   recipe_slug: string;
@@ -36,7 +36,6 @@ export default function HomePage() {
         setLoading(true);
         setError(null);
 
-        // haal populaire recepten op, nu met haze + srm
         const { data, error } = await supabase
           .from("recipes")
           .select(
