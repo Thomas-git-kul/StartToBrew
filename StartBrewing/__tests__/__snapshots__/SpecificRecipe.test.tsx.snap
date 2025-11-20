@@ -1,61 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<SpecificRecipe /> matches snapshot 1`] = `
+exports[`<SpecificRecipe /> snapshot 1`] = `
 <View>
   <Text>
     Loading…
   </Text>
-  <RCTScrollView
-    className="flex-1 mx-3"
-    contentContainerStyle={
-      {
-        "paddingBottom": 80,
-      }
-    }
-    showsVerticalScrollIndicator={false}
+  <View
+    className="flex-1 items-center justify-center"
   >
-    <View>
-      <View
-        className="items-center mb-5"
-      >
-        <Image
-          resizeMode="cover"
-          source={
-            {
-              "testUri": "../../../assets/images/default-beer.png",
-            }
-          }
-          style={
-            {
-              "borderRadius": 16,
-              "width": "100%",
-            }
-          }
-        />
-      </View>
-      <View
-        style={
-          {
-            "alignItems": "center",
-            "marginVertical": 16,
-          }
-        }
-      >
-        <ActivityIndicator />
-      </View>
-      <Text />
-      <View
-        className="flex-row items-start mt-2 ml-3 gap-3"
-      >
-        <Text>
-          •
-        </Text>
-        <Text>
-          not yet implemented
-        </Text>
-      </View>
-    </View>
-  </RCTScrollView>
+    <View />
+    <Text
+      className="mt-3"
+      type="defaultText"
+    >
+      Loading recipe...
+    </Text>
+  </View>
   <View
     style={
       {
@@ -97,6 +57,8 @@ exports[`<SpecificRecipe /> matches snapshot 1`] = `
       onStartShouldSetResponder={[Function]}
       style={
         {
+          "backgroundColor": "#000000",
+          "borderRadius": 20,
           "opacity": 1,
         }
       }
