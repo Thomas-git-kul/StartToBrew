@@ -134,11 +134,6 @@ export default function StorePage() {
     };
   }, []);
 
-  useEffect(() => {
-    console.log("Categories:", categories);
-    console.log("Items:", items);
-  }, [categories, items]);
-
   return (
     <View
       className="flex-1"
@@ -231,7 +226,7 @@ export default function StorePage() {
             <StoreCard
               key={index}
               {...item}
-              onPress={() => router.push(`/StoreItem`)}
+              onPress={() => router.push(({ pathname: "/StoreItem", params: { id: item.id } } as any))}
             />
           ))}
         </View>
