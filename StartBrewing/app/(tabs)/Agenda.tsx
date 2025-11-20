@@ -1,22 +1,72 @@
-import { useCallback, useState } from "react";
-import { View, ScrollView } from "react-native";
+import { useCallback, useState, useEffect } from "react";
+import { View, ScrollView, Dimensions } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "@/hooks/use-fonts";
-
 import { Calendar } from "react-native-calendars";
-import Checkbox from "expo-checkbox";
+import { List } from "react-native-paper";
 import Header from "@/components/header";
-
 import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
 import { ThemedText } from "@/components/themed-text";
+import { ChevronDown, ChevronUp, ArrowBigRight } from 'lucide-react-native';
+import { useRouter } from "expo-router";
+
+const BASE_SCREEN_WIDTH = 375;
+const scale = Dimensions.get('window').width / BASE_SCREEN_WIDTH;
 
 export default function Agenda() {
   useFonts();
+  const router = useRouter();
 
-  const [phasesByDate, setPhasesByDate] = useState<{ [date: string]: typeof initialPhases }>({});
+  const [phasesByDate, setPhasesByDate] = useState<{ [date: string]: typeof todo }>({});
   const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
   const [calendarVisible, setCalendarVisible] = useState(true);
+
+  const todo = [
+    { date: "2025-11-10", 
+      beer: "IJ IPA", 
+      title: "Phase 1: Mash", 
+      steps: [
+        { text: "Heat strike water", time: "60", next: true },
+        { text: "Mash in" },
+        { text: "Saccharification rest", time:"40" },
+        { text: "Mash out" },
+    ]},
+    { date: "2025-11-10", 
+      beer: "black IPA", 
+      title: "Phase 2: Boil", 
+      steps: [
+        { text: "Bring to boil" },
+        { text: "30-min cascade" },
+        { text: "10-min cascade" },
+    ]},
+    { date: "2025-11-12", beer: "IJ IPA", title: "Phase 3: Whirlpool", steps: [
+      { text: "Cool to 80°C" },
+      { text: "Whirlpool cascade + cascade", time: "60" },
+    ]},
+    { date: "2025-11-14", 
+      beer: "black IPA", 
+      title: "Phase 4: Chill", 
+      steps: [
+        { text: "Chill to 19°C" },
+        { text: "Transfer to fermenter" },
+        { text: "Pitch yeast", time: "60" },
+    ]},
+    { date: "2025-11-14", 
+      beer: "IJ IPA", 
+      title: "Phase 5: Ferment", 
+      steps: [
+        { text: "Primary ferment" },
+        { text: "Dry hop (3days)" },
+    ]},
+    { date: "2025-11-14", 
+      beer: "sunny IPA", 
+      title: "Phase 6: Package", 
+      steps: [
+        { text: "Package (bottle/keg)" },
+    ]},
+  ];
 
   useFocusEffect(
     useCallback(() => {
@@ -25,163 +75,162 @@ export default function Agenda() {
         if (saved) {
           setPhasesByDate(JSON.parse(saved));
         } else {
-          setPhasesByDate({ [currentDate]: initialPhases });
+          setPhasesByDate({});
         }
       };
       loadPhases();
-
-      setCalendarVisible(false);
-      requestAnimationFrame(() => setCalendarVisible(true));
-    }, [currentDate])
+    }, [])
   );
 
+  useEffect(() => {
+    setCalendarVisible(false);
+    requestAnimationFrame(() => setCalendarVisible(true));
+  }, [currentDate]);
 
-  const initialPhases = [
-    {
-      title: "Phase 1: Mash",
-      steps: [
-        { text: "Heat strike water", done: false },
-        { text: "Mash in", done: false },
-        { text: "Saccharification rest", done: false },
-        { text: "Mash out", done: false },
-      ],
-    },
-    {
-      title: "Phase 2: Boil",
-      steps: [
-        { text: "Bring to boil", done: false },
-        { text: "30-min cascade", done: false },
-        { text: "10-min cascade", done: false },
-      ],
-    },
-    {
-      title: "Phase 3: Whirlpool",
-      steps: [
-        { text: "Cool to 80°C", done: false },
-        { text: "Whirlpool cascade + cascade", done: false },
-      ],
-    },
-    {
-      title: "Phase 4: Chill",
-      steps: [
-        { text: "Chill to 19°C", done: false },
-        { text: "Transfer to fermenter", done: false },
-        { text: "Pitch yeast", done: false },
-      ],
-    },
-    {
-      title: "Phase 5: Ferment",
-      steps: [
-        { text: "Primary ferment", done: false },
-        { text: "Dry hop (3days)", done: false },
-      ],
-    },
-    {
-      title: "Phase 6: Package",
-      steps: [{ text: "Package (bottle/keg)", done: false }],
-    },
-  ];
+  const phasesForSelectedDate = todo.filter(p => p.date === currentDate);
+  const markedDates: any = {};
 
-  const phaseDates: { [phaseIndex: number]: string } = {
-    0: "2025-11-10",
-    1: "2025-11-11",
-    2: "2025-11-12",
-    3: "2025-11-13",
-    4: "2025-11-14",
-    5: "2025-11-15",
-  };
-
-  const toggleStep = async (date: string, phaseIndex: number, stepIndex: number) => {
-    setPhasesByDate((prev) => {
-      const datePhases = prev[date] ? [...prev[date]] : JSON.parse(JSON.stringify(initialPhases));
-      datePhases[phaseIndex].steps[stepIndex].done = !datePhases[phaseIndex].steps[stepIndex].done;
-      const newState = { ...prev, [date]: datePhases };
-      AsyncStorage.setItem("phasesByDate", JSON.stringify(newState));
-      return newState;
-    });
-  };
-
-  const markedDates: { [key: string]: any } = {};
-    for (const date of Object.values(phaseDates)) {
-      markedDates[date] = { marked: true, dotColor: BASE_COLORS.ACCENT_PRIMARY };
-  }
+  todo.forEach((item) => {
+    markedDates[item.date] = {
+      marked: true,
+      dotColor: BASE_COLORS.ACCENT_PRIMARY,
+    };
+  });
 
   markedDates[currentDate] = {
     ...(markedDates[currentDate] || {}),
     selected: true,
     selectedColor: BASE_COLORS.ACCENT_PRIMARY,
+    customStyles: {
+      container: {
+        backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
+        height: 33,
+        width: 33,
+        alignSelf: "center",
+      },
+      text: {
+        color: BASE_COLORS.WHITE,
+      },
+    },
   };
 
-  const phases = phasesByDate[currentDate] || initialPhases;
+  const SECTIONS = phasesForSelectedDate.map(phase => ({
+    title: phase.beer,
+    content: {
+      phaseTitle: phase.title,
+      steps: phase.steps
+    }
+  }));
+
+  const [expandedStates, setExpandedStates] = useState(phasesForSelectedDate.map(() => false));
+
+  const toggleAccordion = (index: number) => {
+    setExpandedStates((prev) => {
+      const newStates = [...prev];
+      newStates[index] = !newStates[index];
+      return newStates;
+    });
+  };
 
   return (
-    <View className="flex-1"
-      style={{
-        backgroundColor: BASE_COLORS.LIGHT_BG
-      }}
-    >
-      
+    <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
         title="Agenda"
         iconName="Calendar1"
         onIconPress={() => {
-            const today = new Date().toISOString().split("T")[0];
-            setCurrentDate(today);
-          }}
+          const today = new Date().toISOString().split("T")[0];
+          setCurrentDate(today);
+        }}
+        actionTestID="header-calendar1"
       />
 
       {calendarVisible && (
         <View
+          testID="calendar-container"
           className="mx-1 my-1 rounded-2xl overflow-hidden shadow"
-          style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+          style={{
+            backgroundColor: BASE_COLORS.LIGHT_BG,
+            borderRadius: 20,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            elevation: 3,
+          }}
         >
           <Calendar
+            key={currentDate}
             current={currentDate}
             markedDates={markedDates}
+            markingType="custom"
             onDayPress={(day) => setCurrentDate(day.dateString)}
             theme={{
               todayTextColor: BASE_COLORS.ACCENT_PRIMARY,
               arrowColor: BASE_COLORS.ACCENT_PRIMARY,
-              calendarBackground: BASE_COLORS.WHITE
+              calendarBackground: BASE_COLORS.WHITE,
             }}
           />
         </View>
       )}
 
-      <ThemedText type='title' className="ml-1">To do</ThemedText>
-
-      <ScrollView className="ml-1">
-        {phases.map((phase, phaseIndex) => {
-          const date = phaseDates[phaseIndex];
-          if (currentDate !== date) return null;
-
-          return (
-            <View key={phaseIndex}>
-              <ThemedText type='subTitle'>{phase.title}</ThemedText>
-
-              {phase.steps.map((step, stepIndex) => (
-                <View
-                  key={stepIndex}
-                  className="flex-row items-center mb-2"
-                >
-                  <Checkbox
-                    value={step.done}
-                    onValueChange={() => toggleStep(date, phaseIndex, stepIndex)}
-                    style={{ 
-                      marginRight: 8,
-                    }}
-                    color={BASE_COLORS.ACCENT_LIGHT}
-                  />
-                  <ThemedText type='defaultText'
-                    onPress={() => toggleStep(date, phaseIndex, stepIndex)}
-                  >
-                    {step.text}
-                  </ThemedText>
-                </View>
-              ))}
+      <ScrollView
+        className="px-1 mt-3"
+        showsVerticalScrollIndicator={false}
+        style={{
+          backgroundColor: BASE_COLORS.LIGHT_BG,
+        }}
+      >
+        {phasesForSelectedDate.length === 0 ? (
+          <ThemedText type="defaultText">No tasks for this day.</ThemedText>
+        ) : (
+          phasesForSelectedDate.map((phase, index) => (
+            <View
+              key={index}
+              className="p-1 mb-1"
+              style={{
+                backgroundColor: BASE_COLORS.WHITE,
+                borderRadius: 15,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <List.Accordion
+                testID={`accordion-${index}`}
+                title={phase.beer}
+                titleStyle={{ fontFamily: FontFamilies.BODY_BOLD, fontSize: Math.min(18 * scale, 22), color: BASE_COLORS.ACCENT_PRIMARY }}
+                style={{ backgroundColor: BASE_COLORS.WHITE }}
+                left={undefined}
+                expanded={expandedStates[index]}
+                onPress={() => toggleAccordion(index)}
+                right={(props) => expandedStates[index] ? <ChevronUp {...props} color={BASE_COLORS.ACCENT_PRIMARY} /> : <ChevronDown {...props} color={BASE_COLORS.ACCENT_PRIMARY} />}
+              >
+                <ThemedText
+                  testID={`phase-title-${index}`} 
+                  type="subTitle" 
+                  className="ml-4 mb-1"
+                >{phase.title}</ThemedText>
+                {phase.steps.map((step, stepIndex) => (
+                  <View key={stepIndex} className="flex-row items-center ml-6">
+                    <ThemedText testID={`phase-${index}-step-${stepIndex}`} type="defaultText">
+                      • {step.text}{step.time ? ` (${step.time} min)` : ""}
+                    </ThemedText>
+                    {step.next && (
+                      <ArrowBigRight
+                        testID={`step-arrow-${index}-${stepIndex}`}
+                        onPress={() => router.push("../progress")}
+                        color={BASE_COLORS.ACCENT_PRIMARY}
+                        style={{ marginLeft: 8 }}
+                      />
+                    )}
+                  </View>
+                ))}
+              </List.Accordion>
             </View>
-          );
-        })}
+          ))
+        )}
       </ScrollView>
     </View>
   );
