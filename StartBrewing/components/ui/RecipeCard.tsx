@@ -121,7 +121,7 @@ const BeerCard: React.FC<BeerCardProps> = ({
                   fontFamily: FontFamilies.BODY_LIGHT,
                   color: BASE_COLORS.STONE500,
                 }}
-              >{rating}/5 rating ({reviews} reviews)</Text>
+              >{`${Number(rating).toFixed(2)}/5 rating (${reviews} reviews)`}</Text>
             </View>
 
             <Text 

@@ -28,22 +28,20 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   // names to show in the popular section (in this order)
-  const popularNames = [
-    "CalIPA - Citra Rye",
-    "City of the Sun IPA",
-    "Face of Boe - APA #4",
-    "West Coast IPA 2023 v2",
-    "Black Nitro IPA",
-  ];
+  // We'll fetch the top-rated recipes from the DB instead of a hardcoded list
 
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
+        // fetch top 5 recipes by rating (exclude null ratings)
         const { data, error } = await supabase
           .from("recipes")
-          .select("recipe_slug,name,description,rating")
-          .limit(50);
+          .select("recipe_slug,name,description,rating,review_count")
+          .not('rating', 'is', null)
+          .order('rating', { ascending: false, nulls: 'last' })
+          .order('review_count', { ascending: false, nulls: 'last' })
+          .limit(5);
 
         if (error) {
           console.warn("Supabase recipes(fetch) error:", error.message);
@@ -51,14 +49,26 @@ export default function HomePage() {
           return;
         }
 
-        const mapped: Beer[] = (data ?? []).map((row: any) => ({
-          recipe_slug: row.recipe_slug ?? undefined,
-          name: row.name ?? "Untitled Recipe",
-          rating: typeof row.rating === "number" ? row.rating : Number(row.rating ?? 0),
-          reviews: 0,
-          image: require("@/assets/images/default-beer.png"),
-          description: row.description ?? "",
-        }));
+        const mapped: Beer[] = (data ?? []).map((row: any) => {
+          const raw = row?.rating;
+          let num = 0;
+          if (raw !== undefined && raw !== null) {
+            num = Number(raw);
+            if (Number.isNaN(num)) num = parseFloat(String(raw)) || 0;
+          }
+          // clamp between 0 and 5
+          num = Math.min(5, Math.max(0, num));
+          const ratingRounded = Number(num.toFixed(2));
+
+          return {
+            recipe_slug: row.recipe_slug ?? undefined,
+            name: row.name ?? "Untitled Recipe",
+            rating: ratingRounded,
+            reviews: typeof row.review_count === 'number' ? row.review_count : Number(row.review_count ?? 0),
+            image: require("@/assets/images/default-beer.png"),
+            description: row.description ?? "",
+          };
+        });
 
         if (mounted) setBeers(mapped);
       } catch (e: any) {
@@ -95,27 +105,13 @@ export default function HomePage() {
           </View>
         ) : (
           <View>
-            {popularNames.map((popularName, idx) => {
-              const found = beers.find((b) => b.name === popularName);
-              const beer = found ?? {
-                recipe_slug: undefined,
-                name: popularName,
-                description: "",
-                rating: 0,
-                reviews: 0,
-                image: require("@/assets/images/default-beer.png"),
-              };
-
-              return (
-                <BeerCard
-                  key={idx}
-                  {...beer}
-                  onPress={() =>
-                    router.push(({ pathname: "/SpecificRecipe", params: { slug: beer.recipe_slug } } as any))
-                  }
-                />
-              );
-            })}
+            {beers.map((beer, idx) => (
+              <BeerCard
+                key={idx}
+                {...beer}
+                onPress={() => router.push(({ pathname: "/SpecificRecipe", params: { slug: beer.recipe_slug } } as any))}
+              />
+            ))}
           </View>
         )}
       </ScrollView>

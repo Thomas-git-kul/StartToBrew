@@ -40,7 +40,7 @@ export default function Recipes() {
       try {
         const { data, error } = await supabase
           .from("recipes")
-          .select("recipe_slug,name,description,rating")
+          .select("recipe_slug,name,description,rating,review_count")
           .limit(50);
 
         if (error) {
@@ -49,14 +49,25 @@ export default function Recipes() {
           return;
         }
 
-        const mapped: Beer[] = (data ?? []).map((row: any) => ({
-          recipe_slug: row.recipe_slug ?? undefined,
-          name: row.name ?? "Untitled Recipe",
-          rating: typeof row.rating === "number" ? row.rating : Number(row.rating ?? 0),
-          description: row.description ?? "",
-          reviews: 0,
-          image: require("@/assets/images/default-beer.png"),
-        }));
+        const mapped: Beer[] = (data ?? []).map((row: any) => {
+          const raw = row?.rating;
+          let num = 0;
+          if (raw !== undefined && raw !== null) {
+            num = Number(raw);
+            if (Number.isNaN(num)) num = parseFloat(String(raw)) || 0;
+          }
+          num = Math.min(5, Math.max(0, num));
+          const ratingRounded = Number(num.toFixed(2));
+
+          return {
+            recipe_slug: row.recipe_slug ?? undefined,
+            name: row.name ?? "Untitled Recipe",
+            rating: ratingRounded,
+            description: row.description ?? "",
+            reviews: typeof row.review_count === 'number' ? row.review_count : Number(row.review_count ?? 0),
+            image: require("@/assets/images/default-beer.png"),
+          };
+        });
 
         if (mounted) setRecipes(mapped);
       } catch (e: any) {
