@@ -113,7 +113,12 @@ export default function Recipes() {
           ) : (
             <View>
               {recipes.filter((b) => filterMatches(b, searchQuery)).map((beer, index) => (
-                <BeerCard key={index} {...beer} />
+                <BeerCard
+                  key={index}
+                  {...beer}
+                  onPress={() => router.push(({ pathname: "/SpecificRecipe", params: { slug: beer.recipe_slug } } as any))}
+                  onToggleFavorite={() => {}}
+                />
               ))}
             </View>
           )}
