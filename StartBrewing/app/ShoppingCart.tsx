@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { View, ScrollView } from "react-native";
 import { Button } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -10,6 +10,7 @@ import Header from '@/components/header';
 import TextInput from '@/components/textInput';
 import { ThemedText } from "@/components/themed-text";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { supabase } from "../supabase";
 
 interface Order {
   image: any;
@@ -18,25 +19,33 @@ interface Order {
   price: string;
 }
 
+interface StoreItem {
+  id_store_item: number;
+  name: string;
+  price: number;
+  starter_kit: boolean;
+}
+
+interface StarterKit {
+  id_starter_kit: number;
+  name: string;
+  price: number;
+}
+
+const exampleImages: Record<number, any> = {
+  1: require("@/assets/images/malt.png"),
+  2: require("@/assets/images/hop.png"),
+  3: require("@/assets/images/yeast.png"),
+  4: require("@/assets/images/starterkit2.png"),
+  5: require("@/assets/images/Airlock.png"),
+  6: require("@/assets/images/measurement.png"),
+};
+
 export default function ShoppingCart() {
   useFonts();
   const router = useRouter();
 
-  const initialOrders: Order[] = [
-    {
-      image: require("@/assets/images/Premiumkit.png"),
-      title: "Superior starter kit Base",
-      quantity: 1,
-      price: "€299",
-    },
-    {
-      image: require("@/assets/images/Airlock.png"),
-      title: "Airlock",
-      quantity: 1,
-      price: "€1,49",
-    },
-  ];
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
 
   const parsePrice = (priceStr: string) => {
     if (!priceStr) return 0;
@@ -64,6 +73,89 @@ export default function ShoppingCart() {
   }, [orders]);
 
   const formatter = useMemo(() => new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' }), []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadCart = async () => {
+      try {
+        // Get logged-in user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          console.error("Error fetching user:", userError?.message);
+          return;
+        }
+        const userId = user.id;
+        console.log("userId:", userId);
+
+        // 2Fetch shopping cart items for this user
+        const { data: cartItems, error: cartError } = await supabase
+          .from("shopping_cart")
+          .select(`
+            id_cart,
+            store_item_id,
+            quantity,
+            starter_kit,
+            user_shopping_cart:user_shopping_cart!inner(user_id)
+          `)
+          .eq("user_shopping_cart.user_id", userId);
+        if (cartError) {
+          console.error("Error fetching shopping cart:", cartError.message);
+          return;
+        }
+        console.log("cartItems:", cartItems);
+
+        // Fetch all store items
+        const { data: storeItems, error: storeError } = await supabase
+          .from("store_items")
+          .select("id_store_item, name, price");
+
+        if (storeError) {
+          console.error("Error fetching store items:", storeError.message);
+          return;
+        }
+
+        // Fetch all starter kits
+        const { data: starterKits, error: starterError } = await supabase
+          .from("starter_kits")
+          .select("id_starter_kit, name, price");
+
+        if (starterError) {
+          console.error("Error fetching starter kits:", starterError.message);
+          return;
+        }
+
+        // Map cart items to Order[]
+        const mappedOrders: Order[] = (cartItems ?? []).map((item: any) => {
+          if (item.starter_kit) {
+            const kit = (starterKits ?? []).find((k: StarterKit) => k.id_starter_kit === item.store_item_id);
+            return {
+              image: exampleImages[item.store_item_id] || require("@/assets/images/starterkit2.png"),
+              title: kit?.name || "Starter Kit",
+              quantity: item.quantity,
+              price: `€${kit?.price?.toFixed(2) || "0.00"}`,
+            };
+          } else {
+            const storeItem = (storeItems ?? []).find((s: StoreItem) => s.id_store_item === item.store_item_id);
+            return {
+              image: exampleImages[item.store_item_id] || require("@/assets/images/Premiumkit.png"),
+              title: storeItem?.name || "Item",
+              quantity: item.quantity,
+              price: `€${storeItem?.price?.toFixed(2) || "0.00"}`,
+            };
+          }
+        });
+
+        if (mounted) setOrders(mappedOrders);
+
+      } catch (err: any) {
+        console.error("Error loading shopping cart:", err.message ?? err);
+      }
+    };
+
+    loadCart();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <SafeAreaView 

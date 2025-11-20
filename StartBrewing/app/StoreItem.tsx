@@ -327,7 +327,7 @@ export default function StoreItem() {
               hitSlop={8}
               style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
             >
-              <CircleMinus size={20} color={BASE_COLORS.STONE500} />
+              <CircleMinus size={30} color={BASE_COLORS.STONE500} />
             </Pressable>
 
             <ThemedText type="numbers" style={{ marginHorizontal: 12 }}>
@@ -340,7 +340,7 @@ export default function StoreItem() {
               hitSlop={8}
               style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
             >
-              <CirclePlus size={20} color={BASE_COLORS.STONE500} />
+              <CirclePlus size={30} color={BASE_COLORS.STONE500} />
             </Pressable>
           </View>
 
@@ -351,14 +351,14 @@ export default function StoreItem() {
             onPress={handleAddToOrder}
             style={{
               backgroundColor: BASE_COLORS.TEXT_DARK,
-              paddingHorizontal: 24,
-              paddingVertical: 12,
-              borderRadius: 12,
+              borderRadius: 20,
             }}
-            color={BASE_COLORS.WHITE}
             theme={{
               fonts: {
-                labelLarge: { fontFamily: FontFamilies.BODY_BOLD, fontSize: 16 },
+                labelLarge: {
+                  fontSize: 16,
+                  fontFamily: FontFamilies.BODY,
+                },
               },
             }}
           />
