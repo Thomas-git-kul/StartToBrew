@@ -25,7 +25,6 @@ interface Beer {
 export default function HomePage() {
   useFonts();
   const router = useRouter();
-
   const [beers, setBeers] = useState<Beer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

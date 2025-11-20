@@ -2,11 +2,9 @@
 
 exports[`<SpecificRecipe /> snapshot 1`] = `
 <View>
-  <View>
-    <Text>
-      Recipe
-    </Text>
-  </View>
+  <Text>
+    Loading…
+  </Text>
   <View
     className="flex-1 items-center justify-center"
   >

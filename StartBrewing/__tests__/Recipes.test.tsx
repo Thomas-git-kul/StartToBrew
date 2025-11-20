@@ -65,7 +65,7 @@ jest.mock("expo-router", () => ({
   useRouter: jest.fn(),
 }));
 
-// Fonts
+// Mock useFonts
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => true,
 }));

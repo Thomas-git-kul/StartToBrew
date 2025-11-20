@@ -1,7 +1,13 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import SpecificRecipe from "../app/SpecificRecipe";
+import { useRouter, useLocalSearchParams } from "expo-router";
+
+// --------------------------
+// Mock expo-router
+// --------------------------
+const pushMock = jest.fn();
 
 /* ------------------------------
    MOCK DATA (recipes + ingredients)
@@ -120,13 +126,12 @@ jest.mock("@/components/themed-text", () => {
 // SafeArea
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
-  return {
-    SafeAreaView: ({ children }: any) => <View>{children}</View>,
-    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  };
+  return { SafeAreaView: ({ children }: any) => <View>{children}</View> };
 });
 
-// Colors & Fonts
+// --------------------------
+// Mock Colors & Fonts
+// --------------------------
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     LIGHT_BG: "#fafafa",
@@ -138,22 +143,15 @@ jest.mock("@/constants/Colors", () => ({
 }));
 
 jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: {
-    HEADING: "System",
-    BODY: "System",
-    BODY_BOLD: "System",
-    BODY_LIGHT: "System",
-  },
+  FontFamilies: { BODY: "System" },
 }));
 
-// Header
+// --------------------------
+// Mock Header
+// --------------------------
 jest.mock("@/components/header", () => {
-  const { View, Text } = require("react-native");
-  return ({ title }: any) => (
-    <View>
-      <Text>{title}</Text>
-    </View>
-  );
+  const { Text } = require("react-native");
+  return ({ title }: any) => <Text>{title}</Text>;
 });
 
 // react-native-paper

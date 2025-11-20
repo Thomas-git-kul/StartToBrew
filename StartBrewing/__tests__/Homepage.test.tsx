@@ -1,8 +1,8 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
-import { useRouter } from "expo-router";
 import { NavigationContainer } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 
 /* ------------------------------
    MOCK DATA (uit recipes.csv)
@@ -156,7 +156,7 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
-// BeerCard
+// BeerCard – nu mét favorite-button + accessibilityLabel
 jest.mock("@/components/ui/RecipeCard", () => {
   const { View, Text, Pressable } = require("react-native");
   return ({ name, onToggleFavorite, onPress }: any) => (

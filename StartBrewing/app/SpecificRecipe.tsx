@@ -45,12 +45,27 @@ export default function SpecificRecipe() {
   const router = useRouter();
   const { recipe_slug } = useLocalSearchParams<{ recipe_slug?: string }>();
 
+  const { slug } = useLocalSearchParams() as { slug?: string };
+
+  const [loading, setLoading] = useState(true);
+  const [recipe, setRecipe] = useState<{
+    recipe_slug: string;
+    name: string;
+    style: string;
+    batch_size_l: number;
+    abv_target: number;
+    ibu_target: number;
+    srm_target: number;
+    description: string;
+    difficulty: number;
+    rating: number;
+    haze_level: number;
+  } | null>(null);
+
   const [reviewVisible, setReviewVisible] = useState(false);
   const [rating, setRating] = useState(0);
 
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const handleStarPress = (value: number) => {
@@ -89,7 +104,7 @@ export default function SpecificRecipe() {
           throw ingredientError;
         }
 
-        setRecipe(recipeData as Recipe);
+        setRecipe(recipeData);
         setIngredients((ingredientData || []) as IngredientRow[]);
       } catch (e: any) {
         setError(e.message ?? "Something went wrong");
@@ -136,7 +151,7 @@ export default function SpecificRecipe() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
       <Header
-        title={recipe?.name ?? "Recipe"}
+        title={recipe?.name ?? (loading ? "Loading…" : "Recipe")}
         iconName="ArrowRight"
         onIconPress={() => router.push("/Recipes" as any)}
         actionTestID="cart-button"
