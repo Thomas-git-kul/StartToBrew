@@ -1,35 +1,68 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
-import { useRouter } from "expo-router";
 import { NavigationContainer } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 
-/* ------------------------------
- ✅ MOCKS
-------------------------------- */
+/* ---------------------------------------------
+   MOCKS
+---------------------------------------------- */
 
-// Mock navigation router
+// mock router
 const pushMock = jest.fn();
 jest.mock("expo-router", () => ({
-  useRouter: jest.fn(), // Important: jest.fn() so mockReturnValue works
+  useRouter: jest.fn(),
 }));
 
-// Mock fonts hook
+// mock supabase with correct nested chain + return fields
+jest.mock("../supabase", () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({
+        not: () => ({
+          order: () => ({
+            order: () => ({
+              limit: () => ({
+                data: [
+                  {
+                    recipe_slug: "citra-rye",
+                    name: "CalIPA - Citra Rye",
+                    description: "Test desc",
+                    rating: 4.2,
+                    review_count: 12,
+                  },
+                  {
+                    recipe_slug: "city-of-sun",
+                    name: "City of the Sun IPA",
+                    description: "Desc",
+                    rating: 5,
+                    review_count: 24,
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          }),
+        }),
+      }),
+    }),
+  },
+}));
+
+// fonts mock
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => true,
 }));
 
-// Mock ThemedText component
+// ThemedText mock
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
-  return {
-    ThemedText: ({ children, style }: any) => <Text style={style}>{children}</Text>,
-  };
+  return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
 });
 
-// Mock Header component
+// Header mock
 jest.mock("@/components/header", () => {
-  const { Text, View } = require("react-native");
+  const { View, Text } = require("react-native");
   return ({ title }: any) => (
     <View>
       <Text>{title}</Text>
@@ -37,59 +70,43 @@ jest.mock("@/components/header", () => {
   );
 });
 
-// Mock SafeAreaView
-jest.mock("react-native-safe-area-context", () => {
-  const { View } = require("react-native");
-  return {
-    SafeAreaView: ({ children }: any) => <View>{children}</View>,
-    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  };
-});
-
-// Mock constants
-jest.mock("@/constants/Colors", () => ({
-  BASE_COLORS: {
-    WHITE: "#fff",
-    TEXT_DARK: "#000",
-    ACCENT_PRIMARY: "#f00",
-    LIGHT_BG: "#eee",
-  },
-}));
-
-jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: {
-    HEADING: "System",
-    BODY: "System",
-    BODY_BOLD: "System",
-  },
-}));
-
-// Mock RecipeCard component (BeerCard)
-jest.mock("@/components/ui/RecipeCard", () => {
-  const { View, Text, Pressable } = require("react-native");
-  return ({ name, onToggleFavorite, onPress }: any) => (
+// ProgressCard mock
+jest.mock("@/components/ui/ProgressCard", () => {
+  const { Pressable, Text } = require("react-native");
+  return ({ title, onPress }: any) => (
     <Pressable onPress={onPress}>
-      <View>
-        <Text>{name}</Text>
-        <Pressable
-          accessibilityLabel={`favorite-${name}`}
-          onPress={onToggleFavorite}
-        >
-          <Text>FavBtn</Text>
-        </Pressable>
-      </View>
+      <Text>{title}</Text>
     </Pressable>
   );
 });
 
-/* ------------------------------
- ✅ TESTS
-------------------------------- */
+// RecipeCard mock
+jest.mock("@/components/ui/RecipeCard", () => {
+  const { Pressable, Text } = require("react-native");
+  return (props: any) => (
+    <Pressable onPress={props.onPress}>
+      <Text>{props.name}</Text>
+    </Pressable>
+  );
+});
 
-// Wrap HomePage in NavigationContainer for tests
-const renderWithNavigation = (ui: React.ReactElement) => {
-  return render(<NavigationContainer>{ui}</NavigationContainer>);
-};
+// Colors mock
+jest.mock("@/constants/Colors", () => ({
+  BASE_COLORS: {
+    TEXT_DARK: "#000",
+    LIGHT_BG: "#eee",
+  },
+}));
+
+/* ---------------------------------------------
+   Helper render wrapper
+---------------------------------------------- */
+const renderNav = (ui: any) =>
+  render(<NavigationContainer>{ui}</NavigationContainer>);
+
+/* ---------------------------------------------
+   TESTS
+---------------------------------------------- */
 
 describe("<HomePage />", () => {
   beforeEach(() => {
@@ -97,75 +114,60 @@ describe("<HomePage />", () => {
     pushMock.mockClear();
   });
 
-  it("renders main titles correctly", () => {
-    const { getByText } = renderWithNavigation(<HomePage />);
+  it("renders titles", () => {
+    const { getByText } = renderNav(<HomePage />);
 
     expect(getByText("StartToBrew")).toBeTruthy();
     expect(getByText("In progress")).toBeTruthy();
     expect(getByText("Popular recipes")).toBeTruthy();
   });
 
-  it("renders beer cards", () => {
-    const { getByText } = renderWithNavigation(<HomePage />);
-
-    expect(getByText("IJ IPA")).toBeTruthy();
-    expect(getByText("Voodoo Ranger")).toBeTruthy();
-    expect(getByText("Two Hearted IPA")).toBeTruthy();
-  });
-
-  it("toggles favorite when favorite button is pressed", () => {
-    const { getByLabelText } = renderWithNavigation(<HomePage />);
-
-    const favoriteBtn = getByLabelText("favorite-IJ IPA");
-
-    fireEvent.press(favoriteBtn);
-    fireEvent.press(favoriteBtn);
-
-    // No crash = success
-    expect(favoriteBtn).toBeTruthy();
-  });
-
-  it("navigates to /Recipes when FAB is pressed", () => {
-    const { getByTestId } = renderWithNavigation(<HomePage />);
-
-    const fabButton = getByTestId("fab");
-    fireEvent.press(fabButton);
-
-    expect(pushMock).toHaveBeenCalledTimes(1);
-    expect(pushMock).toHaveBeenCalledWith("/Recipes");
-  });
-
-  it("navigates to SpecificRecipe when a beer card is pressed", () => {
-    const { getByText } = renderWithNavigation(<HomePage />);
-
-    fireEvent.press(getByText("IJ IPA"));
-
-    expect(pushMock).toHaveBeenCalledWith("/SpecificRecipe");
-  });
-
   it("renders progress cards", () => {
-    const { getByText } = renderWithNavigation(<HomePage />);
+    const { getByText } = renderNav(<HomePage />);
 
     expect(getByText("Hazy IPA")).toBeTruthy();
     expect(getByText("Belgian Tripel")).toBeTruthy();
     expect(getByText("American Pale Ale")).toBeTruthy();
   });
 
-  it("navigates to /progress when a progress card is pressed", () => {
-    const { getByText } = renderWithNavigation(<HomePage />);
+  it("navigates to /progress when pressing a progress card", () => {
+    const { getByText } = renderNav(<HomePage />);
 
     fireEvent.press(getByText("Hazy IPA"));
     expect(pushMock).toHaveBeenCalledWith("/progress");
+  });
 
-    fireEvent.press(getByText("Belgian Tripel"));
-    expect(pushMock).toHaveBeenCalledWith("/progress");
+  it("renders supabase popular recipes", async () => {
+    const { getByText } = renderNav(<HomePage />);
 
-    fireEvent.press(getByText("American Pale Ale"));
-    expect(pushMock).toHaveBeenCalledWith("/progress");
+    await waitFor(() => {
+      expect(getByText("CalIPA - Citra Rye")).toBeTruthy();
+      expect(getByText("City of the Sun IPA")).toBeTruthy();
+    });
+  });
+
+  it("navigates to SpecificRecipe when recipe is pressed", async () => {
+    const { getByText } = renderNav(<HomePage />);
+
+    await waitFor(() => getByText("CalIPA - Citra Rye"));
+
+    fireEvent.press(getByText("CalIPA - Citra Rye"));
+
+    expect(pushMock).toHaveBeenCalledWith({
+      pathname: "/SpecificRecipe",
+      params: { slug: "citra-rye" },
+    });
+  });
+
+  it("navigates to /Recipes when FAB is pressed", () => {
+    const { getByTestId } = renderNav(<HomePage />);
+    fireEvent.press(getByTestId("fab"));
+
+    expect(pushMock).toHaveBeenCalledWith("/Recipes");
   });
 
   it("matches snapshot", () => {
-    const tree = renderWithNavigation(<HomePage />).toJSON();
+    const tree = renderNav(<HomePage />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });

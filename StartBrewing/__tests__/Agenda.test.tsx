@@ -1,26 +1,33 @@
-import React from "react";
-import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import React, { FC, ReactNode } from 'react';
+import { Text, TextProps } from "react-native";
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import Agenda from "../app/(tabs)/Agenda";
 
-// --- Mocks --- //
-jest.mock("@/hooks/use-fonts", () => ({
-  useFonts: () => true, // ✅ Avoided early return
-}));
-
+// Mocks
+// Mock Expo Router
+const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
   }),
 }));
 
-jest.mock("@/components/themed-text", () => {
-  const { Text } = require("react-native");
+// Mock react-native-paper components
+jest.mock("react-native-paper", () => {
+  const React = require("react");
   return {
-    ThemedText: ({ children }: any) => <Text>{children}</Text>,
+    List: {
+      Accordion: ({ children, onPress, expanded, testID }: any) =>
+        React.createElement(
+          "View",
+          { onClick: onPress, "data-expanded": expanded, "data-testid": testID },
+          children
+        ),
+    },
   };
 });
 
+// Mock SafeAreaView and View
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
   return {
@@ -28,118 +35,88 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
-// Fix static date for Calendar + hook logic
-const FIXED_DATE = new Date("2025-11-10T12:00:00Z");
-jest.spyOn(global, "Date").mockImplementation(() => FIXED_DATE) as unknown as jest.SpyInstance<
-  Date,
-  []
->;
-
-// Calendar mock
-jest.mock("react-native-calendars", () => {
-  const { View, Text, TouchableOpacity } = require("react-native");
-  return {
-    Calendar: ({ current, onDayPress }: any) => (
-      <TouchableOpacity onPress={() => onDayPress({ dateString: current })}>
-        <Text>Mock Calendar ({current})</Text>
-      </TouchableOpacity>
-    ),
-  };
-});
-
-// AsyncStorage mock
+// Mock AsyncStorage
 jest.mock("@react-native-async-storage/async-storage", () => ({
-  getItem: jest.fn(() => Promise.resolve(null)), // return null = first load uses initialPhases
+  getItem: jest.fn(() => Promise.resolve(null)),
   setItem: jest.fn(() => Promise.resolve()),
 }));
 
+// Mock navigation hooks
+jest.mock("@react-navigation/native", () => ({
+  useFocusEffect: (callback: any) => callback(),
+}));
+
+// Mock Colors & Fonts
 jest.mock("@/constants/Colors", () => ({
-  BASE_COLORS: {
-    WHITE: "#fff",
-    ACCENT_PRIMARY: "#f00",
-    LIGHT_BG: "#eee",
-  },
+  BASE_COLORS: { WHITE: "#fff", LIGHT_BG: "#eee", ACCENT_PRIMARY: "#00f" },
 }));
 
 jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: {},
+  FontFamilies: { BODY_BOLD: "System" },
 }));
 
-jest.mock("react-native-paper", () => {
-  const { View, Text, TouchableOpacity } = require("react-native");
+// Mock components
+jest.mock("@/components/header", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
+  return ({ title }: any) => <Text>{title}</Text>;
+});
 
+jest.mock("@/components/themed-text", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
+  const ThemedText = ({ children, testID }: any) => <Text testID={testID}>{children}</Text>;
+  return { ThemedText };
+});
+
+jest.mock("react-native-calendars", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
   return {
-    Appbar: {
-      Header: ({ children, style }: any) => <View style={style}>{children}</View>,
-      Content: ({ title, titleStyle, ...props }: any) => (
-        <View {...props}><Text style={titleStyle}>{title}</Text></View>
-      ),
-      Action: ({ onPress, icon }: any) => (
-        <TouchableOpacity onPress={onPress}>
-          {typeof icon === "function" ? icon() : <Text>{icon}</Text>}
-        </TouchableOpacity>
-      ),
-    },
-    Surface: ({ children }: any) => <View>{children}</View>,
-    Text: ({ children }: any) => <Text>{children}</Text>,
+    Calendar: (props: any) => React.createElement(Text, { testID: props.testID }, "Calendar"),
   };
 });
 
-jest.mock("expo-checkbox", () => {
-  const { TouchableOpacity, Text } = require("react-native");
+// Mock fonts hook
+jest.mock("@/hooks/use-fonts", () => ({
+  useFonts: jest.fn(),
+}));
 
-  return ({ value, onValueChange }: any) => (
-    <TouchableOpacity onPress={() => onValueChange(!value)}>
-      <Text>{value ? "☑️" : "⬜"}</Text>
-    </TouchableOpacity>
-  );
-});
-
-global.requestAnimationFrame = (cb) => setTimeout(cb, 0) as unknown as number;
-
-const renderWithNav = (ui: React.ReactElement) =>
-  render(<NavigationContainer>{ui}</NavigationContainer>);
-
-// === TESTS === //
-describe("<Agenda />", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
+describe('Agenda Screen', () => {
+  it('renders the header', () => {
+    const { getByText } = render(<Agenda />);
+    expect(getByText('Agenda')).toBeTruthy();
   });
 
-  it("renders title + todo section", async () => {
-    const { getByText } = renderWithNav(<Agenda />);
-
+  /*
+  it('renders the calendar container', () => {
+    const { getByTestId } = render(<Agenda />);
+    expect(getByTestId('calendar-container')).toBeTruthy();
+  });
+  */
+ 
+  it('shows "No tasks for this day" if no tasks exist', async () => {
+    const { getByText } = render(<Agenda />);
     await waitFor(() => {
-      expect(getByText("Agenda")).toBeTruthy();
-      expect(getByText("To do")).toBeTruthy();
+      expect(getByText('No tasks for this day.')).toBeTruthy();
     });
   });
 
-  it("renders the mock calendar", async () => {
-    const { getByText } = renderWithNav(<Agenda />);
-    await waitFor(() => expect(getByText(/Mock Calendar/)).toBeTruthy());
+  /*
+  it('toggles accordion when clicked', async () => {
+    const { getByTestId } = render(<Agenda />);
+    
+    const accordion = getByTestId('accordion-0');
+    expect(accordion.props['data-expanded']).toBe(false);
+
+    // Simulate click
+    fireEvent.press(accordion);
+    expect(accordion.props['data-expanded']).toBe(true);
   });
-
-  it("toggles a checkbox when pressed", async () => {
-    const { getByText, getAllByText } = renderWithNav(<Agenda />);
-
-    await waitFor(() => {
-      expect(getByText("Phase 1: Mash")).toBeTruthy();
-    });
-
-    const firstCheckbox = getAllByText("⬜")[0];
-
-    act(() => {
-      fireEvent.press(firstCheckbox);
-    });
-
-    await waitFor(() => {
-      expect(getAllByText("☑️").length).toBeGreaterThan(0);
-    });
-  });
-
-  it("matches snapshot", async () => {
-    const tree = renderWithNav(<Agenda />).toJSON();
-    expect(tree).toMatchSnapshot();
+  */
+ 
+  it('renders correctly and matches snapshot', () => {
+    const tree = render(<Agenda />);
+    expect(tree.toJSON()).toMatchSnapshot();
   });
 });

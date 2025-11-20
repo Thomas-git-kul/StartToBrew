@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     color: BASE_COLORS.ACCENT_PRIMARY,
   },
   titleBlack: {
-    fontSize: Math.min(18 * scale, 22),
+    fontSize: Math.min(22 * scale, 30),
     fontFamily: FontFamilies.BODY_BOLD,
     color: BASE_COLORS.STONE600
   },
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     color: BASE_COLORS.TEXT_DARK,
   },
   numbers: {
-    fontSize: Math.min(15 * scale, 18),
+    fontSize: Math.min(22 * scale, 30),
     fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.STONE600
   },

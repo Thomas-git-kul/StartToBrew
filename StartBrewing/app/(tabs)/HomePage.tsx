@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ScrollView, View } from "react-native";
+import { useState, useEffect } from "react";
+import { ScrollView, View, ActivityIndicator } from "react-native";
 import { FAB } from "react-native-paper";
 import { useRouter } from "expo-router"; 
 import { useFonts } from "@/hooks/use-fonts";
@@ -9,8 +9,10 @@ import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
+import { supabase } from "../../supabase";
 
 interface Beer {
+  recipe_slug?: string;
   name: string;
   rating: number;
   reviews: number;
@@ -22,30 +24,65 @@ export default function HomePage() {
   useFonts();
 
   const router = useRouter();
+  const [beers, setBeers] = useState<Beer[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [beers, setBeers] = useState<Beer[]>([
-    {
-      name: "IJ IPA",
-      rating: 4.8,
-      reviews: 256,
-      image: require("@/assets/images/default-beer.png"),
-      description: "An assertive bitterness that dominates the palate, with citrus and pine notes.",
-    },
-    {
-      name: "Voodoo Ranger",
-      rating: 4.5,
-      reviews: 98,
-      image: require("@/assets/images/default-beer.png"),
-      description: "A crystal-clear IPA dominated by citrus and resin hop profile.",
-    },
-    {
-      name: "Two Hearted IPA",
-      rating: 4.9,
-      reviews: 322,
-      image: require("@/assets/images/default-beer.png"),
-      description: "A slightly hazy gold color with tropical flavors like mango and orange.",
-    },
-  ]);
+  // names to show in the popular section (in this order)
+  // We'll fetch the top-rated recipes from the DB instead of a hardcoded list
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        // fetch top 5 recipes by rating (exclude null ratings)
+        const { data, error } = await supabase
+          .from("recipes")
+          .select("recipe_slug,name,description,rating,review_count")
+          .not('rating', 'is', null)
+          .order('rating', { ascending: false, nulls: 'last' })
+          .order('review_count', { ascending: false, nulls: 'last' })
+          .limit(5);
+
+        if (error) {
+          console.warn("Supabase recipes(fetch) error:", error.message);
+          if (mounted) setBeers([]);
+          return;
+        }
+
+        const mapped: Beer[] = (data ?? []).map((row: any) => {
+          const raw = row?.rating;
+          let num = 0;
+          if (raw !== undefined && raw !== null) {
+            num = Number(raw);
+            if (Number.isNaN(num)) num = parseFloat(String(raw)) || 0;
+          }
+          // clamp between 0 and 5
+          num = Math.min(5, Math.max(0, num));
+          const ratingRounded = Number(num.toFixed(2));
+
+          return {
+            recipe_slug: row.recipe_slug ?? undefined,
+            name: row.name ?? "Untitled Recipe",
+            rating: ratingRounded,
+            reviews: typeof row.review_count === 'number' ? row.review_count : Number(row.review_count ?? 0),
+            image: require("@/assets/images/default-beer.png"),
+            description: row.description ?? "",
+          };
+        });
+
+        if (mounted) setBeers(mapped);
+      } catch (e: any) {
+        console.warn("Supabase fetch exception:", e?.message ?? e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <View className="flex-1">
@@ -62,15 +99,21 @@ export default function HomePage() {
         </View>
 
         <ThemedText type="title">Popular recipes</ThemedText>
-        <View>
-          {beers.map((beer, index) => (
-            <BeerCard 
-              key={index}
-              {...beer}
-              onPress={() => router.push("/SpecificRecipe")}
-            />
-          ))}
-        </View>
+        {loading ? (
+          <View style={{ height: 200, justifyContent: "center", alignItems: "center" }}>
+            <ActivityIndicator />
+          </View>
+        ) : (
+          <View>
+            {beers.map((beer, idx) => (
+              <BeerCard
+                key={idx}
+                {...beer}
+                onPress={() => router.push(({ pathname: "/SpecificRecipe", params: { slug: beer.recipe_slug } } as any))}
+              />
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       {/* Floating Action Button */}

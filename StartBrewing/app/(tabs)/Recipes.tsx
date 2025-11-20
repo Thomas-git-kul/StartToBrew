@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, ScrollView, ActivityIndicator } from "react-native";
 import { Searchbar} from "react-native-paper";
 import { Search, X } from "lucide-react-native";
 import BeerCard from '@/components/ui/RecipeCard';
@@ -7,12 +7,15 @@ import { BASE_COLORS } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import Header from '@/components/header';
 import { useFonts } from "@/hooks/use-fonts";
+import { supabase } from "../../supabase";
+import { FontFamilies } from "@/constants/Fonts";
 
 interface Beer {
+  recipe_slug?: string;
   name: string;
   rating: number;
   reviews: number;
-  image: string;
+  image: any;
   description: string;
 }
 
@@ -21,102 +24,121 @@ export default function Recipes() {
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [recipes, setRecipes] = useState<Beer[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // helper to check whether an item matches the query
   const filterMatches = (item: Beer, q: string) => {
     if (!q) return true;
     const lower = q.toLowerCase();
-    return (
-      item.name.toLowerCase().includes(lower)
-    );
+    return item.name.toLowerCase().includes(lower);
   };
 
-  const [recipes, setRecipes] = useState<Beer[]>([
-    {
-      name: "IJ IPA",
-      rating: 4.8,
-      reviews: 256,
-      image: require("@/assets/images/default-beer.png"),
-      description: "An assertive bitterness that dominates the palate, with citrus and pine notes.",
-    },
-    {
-      name: "Voodoo Ranger",
-      rating: 4.5,
-      reviews: 98,
-      image: require("@/assets/images/default-beer.png"),
-      description: "A crystal-clear IPA dominated by citrus and resin hop profile.",
-    },
-    {
-      name: "Two Hearted IPA",
-      rating: 4.9,
-      reviews: 322,
-      image: require("@/assets/images/default-beer.png"),
-      description: "A slightly hazy gold color with tropical flavors like mango and orange.",
-    },
-  ]);
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("recipes")
+          .select("recipe_slug,name,description,rating,review_count")
+          .limit(50);
 
-  const toggleFavorite = (index: number) => {
-    setRecipes((prev) =>
-      prev.map((beer, i) =>
-        i === index ? { ...beer } : beer
-      )
-    );
-  };
+        if (error) {
+          console.warn("Supabase recipes(fetch) error:", error.message);
+          if (mounted) setRecipes([]);
+          return;
+        }
+
+        const mapped: Beer[] = (data ?? []).map((row: any) => {
+          const raw = row?.rating;
+          let num = 0;
+          if (raw !== undefined && raw !== null) {
+            num = Number(raw);
+            if (Number.isNaN(num)) num = parseFloat(String(raw)) || 0;
+          }
+          num = Math.min(5, Math.max(0, num));
+          const ratingRounded = Number(num.toFixed(2));
+
+          return {
+            recipe_slug: row.recipe_slug ?? undefined,
+            name: row.name ?? "Untitled Recipe",
+            rating: ratingRounded,
+            description: row.description ?? "",
+            reviews: typeof row.review_count === 'number' ? row.review_count : Number(row.review_count ?? 0),
+            image: require("@/assets/images/default-beer.png"),
+          };
+        });
+
+        if (mounted) setRecipes(mapped);
+      } catch (e: any) {
+        console.warn("Supabase fetch exception:", e?.message ?? e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
-    <View className="flex-1"
-      style={{
-          backgroundColor: BASE_COLORS.LIGHT_BG,
-      }}
-    >
-      <Header
-        title="Recipes"
-      />
+    <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+      <Header title="Recipes" />
 
       {/* Searchbar */}
       <Searchbar
         placeholder="Search"
         value={searchQuery}
         onChangeText={setSearchQuery}
-        inputStyle={{ color: BASE_COLORS.STONE700 }}
-        icon={() => (
-          <Search size={20} color={BASE_COLORS.STONE300} />
-        )}
-          clearIcon={searchQuery ? () => (
-            <X size={18} color={BASE_COLORS.STONE500} />
-          ) : undefined}
-          onClearIconPress={() => setSearchQuery("")}
+        inputStyle={{ 
+          color: BASE_COLORS.STONE700, 
+          fontFamily: FontFamilies.BODY
+        }}
+        icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+        clearIcon={searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined}
+        onClearIconPress={() => setSearchQuery("")}
         style={{
           backgroundColor: BASE_COLORS.WHITE,
           borderColor: BASE_COLORS.STONE300,
           borderWidth: 1,
-          marginBottom: 15
+          marginBottom: 15,
         }}
       />
 
       {/* Recipes */}
-      <ScrollView>
-      {!searchQuery ? ( 
-        <View>
-          {recipes.map((beer, index) => (
-            <BeerCard
-              key={index} 
-              {...beer}
-              onPress={() => router.push("/SpecificRecipe")}
-              onToggleFavorite={() => toggleFavorite(index)}
-            />
-          ))}
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator />
         </View>
       ) : (
-        <View>
-          {recipes
-            .filter((b) => filterMatches(b, searchQuery))
-            .map((beer, index) => (
-              <BeerCard key={index} {...beer} />
-            ))}
-        </View>
+        <ScrollView>
+          {!searchQuery ? (
+            <View>
+              {recipes.map((beer, index) => (
+                <BeerCard
+                  key={index}
+                  {...beer}
+                  onPress={() => router.push(({ pathname: "/SpecificRecipe", params: { slug: beer.recipe_slug } } as any))}
+                  onToggleFavorite={() => {}}
+                />
+              ))}
+            </View>
+          ) : (
+            <View>
+              {recipes.filter((b) => filterMatches(b, searchQuery)).map((beer, index) => (
+                <BeerCard
+                  key={index}
+                  {...beer}
+                  onPress={() => router.push(({ pathname: "/SpecificRecipe", params: { slug: beer.recipe_slug } } as any))}
+                  onToggleFavorite={() => {}}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
       )}
-      </ScrollView>
     </View>
   );
 }

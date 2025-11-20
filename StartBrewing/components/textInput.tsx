@@ -1,5 +1,6 @@
 import { TextInput } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
 
 interface textInputProps {
   label: string;
@@ -23,8 +24,18 @@ export default function textInput({
       activeOutlineColor={BASE_COLORS.ACCENT_PRIMARY}
       textColor={BASE_COLORS.STONE900}
       className="mb-2"
+      theme={{
+        colors: {
+          text: BASE_COLORS.STONE300, // Suggestion color
+        },
+        fonts: {
+          regular: {
+            fontFamily: FontFamilies.BODY, // Font family
+          },
+        },
+      }}
       style={{
-          backgroundColor: BASE_COLORS.WHITE
+          backgroundColor: BASE_COLORS.WHITE,
       }}
     >
     </TextInput>
