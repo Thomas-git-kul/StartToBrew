@@ -12,11 +12,13 @@ import { ThemedText } from "@/components/themed-text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../supabase";
 
-interface Order {
+interface OrderItem {
+  store_item_id: number;
   image: any;
   title: string;
   quantity: number;
   price: string;
+  starterkit: boolean;
 }
 
 interface StoreItem {
@@ -45,7 +47,7 @@ export default function ShoppingCart() {
   useFonts();
   const router = useRouter();
 
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderItem[]>([]);
 
   const parsePrice = (priceStr: string) => {
     if (!priceStr) return 0;
@@ -126,22 +128,26 @@ export default function ShoppingCart() {
         }
 
         // Map cart items to Order[]
-        const mappedOrders: Order[] = (cartItems ?? []).map((item: any) => {
+        const mappedOrders: OrderItem[] = (cartItems ?? []).map((item: any) => {
           if (item.starter_kit) {
             const kit = (starterKits ?? []).find((k: StarterKit) => k.id_starter_kit === item.store_item_id);
             return {
-              image: exampleImages[item.store_item_id] || require("@/assets/images/starterkit2.png"),
+              store_item_id: item.store_item_id,
+              image: exampleImages[item.category_id] || require("@/assets/images/Premiumkit.png"),
               title: kit?.name || "Starter Kit",
               quantity: item.quantity,
               price: `€${kit?.price?.toFixed(2) || "0.00"}`,
+              starterkit: true,
             };
           } else {
             const storeItem = (storeItems ?? []).find((s: StoreItem) => s.id_store_item === item.store_item_id);
             return {
-              image: exampleImages[item.store_item_id] || require("@/assets/images/Premiumkit.png"),
+              store_item_id: item.store_item_id,
+              image: exampleImages[item.category_id] || require("@/assets/images/Premiumkit.png"),
               title: storeItem?.name || "Item",
               quantity: item.quantity,
               price: `€${storeItem?.price?.toFixed(2) || "0.00"}`,
+              starterkit: false,
             };
           }
         });
@@ -157,6 +163,44 @@ export default function ShoppingCart() {
     return () => { mounted = false; };
   }, []);
 
+  const updateCartQuantity = async (store_item_id: number, newQty: number) => {
+    try {
+      setOrders(prev => prev.map(o => o.store_item_id === store_item_id ? { ...o, quantity: newQty } : o));
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error("Error fetching user:", userError?.message);
+        return;
+      }
+
+      // Find the cart item id
+      const { data: cartItems, error: cartError } = await supabase
+        .from('shopping_cart')
+        .select('id_cart')
+        .eq('store_item_id', store_item_id)
+        .limit(1);
+
+      if (cartError) {
+        console.error("Error fetching cart item:", cartError.message);
+        return;
+      }
+
+      const cartItemId = cartItems?.[0]?.id_cart;
+      if (!cartItemId) return;
+
+      // Update the quantity in the shopping_cart table
+      const { error: updateError } = await supabase
+        .from('shopping_cart')
+        .update({ quantity: newQty })
+        .eq('id_cart', cartItemId);
+
+      if (updateError) console.error("Error updating quantity:", updateError.message);
+
+    } catch (err: any) {
+      console.error("Error updating shopping cart:", err.message ?? err);
+    }
+  };
+
   return (
     <SafeAreaView 
       className="flex-1" 
@@ -170,15 +214,22 @@ export default function ShoppingCart() {
         actionTestID="store-button"
       />
 
-      <ScrollView className="mx-3">
+      <ScrollView 
+        className="mx-3"
+        showsHorizontalScrollIndicator={false}
+      >
         <ThemedText type="title">Order Summary</ThemedText>
 
-        {/* Order cards */}
-        <View className="mx-1">
-          {orders.map((Order, index) => (
-            <OrderCard key={index} {...Order} onIncrease={() => handleIncrease(index)} onDecrease={() => handleDecrease(index)} />
-          ))}
-        </View>
+      {/* Order cards */}
+      <View className="mx-1">
+        {orders.map((order, index) => (
+          <OrderCard
+            key={index}
+            {...order}
+            onQuantityChange={(newQty) => updateCartQuantity(order.store_item_id, newQty)}
+          />
+        ))}
+      </View>
 
         {/* Subtotal */}
         <View className='mt-3 mr-2 items-end'>
@@ -208,6 +259,7 @@ export default function ShoppingCart() {
             style={{
               backgroundColor: BASE_COLORS.TEXT_DARK,
               alignSelf: "flex-start",
+              marginBottom: 10
             }}
             contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
             labelStyle={{ 
