@@ -67,38 +67,57 @@ export default function StoreItem() {
         return;
       }
 
-      // Create a new order
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .insert([{ user_id: user.id }])
-        .select("id_order")
-        .single();
+      // Insert or increment in shopping cart
+      const { data: existingCart, error: existingError } = await supabase
+        .rpc("get_user_cart_item_json", {
+          p_user_id: user.id,
+          p_store_item_id: item.id,
+        });
 
-      if (orderError || !orderData) {
-        console.error("Error creating order:", orderError?.message);
+        if (existingError && existingError.code !== "PGRST116") { // Not found error
+          console.error("Error checking existing cart:", existingError.message);
+          return;
+        }
+
+        if (existingCart) {
+          // Item exists → update quantity
+          const newQuantity = quantity;
+          const { error: updateError } = await supabase
+            .from("shopping_cart")
+            .update({ quantity: newQuantity })
+            .eq("id_cart", existingCart.cart_id);
+
+          if (updateError) {
+            console.error("Error updating cart quantity:", updateError.message);
+            return;
+          }
+
+        } else {
+          // Item does not exist → insert new cart row
+          const { data: cartData, error: insertCartError } = await supabase
+            .from("shopping_cart")
+            .insert([{ store_item_id: item.id, quantity }])
+            .select()
+            .single();
+
+          if (insertCartError) {
+            console.error("Error inserting into shopping_cart:", insertCartError.message);
+            return;
+          }
+
+
+      // Map cart row to user
+      const { error: mapError } = await supabase
+        .from("user_shopping_cart")
+        .insert([{ user_id: user.id, cart_id: cartData.id_cart }]);
+
+      if (mapError) {
+        console.error("Error mapping cart to user:", mapError.message);
         return;
       }
+    }
 
-      const newOrderId = orderData.id_order;
-
-      // Insert item into order_items
-      const { error: orderItemError } = await supabase
-        .from("order_items")
-        .insert([
-          {
-            store_item_id: item.id,
-            order_id: newOrderId,
-            quantity,
-          },
-        ]);
-
-      if (orderItemError) {
-        console.error("Error inserting order item:", orderItemError.message);
-        return;
-      }
-
-    console.log("order created, item added");
-
+    console.log("shoppingcart created or item added");
     router.push("/Store");
 
     } catch (err: any) {
