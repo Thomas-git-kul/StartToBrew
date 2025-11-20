@@ -32,7 +32,7 @@ StartToBrew is a SaaS app designed for beginner homebrewers who want to learn be
     - [Production environment](https://start-to-brew.vercel.app)
 
 ## How to run the project locally:
-1. Clone the repository
+1. clone the repository
 ```
 git clone https://github.com/Thomas-git-kul/StartToBrew.git
 ```
