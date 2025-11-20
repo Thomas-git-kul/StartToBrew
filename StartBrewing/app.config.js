@@ -2,8 +2,10 @@ export default ({ config }) => ({
   ...config,
   name: process.env.APP_TITLE || config.name,
   web: {
-    favicon: "./assets/favicon.png",
-    manifest: {
+    ...config.web,
+    bundler: 'metro',
+    favicon: config.web?.favicon || "./assets/favicon.png",
+    manifest: config.web?.manifest || {
       name: process.env.APP_TITLE || config.name,
       short_name: "MyApp",
       start_url: ".",
