@@ -62,117 +62,101 @@ export default function ShoppingCart() {
     return Number.isNaN(n) ? 0 : n;
   };
 
-  const handleIncrease = (index: number) => {
-    setOrders((prev) => prev.map((o, i) => i === index ? { ...o, quantity: o.quantity + 1 } : o));
-  };
-
-  const handleDecrease = (index: number) => {
-    setOrders((prev) => prev.map((o, i) => i === index ? { ...o, quantity: Math.max(0, o.quantity - 1) } : o));
-  };
-
   const total = useMemo(() => {
     return orders.reduce((sum, o) => sum + parsePrice(o.price) * o.quantity, 0);
   }, [orders]);
 
   const formatter = useMemo(() => new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' }), []);
 
-  useEffect(() => {
-    let mounted = true;
-
-    const loadCart = async () => {
-      try {
-        // Get logged-in user
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          console.error("Error fetching user:", userError?.message);
-          return;
-        }
-        const userId = user.id;
-        console.log("userId:", userId);
-
-        // 2Fetch shopping cart items for this user
-        const { data: cartItems, error: cartError } = await supabase
-          .from("shopping_cart")
-          .select(`
-            id_cart,
-            store_item_id,
-            quantity,
-            starter_kit,
-            user_shopping_cart:user_shopping_cart!inner(user_id)
-          `)
-          .eq("user_shopping_cart.user_id", userId);
-        if (cartError) {
-          console.error("Error fetching shopping cart:", cartError.message);
-          return;
-        }
-        console.log("cartItems:", cartItems);
-
-        // Fetch all store items
-        const { data: storeItems, error: storeError } = await supabase
-          .from("store_items")
-          .select("id_store_item, name, price");
-
-        if (storeError) {
-          console.error("Error fetching store items:", storeError.message);
-          return;
-        }
-
-        // Fetch all starter kits
-        const { data: starterKits, error: starterError } = await supabase
-          .from("starter_kits")
-          .select("id_starter_kit, name, price");
-
-        if (starterError) {
-          console.error("Error fetching starter kits:", starterError.message);
-          return;
-        }
-
-        // Map cart items to Order[]
-        const mappedOrders: OrderItem[] = (cartItems ?? []).map((item: any) => {
-          if (item.starter_kit) {
-            const kit = (starterKits ?? []).find((k: StarterKit) => k.id_starter_kit === item.store_item_id);
-            return {
-              store_item_id: item.store_item_id,
-              image: exampleImages[item.category_id] || require("@/assets/images/Premiumkit.png"),
-              title: kit?.name || "Starter Kit",
-              quantity: item.quantity,
-              price: `€${kit?.price?.toFixed(2) || "0.00"}`,
-              starterkit: true,
-            };
-          } else {
-            const storeItem = (storeItems ?? []).find((s: StoreItem) => s.id_store_item === item.store_item_id);
-            return {
-              store_item_id: item.store_item_id,
-              image: exampleImages[item.category_id] || require("@/assets/images/Premiumkit.png"),
-              title: storeItem?.name || "Item",
-              quantity: item.quantity,
-              price: `€${storeItem?.price?.toFixed(2) || "0.00"}`,
-              starterkit: false,
-            };
-          }
-        });
-
-        if (mounted) setOrders(mappedOrders);
-
-      } catch (err: any) {
-        console.error("Error loading shopping cart:", err.message ?? err);
-      }
-    };
-
-    loadCart();
-    return () => { mounted = false; };
-  }, []);
-
-  const updateCartQuantity = async (store_item_id: number, newQty: number) => {
+  let mounted = true;
+  const loadCart = async () => {
     try {
-      setOrders(prev => prev.map(o => o.store_item_id === store_item_id ? { ...o, quantity: newQty } : o));
-
+      // Get logged-in user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         console.error("Error fetching user:", userError?.message);
         return;
       }
+      const userId = user.id;
+      console.log("userId:", userId);
 
+      // 2Fetch shopping cart items for this user
+      const { data: cartItems, error: cartError } = await supabase
+        .from("shopping_cart")
+        .select(`
+          id_cart,
+          store_item_id,
+          quantity,
+          starter_kit,
+          user_shopping_cart:user_shopping_cart!inner(user_id)
+        `)
+        .eq("user_shopping_cart.user_id", userId);
+      if (cartError) {
+        console.error("Error fetching shopping cart:", cartError.message);
+        return;
+      }
+      console.log("cartItems:", cartItems);
+
+      // Fetch all store items
+      const { data: storeItems, error: storeError } = await supabase
+        .from("store_items")
+        .select("id_store_item, name, price");
+
+      if (storeError) {
+        console.error("Error fetching store items:", storeError.message);
+        return;
+      }
+
+      // Fetch all starter kits
+      const { data: starterKits, error: starterError } = await supabase
+        .from("starter_kits")
+        .select("id_starter_kit, name, price");
+
+      if (starterError) {
+        console.error("Error fetching starter kits:", starterError.message);
+        return;
+      }
+
+      // Map cart items to Order[]
+      const mappedOrders: OrderItem[] = (cartItems ?? []).map((item: any) => {
+        if (item.starter_kit) {
+          const kit = (starterKits ?? []).find((k: StarterKit) => k.id_starter_kit === item.store_item_id);
+          return {
+            store_item_id: item.store_item_id,
+            image: exampleImages[item.category_id] || require("@/assets/images/Premiumkit.png"),
+            title: kit?.name || "Starter Kit",
+            quantity: item.quantity,
+            price: `€${kit?.price?.toFixed(2) || "0.00"}`,
+            starterkit: true,
+          };
+        } else {
+          const storeItem = (storeItems ?? []).find((s: StoreItem) => s.id_store_item === item.store_item_id);
+          return {
+            store_item_id: item.store_item_id,
+            image: exampleImages[item.category_id] || require("@/assets/images/Premiumkit.png"),
+            title: storeItem?.name || "Item",
+            quantity: item.quantity,
+            price: `€${storeItem?.price?.toFixed(2) || "0.00"}`,
+            starterkit: false,
+          };
+        }
+      });
+
+      if (mounted) setOrders(mappedOrders);
+
+    } catch (err: any) {
+      console.error("Error loading shopping cart:", err.message ?? err);
+    }
+  };
+
+  const updateCartQuantity = async (store_item_id: number, newQty: number) => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          console.error("Error fetching user:", userError?.message);
+          return;
+        }
+      const userId = user.id;
       // Find the cart item id
       const { data: cartItems, error: cartError } = await supabase
         .from('shopping_cart')
@@ -189,17 +173,36 @@ export default function ShoppingCart() {
       if (!cartItemId) return;
 
       // Update the quantity in the shopping_cart table
-      const { error: updateError } = await supabase
-        .from('shopping_cart')
-        .update({ quantity: newQty })
-        .eq('id_cart', cartItemId);
+      if (newQty > 0) {
+        const { error: updateError } = await supabase
+          .from('shopping_cart')
+          .update({ quantity: newQty })
+          .eq('id_cart', cartItemId);
+          if (updateError) console.error("Error updating quantity:", updateError.message);
+      } else {
+        const { error: deleteUserCartError } = await supabase
+          .from("user_shopping_cart")
+          .delete()
+          .eq("cart_id", cartItemId)
+          .eq("user_id", userId);
+        if (deleteUserCartError) console.error("Error deleting from user_shopping_cart:", deleteUserCartError.message);
 
-      if (updateError) console.error("Error updating quantity:", updateError.message);
+        const { error: deleteCartError } = await supabase
+          .from("shopping_cart")
+          .delete()
+          .eq("id_cart", cartItemId);
+          loadCart();
+        if (deleteCartError) console.error("Error deleting from shopping_cart:", deleteCartError.message);
+      }
 
     } catch (err: any) {
       console.error("Error updating shopping cart:", err.message ?? err);
     }
   };
+
+  useEffect(() => {
+    loadCart();
+  }, []);
 
   return (
     <SafeAreaView 
