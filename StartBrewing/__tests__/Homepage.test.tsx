@@ -1,8 +1,7 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
-import HomePage from "../app/(tabs)/HomePage";
+import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import { useRouter } from "expo-router";
+import { useRouter} from "expo-router";
 
 /* ------------------------------
    MOCKS
@@ -14,22 +13,63 @@ jest.mock("expo-router", () => ({
   useRouter: jest.fn(),
 }));
 
-// Mock Supabase
-jest.mock("../supabase", () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({
-        limit: () => ({
-          data: [
-            { recipe_slug: "citra-rye", name: "CalIPA - Citra Rye", description: "Test desc", rating: 4 },
-            { recipe_slug: "city-of-sun", name: "City of the Sun IPA", description: "Desc", rating: 5 },
-          ],
-          error: null,
+// Mock Supabase (auth + from)
+jest.mock("../supabase", () => {
+  const supabaseMock = {
+    auth: {
+      getUser: jest.fn(() => ({
+        data: { user: { id: "user-1" } },
+        error: null,
+      })),
+    },
+    from: jest.fn((tableName: string) => {
+      const dataByTable: Record<string, any[]> = {
+        recipes: [
+          { recipe_slug: "citra-rye", name: "CalIPA - Citra Rye", description: "Test desc", rating: 4 },
+          { recipe_slug: "city-of-sun", name: "City of the Sun IPA", description: "Desc", rating: 5 },
+          { recipe_slug: "face-of-boe", name: "Face of Boe - APA #4", description: "Desc", rating: 3 },
+          { recipe_slug: "west-coast-ipa", name: "West Coast IPA 2023 v2", description: "Desc", rating: 4 },
+          { recipe_slug: "black-nitro-ipa", name: "Black Nitro IPA", description: "Desc", rating: 5 },
+        ],
+        brews: [
+          { id_brew: 1, name: "Hazy IPA", recipe_slug: "citra-rye", user_id: "user-1"},
+          { id_brew: 2, name: "Belgian Tripel", recipe_slug: "city-of-sun", user_id: "user-1"},
+        ],
+        steps: [
+          { step_id: "step1", recipe_slug: "citra-rye" },
+          { step_id: "step2", recipe_slug: "citra-rye" },
+          { step_id: "step1", recipe_slug: "city-of-sun" },
+          { step_id: "step2", recipe_slug: "city-of-sun" },
+        ],
+        brew_steps: [
+          { step_id: "step1", id_brew: 1, status: "completed" },
+          { step_id: "step2", id_brew: 1, status: "completed" },
+          { step_id: "step1", id_brew: 2, status: "completed" },
+          { step_id: "step2", id_brew: 2, status: "completed" },
+      ],
+      };
+
+      const selectMock = jest.fn(() => ({
+        eq: jest.fn((field: string, value: any) => {
+          if (tableName === "brews") {
+            return {
+              data: dataByTable.brews.filter(b => b[field] === value),
+              error: null,
+              eq: jest.fn(() => ({ data: dataByTable[tableName] || [], error: null })),
+            };
+          }
+          return { data: dataByTable[tableName] || [], error: null, eq: jest.fn(() => ({ data: dataByTable[tableName] || [], error: null })) };
         }),
-      }),
+        data: dataByTable[tableName] || [],
+        error: null,
+      }));
+
+      return { select: selectMock };
     }),
-  },
-}));
+  };
+
+  return { supabase: supabaseMock };
+});
 
 // Mock fonts
 jest.mock("@/hooks/use-fonts", () => ({
@@ -65,8 +105,8 @@ jest.mock("@/components/ui/ProgressCard", () => {
 // Mock RecipeCard
 jest.mock("@/components/ui/RecipeCard", () => {
   const { Text, Pressable } = require("react-native");
-  return ({ name, onPress }: any) => (
-    <Pressable onPress={onPress}>
+  return ({ name, onPress, recipe_slug }: any) => (
+    <Pressable onPress={onPress?.(recipe_slug)}>
       <Text>{name}</Text>
     </Pressable>
   );
@@ -76,6 +116,8 @@ jest.mock("@/components/ui/RecipeCard", () => {
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: { TEXT_DARK: "#000", LIGHT_BG: "#eee" },
 }));
+
+const HomePage = require("../app/(tabs)/HomePage").default;
 
 // --------------------------
 // Helper render wrapper
@@ -93,22 +135,29 @@ describe("<HomePage />", () => {
 
   it("renders titles", async () => {
     const { getByText } = renderNav(<HomePage />);
-    expect(getByText("StartToBrew")).toBeTruthy();
-    expect(getByText("In progress")).toBeTruthy();
-    expect(getByText("Popular recipes")).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText("StartToBrew")).toBeTruthy();
+      expect(getByText("In progress")).toBeTruthy();
+      expect(getByText("Popular recipes")).toBeTruthy();
+    });
   });
 
-  it("renders progress cards", () => {
+  it("renders progress cards", async () => {
     const { getByText } = renderNav(<HomePage />);
-    expect(getByText("Hazy IPA")).toBeTruthy();
-    expect(getByText("Belgian Tripel")).toBeTruthy();
-    expect(getByText("American Pale Ale")).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText("Hazy IPA")).toBeTruthy();
+      expect(getByText("Belgian Tripel")).toBeTruthy();
+    });
   });
 
-  it("navigates to /progress when progress card pressed", () => {
+  it("navigates to /progress when progress card pressed", async () => {
     const { getByText } = renderNav(<HomePage />);
-    fireEvent.press(getByText("Hazy IPA"));
-    expect(pushMock).toHaveBeenCalledWith("/progress");
+    await waitFor(() => getByText("Hazy IPA"));
+    await act(async () => {
+      fireEvent.press(getByText("Hazy IPA"));
+    });
+    
+    expect(pushMock).toHaveBeenCalledWith({ pathname: "/progress", params: { id: 1 } });
   });
 
   it("renders popular beers (after supabase mock)", async () => {
