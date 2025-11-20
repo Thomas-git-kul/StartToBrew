@@ -290,6 +290,7 @@ exports[`Recipes screen matches snapshot 1`] = `
             },
             {
               "color": "#44403c",
+              "fontFamily": "Battambang",
             },
           ]
         }
