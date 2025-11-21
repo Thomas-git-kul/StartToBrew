@@ -68,6 +68,28 @@ export default function SpecificRecipe() {
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
   const [reviewCount, setReviewCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [hasUserReviewed, setHasUserReviewed] = useState(false);
+
+  // Check if current logged-in user already reviewed this recipe
+  const checkUserReviewed = async (slugToCheck: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) {
+        setHasUserReviewed(false);
+        return;
+      }
+      const { data: existingReview } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", slugToCheck)
+        .eq("account_id", user.id)
+        .maybeSingle();
+      setHasUserReviewed(!!existingReview);
+    } catch {
+      // Fail silently – keep previous state
+    }
+  };
 
   // Herbruikbare fetch functie (recept + ingrediënten + reviews)
   const fetchRecipeBundle = async (slug: string) => {
@@ -189,6 +211,7 @@ export default function SpecificRecipe() {
     if (!recipe_slug) return;
 
     fetchRecipeBundle(recipe_slug);
+    checkUserReviewed(recipe_slug);
   }, [recipe_slug]);
 
   const chips: { key: string; label: string }[] = [];
@@ -286,16 +309,26 @@ export default function SpecificRecipe() {
             />
             <ThemedText type="subTitle">{displayedRating} / 5</ThemedText>
             <ThemedText type="subTitle">({reviewCount} reviews)</ThemedText>
-            <TouchableOpacity
-              onPress={() => setReviewVisible(true)}
-              style={{
-                marginLeft: 8,
-                paddingVertical: 4,
-                paddingHorizontal: 10,
-              }}
-            >
-              <ThemedText type="subTitle">Add Review</ThemedText>
-            </TouchableOpacity>
+            {hasUserReviewed ? (
+              <ThemedText
+                type="subTitle"
+                testID="already-reviewed-label"
+                style={{ marginLeft: 8 }}
+              >
+                You reviewed ✓
+              </ThemedText>
+            ) : (
+              <TouchableOpacity
+                onPress={() => setReviewVisible(true)}
+                style={{
+                  marginLeft: 8,
+                  paddingVertical: 4,
+                  paddingHorizontal: 10,
+                }}
+              >
+                <ThemedText type="subTitle">Add Review</ThemedText>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Specs chips */}
