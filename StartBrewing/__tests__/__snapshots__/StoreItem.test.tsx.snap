@@ -589,7 +589,7 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
                       },
                       false,
                       {
-                        "color": "rgba(33, 0, 93, 1)",
+                        "color": "#FFFFFF",
                         "fontFamily": "Battambang",
                         "fontSize": 16,
                         "fontWeight": "500",

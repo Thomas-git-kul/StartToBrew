@@ -80,7 +80,7 @@ export default function ShoppingCart() {
       const userId = user.id;
       console.log("userId:", userId);
 
-      // 2Fetch shopping cart items for this user
+      // Fetch shopping cart items for this user
       const { data: cartItems, error: cartError } = await supabase
         .from("shopping_cart")
         .select(`

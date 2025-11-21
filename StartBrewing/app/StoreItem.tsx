@@ -69,15 +69,23 @@ export default function StoreItem() {
         console.error("Error fetching user:", userError?.message);
         return;
       }
+      const userId = user.id;
+      console.log("userId:", userId);
 
       // Check if the item (store_item or starter_kit) already exists in the cart
       const { data: existingCart, error: existingError } = await supabase
         .from("shopping_cart")
-        .select("id_cart, quantity")
+        .select(`
+          id_cart,
+          quantity,
+          user_shopping_cart!inner (
+            user_id
+          )
+        `)
         .eq("store_item_id", item.id)
         .eq("starter_kit", isStarterKit)
-        .limit(1)
-        .single();
+        .eq("user_shopping_cart.user_id", userId)
+        .maybeSingle();
 
       if (existingError && existingError.code !== "PGRST116") {
         console.error("Error checking existing cart:", existingError.message);
@@ -91,7 +99,6 @@ export default function StoreItem() {
           .from("shopping_cart")
           .update({ quantity: newQuantity })
           .eq("id_cart", existingCart.id_cart);
-
         if (updateError) {
           console.error("Error updating cart quantity:", updateError.message);
           return;
@@ -352,7 +359,9 @@ export default function StoreItem() {
             style={{
               backgroundColor: BASE_COLORS.TEXT_DARK,
               borderRadius: 20,
+
             }}
+            color={BASE_COLORS.WHITE}
             theme={{
               fonts: {
                 labelLarge: {

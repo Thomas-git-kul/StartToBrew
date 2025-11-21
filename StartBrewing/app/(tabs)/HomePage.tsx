@@ -178,7 +178,7 @@ export default function HomePage() {
           backgroundColor: BASE_COLORS.TEXT_DARK,
           borderRadius: 20,
         }}
-        color={BASE_COLORS.LIGHT_BG}
+        color={BASE_COLORS.WHITE}
         onPress={() => router.push("/Recipes")}
         mode="elevated"
         size="medium"

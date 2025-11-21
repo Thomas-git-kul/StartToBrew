@@ -105,7 +105,7 @@ export default function OrderCard({
                   borderColor: BASE_COLORS.STONE300, 
                   borderWidth: 1, 
                   borderRadius: 20,
-                  width: 40,
+                  width: 65,
                   marginLeft: 10
                 }}
                 labelStyle={{
