@@ -210,9 +210,24 @@ export default function Registration() {
             mode="contained"
             onPress={signUpWithEmail}
             loading={loading}
-            disabled={!agree || loading}
+            disabled={
+              !agree ||
+              loading ||
+              !lastname.trim() ||
+              !firstname.trim() ||
+              !day.trim() ||
+              !month.trim() ||
+              !year.trim() ||
+              !email.trim() ||
+              !username.trim() ||
+              !password.trim() ||
+              !confirmPassword.trim()
+            }
             style={{
-              backgroundColor: agree ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200,
+              backgroundColor:
+                agree && lastname.trim() && firstname.trim() && day.trim() && month.trim() && year.trim() && email.trim() && username.trim() && password.trim() && confirmPassword.trim()
+                  ? BASE_COLORS.TEXT_DARK
+                  : BASE_COLORS.STONE200,
               borderRadius: 20,
               width: 220,
             }}
