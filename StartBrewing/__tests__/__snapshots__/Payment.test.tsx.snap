@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<PaymentScreen /> matches snapshot 1`] = `
+<View
+  className="p-5"
+>
+  <Text>
+    Loading payment...
+  </Text>
+</View>
+`;
