@@ -16,7 +16,7 @@ interface Beer {
   name: string;
   rating: number;
   reviews: number;
-  image: any; // React Native image source
+  image: any;
   description: string | null;
   style: string | null;
 }
@@ -95,11 +95,16 @@ export default function Recipes() {
           };
         });
 
-        setRecipes(mapped);
+        const shuffled = [...mapped];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setRecipes(shuffled);
       } catch (e: any) {
         console.error("Error loading recipes", e);
         setError(
-          e.message ?? "Er ging iets mis bij het laden van de recepten."
+          e.message ?? "Unable to load recipes."
         );
       } finally {
         setLoading(false);
@@ -143,7 +148,10 @@ export default function Recipes() {
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator animating size="large" />
+          <ActivityIndicator 
+            animating size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
           <ThemedText type="defaultText" className="mt-3">
             Loading recipes...
           </ThemedText>
