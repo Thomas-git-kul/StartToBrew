@@ -258,7 +258,7 @@ export default function ShoppingCart() {
         <View className="mt-5">
           <Button
             mode="contained"
-            onPress={() => console.log("Proceed to payment")}
+            onPress={() => router.push("../Payment")}
             style={{
               backgroundColor: BASE_COLORS.TEXT_DARK,
               alignSelf: "flex-start",
