@@ -1,31 +1,15 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Agenda Screen renders correctly and matches snapshot 1`] = `
-<View
-  className="flex-1"
+exports[`<Agenda /> snapshot 1`] = `
+<RNCSafeAreaProvider
+  onInsetsChange={[Function]}
   style={
-    {
-      "backgroundColor": "#eee",
-    }
-  }
->
-  <Text>
-    Agenda
-  </Text>
-  <RCTScrollView
-    className="px-1 mt-3"
-    showsVerticalScrollIndicator={false}
-    style={
+    [
       {
-        "backgroundColor": "#eee",
-      }
-    }
-  >
-    <View>
-      <Text>
-        No tasks for this day.
-      </Text>
-    </View>
-  </RCTScrollView>
-</View>
+        "flex": 1,
+      },
+      undefined,
+    ]
+  }
+/>
 `;

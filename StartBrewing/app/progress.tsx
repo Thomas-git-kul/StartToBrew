@@ -184,7 +184,7 @@ function Progress() {
   if (loading || !stepData) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" testID="loading-indicator"/>
       </SafeAreaView>
     );
   }
