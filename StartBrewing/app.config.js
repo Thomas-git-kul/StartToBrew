@@ -1,6 +1,7 @@
 export default ({ config }) => ({
   ...config,
   name: process.env.APP_TITLE || config.name,
+  icon: "./assets/icon.png",
   web: {
     ...config.web,
     bundler: 'metro',
