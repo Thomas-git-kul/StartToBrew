@@ -394,9 +394,10 @@ exports[`<Registration /> matches snapshot 1`] = `
             undefined,
             {
               "color": undefined,
-              "fontFamily": "System",
-              "fontSize": 24,
+              "fontFamily": undefined,
+              "fontSize": 16,
             },
+            undefined,
             undefined,
             undefined,
             undefined,
@@ -950,9 +951,10 @@ exports[`<Registration /> matches snapshot 1`] = `
             undefined,
             {
               "color": undefined,
-              "fontFamily": "System",
-              "fontSize": 24,
+              "fontFamily": undefined,
+              "fontSize": 16,
             },
+            undefined,
             undefined,
             undefined,
             undefined,
@@ -1774,9 +1776,10 @@ exports[`<Registration /> matches snapshot 1`] = `
             undefined,
             {
               "color": undefined,
-              "fontFamily": "System",
-              "fontSize": 24,
+              "fontFamily": undefined,
+              "fontSize": 16,
             },
+            undefined,
             undefined,
             undefined,
             undefined,
@@ -2054,9 +2057,10 @@ exports[`<Registration /> matches snapshot 1`] = `
             undefined,
             {
               "color": undefined,
-              "fontFamily": "System",
-              "fontSize": 24,
+              "fontFamily": undefined,
+              "fontSize": 16,
             },
+            undefined,
             undefined,
             undefined,
             undefined,
@@ -2860,7 +2864,7 @@ exports[`<Registration /> matches snapshot 1`] = `
           }
           accessible={true}
           collapsable={false}
-          color="#f00"
+          color="#000"
           focusable={true}
           onBlur={[Function]}
           onClick={[Function]}
@@ -2899,7 +2903,7 @@ exports[`<Registration /> matches snapshot 1`] = `
               style={
                 [
                   {
-                    "color": "#f00",
+                    "color": "#000",
                     "fontSize": 24,
                   },
                   [
@@ -2938,8 +2942,9 @@ exports[`<Registration /> matches snapshot 1`] = `
               {
                 "color": undefined,
                 "fontFamily": "System",
-                "fontSize": 24,
+                "fontSize": 20,
               },
+              undefined,
               undefined,
               undefined,
               undefined,

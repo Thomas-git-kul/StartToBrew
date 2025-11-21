@@ -3,17 +3,14 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 
-// Get screen width
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// Base width that original font sizes were designed for
 const BASE_SCREEN_WIDTH = 375; 
-// Scale factor
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'defaultText' | 'title' | 'subTitle' | 'smallText' | 'darkAccent' | 'numbers' | 'titleBlack';
+  type?: 'defaultText' | 'title' | 'subTitle' | 'accentPrimary' | 'accentDark' | 'numbers' | 'titleBlack' | 'tips';
 };
 
 export function ThemedText({
@@ -32,10 +29,11 @@ export function ThemedText({
         type === 'defaultText' ? styles.defaultText : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'subTitle' ? styles.subTitle : undefined,
-        type === 'smallText' ? styles.smallText : undefined,
-        type === 'darkAccent' ? styles.darkAccent : undefined,
+        type === 'accentPrimary' ? styles.accentPrimary : undefined,
+        type === 'accentDark' ? styles.accentDark : undefined,
         type === 'numbers' ? styles.numbers : undefined,
         type === 'titleBlack' ? styles.titleBlack : undefined,
+        type === 'tips' ? styles.tips : undefined,
         style,
       ]}
       {...rest}
@@ -44,39 +42,44 @@ export function ThemedText({
 }
 
 const styles = StyleSheet.create({
-  defaultText: {
-    fontSize: 12 * scale,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.STONE700,
-  },
   title: {
-    fontSize: 17 * scale,
+    fontSize: Math.min(18 * scale, 22),
     fontFamily: FontFamilies.BODY_BOLD,
     color: BASE_COLORS.ACCENT_PRIMARY,
   },
-  subTitle: {
-    fontSize: 12 * scale,
-    fontFamily: FontFamilies.BODY,
-    color: BASE_COLORS.STONE950,
+  titleBlack: {
+    fontSize: Math.min(22 * scale, 30),
+    fontFamily: FontFamilies.BODY_BOLD,
+    color: BASE_COLORS.STONE600
   },
-  smallText: {
-    fontSize: 10 * scale,
+  subTitle: {
+    fontSize: Math.min(14 * scale, 16), 
+    fontFamily: FontFamilies.BODY_LIGHT,
+    color: BASE_COLORS.STONE700,
+  },
+  accentPrimary: {
+    fontSize: Math.min(10 * scale, 14), 
     fontFamily: FontFamilies.BODY_LIGHT,
     color: BASE_COLORS.STONE500,
   },
-  darkAccent: {
-    fontSize: 17 * scale,
+  accentDark: {
+    fontSize: Math.min(17 * scale, 22),
     fontFamily: FontFamilies.BODY_BLACK,
     color: BASE_COLORS.TEXT_DARK,
   },
   numbers: {
-    fontSize: 15 * scale,
+    fontSize: Math.min(22 * scale, 30),
     fontFamily: FontFamilies.BODY,
     color: BASE_COLORS.STONE600
   },
-  titleBlack: {
-    fontSize: 25 * scale,
-    fontFamily: FontFamilies.BODY_BOLD,
-    color: BASE_COLORS.TEXT_DARK
+  defaultText: {
+    fontSize: Math.min(17 * scale, 20),
+    fontFamily: FontFamilies.HEADING,
+    color: BASE_COLORS.STONE700,
+  },
+  tips: {
+    fontSize: Math.min(14 * scale, 18),
+    fontFamily: FontFamilies.BODY_LIGHT,
+    color: BASE_COLORS.ACCENT_LIGHT
   },
 });

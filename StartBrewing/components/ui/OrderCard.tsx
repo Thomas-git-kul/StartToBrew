@@ -1,29 +1,32 @@
 import { useState, useMemo, useEffect } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
-import { Card, Text, Avatar } from 'react-native-paper';
+import { View, Pressable, Dimensions } from 'react-native';
+import { Card, Text, Avatar, Menu, Button } from 'react-native-paper';
 import { BASE_COLORS } from '@/constants/Colors';
 import { FontFamilies } from '@/constants/Fonts';
-import { ThemedText } from "@/components/themed-text";
 import { CirclePlus, CircleMinus } from "lucide-react-native";
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BASE_SCREEN_WIDTH = 375; 
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 type OrderCardProps = {
   image: any;
   title: string;
   quantity: number;
   price: string;
-  onIncrease?: () => void;
-  onDecrease?: () => void;
-}
+  onQuantityChange?: (newQuantity: number) => void;  // <-- new prop
+};
 
 export default function OrderCard({ 
     image, 
     title,
     quantity, 
     price, 
-    onIncrease, 
-    onDecrease 
+    onQuantityChange,
 }: OrderCardProps) {
+
   const [localQuantity, setLocalQuantity] = useState<number>(quantity ?? 0);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   // Parse price string into number
   const parsePrice = (priceStr: string) => {
@@ -51,62 +54,92 @@ export default function OrderCard({
     }
   }, [quantity]);
 
-  const handleIncrease = () => {
-    setLocalQuantity((q) => {
-      const nq = q + 1;
-      setCurrentPrice(unitPrice * nq);
-      return nq;
-    });
-    if (onIncrease) onIncrease();
+  const handleQuantityChange = (newQty: number) => {
+    setLocalQuantity(newQty);
+    setCurrentPrice(unitPrice * newQty);
+    if (onQuantityChange) onQuantityChange(newQty);
+    setMenuVisible(false);
   };
-
-  const handleDecrease = () => {
-    setLocalQuantity((q) => {
-      const nq = Math.max(0, q - 1);
-      setCurrentPrice(unitPrice * nq);
-      return nq;
-    });
-    if (onDecrease) onDecrease();
-  };
-
-  const displayedQuantity = localQuantity;
-  const displayedPrice = currentPrice;
 
   return (
     <Card
-        style = {{
-            marginBottom: 10,
-            backgroundColor: BASE_COLORS.WHITE
-        }}
+      style = {{
+          marginBottom: 2,
+          backgroundColor: BASE_COLORS.WHITE,
+          borderRadius: 12,
+          marginBlock: 3,
+          marginInline: 2,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
+      }}
     >
-      <View className="flex-row items-center">
+      <View className="flex-row">
         {/* Image */}
         <Avatar.Image source={image} size={80} />
 
         <View className="flex-1 flex-row ml-3 items-center">
 
           {/* Title */}
-          <ThemedText 
-            type="subTitle" 
-            style={{ flex: 1 }}
-          >{title}</ThemedText>
+          <Text
+            numberOfLines={3}
+            style={{ 
+              flex: 1,
+              fontSize: Math.min(12 * scale, 18),
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.STONE950,
+            }}
+          >{title}</Text>
 
-          {/* Quantity */}
-          <View style={{ width: 80 }} className="flex-row items-center justify-center">
-            <Pressable onPress={handleDecrease} hitSlop={8}>
-              <CircleMinus size={20} color={BASE_COLORS.STONE500} />
-            </Pressable>
-            <ThemedText type="numbers" className="mx-2">
-              {displayedQuantity}
-            </ThemedText>
-            <Pressable onPress={handleIncrease} hitSlop={8}>
-              <CirclePlus size={20} color={BASE_COLORS.STONE500} />
-            </Pressable>
-          </View>
+          {/* Quantity Dropdown */}
+          <Menu
+            visible={menuVisible}
+            onDismiss={() => setMenuVisible(false)}
+            anchor={
+              <Button 
+                mode="outlined" 
+                onPress={() => setMenuVisible(true)}
+                style={{ 
+                  borderColor: BASE_COLORS.STONE300, 
+                  borderWidth: 1, 
+                  borderRadius: 20,
+                  width: 40,
+                  marginLeft: 10
+                }}
+                labelStyle={{
+                  color: BASE_COLORS.STONE600,
+                  fontFamily: FontFamilies.BODY,
+                }}
+              >{localQuantity}</Button>
+            }
+            contentStyle={{
+              backgroundColor: BASE_COLORS.WHITE,
+            }}
+          >
+            {[...Array(20)].map((_, i) => (
+              <Menu.Item
+                key={i}
+                title={i.toString()} 
+                onPress={() => handleQuantityChange(i)}
+                titleStyle={{
+                  color: BASE_COLORS.STONE600,
+                  fontFamily: FontFamilies.BODY,
+                }}
+              />
+            ))}
+          </Menu>
 
           {/* Price */}
           <View style={{ width: 80, alignItems: "flex-end", marginRight: 5 }}>
-            <ThemedText type="numbers">{formatter.format(displayedPrice)}</ThemedText>
+            <Text
+              style={{
+                fontSize: Math.min(15 * scale, 20),
+                fontFamily: FontFamilies.BODY,
+                color: BASE_COLORS.STONE600
+              }}
+            >{formatter.format(currentPrice)}</Text>
           </View>
 
         </View>

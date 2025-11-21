@@ -1,34 +1,109 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
+import { NavigationContainer } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 
 /* ------------------------------
- ✅ MOCKS
+   MOCK DATA
 ------------------------------- */
 
-// Mock navigation router
-const pushMock = jest.fn();
-jest.mock("expo-router", () => ({
-  useRouter: jest.fn(), // Important: jest.fn() so mockReturnValue works
-}));
+const recipesData = [
+  {
+    recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
+    name: "Den Ballaste Point Sculpin IPA 60",
+    description: "Den Ballaste Point Sculpin IPA 60 is a classic American IPA.",
+    rating: null,
+    haze_level: 1,
+    srm_target: 6.0,
+    style: "American IPA",
+  },
+  {
+    recipe_slug: "americanipa-city-of-the-sun-ipa",
+    name: "City of the Sun IPA",
+    description: "City of the Sun IPA is a sunny American IPA.",
+    rating: null,
+    haze_level: 1,
+    srm_target: 5.1,
+    style: "American IPA",
+  },
+  {
+    recipe_slug: "sessionipa-smash-session-pale-ale",
+    name: "SMaSH Session Pale Ale",
+    description: "SMaSH Session Pale Ale is een lichte Session IPA.",
+    rating: null,
+    haze_level: 2,
+    srm_target: 3.4,
+    style: "Session IPA",
+  },
+];
 
-// Mock fonts hook
-jest.mock("@/hooks/use-fonts", () => ({
-  useFonts: () => true,
-}));
+const reviewData = [
+  { recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60", rating: 4 },
+  { recipe_slug: "americanipa-city-of-the-sun-ipa", rating: 3 },
+  { recipe_slug: "sessionipa-smash-session-pale-ale", rating: 5 },
+];
 
-// Mock ThemedText component
-jest.mock("@/components/themed-text", () => {
-  const { Text } = require("react-native");
-  return {
-    ThemedText: ({ children, style }: any) => <Text style={style}>{children}</Text>,
-  };
+/* ------------------------------
+   HELPERS
+------------------------------- */
+
+const createRecipesQuery = (listData = recipesData) => ({
+  select: () => ({
+    then(cb) {
+      return Promise.resolve({ data: listData, error: null }).then(cb);
+    },
+  }),
+  then(cb) {
+    return Promise.resolve({ data: listData, error: null }).then(cb);
+  },
 });
 
-// Mock Header component
+/* ------------------------------
+   MOCKS
+------------------------------- */
+
+const pushMock = jest.fn();
+jest.mock("expo-router", () => ({ useRouter: jest.fn() }));
+
+jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
+
+jest.mock("@/supabase", () => ({
+  supabase: {
+    from: (table: string) => {
+      if (table === "recipes") {
+        return {
+          select: () =>
+            Promise.resolve({
+              data: recipesData,
+              error: null,
+            }),
+        };
+      }
+      if (table === "recipe_reviews") {
+        return {
+          select: () => ({
+            in: () =>
+              Promise.resolve({
+                data: reviewData,
+                error: null,
+              }),
+          }),
+        };
+      }
+      return {
+        select: () => Promise.resolve({ data: [], error: null }),
+      };
+    },
+  },
+}));
+
+jest.mock("@/hooks/beer-image", () => ({
+  getBeerImageSource: () => ({ uri: "test-beer-image" }),
+}));
+
 jest.mock("@/components/header", () => {
-  const { Text, View } = require("react-native");
+  const { View, Text } = require("react-native");
   return ({ title }: any) => (
     <View>
       <Text>{title}</Text>
@@ -36,7 +111,13 @@ jest.mock("@/components/header", () => {
   );
 });
 
-// Mock SafeAreaView
+jest.mock("@/components/themed-text", () => {
+  const { Text } = require("react-native");
+  return {
+    ThemedText: ({ children }: any) => <Text>{children}</Text>,
+  };
+});
+
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
   return {
@@ -45,13 +126,15 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
-// Mock constants
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     WHITE: "#fff",
     TEXT_DARK: "#000",
     ACCENT_PRIMARY: "#f00",
     LIGHT_BG: "#eee",
+    STONE300: "#E5E7EB",
+    STONE500: "#6B7280",
+    STONE700: "#374151",
   },
 }));
 
@@ -63,7 +146,6 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
-// Mock RecipeCard component (BeerCard)
 jest.mock("@/components/ui/RecipeCard", () => {
   const { View, Text, Pressable } = require("react-native");
   return ({ name, onToggleFavorite, onPress }: any) => (
@@ -81,8 +163,31 @@ jest.mock("@/components/ui/RecipeCard", () => {
   );
 });
 
+jest.mock("@/components/ui/ProgressCard", () => {
+  const { View, Text, Pressable } = require("react-native");
+  return ({ title, onPress }: any) => (
+    <Pressable onPress={onPress}>
+      <View>
+        <Text>{title}</Text>
+      </View>
+    </Pressable>
+  );
+});
+
+jest.mock("lucide-react-native", () => {
+  const { Text } = require("react-native");
+  return { Plus: () => <Text>Plus</Text> };
+});
+
 /* ------------------------------
- ✅ TESTS
+   TEST UTIL
+------------------------------- */
+
+const renderWithNavigation = (ui: React.ReactElement) =>
+  render(<NavigationContainer>{ui}</NavigationContainer>);
+
+/* ------------------------------
+   TESTS
 ------------------------------- */
 
 describe("<HomePage />", () => {
@@ -91,54 +196,68 @@ describe("<HomePage />", () => {
     pushMock.mockClear();
   });
 
-  it("renders main titles correctly", () => {
-    const { getByText } = render(<HomePage />);
+  it("rendered hoofdsecties", () => {
+    const { getByText } = renderWithNavigation(<HomePage />);
 
     expect(getByText("StartToBrew")).toBeTruthy();
     expect(getByText("In progress")).toBeTruthy();
     expect(getByText("Popular recipes")).toBeTruthy();
   });
 
-  it("renders beer cards", () => {
-    const { getByText } = render(<HomePage />);
+  it("laadt recipes", async () => {
+    const { findByText } = renderWithNavigation(<HomePage />);
 
-    expect(getByText("IJ IPA")).toBeTruthy();
-    expect(getByText("Voodoo Ranger")).toBeTruthy();
-    expect(getByText("Two Hearted IPA")).toBeTruthy();
+    expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
+    expect(await findByText("City of the Sun IPA")).toBeTruthy();
+    expect(await findByText("SMaSH Session Pale Ale")).toBeTruthy();
   });
 
-  it("toggles favorite when favorite button is pressed", () => {
-    const { getByLabelText } = render(<HomePage />);
+  it("kan favorite togglen zonder crash", async () => {
+    const { findByLabelText } = renderWithNavigation(<HomePage />);
 
-    const favoriteBtn = getByLabelText("favorite-IJ IPA");
+    const favBtn = await findByLabelText(
+      "favorite-Den Ballaste Point Sculpin IPA 60"
+    );
+    fireEvent.press(favBtn);
+    fireEvent.press(favBtn);
 
-    fireEvent.press(favoriteBtn);
-    fireEvent.press(favoriteBtn);
-
-    // No crash = success
-    expect(favoriteBtn).toBeTruthy();
+    expect(favBtn).toBeTruthy();
   });
 
-  it("navigates to /Recipes when FAB is pressed", () => {
-    const { getByTestId } = render(<HomePage />);
+  it("navigates naar /Recipes via FAB", async () => {
+    const { findByTestId } = renderWithNavigation(<HomePage />);
+    const fab = await findByTestId("fab");
 
-    const fabButton = getByTestId("fab");
-    fireEvent.press(fabButton);
-
-    expect(pushMock).toHaveBeenCalledTimes(1);
+    fireEvent.press(fab);
     expect(pushMock).toHaveBeenCalledWith("/Recipes");
   });
 
-  it("navigates to SpecificRecipe when a beer card is pressed", () => {
-    const { getByText } = render(<HomePage />);
+  it("navigates naar SpecificRecipe via beer card", async () => {
+    const { findByText } = renderWithNavigation(<HomePage />);
 
-    fireEvent.press(getByText("IJ IPA"));
+    const card = await findByText("Den Ballaste Point Sculpin IPA 60");
+    fireEvent.press(card);
 
-    expect(pushMock).toHaveBeenCalledWith("/SpecificRecipe");
+    expect(pushMock).toHaveBeenCalledWith({
+      pathname: "/SpecificRecipe",
+      params: {
+        recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
+      },
+    });
   });
 
-  it("matches snapshot", () => {
-    const tree = render(<HomePage />).toJSON();
+  it("rendered progress cards en navigatie werkt", () => {
+    const { getByText } = renderWithNavigation(<HomePage />);
+
+    fireEvent.press(getByText("Hazy IPA"));
+    fireEvent.press(getByText("Belgian Tripel"));
+    fireEvent.press(getByText("American Pale Ale"));
+
+    expect(pushMock).toHaveBeenCalledWith("/progress");
+  });
+
+  it("snapshot", () => {
+    const tree = renderWithNavigation(<HomePage />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });
