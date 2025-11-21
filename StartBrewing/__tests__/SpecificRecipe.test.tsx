@@ -138,6 +138,7 @@ jest.mock("@/constants/Colors", () => ({
     WHITE: "#ffffff",
     TEXT_DARK: "#000000",
     ACCENT_LIGHT: "#B45309",
+    ACCENT_PRIMARY: "#FF6600",
     STONE300: "#E5E7EB",
   },
 }));
@@ -181,10 +182,13 @@ jest.mock("react-native-paper", () => {
 // lucide Star
 jest.mock("lucide-react-native", () => {
   const { Text } = require("react-native");
+  const make = (name: string) => ({ size, color, fill, stroke }: any) => (
+    <Text>{`${name}`}</Text>
+  );
   return {
-    Star: ({ size, color, fill }: any) => (
-      <Text>{`Star(${size},${color},${fill})`}</Text>
-    ),
+    Star: make("Star"),
+    Heart: make("Heart"),
+    HeartPlus: make("HeartPlus"),
   };
 });
 
@@ -201,7 +205,6 @@ jest.mock("@/supabase", () => ({
         error: null,
       }),
     },
-
     from: (table: string) => {
       if (table === "recipes") {
         return {
@@ -217,7 +220,25 @@ jest.mock("@/supabase", () => ({
           }),
         };
       }
-
+      if (table === "recipe_reviews") {
+        // Provide a thenable builder so both await eq() and chained eq().maybeSingle() work.
+        const builder: any = {
+          _filters: [] as Array<[string, any]>,
+          select: () => builder,
+          eq: (field: string, value: any) => {
+            builder._filters.push([field, value]);
+            return builder;
+          },
+          maybeSingle: async () => ({ data: null, error: null }),
+          then: (resolve: any) => {
+            // When awaited directly after eq() return array of ratings.
+            resolve({ data: [], error: null });
+          },
+        };
+        return {
+          select: () => builder,
+        } as any;
+      }
       return {
         select: () => ({
           eq: () => ({
@@ -226,13 +247,8 @@ jest.mock("@/supabase", () => ({
         }),
       };
     },
-
     rpc: async (fn: string, args: any) => {
-      if (
-        fn === "get_recipe_ingredients" &&
-        args &&
-        args._recipe_slug === recipeSlug
-      ) {
+      if (fn === "get_recipe_ingredients" && args && args._recipe_slug === recipeSlug) {
         return {
           data: ingredientRows.map(mapIngredient),
           error: null,
