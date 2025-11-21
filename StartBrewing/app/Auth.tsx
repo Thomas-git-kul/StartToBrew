@@ -44,6 +44,20 @@ export default function Auth() {
     router.replace("/(tabs)/HomePage");
   }
 
+  async function signInAsTestUser() {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: "test@user.com",
+      password: "testuser",
+    });
+
+    if (error) {
+      Alert.alert(error.message);
+      return;
+    }
+
+    router.replace("/(tabs)/HomePage");
+  }
+
   return (
     <SafeAreaView
       className="flex-1 justify-center"
@@ -100,6 +114,24 @@ export default function Auth() {
           }}
         >
           Sign Up
+        </Button>
+        <Button
+          mode="contained"
+          onPress={signInAsTestUser}
+          buttonColor={BASE_COLORS.STONE400}
+          textColor={BASE_COLORS.WHITE}
+          contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
+          labelStyle={{
+            fontSize: 16,
+            color: BASE_COLORS.WHITE,
+            fontFamily: FontFamilies.BODY,
+          }}
+          style={{
+            borderRadius: 20,
+            width: "65%",
+          }}
+        >
+          Sign In as Test User
         </Button>
       </View>
     </SafeAreaView>

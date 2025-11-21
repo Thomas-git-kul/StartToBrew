@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { View, Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Checkbox, FAB } from "react-native-paper";
+import { Button } from "react-native-paper";
+import CheckBox from "expo-checkbox";
 import { router } from "expo-router";
 import { supabase } from "@/supabase";
 import { useFonts } from "@/hooks/use-fonts";
@@ -27,6 +28,7 @@ export default function Registration() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
+  // const [submitChecked, setSubmitChecked] = useState(false);
 
   async function signUpWithEmail() {
     if (!agree) {
@@ -159,14 +161,10 @@ export default function Registration() {
             <TextInput value={day} onChangeText={setDay} label="DD" />
           </View>
           <View style={{ width: "25%" }}>
-            <View className="flex-1">
-              <TextInput value={month} onChangeText={setMonth} label="MM" />
-            </View>
+            <TextInput value={month} onChangeText={setMonth} label="MM" />
           </View>
           <View style={{ width: "50%" }}>
-            <View className="flex-1">
-              <TextInput value={year} onChangeText={setYear} label="YYYY" />
-            </View>
+            <TextInput value={year} onChangeText={setYear} label="YYYY" />
           </View>
         </View>
 
@@ -187,54 +185,62 @@ export default function Registration() {
           value={password}
           onChangeText={setPassword}
           label="Password"
+          secureTextEntry
         />
         <TextInput
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           label="Confirm Password"
+          secureTextEntry
         />
 
         <View className="flex-row items-center my-4">
-          <Checkbox
-            status={agree ? "checked" : "unchecked"}
-            onPress={() => setAgree(!agree)}
+          <CheckBox
+            value={agree}
+            onValueChange={setAgree}
             color={BASE_COLORS.TEXT_DARK}
+            style={{ marginRight: 8, height: 24, width: 24 }}
           />
           <ThemedText className="defaultText">
             I agree to the terms and conditions
           </ThemedText>
         </View>
+        <View style={{ alignItems: "center", marginBottom: 32 }}>
+          <Button
+            mode="contained"
+            onPress={signUpWithEmail}
+            loading={loading}
+            disabled={
+              !agree ||
+              loading ||
+              !lastname.trim() ||
+              !firstname.trim() ||
+              !day.trim() ||
+              !month.trim() ||
+              !year.trim() ||
+              !email.trim() ||
+              !username.trim() ||
+              !password.trim() ||
+              !confirmPassword.trim()
+            }
+            style={{
+              backgroundColor:
+                agree && lastname.trim() && firstname.trim() && day.trim() && month.trim() && year.trim() && email.trim() && username.trim() && password.trim() && confirmPassword.trim()
+                  ? BASE_COLORS.TEXT_DARK
+                  : BASE_COLORS.STONE200,
+              borderRadius: 20,
+              width: 220,
+            }}
+            labelStyle={{
+              fontSize: 14,
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.WHITE,
+            }}
+          >
+            {loading ? "Creating account..." : "Create account"}
+          </Button>
+        </View>
       </ScrollView>
-
-      <View
-        style={{
-          position: "absolute",
-          bottom: 20,
-          left: 0,
-          right: 0,
-          alignItems: "center",
-        }}
-      >
-        <FAB
-          mode="elevated"
-          label={loading ? "Creating account..." : "Create account"}
-          onPress={signUpWithEmail}
-          loading={loading}
-          color={BASE_COLORS.WHITE}
-          style={{
-            backgroundColor: BASE_COLORS.TEXT_DARK,
-            borderRadius: 20,
-          }}
-          theme={{
-            fonts: {
-              labelLarge: {
-                fontSize: 14,
-                fontFamily: FontFamilies.BODY,
-              },
-            },
-          }}
-        />
-      </View>
     </SafeAreaView>
   );
 }
