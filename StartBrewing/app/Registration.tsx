@@ -159,12 +159,27 @@ export default function Registration() {
         <View className="flex-row gap-3">
           <View className="flex-1">
             <TextInput value={day} onChangeText={setDay} label="DD" />
+            {day.length > 0 && (!/^([0-2][0-9]|3[01])$/.test(day)) && (
+              <ThemedText style={{ color: 'red', marginBottom: 8 }}>
+                Invalid day (01-31)
+              </ThemedText>
+            )}
           </View>
           <View style={{ width: "25%" }}>
             <TextInput value={month} onChangeText={setMonth} label="MM" />
+            {month.length > 0 && (!/^(0[1-9]|1[0-2])$/.test(month)) && (
+              <ThemedText style={{ color: 'red', marginBottom: 8 }}>
+                Invalid month (01-12)
+              </ThemedText>
+            )}
           </View>
           <View style={{ width: "50%" }}>
             <TextInput value={year} onChangeText={setYear} label="YYYY" />
+            {year.length > 0 && (!/^\d{4}$/.test(year)) && (
+              <ThemedText style={{ color: 'red', marginBottom: 8 }}>
+                Invalid year (e.g. 1990)
+              </ThemedText>
+            )}
           </View>
         </View>
 
@@ -172,6 +187,11 @@ export default function Registration() {
           Contact information
         </ThemedText>
         <TextInput value={email} onChangeText={setEmail} label="Email" />
+        {email.length > 0 && (!/^\S+@\S+\.\S+$/.test(email)) && (
+          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
+            Invalid email format
+          </ThemedText>
+        )}
 
         <ThemedText type="subTitle" className="mt-6">
           Account
@@ -193,6 +213,11 @@ export default function Registration() {
           label="Confirm Password"
           secureTextEntry
         />
+        {confirmPassword.length > 0 && password !== confirmPassword && (
+          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
+            Passwords do not match
+          </ThemedText>
+        )}
 
         <View className="flex-row items-center my-4">
           <CheckBox
@@ -221,7 +246,12 @@ export default function Registration() {
               !email.trim() ||
               !username.trim() ||
               !password.trim() ||
-              !confirmPassword.trim()
+              !confirmPassword.trim() ||
+              password !== confirmPassword ||
+              !/^([0-2][0-9]|3[01])$/.test(day) ||
+              !/^(0[1-9]|1[0-2])$/.test(month) ||
+              !/^\d{4}$/.test(year) ||
+              !/^\S+@\S+\.\S+$/.test(email)
             }
             style={{
               backgroundColor:
