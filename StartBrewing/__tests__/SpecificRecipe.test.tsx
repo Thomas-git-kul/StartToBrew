@@ -193,9 +193,15 @@ jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
 }));
 
-// Supabase
 jest.mock("@/supabase", () => ({
   supabase: {
+    auth: {
+      getSession: async () => ({
+        data: { session: null },
+        error: null,
+      }),
+    },
+
     from: (table: string) => {
       if (table === "recipes") {
         return {
@@ -211,6 +217,7 @@ jest.mock("@/supabase", () => ({
           }),
         };
       }
+
       return {
         select: () => ({
           eq: () => ({
@@ -219,6 +226,7 @@ jest.mock("@/supabase", () => ({
         }),
       };
     },
+
     rpc: async (fn: string, args: any) => {
       if (
         fn === "get_recipe_ingredients" &&
@@ -269,7 +277,7 @@ describe("<SpecificRecipe />", () => {
   });
 
   it("opent review modal en laat sterren klikken", async () => {
-    const { findByText, queryByText, findAllByTestId } = renderWithNavigation(
+    const { findByText, findAllByTestId, queryByText } = renderWithNavigation(
       <SpecificRecipe />
     );
 
@@ -279,12 +287,14 @@ describe("<SpecificRecipe />", () => {
     const addReviewBtn = await findByText("Add Review");
     fireEvent.press(addReviewBtn);
 
-    expect(await findByText("Rate this recipe")).toBeTruthy();
+    // Wait for modal to appear
+    const modalTitle = await findByText("Rate this recipe");
+    expect(modalTitle).toBeTruthy();
 
     const stars = await findAllByTestId(/star-/);
     fireEvent.press(stars[2]);
 
-    // We testen hier alleen dat het niet crasht en dat modal bestaat
+    // Modal should still be present after clicking a star (until async closes it)
     expect(queryByText("Rate this recipe")).not.toBeNull();
   });
 

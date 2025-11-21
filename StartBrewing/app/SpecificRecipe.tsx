@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, Image, ScrollView, TouchableOpacity } from "react-native";
+import { View, Image, ScrollView, TouchableOpacity, Alert } from "react-native";
 import {
   FAB,
   Modal,
@@ -69,72 +69,126 @@ export default function SpecificRecipe() {
   const [reviewCount, setReviewCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
 
-  const handleStarPress = (value: number) => {
+  // Herbruikbare fetch functie (recept + ingrediënten + reviews)
+  const fetchRecipeBundle = async (slug: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data: recipeData, error: recipeError } = await supabase
+        .from("recipes")
+        .select(
+          "recipe_slug, name, style, batch_size_l, abv_target, ibu_target, srm_target, description, difficulty, rating, haze_level"
+        )
+        .eq("recipe_slug", slug)
+        .single();
+
+      if (recipeError) throw recipeError;
+
+      const { data: ingredientData, error: ingredientError } = await supabase.rpc(
+        "get_recipe_ingredients",
+        { _recipe_slug: slug }
+      );
+      if (ingredientError) throw ingredientError;
+
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", slug);
+      if (reviewsError) throw reviewsError;
+
+      const count = (reviewsData || []).length;
+      const avg = count
+        ? (reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) / count)
+        : null;
+
+      const recipeWithRating = recipeData
+        ? { ...recipeData, rating: avg != null ? parseFloat(avg.toFixed(2)) : recipeData.rating }
+        : null;
+
+      setRecipe(recipeWithRating);
+      setIngredients((ingredientData || []) as IngredientRow[]);
+      setReviewCount(count);
+    } catch (e: any) {
+      setError(e.message ?? "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStarPress = async (value: number) => {
+    if (!recipe_slug) return;
     setRating(value);
-    setTimeout(() => setReviewVisible(false), 300);
+    try {
+      // Controleer of user sessie aanwezig is (web en native)
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const user = sessionData?.session?.user;
+      if (!user) {
+        Alert.alert("Login vereist", "Log eerst in om een review te plaatsen.");
+        return;
+      }
+
+      // Controleer of de ingelogde user al een review voor dit recept heeft
+      const { data: existingReview, error: existingError } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", recipe_slug)
+        .eq("account_id", user.id)
+        .maybeSingle();
+      if (existingError) throw existingError;
+      if (existingReview) {
+        Alert.alert("Review bestaat al", "Je hebt dit recept al beoordeeld.");
+        setReviewVisible(false);
+        return;
+      }
+
+      // Insert nieuwe review met account_id (jouw DB gebruikt `account_id`)
+      const { error: insertError } = await supabase.from("recipe_reviews").insert({
+        recipe_slug: recipe_slug,
+        rating: value,
+        account_id: user.id,
+      });
+      if (insertError) {
+        throw insertError;
+      }
+
+      // Na succesvolle insert: herbereken gemiddelde en count en update recepten-tabel
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", recipe_slug);
+      if (reviewsError) throw reviewsError;
+
+      const count = (reviewsData || []).length;
+      const avg = count
+        ? (reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) / count)
+        : null;
+
+      // Werk de aggregate kolommen in recipes bij
+      const updatePayload: any = {};
+      if (avg != null) updatePayload.rating = parseFloat(avg.toFixed(2));
+      updatePayload.review_count = count;
+
+      const { error: updateError } = await supabase
+        .from("recipes")
+        .update(updatePayload)
+        .eq("recipe_slug", recipe_slug);
+      if (updateError) throw updateError;
+
+      // Refetch local bundle voor UI
+      await fetchRecipeBundle(recipe_slug);
+    } catch (e: any) {
+      Alert.alert("Review mislukt", e.message ?? "Onbekende fout bij opslaan review");
+    } finally {
+      setReviewVisible(false);
+    }
   };
 
   useEffect(() => {
     if (!recipe_slug) return;
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Recipe details
-        const { data: recipeData, error: recipeError } = await supabase
-          .from("recipes")
-          .select(
-            "recipe_slug, name, style, batch_size_l, abv_target, ibu_target, srm_target, description, difficulty, rating, haze_level"
-          )
-          .eq("recipe_slug", recipe_slug)
-          .single();
-
-        if (recipeError) {
-          throw recipeError;
-        }
-
-        // Ingredients via function
-        const { data: ingredientData, error: ingredientError } =
-          await supabase.rpc("get_recipe_ingredients", {
-            _recipe_slug: recipe_slug,
-          });
-
-        if (ingredientError) {
-          throw ingredientError;
-        }
-
-        // fetch reviews for this recipe and compute average + count
-        const { data: reviewsData, error: reviewsError } = await supabase
-          .from("recipe_reviews")
-          .select("rating")
-          .eq("recipe_slug", recipe_slug);
-
-        if (reviewsError) throw reviewsError;
-
-        const count = (reviewsData || []).length;
-        const avg = count
-          ? (reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) /
-              count)
-          : null;
-
-        // Aggregated average rating (0-5) met twee decimalen precisie
-        const recipeWithRating = recipeData
-          ? { ...recipeData, rating: avg != null ? parseFloat(avg.toFixed(2)) : recipeData.rating }
-          : null;
-
-        setRecipe(recipeWithRating);
-        setIngredients((ingredientData || []) as IngredientRow[]);
-        setReviewCount(count);
-      } catch (e: any) {
-        setError(e.message ?? "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchRecipeBundle(recipe_slug);
   }, [recipe_slug]);
 
   const chips: { key: string; label: string }[] = [];
