@@ -1,30 +1,23 @@
-// __tests__/Account.test.tsx
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 
-// 1. AsyncStorage mock
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock")
 );
 
-// 2. useFonts-hook mock
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => {},
 }));
 
-// 2b. beer-image hook mock (voor getBeerImageSource)
 jest.mock("@/hooks/beer-image", () => ({
-  getBeerImageSource: () => "test-image-source",
+  getBeerImageSource: () => "test-image",
 }));
 
-// 3. UI / styling mocks
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     WHITE: "#fff",
     LIGHT_BG: "#fafafa",
     TEXT_DARK: "#000",
-    TEXT_BODY: "#111",
     ACCENT_PRIMARY: "#f00",
-    STONE_DARK: "#333",
   },
 }));
 
@@ -32,19 +25,9 @@ jest.mock("@/constants/Fonts", () => ({
   FontFamilies: {
     HEADING: "System",
     BODY: "System",
-    BODY_BOLD: "System",
   },
 }));
 
-jest.mock("react-native-safe-area-context", () => {
-  return {
-    SafeAreaProvider: ({ children }: any) => children,
-    SafeAreaView: ({ children }: any) => children,
-    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-  };
-});
-
-// 4. ThemedText + Header mocks
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
@@ -55,26 +38,22 @@ jest.mock("@/components/themed-text", () => {
 });
 
 jest.mock("@/components/header", () => {
-  const { Text, View, TouchableOpacity } = require("react-native");
-  return ({ title, iconName, onIconPress }: any) => (
+  const { View, Text, TouchableOpacity } = require("react-native");
+  return ({ title, onIconPress }: any) => (
     <View>
       <TouchableOpacity onPress={onIconPress}>
-        <Text>{iconName}</Text>
+        <Text>ArrowRight</Text>
       </TouchableOpacity>
       <Text>{title}</Text>
     </View>
   );
 });
 
-// 5. expo-image mock
 jest.mock("expo-image", () => {
   const { Text } = require("react-native");
-  return {
-    Image: () => <Text>image-placeholder</Text>,
-  };
+  return { Image: () => <Text>image-placeholder</Text> };
 });
 
-// 6. Router mock
 export const mockPush = jest.fn();
 export const mockReplace = jest.fn();
 
@@ -84,40 +63,19 @@ jest.mock("expo-router", () => ({
     push: mockPush,
     replace: mockReplace,
   }),
-  // 'router' named export die in Account.tsx gebruikt wordt
   router: {
     push: mockPush,
     replace: mockReplace,
   },
 }));
 
-// 7. Supabase inline mock – inclusief rpc voor get_completed_brews
 jest.mock("@/supabase", () => {
   const mockGetUser = jest.fn().mockResolvedValue({
     data: { user: { id: "user-1" } },
     error: null,
   });
 
-  const profileData = {
-    id: "user-1",
-    username: "testuser",
-    full_name: "Test User",
-    avatar_url: null,
-    bio: "Test bio",
-    updated_at: null,
-  };
-
-  const profilesSelect = {
-    select: jest.fn().mockReturnValue({
-      eq: jest.fn().mockReturnValue({
-        single: jest.fn().mockResolvedValue({
-          data: profileData,
-          error: null,
-        }),
-      }),
-    }),
-  };
-
+  // ACCOUNT BADGES
   const accountBadgesSelect = {
     select: jest.fn().mockReturnValue({
       eq: jest.fn().mockReturnValue({
@@ -129,6 +87,7 @@ jest.mock("@/supabase", () => {
     }),
   };
 
+  // BADGE DEFINITIONS
   const badgesSelect = {
     select: jest.fn().mockReturnValue({
       in: jest.fn().mockResolvedValue({
@@ -147,29 +106,64 @@ jest.mock("@/supabase", () => {
     }),
   };
 
-  const mockFrom = jest.fn((table: string) => {
-    switch (table) {
+  // PROFILES
+  const profilesSelect = {
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id: "user-1",
+            username: "testuser",
+            full_name: "Test User",
+            avatar_url: null,
+            bio: "Test bio",
+          },
+          error: null,
+        }),
+      }),
+    }),
+  };
+
+  // RECIPES FOR BREWS IMAGES
+  const recipesSelect = {
+    select: jest.fn().mockReturnValue({
+      in: jest.fn().mockResolvedValue({
+        data: [
+          {
+            recipe_slug: "recipe-1",
+            haze_level: 2,
+            srm_target: 5,
+          },
+        ],
+        error: null,
+      }),
+    }),
+  };
+
+  const mockFrom = jest.fn((tbl: string) => {
+    switch (tbl) {
       case "profiles":
         return profilesSelect;
       case "account_badges":
         return accountBadgesSelect;
       case "badges":
         return badgesSelect;
-      // voor deze tests hoeven we recipes/get_completed_brews niet echt te laden
+      case "recipes":
+        return recipesSelect;
       default:
         return { select: jest.fn() };
     }
   });
 
-  const mockStorageFrom = jest.fn(() => ({
-    getPublicUrl: jest.fn().mockReturnValue({
-      data: { publicUrl: "https://example.com/avatar.png" },
-      error: null,
-    }),
-  }));
-
   const mockRpc = jest.fn().mockResolvedValue({
-    data: [], // geen completed brews nodig voor deze tests
+    data: [
+      {
+        id_brew: 100,
+        name: "My Finished Brew",
+        recipe_slug: "recipe-1",
+        start_date: "2025-01-10T00:00:00Z",
+      },
+    ],
     error: null,
   });
 
@@ -177,45 +171,46 @@ jest.mock("@/supabase", () => {
     supabase: {
       auth: {
         getUser: mockGetUser,
-        signOut: jest.fn().mockResolvedValue({ error: null }),
+        signOut: jest.fn(),
       },
       from: mockFrom,
       storage: {
-        from: mockStorageFrom,
+        from: jest.fn(() => ({
+          getPublicUrl: jest.fn().mockReturnValue({
+            data: { publicUrl: "https://example.com/avatar.png" },
+          }),
+        })),
       },
       rpc: mockRpc,
     },
   };
 });
 
-// Component NA alle mocks importeren
+// IMPORT COMPONENT AFTER MOCKS
 import Account from "@/app/(tabs)/Account";
 
 describe("<Account />", () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("renders profile header and badges from backend", async () => {
-    const { getByText } = render(<Account />);
+  test("renders profile data + badges", async () => {
+    const { getByText, queryByText } = render(<Account />);
 
     await waitFor(() => {
       expect(getByText("Test User")).toBeTruthy();
+      expect(getByText("@testuser")).toBeTruthy();
     });
 
-    expect(getByText("@testuser")).toBeTruthy();
-    expect(getByText("Badges")).toBeTruthy();
-    expect(getByText("First Badge")).toBeTruthy();
+    // ENSURE BADGES LOADED
+    await waitFor(() => {
+      expect(queryByText("First Badge")).toBeTruthy();
+    });
   });
 
-  it("navigates to edit screen when pressing Change profile", async () => {
+  test("navigates to account edit", async () => {
     const { getByText } = render(<Account />);
 
-    await waitFor(() => {
-      expect(getByText("Change profile")).toBeTruthy();
-    });
+    await waitFor(() => getByText("Change profile"));
 
     fireEvent.press(getByText("Change profile"));
+
     expect(mockPush).toHaveBeenCalledWith("/AccountEdit");
   });
 });

@@ -303,7 +303,7 @@ export default function Account() {
     const completedBrewsCount = completedBrews.length;
 
     return (
-      <View
+      <ScrollView
         className="flex-1"
         style={{
           backgroundColor: BASE_COLORS.LIGHT_BG,
@@ -484,7 +484,7 @@ export default function Account() {
             <Text style={styles.buttonSecondaryText}>Sign off</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     );
   };
 
