@@ -1,7 +1,8 @@
 import React from "react";
-import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import HomePage from "../app/(tabs)/HomePage";
 import { NavigationContainer } from "@react-navigation/native";
-import { useRouter} from "expo-router";
+import { useRouter } from "expo-router";
 
 /* ---------------------------------------------
    MOCKS
@@ -45,10 +46,8 @@ jest.mock("../supabase", () => ({
         }),
       }),
     }),
-  };
-
-  return { supabase: supabaseMock };
-});
+  },
+}));
 
 // fonts mock
 jest.mock("@/hooks/use-fonts", () => ({
@@ -123,7 +122,7 @@ describe("<HomePage />", () => {
     expect(getByText("Popular recipes")).toBeTruthy();
   });
 
-  it("renders progress cards", async () => {
+  it("renders progress cards", () => {
     const { getByText } = renderNav(<HomePage />);
 
     expect(getByText("Hazy IPA")).toBeTruthy();
