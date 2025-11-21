@@ -80,7 +80,7 @@ export default function ShoppingCart() {
       const userId = user.id;
       console.log("userId:", userId);
 
-      // 2Fetch shopping cart items for this user
+      // Fetch shopping cart items for this user
       const { data: cartItems, error: cartError } = await supabase
         .from("shopping_cart")
         .select(`
@@ -100,7 +100,7 @@ export default function ShoppingCart() {
       // Fetch all store items
       const { data: storeItems, error: storeError } = await supabase
         .from("store_items")
-        .select("id_store_item, name, price");
+        .select("id_store_item, name, price, category_id");
 
       if (storeError) {
         console.error("Error fetching store items:", storeError.message);
@@ -133,7 +133,7 @@ export default function ShoppingCart() {
           const storeItem = (storeItems ?? []).find((s: StoreItem) => s.id_store_item === item.store_item_id);
           return {
             store_item_id: item.store_item_id,
-            image: exampleImages[item.category_id] || require("@/assets/images/Premiumkit.png"),
+            image: exampleImages[storeItem?.category_id] || require("@/assets/images/Premiumkit.png"),
             title: storeItem?.name || "Item",
             quantity: item.quantity,
             price: `€${storeItem?.price?.toFixed(2) || "0.00"}`,
