@@ -1,4 +1,4 @@
-import React from "react";
+
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import PaymentScreen from "../app/Payment";
 import { useRouter, useLocalSearchParams } from "expo-router";

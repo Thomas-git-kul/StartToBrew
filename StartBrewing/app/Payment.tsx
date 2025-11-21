@@ -1,5 +1,5 @@
 // Payment.tsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { View, ScrollView, Platform } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -61,6 +61,8 @@ const WebPaymentForm = ({
     currency: "EUR",
   }).format(amount / 100);
 
+  
+
   return (
     <View className="mt-4">
       <View className="bg-white rounded-lg border border-gray-200 p-4 min-h-[60px]">
@@ -80,7 +82,7 @@ const WebPaymentForm = ({
 
       <View className="flex-row items-center mt-4">
         <Ionicons name="lock-closed" size={16} color={BASE_COLORS.TEXT_DARK} />
-        <ThemedText type="smallText" style={{ marginLeft: 8 }}>
+        <ThemedText type="defaultText" style={{ marginLeft: 8 }}>
           Your payment information is processed securely.
         </ThemedText>
       </View>
@@ -187,7 +189,7 @@ export default function PaymentScreen() {
                   <ThemedText type="subTitle" className="mb-2">
                     Order Summary
                   </ThemedText>
-                  <ThemedText type="darkAccent">
+                  <ThemedText type="accentDark">
                     Total Amount:{" "}
                     {new Intl.NumberFormat("nl-BE", { style: "currency", currency: "EUR" }).format(amount / 100)}
                   </ThemedText>
