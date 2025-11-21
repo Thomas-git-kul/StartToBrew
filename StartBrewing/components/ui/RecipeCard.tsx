@@ -60,7 +60,7 @@ const BeerCard: React.FC<BeerCardProps> = ({
           backgroundColor: BASE_COLORS.WHITE,
           marginBlock: 3,
           marginInline: 2,
-          shadowColor: "BASE_COLORS.STONE950",
+          shadowColor: BASE_COLORS.STONE700,
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.07,
         }}
