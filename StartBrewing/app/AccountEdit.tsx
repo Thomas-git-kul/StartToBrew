@@ -16,7 +16,7 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "@/supabase";
 import { updateAvatar } from "@/supabase/storage/updateAvatar";
 import { Image } from "expo-image";
-import { router } from "expo-router";
+import { router, useRouter } from "expo-router";
 import Header from "@/components/header";
 
 type Profile = {
@@ -29,6 +29,7 @@ type Profile = {
 };
 
 export default function EditAccount() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -141,23 +142,21 @@ export default function EditAccount() {
   }, [userId]);
 
   const onSave = useCallback(async () => {
-    if (!userId) return;
-    setSaving(true);
+    // jouw bestaande save-logica
     const { error } = await supabase
       .from("profiles")
       .update({
-        username: username || null,
-        full_name: fullName || null,
-        bio: bio || null,
-        updated_at: new Date().toISOString(),
+        username,
+        full_name: fullName,
+        bio,
       })
       .eq("id", userId);
 
-    setSaving(false);
     if (error) Alert.alert("Opslaan mislukt", error.message);
     else Alert.alert("Opgeslagen", "Je profiel is bijgewerkt.");
+
     router.push("../Account");
-  }, [userId, username, fullName, bio]);
+  }, [router, userId, username, fullName, bio]);
 
   const onSignOut = useCallback(async () => {
     await supabase.auth.signOut();
