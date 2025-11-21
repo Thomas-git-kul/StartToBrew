@@ -13,7 +13,7 @@ import { FontFamilies } from "@/constants/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
-import { Star } from "lucide-react-native";
+import { Star, Heart, HeartPlus } from "lucide-react-native";
 import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
@@ -69,6 +69,12 @@ export default function SpecificRecipe() {
   const [reviewCount, setReviewCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [hasUserReviewed, setHasUserReviewed] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const handleToggleFavorite = () => {
+    setIsFavorite((prev) => !prev);
+    // Hier kun je eventueel een API-call doen om de favorite op te slaan
+  };
 
   // Check if current logged-in user already reviewed this recipe
   const checkUserReviewed = async (slugToCheck: string) => {
@@ -333,6 +339,23 @@ export default function SpecificRecipe() {
                 <ThemedText type="subTitle">Add Review</ThemedText>
               </TouchableOpacity>
             )}
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity
+              onPress={handleToggleFavorite}
+              accessibilityLabel={`favorite-${recipe?.name ?? "recipe"}`}
+              hitSlop={8}
+              style={{ marginLeft: 12 }}
+            >
+              {isFavorite ? (
+                <Heart
+                  size={24}
+                  stroke={BASE_COLORS.ACCENT_PRIMARY}
+                  fill={BASE_COLORS.ACCENT_PRIMARY}
+                />
+              ) : (
+                <HeartPlus size={24} stroke={BASE_COLORS.STONE300} />
+              )}
+            </TouchableOpacity>
           </View>
 
           {/* Specs chips */}
