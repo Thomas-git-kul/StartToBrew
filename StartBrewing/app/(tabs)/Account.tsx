@@ -16,6 +16,7 @@ import { supabase } from "@/supabase";
 import { Image } from "expo-image";
 import { router, useRouter } from "expo-router";
 import Header from "@/components/header";
+import { getBeerImageSource } from "@/hooks/beer-image";
 
 type Profile = {
   id: string;
@@ -33,7 +34,23 @@ type BadgeWithEarned = {
   description: string | null;
   category: string;
   icon_url: string | null;
-  earned_at: string; // uit account_badges.earned_at
+  earned_at: string;
+};
+
+type Brew = {
+  id_brew: number;
+  user_id: string;
+  name: string;
+  start_date: string | null;
+  status_id: number | null;
+  recipe_slug: string | null;
+  last_step_id: string | null;
+};
+
+type CompletedBrewWithImage = Brew & {
+  haze_level?: number | null;
+  srm_target?: number | null;
+  image?: any;
 };
 
 export default function Account() {
@@ -46,6 +63,11 @@ export default function Account() {
 
   const [badges, setBadges] = useState<BadgeWithEarned[]>([]);
   const [badgesLoading, setBadgesLoading] = useState(false);
+
+  const [completedBrews, setCompletedBrews] = useState<
+    CompletedBrewWithImage[]
+  >([]);
+  const [brewsLoading, setBrewsLoading] = useState(false);
 
   const initials = useMemo(() => {
     const src = fullName || username || "";
@@ -98,7 +120,6 @@ export default function Account() {
         url = pub.publicUrl;
       }
 
-      // simpele cache-buster
       setAvatarUrl(`${url}?v=${Date.now()}`);
     } else {
       setAvatarUrl(null);
@@ -110,7 +131,6 @@ export default function Account() {
   const fetchBadges = useCallback(async (accountId: string) => {
     setBadgesLoading(true);
 
-    // 1) haal de account_badges op voor deze user
     const { data: accountBadges, error: abErr } = await supabase
       .from("account_badges")
       .select("badge_id, earned_at")
@@ -133,7 +153,6 @@ export default function Account() {
       (row: { badge_id: any }) => row.badge_id
     );
 
-    // 2) haal de badge-definities op
     const { data: badgesData, error: bErr } = await supabase
       .from("badges")
       .select("id_badge, code, name, description, icon_url, category")
@@ -151,7 +170,6 @@ export default function Account() {
       return;
     }
 
-    // 3) merge earned_at in de badges
     const earnedById = new Map<number, string>();
     for (const row of accountBadges) {
       earnedById.set(row.badge_id, row.earned_at);
@@ -167,7 +185,6 @@ export default function Account() {
       earned_at: earnedById.get(b.id_badge) ?? "",
     }));
 
-    // sorteer optioneel op earned_at desc
     merged.sort((a, b) => {
       if (!a.earned_at || !b.earned_at) return 0;
       return new Date(b.earned_at).getTime() - new Date(a.earned_at).getTime();
@@ -177,16 +194,89 @@ export default function Account() {
     setBadgesLoading(false);
   }, []);
 
+  const fetchCompletedBrews = useCallback(async (accountId: string) => {
+    setBrewsLoading(true);
+
+    const { data, error } = await supabase.rpc("get_completed_brews", {
+      uid_input: accountId,
+    });
+
+    if (error || !data) {
+      console.error("Error fetching completed brews", error);
+      setCompletedBrews([]);
+      setBrewsLoading(false);
+      return;
+    }
+
+    const brews = data as Brew[];
+
+    if (!brews.length) {
+      setCompletedBrews([]);
+      setBrewsLoading(false);
+      return;
+    }
+
+    const slugs = brews
+      .map((b) => b.recipe_slug)
+      .filter((s): s is string => !!s);
+
+    const { data: recipesData, error: recipesError } = await supabase
+      .from("recipes")
+      .select("recipe_slug, haze_level, srm_target")
+      .in("recipe_slug", slugs);
+
+    if (recipesError) {
+      console.error("Error fetching recipes for brews", recipesError);
+      setCompletedBrews(
+        brews.map((b) => ({
+          ...b,
+          image: getBeerImageSource(null, null),
+        }))
+      );
+      setBrewsLoading(false);
+      return;
+    }
+
+    const recipeMap = new Map<
+      string,
+      {
+        recipe_slug: string;
+        haze_level: number | null;
+        srm_target: number | null;
+      }
+    >();
+
+    (recipesData || []).forEach((r: any) => {
+      recipeMap.set(r.recipe_slug, r);
+    });
+
+    const enriched: CompletedBrewWithImage[] = brews.map((b) => {
+      const recipe = b.recipe_slug ? recipeMap.get(b.recipe_slug) : undefined;
+      const haze = recipe?.haze_level ?? null;
+      const srm = recipe?.srm_target ?? null;
+
+      return {
+        ...b,
+        haze_level: haze,
+        srm_target: srm,
+        image: getBeerImageSource(haze, srm),
+      };
+    });
+
+    setCompletedBrews(enriched);
+    setBrewsLoading(false);
+  }, []);
+
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
 
-  // badges ophalen zodra we een userId hebben
   useEffect(() => {
     if (userId) {
       fetchBadges(userId);
+      fetchCompletedBrews(userId);
     }
-  }, [userId, fetchBadges]);
+  }, [userId, fetchBadges, fetchCompletedBrews]);
 
   const onSignOut = useCallback(async () => {
     await supabase.auth.signOut();
@@ -194,7 +284,7 @@ export default function Account() {
     router.replace("/Auth");
   }, []);
 
-  const Account = () => {
+  const AccountInner = () => {
     const router = useRouter();
 
     const onEditProfile = useCallback(() => {
@@ -210,6 +300,7 @@ export default function Account() {
     }
 
     const badgeCount = badges.length;
+    const completedBrewsCount = completedBrews.length;
 
     return (
       <View
@@ -272,8 +363,12 @@ export default function Account() {
 
           <View style={styles.infoCard}>
             <ThemedText style={styles.cardLabel}>Brews</ThemedText>
-            <ThemedText style={styles.cardValue}>0</ThemedText>
-            <ThemedText style={styles.cardHint}>Coming soon!</ThemedText>
+            <ThemedText style={styles.cardValue}>
+              {completedBrewsCount}
+            </ThemedText>
+            <ThemedText style={styles.cardHint}>
+              {completedBrewsCount === 1 ? "brew completed" : "brews completed"}
+            </ThemedText>
           </View>
         </View>
 
@@ -296,7 +391,6 @@ export default function Account() {
             >
               {badges.map((badge) => (
                 <View key={badge.id_badge} style={styles.badgeCard}>
-                  {/* Placeholder icon – later vervangen door echte badge icon_url */}
                   <View style={styles.badgeIconPlaceholder}>
                     <Text style={styles.badgeIconText}>★</Text>
                   </View>
@@ -318,6 +412,57 @@ export default function Account() {
                     </ThemedText>
                   )}
                 </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        {/* Completed brews */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Completed brews</ThemedText>
+
+          {brewsLoading ? (
+            <ActivityIndicator style={{ marginTop: 8 }} />
+          ) : completedBrewsCount === 0 ? (
+            <ThemedText style={styles.emptyText}>
+              You have not completed any brews yet.
+            </ThemedText>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginTop: 8 }}
+            >
+              {completedBrews.map((brew) => (
+                <TouchableOpacity
+                  key={brew.id_brew}
+                  style={styles.brewCard}
+                  activeOpacity={0.8}
+                  disabled={!brew.recipe_slug}
+                  onPress={() =>
+                    brew.recipe_slug &&
+                    router.push({
+                      pathname: "/SpecificRecipe",
+                      params: { recipe_slug: brew.recipe_slug },
+                    })
+                  }
+                >
+                  {brew.image && (
+                    <Image
+                      source={brew.image}
+                      style={styles.brewImage}
+                      contentFit="cover"
+                    />
+                  )}
+                  <ThemedText style={styles.brewName} numberOfLines={1}>
+                    {brew.name.trim()}
+                  </ThemedText>
+                  {brew.start_date && (
+                    <ThemedText style={styles.brewMeta}>
+                      {new Date(brew.start_date).toLocaleDateString()}
+                    </ThemedText>
+                  )}
+                </TouchableOpacity>
               ))}
             </ScrollView>
           )}
@@ -496,6 +641,33 @@ export default function Account() {
     },
     buttonText: { color: BASE_COLORS.WHITE, fontWeight: "bold" },
     buttonSecondaryText: { color: BASE_COLORS.TEXT_DARK, fontWeight: "bold" },
+    brewCard: {
+      width: 140,
+      marginRight: 12,
+      backgroundColor: BASE_COLORS.WHITE,
+      borderRadius: 10,
+      padding: 8,
+      borderWidth: 1,
+      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
+    },
+    brewImage: {
+      width: "100%",
+      height: 110,
+      borderRadius: 8,
+      marginBottom: 6,
+    },
+    brewName: {
+      fontSize: 14,
+      fontFamily: FontFamilies.HEADING,
+      color: BASE_COLORS.TEXT_DARK,
+      marginBottom: 2,
+    },
+    brewMeta: {
+      fontSize: 12,
+      color: BASE_COLORS.TEXT_DARK,
+      opacity: 0.8,
+    },
   });
-  return <Account />;
+
+  return <AccountInner />;
 }

@@ -1,5 +1,6 @@
 // __tests__/Account.test.tsx
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
+
 // 1. AsyncStorage mock
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock")
@@ -8,6 +9,11 @@ jest.mock("@react-native-async-storage/async-storage", () =>
 // 2. useFonts-hook mock
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => {},
+}));
+
+// 2b. beer-image hook mock (voor getBeerImageSource)
+jest.mock("@/hooks/beer-image", () => ({
+  getBeerImageSource: () => "test-image-source",
 }));
 
 // 3. UI / styling mocks
@@ -74,14 +80,18 @@ export const mockReplace = jest.fn();
 
 jest.mock("expo-router", () => ({
   __esModule: true,
-  // wat de component gebruikt
   useRouter: () => ({
     push: mockPush,
     replace: mockReplace,
   }),
+  // 'router' named export die in Account.tsx gebruikt wordt
+  router: {
+    push: mockPush,
+    replace: mockReplace,
+  },
 }));
 
-// 7. Supabase inline mock – alles binnen de factory, geen hoisting-issues
+// 7. Supabase inline mock – inclusief rpc voor get_completed_brews
 jest.mock("@/supabase", () => {
   const mockGetUser = jest.fn().mockResolvedValue({
     data: { user: { id: "user-1" } },
@@ -145,6 +155,7 @@ jest.mock("@/supabase", () => {
         return accountBadgesSelect;
       case "badges":
         return badgesSelect;
+      // voor deze tests hoeven we recipes/get_completed_brews niet echt te laden
       default:
         return { select: jest.fn() };
     }
@@ -157,6 +168,11 @@ jest.mock("@/supabase", () => {
     }),
   }));
 
+  const mockRpc = jest.fn().mockResolvedValue({
+    data: [], // geen completed brews nodig voor deze tests
+    error: null,
+  });
+
   return {
     supabase: {
       auth: {
@@ -167,6 +183,7 @@ jest.mock("@/supabase", () => {
       storage: {
         from: mockStorageFrom,
       },
+      rpc: mockRpc,
     },
   };
 });
