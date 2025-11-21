@@ -4,7 +4,7 @@ import Recipes from "@/app/(tabs)/Recipes";
 import { useRouter } from "expo-router";
 
 /* ------------------------------
-   MOCK DATA (uit recipes.csv)
+   MOCK DATA
 ------------------------------- */
 
 const recipesData = [
@@ -37,62 +37,59 @@ const recipesData = [
   },
 ];
 
-const createRecipesQuery = (listData = recipesData) => {
-  const query: any = {
-    order: () => ({
-      limit: async (count: number) => ({
-        data: listData.slice(0, count),
-        error: null,
-      }),
-    }),
-    then(onFulfilled: any, onRejected: any) {
-      return Promise.resolve({ data: listData, error: null }).then(
-        onFulfilled,
-        onRejected
-      );
-    },
-  };
-  return query;
-};
+const reviewData = [
+  { recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60", rating: 4 },
+  { recipe_slug: "americanipa-city-of-the-sun-ipa", rating: 3 },
+  { recipe_slug: "sessionipa-smash-session-pale-ale", rating: 5 },
+];
 
 /* ------------------------------
    MOCKS
 ------------------------------- */
 
-// Router
 const pushMock = jest.fn();
 jest.mock("expo-router", () => ({
   useRouter: jest.fn(),
 }));
 
-// Mock useFonts
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => true,
 }));
 
-// Supabase
 jest.mock("@/supabase", () => ({
   supabase: {
     from: (table: string) => {
-      if (table !== "recipes") {
+      if (table === "recipes") {
         return {
-          select: () => createRecipesQuery([]),
+          select: () =>
+            Promise.resolve({
+              data: recipesData,
+              error: null,
+            }),
+        };
+      }
+      if (table === "recipe_reviews") {
+        return {
+          select: () => ({
+            in: () =>
+              Promise.resolve({
+                data: reviewData,
+                error: null,
+              }),
+          }),
         };
       }
       return {
-        select: () => createRecipesQuery(recipesData),
+        select: () => Promise.resolve({ data: [], error: null }),
       };
     },
-    rpc: jest.fn(),
   },
 }));
 
-// Beer image
 jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
 }));
 
-// Header
 jest.mock("@/components/header", () => {
   const { View, Text } = require("react-native");
   return ({ title }: any) => (
@@ -102,17 +99,13 @@ jest.mock("@/components/header", () => {
   );
 });
 
-// ThemedText
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
-    ThemedText: ({ children, ...rest }: any) => (
-      <Text {...rest}>{children}</Text>
-    ),
+    ThemedText: ({ children }: any) => <Text>{children}</Text>,
   };
 });
 
-// Colors
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     LIGHT_BG: "#fafafa",
@@ -124,7 +117,6 @@ jest.mock("@/constants/Colors", () => ({
   },
 }));
 
-// Icons (lucide)
 jest.mock("lucide-react-native", () => {
   const { Text } = require("react-native");
   return {
@@ -133,7 +125,6 @@ jest.mock("lucide-react-native", () => {
   };
 });
 
-// BeerCard
 jest.mock("@/components/ui/RecipeCard", () => {
   const { View, Text, Pressable } = require("react-native");
   return ({ name, onToggleFavorite, onPress }: any) => (
@@ -151,17 +142,42 @@ jest.mock("@/components/ui/RecipeCard", () => {
   );
 });
 
+/* Required mock for Searchbar clear icon */
+jest.mock("react-native-paper", () => {
+  const actual = jest.requireActual("react-native-paper");
+  const { TextInput, View, Text } = require("react-native");
+  return {
+    ...actual,
+    Searchbar: ({ placeholder, value, onChangeText, onClearIconPress }: any) => (
+      <View>
+        <Text>{placeholder}</Text>
+        <TextInput
+          testID="search-input"
+          value={value}
+          onChangeText={onChangeText}
+        />
+        <Text onPress={onClearIconPress}>Clear</Text>
+      </View>
+    ),
+    ActivityIndicator: () => <Text>Loading...</Text>,
+  };
+});
+
+/* ------------------------------
+   TESTS
+------------------------------- */
+
 describe("Recipes screen", () => {
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
     pushMock.mockClear();
   });
 
-  it("rendered header, searchbar en beer cards uit Supabase mock", async () => {
-    const { findByText, findByPlaceholderText } = render(<Recipes />);
+  it("rendered header, searchbar en beer cards", async () => {
+    const { findByText, findByTestId } = render(<Recipes />);
 
     expect(await findByText("Recipes")).toBeTruthy();
-    expect(await findByPlaceholderText("Search")).toBeTruthy();
+    expect(await findByText("Search")).toBeTruthy();
 
     expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
     expect(await findByText("City of the Sun IPA")).toBeTruthy();
@@ -169,13 +185,11 @@ describe("Recipes screen", () => {
   });
 
   it("filtert beers op naam", async () => {
-    const { findByPlaceholderText, findByText, queryByText } = render(
-      <Recipes />
-    );
+    const { findByTestId, findByText, queryByText } = render(<Recipes />);
 
-    const searchInput = await findByPlaceholderText("Search");
-    // zorg dat data geladen is
     await findByText("City of the Sun IPA");
+
+    const searchInput = await findByTestId("search-input");
 
     fireEvent.changeText(searchInput, "City");
 
@@ -185,8 +199,9 @@ describe("Recipes screen", () => {
   });
 
   it("reset search toont weer alle beers", async () => {
-    const { findByPlaceholderText, findByText } = render(<Recipes />);
-    const searchInput = await findByPlaceholderText("Search");
+    const { findByTestId, findByText } = render(<Recipes />);
+
+    const searchInput = await findByTestId("search-input");
 
     await findByText("City of the Sun IPA");
 
@@ -220,6 +235,7 @@ describe("Recipes screen", () => {
     const favBtn = await findByLabelText(
       "favorite-Den Ballaste Point Sculpin IPA 60"
     );
+
     fireEvent.press(favBtn);
     fireEvent.press(favBtn);
 

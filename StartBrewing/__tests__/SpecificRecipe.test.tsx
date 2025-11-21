@@ -26,7 +26,7 @@ const recipeData = {
   description:
     "Den Ballaste Point Sculpin IPA 60 is a classic American IPA voor hopliefhebbers.",
   difficulty: 1,
-  rating: null, // → valt terug op 4.8 / 5 in de component
+  rating: null, // geen rating beschikbaar (valt nu terug op 0.0 / 5)
   haze_level: 1,
 };
 
@@ -193,9 +193,15 @@ jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
 }));
 
-// Supabase
 jest.mock("@/supabase", () => ({
   supabase: {
+    auth: {
+      getSession: async () => ({
+        data: { session: null },
+        error: null,
+      }),
+    },
+
     from: (table: string) => {
       if (table === "recipes") {
         return {
@@ -211,6 +217,7 @@ jest.mock("@/supabase", () => ({
           }),
         };
       }
+
       return {
         select: () => ({
           eq: () => ({
@@ -219,6 +226,7 @@ jest.mock("@/supabase", () => ({
         }),
       };
     },
+
     rpc: async (fn: string, args: any) => {
       if (
         fn === "get_recipe_ingredients" &&
@@ -256,12 +264,6 @@ describe("<SpecificRecipe />", () => {
     expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
   });
 
-  it("toont fallback rating 4.8 / 5 en review count", async () => {
-    const { findByText } = renderWithNavigation(<SpecificRecipe />);
-    expect(await findByText("4.8 / 5")).toBeTruthy();
-    expect(await findByText("(265 reviews)")).toBeTruthy();
-  });
-
   it("toont Start Brewing knop", async () => {
     const { findByText } = renderWithNavigation(<SpecificRecipe />);
     expect(await findByText("Start Brewing")).toBeTruthy();
@@ -275,7 +277,7 @@ describe("<SpecificRecipe />", () => {
   });
 
   it("opent review modal en laat sterren klikken", async () => {
-    const { findByText, queryByText, findAllByTestId } = renderWithNavigation(
+    const { findByText, findAllByTestId, queryByText } = renderWithNavigation(
       <SpecificRecipe />
     );
 
@@ -285,12 +287,14 @@ describe("<SpecificRecipe />", () => {
     const addReviewBtn = await findByText("Add Review");
     fireEvent.press(addReviewBtn);
 
-    expect(await findByText("Rate this recipe")).toBeTruthy();
+    // Wait for modal to appear
+    const modalTitle = await findByText("Rate this recipe");
+    expect(modalTitle).toBeTruthy();
 
     const stars = await findAllByTestId(/star-/);
     fireEvent.press(stars[2]);
 
-    // We testen hier alleen dat het niet crasht en dat modal bestaat
+    // Modal should still be present after clicking a star (until async closes it)
     expect(queryByText("Rate this recipe")).not.toBeNull();
   });
 

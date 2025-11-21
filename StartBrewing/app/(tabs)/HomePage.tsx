@@ -35,25 +35,65 @@ export default function HomePage() {
         setLoading(true);
         setError(null);
 
-        const { data, error } = await supabase
+        // 1) load recipes (we need at least the basic fields)
+        const { data: recipesData, error: recipesError } = await supabase
           .from("recipes")
           .select(
-            "recipe_slug, name, description, rating, style, haze_level, srm_target"
-          )
-          .order("rating", { ascending: false })
-          .limit(5);
+            "recipe_slug, name, description, haze_level, srm_target, style"
+          );
 
-        if (error) throw error;
+        if (recipesError) throw recipesError;
 
-        const mapped: Beer[] = (data || []).map((r: any) => ({
-          recipe_slug: r.recipe_slug,
-          name: r.name,
-          rating: r.rating ?? 0,
-          reviews: 0, // later: count(recipe_reviews)
-          image: getBeerImageSource(r.haze_level, r.srm_target),
-          description: r.description ?? null,
-          style: r.style ?? null,
-        }));
+        const slugs = (recipesData || []).map((r: any) => r.recipe_slug);
+
+        // 2) load all reviews for these recipes and aggregate in client
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from("recipe_reviews")
+          .select("recipe_slug, rating")
+          .in("recipe_slug", slugs.length ? slugs : [""]);
+
+        if (reviewsError) throw reviewsError;
+
+        // aggregate by recipe_slug
+        const agg: Record<
+          string,
+          { count: number; avg: number }
+        > = {};
+        (reviewsData || []).forEach((r: any) => {
+          const slug = r.recipe_slug;
+          if (!agg[slug]) agg[slug] = { count: 0, avg: 0 };
+          agg[slug].count += 1;
+          agg[slug].avg += (r.rating ?? 0);
+        });
+        Object.keys(agg).forEach((k) => {
+          agg[k].avg = agg[k].count ? agg[k].avg / agg[k].count : 0;
+        });
+
+        // map recipes and attach aggregated ratings/counts
+        const mappedAll: Beer[] = (recipesData || []).map((r: any) => {
+          const a = agg[r.recipe_slug];
+          const avgRating = a ? a.avg : r.rating ?? 0;
+          // ensure rating on 0-5 scale
+          // behoud twee decimalen precisie voor we tonen
+          const rating = parseFloat(avgRating.toFixed(2));
+          return {
+            recipe_slug: r.recipe_slug,
+            name: r.name,
+            rating,
+            reviews: a ? a.count : 0,
+            image: getBeerImageSource(r.haze_level, r.srm_target),
+            description: r.description ?? null,
+            style: r.style ?? null,
+          };
+        });
+
+        // sort by rating desc, then reviews desc and take top 5
+        const mapped = mappedAll
+          .sort((a, b) => {
+            if (b.rating !== a.rating) return b.rating - a.rating;
+            return b.reviews - a.reviews;
+          })
+          .slice(0, 5);
 
         setBeers(mapped);
       } catch (e: any) {
