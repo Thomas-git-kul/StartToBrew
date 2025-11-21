@@ -126,7 +126,7 @@ const BeerCard: React.FC<BeerCardProps> = ({
           </View>
 
           {(style ? style.split(",") : ["Unknown Style"]).map((label, index) => (
-          <View>
+          <View key={index}>
             <Chip
               key={index}
               mode="flat"
