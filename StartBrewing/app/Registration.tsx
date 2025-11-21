@@ -29,6 +29,7 @@ export default function Registration() {
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emailInUseError, setEmailInUseError] = useState(false);
+  const [usernameInUseError, setUsernameInUseError] = useState(false);
 
   async function signUpWithEmail() {
     if (!agree) {
@@ -51,9 +52,11 @@ export default function Registration() {
       return;
     }
 
-    // Check if email already exists in profiles
+    // Check if email or username already exists in profiles
     setLoading(true);
     setEmailInUseError(false);
+    setUsernameInUseError(false);
+    // Check email
     const { data: existingEmail, error: emailError } = await supabase
       .from("profiles")
       .select("id")
@@ -69,6 +72,25 @@ export default function Registration() {
     if (existingEmail) {
       setLoading(false);
       setEmailInUseError(true);
+      return;
+    }
+
+    // Check username
+    const { data: existingUsername, error: usernameError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .single();
+
+    if (usernameError && usernameError.code !== 'PGRST116') {
+      setLoading(false);
+      Alert.alert("Error checking username: " + usernameError.message);
+      return;
+    }
+
+    if (existingUsername) {
+      setLoading(false);
+      setUsernameInUseError(true);
       return;
     }
 
@@ -222,9 +244,14 @@ export default function Registration() {
         </ThemedText>
         <TextInput
           value={username}
-          onChangeText={setUsername}
+          onChangeText={text => { setUsername(text); setUsernameInUseError(false); }}
           label="Username"
         />
+        {usernameInUseError && (
+          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
+            This username is already in use
+          </ThemedText>
+        )}
         <TextInput
           value={password}
           onChangeText={setPassword}
