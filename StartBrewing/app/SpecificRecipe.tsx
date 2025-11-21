@@ -161,6 +161,7 @@ export default function SpecificRecipe() {
       if (existingError) throw existingError;
       if (existingReview) {
         Alert.alert("Review bestaat al", "Je hebt dit recept al beoordeeld.");
+        setHasUserReviewed(true); // direct UI update
         setReviewVisible(false);
         return;
       }
@@ -200,6 +201,9 @@ export default function SpecificRecipe() {
 
       // Refetch local bundle voor UI
       await fetchRecipeBundle(recipe_slug);
+      // Markeer dat user nu gereviewd heeft en dubbelcheck
+      setHasUserReviewed(true);
+      checkUserReviewed(recipe_slug);
     } catch (e: any) {
       Alert.alert("Review mislukt", e.message ?? "Onbekende fout bij opslaan review");
     } finally {
