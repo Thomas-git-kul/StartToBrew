@@ -112,8 +112,10 @@ export default function HomePage() {
   return (
     <View className="flex-1">
       <Header title="StartToBrew" />
-
-      <ScrollView style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+      >
         {/* In progress section voorlopig statisch */}
         <ThemedText type="title">In progress</ThemedText>
         <View>
@@ -138,7 +140,10 @@ export default function HomePage() {
 
         {loading ? (
           <View className="items-center justify-center my-4">
-            <ActivityIndicator animating size="small" />
+            <ActivityIndicator 
+              animating size="small" 
+              color={BASE_COLORS.ACCENT_PRIMARY}
+            />
             <ThemedText type="defaultText" className="mt-2">
               Loading recipes...
             </ThemedText>
