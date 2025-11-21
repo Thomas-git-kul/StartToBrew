@@ -1,115 +1,166 @@
-import { useState, useEffect } from "react";
-import { ScrollView, View, ActivityIndicator } from "react-native";
-import { FAB } from "react-native-paper";
-import { useRouter } from "expo-router"; 
+import React, { useEffect, useState } from "react";
+import { ScrollView, View } from "react-native";
+import { FAB, ActivityIndicator } from "react-native-paper";
+import { useRouter } from "expo-router";
 import { useFonts } from "@/hooks/use-fonts";
-import BeerCard from '@/components/ui/RecipeCard';
-import Header from '@/components/header';
+import BeerCard from "@/components/ui/RecipeCard";
+import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
-import { supabase } from "../../supabase";
+import { supabase } from "@/supabase";
+import { getBeerImageSource } from "@/hooks/beer-image";
 
 interface Beer {
-  recipe_slug?: string;
+  recipe_slug: string;
   name: string;
   rating: number;
   reviews: number;
-  image: any;
-  description: string;
+  image: any; // React Native image source
+  description: string | null;
+  style: string | null;
 }
 
 export default function HomePage() {
   useFonts();
-
   const router = useRouter();
   const [beers, setBeers] = useState<Beer[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // names to show in the popular section (in this order)
-  // We'll fetch the top-rated recipes from the DB instead of a hardcoded list
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
+    const fetchPopularRecipes = async () => {
       try {
-        // fetch top 5 recipes by rating (exclude null ratings)
-        const { data, error } = await supabase
+        setLoading(true);
+        setError(null);
+
+        // 1) load recipes (we need at least the basic fields)
+        const { data: recipesData, error: recipesError } = await supabase
           .from("recipes")
-          .select("recipe_slug,name,description,rating,review_count")
-          .not('rating', 'is', null)
-          .order('rating', { ascending: false, nulls: 'last' })
-          .order('review_count', { ascending: false, nulls: 'last' })
-          .limit(5);
+          .select(
+            "recipe_slug, name, description, haze_level, srm_target, style"
+          );
 
-        if (error) {
-          console.warn("Supabase recipes(fetch) error:", error.message);
-          if (mounted) setBeers([]);
-          return;
-        }
+        if (recipesError) throw recipesError;
 
-        const mapped: Beer[] = (data ?? []).map((row: any) => {
-          const raw = row?.rating;
-          let num = 0;
-          if (raw !== undefined && raw !== null) {
-            num = Number(raw);
-            if (Number.isNaN(num)) num = parseFloat(String(raw)) || 0;
-          }
-          // clamp between 0 and 5
-          num = Math.min(5, Math.max(0, num));
-          const ratingRounded = Number(num.toFixed(2));
+        const slugs = (recipesData || []).map((r: any) => r.recipe_slug);
 
+        // 2) load all reviews for these recipes and aggregate in client
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from("recipe_reviews")
+          .select("recipe_slug, rating")
+          .in("recipe_slug", slugs.length ? slugs : [""]);
+
+        if (reviewsError) throw reviewsError;
+
+        // aggregate by recipe_slug
+        const agg: Record<
+          string,
+          { count: number; avg: number }
+        > = {};
+        (reviewsData || []).forEach((r: any) => {
+          const slug = r.recipe_slug;
+          if (!agg[slug]) agg[slug] = { count: 0, avg: 0 };
+          agg[slug].count += 1;
+          agg[slug].avg += (r.rating ?? 0);
+        });
+        Object.keys(agg).forEach((k) => {
+          agg[k].avg = agg[k].count ? agg[k].avg / agg[k].count : 0;
+        });
+
+        // map recipes and attach aggregated ratings/counts
+        const mappedAll: Beer[] = (recipesData || []).map((r: any) => {
+          const a = agg[r.recipe_slug];
+          const avgRating = a ? a.avg : r.rating ?? 0;
+          // ensure rating on 0-5 scale
+          // behoud twee decimalen precisie voor we tonen
+          const rating = parseFloat(avgRating.toFixed(2));
           return {
-            recipe_slug: row.recipe_slug ?? undefined,
-            name: row.name ?? "Untitled Recipe",
-            rating: ratingRounded,
-            reviews: typeof row.review_count === 'number' ? row.review_count : Number(row.review_count ?? 0),
-            image: require("@/assets/images/default-beer.png"),
-            description: row.description ?? "",
+            recipe_slug: r.recipe_slug,
+            name: r.name,
+            rating,
+            reviews: a ? a.count : 0,
+            image: getBeerImageSource(r.haze_level, r.srm_target),
+            description: r.description ?? null,
+            style: r.style ?? null,
           };
         });
 
-        if (mounted) setBeers(mapped);
+        // sort by rating desc, then reviews desc and take top 5
+        const mapped = mappedAll
+          .sort((a, b) => {
+            if (b.rating !== a.rating) return b.rating - a.rating;
+            return b.reviews - a.reviews;
+          })
+          .slice(0, 5);
+
+        setBeers(mapped);
       } catch (e: any) {
-        console.warn("Supabase fetch exception:", e?.message ?? e);
+        setError(
+          e.message ??
+            "Er ging iets mis bij het laden van de populaire recepten."
+        );
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
     };
 
-    load();
-    return () => {
-      mounted = false;
-    };
+    fetchPopularRecipes();
   }, []);
 
   return (
     <View className="flex-1">
-      <Header
-        title="StartToBrew"
-      />
+      <Header title="StartToBrew" />
 
-      <ScrollView style={{backgroundColor: BASE_COLORS.LIGHT_BG}}>
+      <ScrollView style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+        {/* In progress section voorlopig statisch */}
         <ThemedText type="title">In progress</ThemedText>
         <View>
-          <ProgressCard title="Hazy IPA" progress={0.3} onPress={() => router.push("/progress")}/>
-          <ProgressCard title="Belgian Tripel" progress={0.65} onPress={() => router.push("/progress")}/>
-          <ProgressCard title="American Pale Ale" progress={0.85} onPress={() => router.push("/progress")}/>
+          <ProgressCard
+            title="Hazy IPA"
+            progress={0.3}
+            onPress={() => router.push("/progress")}
+          />
+          <ProgressCard
+            title="Belgian Tripel"
+            progress={0.65}
+            onPress={() => router.push("/progress")}
+          />
+          <ProgressCard
+            title="American Pale Ale"
+            progress={0.85}
+            onPress={() => router.push("/progress")}
+          />
         </View>
 
         <ThemedText type="title">Popular recipes</ThemedText>
+
         {loading ? (
-          <View style={{ height: 200, justifyContent: "center", alignItems: "center" }}>
-            <ActivityIndicator />
+          <View className="items-center justify-center my-4">
+            <ActivityIndicator animating size="small" />
+            <ThemedText type="defaultText" className="mt-2">
+              Loading recipes...
+            </ThemedText>
+          </View>
+        ) : error ? (
+          <View className="items-center justify-center my-4 px-6">
+            <ThemedText type="defaultText" className="text-center">
+              {error}
+            </ThemedText>
           </View>
         ) : (
           <View>
-            {beers.map((beer, idx) => (
+            {beers.map((beer) => (
               <BeerCard
-                key={idx}
+                key={beer.recipe_slug}
                 {...beer}
-                onPress={() => router.push(({ pathname: "/SpecificRecipe", params: { slug: beer.recipe_slug } } as any))}
+                onPress={() =>
+                  router.push({
+                    pathname: "/SpecificRecipe",
+                    params: { recipe_slug: beer.recipe_slug },
+                  })
+                }
               />
             ))}
           </View>
@@ -118,22 +169,20 @@ export default function HomePage() {
 
       {/* Floating Action Button */}
       <FAB
-        icon={(props) => (
-          <Plus size={props.size} color={props.color} />
-        )}
+        icon={(props) => <Plus size={props.size} color={props.color} />}
         testID="fab"
         style={{
-          position: 'absolute',
+          position: "absolute",
           right: 10,
           bottom: 25,
           backgroundColor: BASE_COLORS.TEXT_DARK,
-          borderRadius: 20
+          borderRadius: 20,
         }}
         color={BASE_COLORS.LIGHT_BG}
-        onPress={() => router.push('/Recipes')}
+        onPress={() => router.push("/Recipes")}
         mode="elevated"
         size="medium"
       />
     </View>
   );
-};
+}
