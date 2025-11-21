@@ -17,7 +17,7 @@ interface Beer {
   name: string;
   rating: number;
   reviews: number;
-  image: any; // React Native image source
+  image: any;
   description: string | null;
   style: string | null;
 }
