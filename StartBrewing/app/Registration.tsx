@@ -28,7 +28,7 @@ export default function Registration() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
-  // const [submitChecked, setSubmitChecked] = useState(false);
+  const [emailInUseError, setEmailInUseError] = useState(false);
 
   async function signUpWithEmail() {
     if (!agree) {
@@ -51,9 +51,28 @@ export default function Registration() {
       return;
     }
 
-    const birthdate = `${year}-${month}-${day}`; // YYYY-MM-DD, Postgres kan dit parsen
-
+    // Check if email already exists in profiles
     setLoading(true);
+    setEmailInUseError(false);
+    const { data: existingEmail, error: emailError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("mail", email)
+      .single();
+
+    if (emailError && emailError.code !== 'PGRST116') { // PGRST116 = no rows found
+      setLoading(false);
+      Alert.alert("Error checking email: " + emailError.message);
+      return;
+    }
+
+    if (existingEmail) {
+      setLoading(false);
+      setEmailInUseError(true);
+      return;
+    }
+
+    const birthdate = `${year}-${month}-${day}`; // YYYY-MM-DD, Postgres kan dit parsen
 
     // 1) User in auth.users
     const { data, error } = await supabase.auth.signUp({
@@ -135,13 +154,6 @@ export default function Registration() {
       >
         <ThemedText type="subTitle">Full Name</ThemedText>
         <View className="flex-row gap-3 w-full">
-          <View className="flex-1">
-            <TextInput
-              value={lastname}
-              onChangeText={setLastname}
-              label="Lastname"
-            />
-          </View>
           <View style={{ width: "50%" }}>
             <View className="flex-1">
               <TextInput
@@ -150,6 +162,13 @@ export default function Registration() {
                 label="Firstname"
               />
             </View>
+          </View>
+          <View className="flex-1">
+            <TextInput
+              value={lastname}
+              onChangeText={setLastname}
+              label="Lastname"
+            />
           </View>
         </View>
 
@@ -186,10 +205,15 @@ export default function Registration() {
         <ThemedText type="subTitle" className="mt-6">
           Contact information
         </ThemedText>
-        <TextInput value={email} onChangeText={setEmail} label="Email" />
+        <TextInput value={email} onChangeText={text => { setEmail(text); setEmailInUseError(false); }} label="Email" />
         {email.length > 0 && (!/^\S+@\S+\.\S+$/.test(email)) && (
           <ThemedText style={{ color: 'red', marginBottom: 8 }}>
             Invalid email format
+          </ThemedText>
+        )}
+        {emailInUseError && (
+          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
+            This email is already in use
           </ThemedText>
         )}
 
@@ -207,6 +231,21 @@ export default function Registration() {
           label="Password"
           secureTextEntry
         />
+        {password.length > 0 && password.length < 6 && (
+          <ThemedText style={{ color: 'red', marginBottom: 4 }}>
+            Password must be at least 6 characters
+          </ThemedText>
+        )}
+        {password.length > 0 && !/[A-Z]/.test(password) && (
+          <ThemedText style={{ color: 'red', marginBottom: 4 }}>
+            Password must contain at least one uppercase letter
+          </ThemedText>
+        )}
+        {password.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
+          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
+            Password must contain at least one special character
+          </ThemedText>
+        )}
         <TextInput
           value={confirmPassword}
           onChangeText={setConfirmPassword}
@@ -251,7 +290,10 @@ export default function Registration() {
               !/^([0-2][0-9]|3[01])$/.test(day) ||
               !/^(0[1-9]|1[0-2])$/.test(month) ||
               !/^\d{4}$/.test(year) ||
-              !/^\S+@\S+\.\S+$/.test(email)
+              !/^\S+@\S+\.\S+$/.test(email) ||
+              password.length < 6 ||
+              !/[A-Z]/.test(password) ||
+              !/[!@#$%^&*(),.?":{}|<>]/.test(password)
             }
             style={{
               backgroundColor:
