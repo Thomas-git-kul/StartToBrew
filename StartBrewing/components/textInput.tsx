@@ -17,6 +17,7 @@ interface textInputProps {
   numberOfLines?: number;
   keyboardType?: "default" | "email-address" | "numeric" | "phone-pad";
   maxLength?: number;
+  style?: object;
 }
 
 export default function CustomTextInput({
@@ -28,6 +29,7 @@ export default function CustomTextInput({
   numberOfLines,
   keyboardType = "default",
   maxLength,
+  style,
 }: textInputProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState(false);

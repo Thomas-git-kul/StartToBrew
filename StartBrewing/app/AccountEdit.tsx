@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
 import TextInput from "@/components/textInput";
+import ErrorChip from "@/components/errorChip";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -193,8 +194,10 @@ export default function EditAccount() {
           password: currentPassword,
         });
         if (signInError) {
-          Alert.alert("Error", `Current password incorrect: ${signInError.message}`);
+          setCurrentPasswordError("Current password incorrect");
           return;
+        } else {
+          setCurrentPasswordError("");
         }
         if (!signInData.session) {
           Alert.alert("Error", "Unaible to obtain a valid session for password change.");
@@ -248,7 +251,6 @@ export default function EditAccount() {
       </SafeAreaView>
     );
   }
-
   
   const hasError = Boolean(
     ((passwordError && !passwordError.includes('New password cannot be the same as your current password')) ||
@@ -350,7 +352,9 @@ export default function EditAccount() {
           secureTextEntry
         />
         {currentPasswordError ? (
-          <ThemedText style={{ color: 'red', marginBottom: 8 }}>{currentPasswordError}</ThemedText>
+          <View className="mb-5">
+            <ErrorChip text="Current password incorrect" />
+          </View>
         ) : null}
         <TextInput
           placeholder="New Password"
@@ -358,14 +362,18 @@ export default function EditAccount() {
           value={newPassword}
           secureTextEntry
         />
-        {newPassword.length > 0 && newPassword.length < 6 && (
-          <ThemedText style={{ color: 'red', marginBottom: 4 }}>Minimaal 6 tekens</ThemedText>
-        )}
-        {newPassword.length > 0 && !/[A-Z]/.test(newPassword) && (
-          <ThemedText style={{ color: 'red', marginBottom: 4 }}>Minimaal 1 hoofdletter</ThemedText>
-        )}
-        {newPassword.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) && (
-          <ThemedText style={{ color: 'red', marginBottom: 8 }}>Minimaal 1 speciaal teken</ThemedText>
+        {newPassword.length > 0 && (newPassword.length < 6 || !/[A-Z]/.test(newPassword) || !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) && (
+          <View className="mb-5">
+            {newPassword.length > 0 && newPassword.length < 6 && (
+              <ErrorChip text="Enter at least 6 characters" />
+            )}
+            {newPassword.length > 0 && !/[A-Z]/.test(newPassword) && (
+              <ErrorChip text="Enter at least 1 capital letter" />
+            )}
+            {newPassword.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) && (
+              <ErrorChip text="Enter at least 1 special character" />
+            )}
+          </View>
         )}
         <TextInput
           placeholder="Confirm New Password"
@@ -374,10 +382,14 @@ export default function EditAccount() {
           secureTextEntry
         />
         {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
-          <ThemedText style={{ color: 'red', marginBottom: 8 }}>Wachtwoorden komen niet overeen</ThemedText>
+          <View className="mb-5">
+            <ErrorChip text="Passwords don't match"/>
+          </View>
         )}
         {passwordError ? (
-          <ThemedText style={{ color: 'red', marginBottom: 8 }}>{passwordError}</ThemedText>
+          <View className="mb-5">
+            <ErrorChip text={passwordError}/>
+          </View>
         ) : null}
 
         <View
