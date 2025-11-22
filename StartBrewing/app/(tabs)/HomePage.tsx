@@ -7,7 +7,7 @@ import BeerCard from "@/components/ui/RecipeCard";
 import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
-import { Plus } from "lucide-react-native";
+import { Cpu, Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
@@ -21,6 +21,18 @@ interface Beer {
   description: string | null;
   style: string | null;
 }
+interface BrewRow {
+  id_brew: number;
+  name: string;
+  recipe_slug: string | null;
+}
+
+interface InProgressBrew {
+  id: number;
+  name: string;
+  progress: number;
+}
+
 
 export default function HomePage() {
   useFonts();
@@ -29,7 +41,10 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [inProgress, setInProgress] = useState<InProgressBrew[]>([]);
+
   useEffect(() => {
+    let mounted = true;
     const fetchPopularRecipes = async () => {
       try {
         setLoading(true);
@@ -106,6 +121,78 @@ export default function HomePage() {
       }
     };
 
+    const loadProgress = async () => {
+    setLoading(true);
+
+    try {
+      // 1️⃣ Haal user info op
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        if (mounted) {
+          setInProgress([]);
+          setBeers([]);
+        }
+        return;
+      }
+
+      // 2️⃣ Haal in-progress brews op
+      const { data: brews, error: brewsError } = await supabase
+        .from("brews")
+        .select("id_brew, name, recipe_slug")
+        .eq("user_id", user.id) 
+        .in ("status_id", [1,2]) as { data: BrewRow[] | null; error: any };
+
+      if (brewsError) {
+        console.warn("Failed to load brews:", brewsError.message);
+      }
+
+      interface PhaseRow {
+        phase_id: string;
+      }
+
+      const inProgressResult = brews?.length
+        ? await Promise.all(
+            brews.map(async (brew) => {
+              const { data: phases } = await supabase
+                .from("phases")
+                .select("phase_id")
+                .eq("recipe_slug", brew.recipe_slug) as {data: PhaseRow[] | null};
+
+              const phaseIds = phases?.map(p => p.phase_id) ?? [];
+
+              const { data: totalSteps } = await supabase
+                .from("steps")
+                .select("step_id")
+                .in("phase_id", phaseIds);
+
+              const { data: completedSteps } = await supabase
+                .from("brew_steps")
+                .select("step_id")
+                .eq("id_brew", brew.id_brew)
+                .eq("status", "completed");
+
+              const progress =
+                totalSteps && completedSteps
+                  ? completedSteps.length / totalSteps.length
+                  : 0;
+
+              return { id: brew.id_brew, name: brew.name, progress };
+            })
+          )
+        : [];
+
+      if (mounted) {
+        const sortedResult = inProgressResult.sort((a, b) => a.progress - b.progress);
+        setInProgress(sortedResult);
+      }
+    } catch (e: any) {
+      console.warn("Failed to load homepage data:", e?.message ?? e);
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  };
+
+    loadProgress();
     fetchPopularRecipes();
   }, []);
 
@@ -116,24 +203,22 @@ export default function HomePage() {
         showsVerticalScrollIndicator={false}
         style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
       >
-        {/* In progress section voorlopig statisch */}
+        {/* In progress section */}
         <ThemedText type="title">In progress</ThemedText>
         <View>
-          <ProgressCard
-            title="Hazy IPA"
-            progress={0.3}
-            onPress={() => router.push("/progress")}
-          />
-          <ProgressCard
-            title="Belgian Tripel"
-            progress={0.65}
-            onPress={() => router.push("/progress")}
-          />
-          <ProgressCard
-            title="American Pale Ale"
-            progress={0.85}
-            onPress={() => router.push("/progress")}
-          />
+          {inProgress.length === 0 ? (
+              <ThemedText>No brews in progress. Start a new recipe!</ThemedText>
+            ) : (
+              inProgress.map((brew) => (
+                <ProgressCard
+                  key={brew.id}
+                  title={brew.name}
+                  progress={brew.progress}
+                  onPress={() => router.push({ pathname: "/progress", params: { id: brew.id } })}
+                />
+              ))
+            )}
+
         </View>
 
         <ThemedText type="title">Popular recipes</ThemedText>

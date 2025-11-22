@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`<Progress /> snapshot 1`] = `
+<RNCSafeAreaView
+  className="flex-1 justify-center items-center"
+  edges={
+    {
+      "bottom": "additive",
+      "left": "additive",
+      "right": "additive",
+      "top": "additive",
+    }
+  }
+>
+  <ActivityIndicator
+    size="large"
+    testID="loading-indicator"
+  />
+</RNCSafeAreaView>
+`;
