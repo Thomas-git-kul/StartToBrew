@@ -244,6 +244,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
               onFocus={[Function]}
               onLayout={[Function]}
               placeholderTextColor="transparent"
+              secureTextEntry={false}
               selectionColor="#B45309"
               style={
                 [
@@ -499,6 +500,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
               onFocus={[Function]}
               onLayout={[Function]}
               placeholderTextColor="transparent"
+              secureTextEntry={false}
               selectionColor="#B45309"
               style={
                 [
@@ -757,6 +759,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
                 onFocus={[Function]}
                 onLayout={[Function]}
                 placeholderTextColor="transparent"
+                secureTextEntry={false}
                 selectionColor="#B45309"
                 style={
                   [
@@ -1015,6 +1018,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
                   onFocus={[Function]}
                   onLayout={[Function]}
                   placeholderTextColor="transparent"
+                  secureTextEntry={false}
                   selectionColor="#B45309"
                   style={
                     [

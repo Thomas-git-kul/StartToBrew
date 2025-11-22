@@ -1,19 +1,13 @@
 import { useState, useEffect } from "react";
-import { View, Image, ScrollView, TouchableOpacity } from "react-native";
-import {
-  FAB,
-  Modal,
-  Portal,
-  Chip,
-  ActivityIndicator,
-} from "react-native-paper";
+import { View, Image, ScrollView, TouchableOpacity, Alert } from "react-native";
+import {FAB, Modal, Portal, Chip, ActivityIndicator,} from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
-import { Star } from "lucide-react-native";
+import { Star, Heart, HeartPlus } from "lucide-react-native";
 import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
@@ -68,73 +62,291 @@ export default function SpecificRecipe() {
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
   const [reviewCount, setReviewCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [hasUserReviewed, setHasUserReviewed] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
-  const handleStarPress = (value: number) => {
-    setRating(value);
-    setTimeout(() => setReviewVisible(false), 300);
+  const handleToggleFavorite = () => {
+    setIsFavorite((prev) => !prev);
+    // Hier kun je eventueel een API-call doen om de favorite op te slaan
   };
+
+  // Check if current logged-in user already reviewed this recipe
+  const checkUserReviewed = async (slugToCheck: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) {
+        setHasUserReviewed(false);
+        return;
+      }
+      const { data: existingReview } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", slugToCheck)
+        .eq("account_id", user.id)
+        .maybeSingle();
+      setHasUserReviewed(!!existingReview);
+    } catch {
+      // Fail silently – keep previous state
+    }
+  };
+
+  // Herbruikbare fetch functie (recept + ingrediënten + reviews)
+  const fetchRecipeBundle = async (slug: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data: recipeData, error: recipeError } = await supabase
+        .from("recipes")
+        .select(
+          "recipe_slug, name, style, batch_size_l, abv_target, ibu_target, srm_target, description, difficulty, rating, haze_level"
+        )
+        .eq("recipe_slug", slug)
+        .single();
+
+      if (recipeError) throw recipeError;
+
+      const { data: ingredientData, error: ingredientError } = await supabase.rpc(
+        "get_recipe_ingredients",
+        { _recipe_slug: slug }
+      );
+      if (ingredientError) throw ingredientError;
+
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", slug);
+      if (reviewsError) throw reviewsError;
+
+      const count = (reviewsData || []).length;
+      const avg = count
+        ? (reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) / count)
+        : null;
+
+      const recipeWithRating = recipeData
+        ? { ...recipeData, rating: avg != null ? parseFloat(avg.toFixed(2)) : recipeData.rating }
+        : null;
+
+      setRecipe(recipeWithRating);
+      setIngredients((ingredientData || []) as IngredientRow[]);
+      setReviewCount(count);
+    } catch (e: any) {
+      setError(e.message ?? "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStarPress = async (value: number) => {
+    if (!recipe_slug) return;
+    setRating(value);
+    try {
+      // Controleer of user sessie aanwezig is (web en native)
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const user = sessionData?.session?.user;
+      if (!user) {
+        Alert.alert("Login vereist", "Log eerst in om een review te plaatsen.");
+        return;
+      }
+
+      // Controleer of de ingelogde user al een review voor dit recept heeft
+      const { data: existingReview, error: existingError } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", recipe_slug)
+        .eq("account_id", user.id)
+        .maybeSingle();
+      if (existingError) throw existingError;
+      if (existingReview) {
+        Alert.alert("Review bestaat al", "Je hebt dit recept al beoordeeld.");
+        setHasUserReviewed(true); // direct UI update
+        setReviewVisible(false);
+        return;
+      }
+
+      // Insert nieuwe review met account_id (jouw DB gebruikt `account_id`)
+      const { error: insertError } = await supabase.from("recipe_reviews").insert({
+        recipe_slug: recipe_slug,
+        rating: value,
+        account_id: user.id,
+      });
+      if (insertError) {
+        throw insertError;
+      }
+
+      // Na succesvolle insert: herbereken gemiddelde en count en update recepten-tabel
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", recipe_slug);
+      if (reviewsError) throw reviewsError;
+
+      const count = (reviewsData || []).length;
+      const avg = count
+        ? (reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) / count)
+        : null;
+
+      // Werk de aggregate kolommen in recipes bij
+      const updatePayload: any = {};
+      if (avg != null) updatePayload.rating = parseFloat(avg.toFixed(2));
+      updatePayload.review_count = count;
+
+      const { error: updateError } = await supabase
+        .from("recipes")
+        .update(updatePayload)
+        .eq("recipe_slug", recipe_slug);
+      if (updateError) throw updateError;
+
+      // Refetch local bundle voor UI
+      await fetchRecipeBundle(recipe_slug);
+      // Markeer dat user nu gereviewd heeft en dubbelcheck
+      setHasUserReviewed(true);
+      checkUserReviewed(recipe_slug);
+    } catch (e: any) {
+      Alert.alert("Review mislukt", e.message ?? "Onbekende fout bij opslaan review");
+    } finally {
+      setReviewVisible(false);
+    }
+  };
+
+  const brewRecipe = async () => {
+  if (!recipe_slug || !recipe?.name) {
+    console.warn("Cannot start brew: missing slug or recipe name.");
+    return;
+  }
+  console.log("Start brewing brewRecipe");
+
+  try {
+    // 1. Haal de gebruikerssessie op om de user_id te krijgen
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    console.log("User:", user);
+
+    if (userError || !user) {
+      console.error("Error fetching user for brew:", userError?.message);
+      return;
+    }
+
+    // 2. Zoek de fase met de laagste positie (de eerste fase)
+    const { data: phasesData, error: phasesError } = await supabase
+      .from("phases")
+      .select("phase_id")
+      .eq("recipe_slug", recipe_slug)
+      .order("position", { ascending: true });
+
+    if (phasesError || !phasesData?.length) {
+      console.error("Error fetching phases:", phasesError?.message || "No phases found.");
+      return;
+    }
+
+    interface Phase {
+      phase_id: string;
+    }
+
+    const phaseIds = phasesData.map((p: Phase) => p.phase_id);
+
+    // 3. Haal de eerste stap van de eerste fase
+    const { data: firstStepData, error: firstStepError } = await supabase
+      .from("steps")
+      .select("step_id")
+      .eq("phase_id", phaseIds[0])
+      .is("after_step_id", null) // startstap
+      .limit(1)
+      .single();
+
+    if (firstStepError || !firstStepData) {
+      console.error("Error finding first step:", firstStepError?.message || "No starting step found.");
+      return;
+    }
+
+    const firstStepId = firstStepData.step_id;
+    console.log("First step:", firstStepId);
+
+    // 4. Voer INSERT uit in brews
+    const newBrew = {
+      user_id: user.id,
+      name: recipe.name,
+      start_date: new Date().toISOString(),
+      status_id: 1,
+      recipe_slug: recipe_slug,
+      last_step_id: firstStepId,
+    };
+
+    const { data: brewData, error: insertError } = await supabase
+      .from("brews")
+      .insert([newBrew])
+      .select();
+
+    if (insertError || !brewData?.length) {
+      console.error("Error inserting brew:", insertError?.message);
+      return;
+    }
+
+    const brewId = brewData[0].id_brew;
+    console.log("New brew started successfully:", brewId);
+
+    // 5. Haal alle stappen van alle fases
+    const { data: allSteps, error: stepsError } = await supabase
+      .from("steps")
+      .select("step_id, after_step_id")
+      .in("phase_id", phaseIds)
+
+    if (stepsError || !allSteps?.length) {
+      console.error("Error fetching steps:", stepsError?.message || "No steps found.");
+      return;
+    }
+
+    interface Step {
+      step_id: string;
+      after_step_id: string | null;
+    }
+
+    const orderedSteps: Step[] = [];
+    let currentStep = allSteps.find((s: Step) => s.after_step_id === null);
+
+    while (currentStep) {
+      // Voeg zowel step_id als after_step_id toe
+      orderedSteps.push({ 
+        step_id: currentStep.step_id, 
+        after_step_id: currentStep.after_step_id 
+      });
+      
+      currentStep = allSteps.find((s: Step) => s.after_step_id === currentStep.step_id);
+    }
+
+
+    // 6. Voeg alle stappen toe aan brew_steps
+    const brewSteps = allSteps.map((step: { step_id: string }) => ({
+      id_brew: brewId,
+      step_id: step.step_id,
+      status: "pending",
+      completed_at: null,
+    }));
+
+    const { error: brewStepsError } = await supabase
+      .from("brew_steps")
+      .insert(brewSteps);
+
+    if (brewStepsError) {
+      console.error("Error inserting brew_steps:", brewStepsError.message);
+    } else {
+      console.log("All brew steps added successfully!");
+    }
+
+    // 7. Navigeer naar progress
+    router.push("../progress");
+
+  } catch (e: any) {
+    console.error("Exception during brew start:", e.message ?? e);
+  }
+};
 
   useEffect(() => {
     if (!recipe_slug) return;
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Recipe details
-        const { data: recipeData, error: recipeError } = await supabase
-          .from("recipes")
-          .select(
-            "recipe_slug, name, style, batch_size_l, abv_target, ibu_target, srm_target, description, difficulty, rating, haze_level"
-          )
-          .eq("recipe_slug", recipe_slug)
-          .single();
-
-        if (recipeError) {
-          throw recipeError;
-        }
-
-        // Ingredients via function
-        const { data: ingredientData, error: ingredientError } =
-          await supabase.rpc("get_recipe_ingredients", {
-            _recipe_slug: recipe_slug,
-          });
-
-        if (ingredientError) {
-          throw ingredientError;
-        }
-
-        // fetch reviews for this recipe and compute average + count
-        const { data: reviewsData, error: reviewsError } = await supabase
-          .from("recipe_reviews")
-          .select("rating")
-          .eq("recipe_slug", recipe_slug);
-
-        if (reviewsError) throw reviewsError;
-
-        const count = (reviewsData || []).length;
-        const avg = count
-          ? (reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) /
-              count)
-          : null;
-
-        // Aggregated average rating (0-5) met twee decimalen precisie
-        const recipeWithRating = recipeData
-          ? { ...recipeData, rating: avg != null ? parseFloat(avg.toFixed(2)) : recipeData.rating }
-          : null;
-
-        setRecipe(recipeWithRating);
-        setIngredients((ingredientData || []) as IngredientRow[]);
-        setReviewCount(count);
-      } catch (e: any) {
-        setError(e.message ?? "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    fetchRecipeBundle(recipe_slug);
+    checkUserReviewed(recipe_slug);
   }, [recipe_slug]);
 
   const chips: { key: string; label: string }[] = [];
@@ -232,15 +444,42 @@ export default function SpecificRecipe() {
             />
             <ThemedText type="subTitle">{displayedRating} / 5</ThemedText>
             <ThemedText type="subTitle">({reviewCount} reviews)</ThemedText>
+            {hasUserReviewed ? (
+              <ThemedText
+                type="subTitle"
+                testID="already-reviewed-label"
+                style={{ marginLeft: 8 }}
+              >
+                You reviewed ✓
+              </ThemedText>
+            ) : (
+              <TouchableOpacity
+                onPress={() => setReviewVisible(true)}
+                style={{
+                  marginLeft: 8,
+                  paddingVertical: 4,
+                  paddingHorizontal: 10,
+                }}
+              >
+                <ThemedText type="subTitle">Add Review</ThemedText>
+              </TouchableOpacity>
+            )}
+            <View style={{ flex: 1 }} />
             <TouchableOpacity
-              onPress={() => setReviewVisible(true)}
-              style={{
-                marginLeft: 8,
-                paddingVertical: 4,
-                paddingHorizontal: 10,
-              }}
+              onPress={handleToggleFavorite}
+              accessibilityLabel={`favorite-${recipe?.name ?? "recipe"}`}
+              hitSlop={8}
+              style={{ marginLeft: 12 }}
             >
-              <ThemedText type="subTitle">Add Review</ThemedText>
+              {isFavorite ? (
+                <Heart
+                  size={24}
+                  stroke={BASE_COLORS.ACCENT_PRIMARY}
+                  fill={BASE_COLORS.ACCENT_PRIMARY}
+                />
+              ) : (
+                <HeartPlus size={24} stroke={BASE_COLORS.STONE300} />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -356,7 +595,7 @@ export default function SpecificRecipe() {
           mode="elevated"
           label="Start Brewing"
           color={BASE_COLORS.WHITE}
-          onPress={() => router.push("../progress")}
+          onPress={brewRecipe}
           style={{
             backgroundColor: BASE_COLORS.TEXT_DARK,
             borderRadius: 20,

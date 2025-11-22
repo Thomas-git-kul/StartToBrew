@@ -17,7 +17,7 @@ interface Beer {
   name: string;
   rating: number;
   reviews: number;
-  image: any; // React Native image source
+  image: any;
   description: string | null;
   style: string | null;
 }
@@ -139,7 +139,8 @@ export default function HomePage() {
       const { data: brews, error: brewsError } = await supabase
         .from("brews")
         .select("id_brew, name, recipe_slug")
-        .eq("user_id", user.id) as { data: BrewRow[] | null; error: any };
+        .eq("user_id", user.id) 
+        .in ("status_id", [1,2]) as { data: BrewRow[] | null; error: any };
 
       if (brewsError) {
         console.warn("Failed to load brews:", brewsError.message);
@@ -197,9 +198,11 @@ export default function HomePage() {
   return (
     <View className="flex-1">
       <Header title="StartToBrew" />
-
-      <ScrollView style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
-        {/* In progress section voorlopig statisch */}
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+      >
+        {/* In progress section */}
         <ThemedText type="title">In progress</ThemedText>
         <View>
           {inProgress.length === 0 ? (
@@ -221,7 +224,10 @@ export default function HomePage() {
 
         {loading ? (
           <View className="items-center justify-center my-4">
-            <ActivityIndicator animating size="small" />
+            <ActivityIndicator 
+              animating size="small" 
+              color={BASE_COLORS.ACCENT_PRIMARY}
+            />
             <ThemedText type="defaultText" className="mt-2">
               Loading recipes...
             </ThemedText>
@@ -261,7 +267,7 @@ export default function HomePage() {
           backgroundColor: BASE_COLORS.TEXT_DARK,
           borderRadius: 20,
         }}
-        color={BASE_COLORS.LIGHT_BG}
+        color={BASE_COLORS.WHITE}
         onPress={() => router.push("/Recipes")}
         mode="elevated"
         size="medium"

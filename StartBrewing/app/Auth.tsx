@@ -15,8 +15,9 @@ export default function Auth() {
   useFonts();
 
   const theme = useTheme();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
@@ -31,13 +32,29 @@ export default function Auth() {
   }, []);
 
   async function signInWithEmail() {
+    setLoginError("");
+    let loginEmail = identifier;
+    // Check if identifier is an email
+    if (!/^\S+@\S+\.\S+$/.test(identifier)) {
+      // Not an email, try to fetch email by username
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("mail")
+        .eq("username", identifier)
+        .single();
+      if (error || !data) {
+        setLoginError("Incorrect username/email or password");
+        return;
+      }
+      loginEmail = data.mail;
+    }
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: loginEmail,
       password,
     });
 
     if (error) {
-      Alert.alert(error.message);
+      setLoginError("Incorrect username/email or password");
       return;
     }
 
@@ -70,12 +87,18 @@ export default function Auth() {
       </ThemedText>
 
       <View className="gap-1 mx-5 mb-8">
-        <TextInput label="Email" value={email} onChangeText={setEmail} />
+        <TextInput label="Email or Username" value={identifier} onChangeText={setIdentifier} />
         <TextInput
           label="Password"
           value={password}
           onChangeText={setPassword}
+          secureTextEntry
         />
+        {loginError.length > 0 && (
+          <ThemedText style={{ color: 'red', marginTop: 8, textAlign: 'center' }}>
+            {loginError}
+          </ThemedText>
+        )}
       </View>
 
       <View className="items-center gap-2">

@@ -3,6 +3,7 @@ import { render, fireEvent } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
 import { NavigationContainer } from "@react-navigation/native";
 import { useRouter } from "expo-router";
+jest.spyOn(console, "error").mockImplementation(() => {});
 
 /* ------------------------------
    MOCK DATA
@@ -52,11 +53,91 @@ type RecipesDataType = typeof recipesData;
 
 const createRecipesQuery = (listData: RecipesDataType = recipesData) => ({
   select: () => ({
-    then<T>(cb: (res: { data: RecipesDataType; error: any }) => T | Promise<T>): Promise<T> {
+    then(
+      cb:
+        | ((value: {
+            data: {
+              recipe_slug: string;
+              name: string;
+              description: string;
+              rating: null;
+              haze_level: number;
+              srm_target: number;
+              style: string;
+            }[];
+            error: null;
+          }) =>
+            | {
+                data: {
+                  recipe_slug: string;
+                  name: string;
+                  description: string;
+                  rating: null;
+                  haze_level: number;
+                  srm_target: number;
+                  style: string;
+                }[];
+                error: null;
+              }
+            | PromiseLike<{
+                data: {
+                  recipe_slug: string;
+                  name: string;
+                  description: string;
+                  rating: null;
+                  haze_level: number;
+                  srm_target: number;
+                  style: string;
+                }[];
+                error: null;
+              }>)
+        | null
+        | undefined
+    ) {
       return Promise.resolve({ data: listData, error: null }).then(cb);
     },
   }),
-  then<T>(cb: (res: { data: RecipesDataType; error: any }) => T | Promise<T>): Promise<T> {
+  then(
+    cb:
+      | ((value: {
+          data: {
+            recipe_slug: string;
+            name: string;
+            description: string;
+            rating: null;
+            haze_level: number;
+            srm_target: number;
+            style: string;
+          }[];
+          error: null;
+        }) =>
+          | {
+              data: {
+                recipe_slug: string;
+                name: string;
+                description: string;
+                rating: null;
+                haze_level: number;
+                srm_target: number;
+                style: string;
+              }[];
+              error: null;
+            }
+          | PromiseLike<{
+              data: {
+                recipe_slug: string;
+                name: string;
+                description: string;
+                rating: null;
+                haze_level: number;
+                srm_target: number;
+                style: string;
+              }[];
+              error: null;
+            }>)
+      | null
+      | undefined
+  ) {
     return Promise.resolve({ data: listData, error: null }).then(cb);
   },
 });

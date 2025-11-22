@@ -105,7 +105,7 @@ const mockPush = jest.fn();
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
-  useLocalSearchParams: () => ({ recipe_slug: recipeSlug }),
+  useLocalSearchParams: () => ({ recipe_slug: recipeSlug, slug: recipeSlug }),
 }));
 
 // Fonts
@@ -138,6 +138,7 @@ jest.mock("@/constants/Colors", () => ({
     WHITE: "#ffffff",
     TEXT_DARK: "#000000",
     ACCENT_LIGHT: "#B45309",
+    ACCENT_PRIMARY: "#FF6600",
     STONE300: "#E5E7EB",
   },
 }));
@@ -181,10 +182,13 @@ jest.mock("react-native-paper", () => {
 // lucide Star
 jest.mock("lucide-react-native", () => {
   const { Text } = require("react-native");
+  const make = (name: string) => ({ size, color, fill, stroke }: any) => (
+    <Text>{`${name}`}</Text>
+  );
   return {
-    Star: ({ size, color, fill }: any) => (
-      <Text>{`Star(${size},${color},${fill})`}</Text>
-    ),
+    Star: make("Star"),
+    Heart: make("Heart"),
+    HeartPlus: make("HeartPlus"),
   };
 });
 
@@ -193,47 +197,116 @@ jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
 }));
 
-// Supabase
 jest.mock("@/supabase", () => ({
   supabase: {
-    from: (table: string) => {
-      if (table === "recipes") {
-        return {
-          select: () => ({
-            eq: (field: string, value: string) => ({
-              single: async () => {
-                if (field === "recipe_slug" && value === recipeSlug) {
-                  return { data: recipeData, error: null };
-                }
-                return { data: null, error: null };
-              },
-            }),
-          }),
-        };
-      }
-      return {
-        select: () => ({
-          eq: () => ({
-            single: async () => ({ data: null, error: null }),
-          }),
-        }),
-      };
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      }),
     },
-    rpc: async (fn: string, args: any) => {
-      if (
-        fn === "get_recipe_ingredients" &&
-        args &&
-        args._recipe_slug === recipeSlug
-      ) {
+
+    from: jest.fn((table) => {
+      switch (table) {
+
+        case "recipes":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: async () => ({
+                  data: recipeData,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+
+        case "recipe_reviews":
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: null,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+
+        case "phases":
+          return {
+            select: () => ({
+              eq: () => ({
+                order: async () => ({
+                  data: [
+                    { phase_id: "phase-1" },
+                    { phase_id: "phase-2" },
+                  ],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+
+        case "steps":
+          const steps = [
+            { step_id: "step-1", after_step_id: null, phase_id: "phase-1" },
+            { step_id: "step-2", after_step_id: "step-1", phase_id: "phase-1" },
+            { step_id: "step-3", after_step_id: null, phase_id: "phase-2" },
+          ];
+
+          return {
+            select: () => ({
+              eq: () => ({
+                is: () => ({
+                  limit: () => ({
+                    single: async () => ({
+                      data: { step_id: "step-1" },
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+
+              in: async () => ({
+                data: steps,
+                error: null,
+              }),
+            }),
+          };
+
+        case "brews":
+          return {
+            insert: () => ({
+              select: async () => ({
+                data: [{ id_brew: 123 }],
+                error: null,
+              }),
+            }),
+          };
+
+        case "brew_steps":
+          return {
+            insert: async () => ({ data: null, error: null }),
+          };
+
+        default:
+          return { select: () => ({}) };
+      }
+    }),
+
+    rpc: jest.fn(async (fn, args) => {
+      if (fn === "get_recipe_ingredients" && args._recipe_slug === recipeSlug) {
         return {
           data: ingredientRows.map(mapIngredient),
           error: null,
         };
       }
       return { data: [], error: null };
-    },
+    }),
   },
 }));
+
 
 /* ------------------------------
    HELPER
@@ -262,14 +335,20 @@ describe("<SpecificRecipe />", () => {
   });
 
   it("navigates naar /progress bij Start Brewing", async () => {
-    const { findByText } = renderWithNavigation(<SpecificRecipe />);
-    const btn = await findByText("Start Brewing");
-    fireEvent.press(btn);
+    const { getByText } = renderWithNavigation(<SpecificRecipe />);
+    await waitFor(() => getByText("Start Brewing"));
+
+    await act(async () => {
+      fireEvent.press(getByText("Start Brewing"));
+      // wacht even voor de async Supabase calls
+      await new Promise((res) => setTimeout(res, 10));
+    });
+
     expect(mockPush).toHaveBeenCalledWith("../progress");
   });
 
   it("opent review modal en laat sterren klikken", async () => {
-    const { findByText, queryByText, findAllByTestId } = renderWithNavigation(
+    const { findByText, findAllByTestId, queryByText } = renderWithNavigation(
       <SpecificRecipe />
     );
 
@@ -279,13 +358,17 @@ describe("<SpecificRecipe />", () => {
     const addReviewBtn = await findByText("Add Review");
     fireEvent.press(addReviewBtn);
 
-    expect(await findByText("Rate this recipe")).toBeTruthy();
+    // Wait for modal to appear
+    const modalTitle = await findByText("Rate this recipe");
+    expect(modalTitle).toBeTruthy();
 
     const stars = await findAllByTestId(/star-/);
     fireEvent.press(stars[2]);
 
-    // We testen hier alleen dat het niet crasht en dat modal bestaat
-    expect(queryByText("Rate this recipe")).not.toBeNull();
+    // Modal should still be present after clicking a star (until async closes it)
+    await waitFor(() => {
+      expect(queryByText("Rate this recipe")).toBeNull();
+  });
   });
 
   it("snapshot", () => {

@@ -1,23 +1,22 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
-  TextInput,
   TouchableOpacity,
   Text,
   StyleSheet,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "@/supabase";
-import { updateAvatar } from "@/supabase/storage/updateAvatar";
 import { Image } from "expo-image";
 import { router, useRouter } from "expo-router";
 import Header from "@/components/header";
+import { getBeerImageSource } from "@/hooks/beer-image";
 
 type Profile = {
   id: string;
@@ -28,14 +27,47 @@ type Profile = {
   updated_at: string | null;
 };
 
+type BadgeWithEarned = {
+  id_badge: number;
+  code: string;
+  name: string;
+  description: string | null;
+  category: string;
+  icon_url: string | null;
+  earned_at: string;
+};
+
+type Brew = {
+  id_brew: number;
+  user_id: string;
+  name: string;
+  start_date: string | null;
+  status_id: number | null;
+  recipe_slug: string | null;
+  last_step_id: string | null;
+};
+
+type CompletedBrewWithImage = Brew & {
+  haze_level?: number | null;
+  srm_target?: number | null;
+  image?: any;
+};
+
 export default function Account() {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+
+  const [badges, setBadges] = useState<BadgeWithEarned[]>([]);
+  const [badgesLoading, setBadgesLoading] = useState(false);
+
+  const [completedBrews, setCompletedBrews] = useState<
+    CompletedBrewWithImage[]
+  >([]);
+  const [brewsLoading, setBrewsLoading] = useState(false);
 
   const initials = useMemo(() => {
     const src = fullName || username || "";
@@ -76,22 +108,19 @@ export default function Account() {
     setFullName(p?.full_name ?? "");
     setBio(p?.bio ?? "");
 
-    // avatar_url kan pad of volledige URL zijn
     if (p?.avatar_url) {
       let url: string;
 
       if (p.avatar_url.startsWith("http")) {
-        // al een volledige URL
         url = p.avatar_url;
       } else {
-        // pad -> public url
         const { data: pub } = supabase.storage
           .from("avatars")
           .getPublicUrl(p.avatar_url);
         url = pub.publicUrl;
       }
 
-      setAvatarUrl(`${url}?v=${Date.now()}`); // cache-buster
+      setAvatarUrl(`${url}?v=${Date.now()}`);
     } else {
       setAvatarUrl(null);
     }
@@ -99,71 +128,155 @@ export default function Account() {
     setLoading(false);
   }, []);
 
+  const fetchBadges = useCallback(async (accountId: string) => {
+    setBadgesLoading(true);
+
+    const { data: accountBadges, error: abErr } = await supabase
+      .from("account_badges")
+      .select("badge_id, earned_at")
+      .eq("account_id", accountId)
+      .order("earned_at", { ascending: false });
+
+    if (abErr) {
+      setBadgesLoading(false);
+      console.error("Error fetching account_badges", abErr);
+      return;
+    }
+
+    if (!accountBadges || accountBadges.length === 0) {
+      setBadges([]);
+      setBadgesLoading(false);
+      return;
+    }
+
+    const badgeIds = accountBadges.map(
+      (row: { badge_id: any }) => row.badge_id
+    );
+
+    const { data: badgesData, error: bErr } = await supabase
+      .from("badges")
+      .select("id_badge, code, name, description, icon_url, category")
+      .in("id_badge", badgeIds);
+
+    if (bErr) {
+      setBadgesLoading(false);
+      console.error("Error fetching badges", bErr);
+      return;
+    }
+
+    if (!badgesData) {
+      setBadges([]);
+      setBadgesLoading(false);
+      return;
+    }
+
+    const earnedById = new Map<number, string>();
+    for (const row of accountBadges) {
+      earnedById.set(row.badge_id, row.earned_at);
+    }
+
+    const merged: BadgeWithEarned[] = badgesData.map((b: any) => ({
+      id_badge: b.id_badge,
+      code: b.code,
+      name: b.name,
+      description: b.description,
+      category: b.category,
+      icon_url: b.icon_url,
+      earned_at: earnedById.get(b.id_badge) ?? "",
+    }));
+
+    merged.sort((a, b) => {
+      if (!a.earned_at || !b.earned_at) return 0;
+      return new Date(b.earned_at).getTime() - new Date(a.earned_at).getTime();
+    });
+
+    setBadges(merged);
+    setBadgesLoading(false);
+  }, []);
+
+  const fetchCompletedBrews = useCallback(async (accountId: string) => {
+    setBrewsLoading(true);
+
+    const { data, error } = await supabase.rpc("get_completed_brews", {
+      uid_input: accountId,
+    });
+
+    if (error || !data) {
+      console.error("Error fetching completed brews", error);
+      setCompletedBrews([]);
+      setBrewsLoading(false);
+      return;
+    }
+
+    const brews = data as Brew[];
+
+    if (!brews.length) {
+      setCompletedBrews([]);
+      setBrewsLoading(false);
+      return;
+    }
+
+    const slugs = brews
+      .map((b) => b.recipe_slug)
+      .filter((s): s is string => !!s);
+
+    const { data: recipesData, error: recipesError } = await supabase
+      .from("recipes")
+      .select("recipe_slug, haze_level, srm_target")
+      .in("recipe_slug", slugs);
+
+    if (recipesError) {
+      console.error("Error fetching recipes for brews", recipesError);
+      setCompletedBrews(
+        brews.map((b) => ({
+          ...b,
+          image: getBeerImageSource(null, null),
+        }))
+      );
+      setBrewsLoading(false);
+      return;
+    }
+
+    const recipeMap = new Map<
+      string,
+      {
+        recipe_slug: string;
+        haze_level: number | null;
+        srm_target: number | null;
+      }
+    >();
+
+    (recipesData || []).forEach((r: any) => {
+      recipeMap.set(r.recipe_slug, r);
+    });
+
+    const enriched: CompletedBrewWithImage[] = brews.map((b) => {
+      const recipe = b.recipe_slug ? recipeMap.get(b.recipe_slug) : undefined;
+      const haze = recipe?.haze_level ?? null;
+      const srm = recipe?.srm_target ?? null;
+
+      return {
+        ...b,
+        haze_level: haze,
+        srm_target: srm,
+        image: getBeerImageSource(haze, srm),
+      };
+    });
+
+    setCompletedBrews(enriched);
+    setBrewsLoading(false);
+  }, []);
+
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
 
-  // Lokale foto kiezen en URI doorgeven aan updateAvatar
-  const onChangeAvatar = useCallback(async () => {
-    if (!userId) return;
-
-    // Toestemming
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Toestemming vereist", "Geef toegang tot je foto's.");
-      return;
+  useEffect(() => {
+    if (userId) {
+      fetchBadges(userId);
+      fetchCompletedBrews(userId);
     }
-
-    // Galerij openen (zonder mediaTypes i.v.m. versieverschillen)
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      quality: 1,
-    } as any);
-
-    if (result.canceled) return;
-
-    const asset = result.assets?.[0];
-    if (!asset?.uri) {
-      Alert.alert("Fout", "Kon geen lokale afbeelding vinden.");
-      return;
-    }
-    // Sommige versies leveren asset.type ("image" | "video"); filter defensief
-    if (asset.type && asset.type !== "image") {
-      Alert.alert("Geen afbeelding", "Kies een fotobestand.");
-      return;
-    }
-
-    try {
-      const url = await updateAvatar({
-        userId,
-        fileUri: asset.uri,
-        quality: 0.8,
-        maxWidth: 512,
-        maxHeight: 512,
-      });
-      if (url) setAvatarUrl(url);
-    } catch (err: any) {
-      Alert.alert("Upload mislukt", err.message ?? "Onbekende fout");
-    }
-  }, [userId]);
-
-  const onSave = useCallback(async () => {
-    if (!userId) return;
-    setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        username: username || null,
-        full_name: fullName || null,
-        bio: bio || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId);
-
-    setSaving(false);
-    if (error) Alert.alert("Opslaan mislukt", error.message);
-    else Alert.alert("Opgeslagen", "Je profiel is bijgewerkt.");
-  }, [userId, username, fullName, bio]);
+  }, [userId, fetchBadges, fetchCompletedBrews]);
 
   const onSignOut = useCallback(async () => {
     await supabase.auth.signOut();
@@ -171,176 +284,390 @@ export default function Account() {
     router.replace("/Auth");
   }, []);
 
-  if (loading) {
+  const AccountInner = () => {
+    const router = useRouter();
+
+    const onEditProfile = useCallback(() => {
+      router.push("/AccountEdit");
+    }, [router]);
+
+    if (loading) {
+      return (
+        <SafeAreaView>
+          <ActivityIndicator />
+        </SafeAreaView>
+      );
+    }
+
+    const badgeCount = badges.length;
+    const completedBrewsCount = completedBrews.length;
+
     return (
-      <SafeAreaView>
-        <ActivityIndicator />
-      </SafeAreaView>
-    );
-  }
+      <ScrollView
+        className="flex-1"
+        style={{
+          backgroundColor: BASE_COLORS.LIGHT_BG,
+          paddingHorizontal: 16,
+          paddingTop: 8,
+        }}
+      >
+        <Header
+          title="Account"
+          iconName="ArrowRight"
+          onIconPress={() => router.push("/HomePage")}
+          actionTestID="account-button"
+        />
 
-  return (
-    <View className="flex-1"
-      style={{
-        backgroundColor: BASE_COLORS.LIGHT_BG
-      }}
-    >
-      <Header
-        title="Account"
-        iconName="ArrowRight"
-        onIconPress={() => router.push("/HomePage")}
-        actionTestID="account-button"
-      />
+        {/* Profiel header */}
+        <View style={styles.section}>
+          <View style={styles.avatarRow}>
+            <View style={styles.avatarTouch}>
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={styles.avatar}
+                  onError={() => setAvatarUrl(null)}
+                />
+              ) : (
+                <View style={[styles.avatar, styles.avatarFallback]}>
+                  <Text style={styles.initials}>{initials || "?"}</Text>
+                </View>
+              )}
+            </View>
 
-      <View style={styles.section}>
-        <View style={styles.avatarRow}>
+            <View style={styles.profileTextBlock}>
+              <ThemedText style={styles.nameText}>
+                {fullName || "Name not set"}
+              </ThemedText>
+              {!!username && (
+                <ThemedText style={styles.usernameText}>@{username}</ThemedText>
+              )}
+              {!!bio && (
+                <ThemedText style={styles.bioText} numberOfLines={3}>
+                  {bio}
+                </ThemedText>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* Statistieken */}
+        <View style={[styles.section, styles.cardsRow]}>
+          <View style={styles.infoCard}>
+            <ThemedText style={styles.cardLabel}>Badges</ThemedText>
+            <ThemedText style={styles.cardValue}>{badgeCount}</ThemedText>
+            <ThemedText style={styles.cardHint}>
+              {badgeCount === 1 ? "badge earned" : "badges earned"}
+            </ThemedText>
+          </View>
+
+          <View style={styles.infoCard}>
+            <ThemedText style={styles.cardLabel}>Brews</ThemedText>
+            <ThemedText style={styles.cardValue}>
+              {completedBrewsCount}
+            </ThemedText>
+            <ThemedText style={styles.cardHint}>
+              {completedBrewsCount === 1 ? "brew completed" : "brews completed"}
+            </ThemedText>
+          </View>
+        </View>
+
+        {/* Badges-overzicht */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Your badges</ThemedText>
+
+          {badgesLoading ? (
+            <ActivityIndicator style={{ marginTop: 8 }} />
+          ) : badgeCount === 0 ? (
+            <ThemedText style={styles.emptyText}>
+              You have not earned any badges yet. Brew some beers to earn
+              badges!
+            </ThemedText>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.badgeScrollContent}
+            >
+              {badges.map((badge) => (
+                <View key={badge.id_badge} style={styles.badgeCard}>
+                  <View style={styles.badgeIconPlaceholder}>
+                    <Text style={styles.badgeIconText}>★</Text>
+                  </View>
+
+                  <ThemedText style={styles.badgeName} numberOfLines={1}>
+                    {badge.name}
+                  </ThemedText>
+                  {!!badge.description && (
+                    <ThemedText
+                      style={styles.badgeDescription}
+                      numberOfLines={2}
+                    >
+                      {badge.description}
+                    </ThemedText>
+                  )}
+                  {!!badge.earned_at && (
+                    <ThemedText style={styles.badgeEarnedText}>
+                      Earned on {new Date(badge.earned_at).toLocaleDateString()}
+                    </ThemedText>
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        {/* Completed brews */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Completed brews</ThemedText>
+
+          {brewsLoading ? (
+            <ActivityIndicator style={{ marginTop: 8 }} />
+          ) : completedBrewsCount === 0 ? (
+            <ThemedText style={styles.emptyText}>
+              You have not completed any brews yet.
+            </ThemedText>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginTop: 8 }}
+            >
+              {completedBrews.map((brew) => (
+                <TouchableOpacity
+                  key={brew.id_brew}
+                  style={styles.brewCard}
+                  activeOpacity={0.8}
+                  disabled={!brew.recipe_slug}
+                  onPress={() =>
+                    brew.recipe_slug &&
+                    router.push({
+                      pathname: "/SpecificRecipe",
+                      params: { recipe_slug: brew.recipe_slug },
+                    })
+                  }
+                >
+                  {brew.image && (
+                    <Image
+                      source={brew.image}
+                      style={styles.brewImage}
+                      contentFit="cover"
+                    />
+                  )}
+                  <ThemedText style={styles.brewName} numberOfLines={1}>
+                    {brew.name.trim()}
+                  </ThemedText>
+                  {brew.start_date && (
+                    <ThemedText style={styles.brewMeta}>
+                      {new Date(brew.start_date).toLocaleDateString()}
+                    </ThemedText>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        {/* Acties */}
+        <View style={styles.actionsColumn}>
           <TouchableOpacity
-            onPress={onChangeAvatar}
-            activeOpacity={0.3}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            style={styles.avatarTouch}
+            style={[styles.button, styles.buttonPrimary]}
+            onPress={onEditProfile}
           >
-            {avatarUrl ? (
-              <Image
-                source={{ uri: avatarUrl }}
-                style={styles.avatar}
-                onError={() => setAvatarUrl(null)} // bij fout -> placeholder
-              />
-            ) : (
-              <View style={[styles.avatar, styles.avatarFallback]}>
-                <Text style={styles.initials}>{initials || "?"}</Text>
-              </View>
-            )}
+            <Text style={styles.buttonText}>Change profile</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={onChangeAvatar}>
-            <Text style={styles.buttonText}>Wijzig foto</Text>
+          <TouchableOpacity
+            style={[styles.button, styles.buttonSecondary]}
+            onPress={onSignOut}
+          >
+            <Text style={styles.buttonSecondaryText}>Sign off</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
+    );
+  };
 
-      <View style={styles.section}>
-        <ThemedText style={styles.label}>Gebruikersnaam</ThemedText>
-        <TextInput
-          value={username}
-          onChangeText={setUsername}
-          placeholder="jouw_naam"
-          placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-          style={styles.input}
-          autoCapitalize="none"
-        />
+  const styles = StyleSheet.create({
+    section: {
+      marginTop: 16,
+    },
+    avatarRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 16,
+    },
+    avatar: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      backgroundColor: BASE_COLORS.LIGHT_BG || "#eee",
+    },
+    avatarTouch: {
+      borderRadius: 48,
+      overflow: "hidden",
+    },
+    avatarFallback: {
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    initials: {
+      fontSize: 32,
+      fontWeight: "bold",
+      color: BASE_COLORS.TEXT_DARK,
+    },
+    profileTextBlock: {
+      flex: 1,
+    },
+    nameText: {
+      fontSize: 20,
+      fontFamily: FontFamilies.HEADING,
+      color: BASE_COLORS.TEXT_DARK,
+      marginBottom: 4,
+    },
+    usernameText: {
+      fontSize: 14,
+      color: BASE_COLORS.TEXT_DARK,
+      opacity: 0.8,
+      marginBottom: 8,
+    },
+    bioText: {
+      fontSize: 14,
+      color: BASE_COLORS.TEXT_DARK,
+    },
+    cardsRow: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    infoCard: {
+      flex: 1,
+      backgroundColor: BASE_COLORS.WHITE,
+      borderRadius: 10,
+      padding: 12,
+      borderWidth: 1,
+      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
+    },
+    cardLabel: {
+      fontSize: 14,
+      fontFamily: FontFamilies.HEADING,
+      color: BASE_COLORS.TEXT_DARK,
+      marginBottom: 4,
+    },
+    cardValue: {
+      fontSize: 22,
+      fontFamily: FontFamilies.HEADING,
+      color: BASE_COLORS.ACCENT_PRIMARY,
+      marginBottom: 4,
+    },
+    cardHint: {
+      fontSize: 12,
+      color: BASE_COLORS.TEXT_DARK,
+      opacity: 0.7,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontFamily: FontFamilies.HEADING,
+      color: BASE_COLORS.TEXT_DARK,
+      marginBottom: 8,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: BASE_COLORS.TEXT_DARK,
+      opacity: 0.8,
+    },
+    badgeScrollContent: {
+      paddingVertical: 4,
+      paddingRight: 4,
+    },
+    badgeCard: {
+      width: 140,
+      marginRight: 12,
+      backgroundColor: BASE_COLORS.WHITE,
+      borderRadius: 10,
+      padding: 10,
+      borderWidth: 1,
+      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
+    },
+    badgeIconPlaceholder: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      alignSelf: "flex-start",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
+      marginBottom: 8,
+    },
+    badgeIconText: {
+      fontSize: 24,
+      color: BASE_COLORS.WHITE,
+      fontWeight: "bold",
+    },
+    badgeName: {
+      fontSize: 14,
+      fontFamily: FontFamilies.HEADING,
+      color: BASE_COLORS.TEXT_DARK,
+      marginBottom: 4,
+    },
+    badgeDescription: {
+      fontSize: 12,
+      color: BASE_COLORS.TEXT_DARK,
+      opacity: 0.8,
+      marginBottom: 4,
+    },
+    badgeEarnedText: {
+      fontSize: 11,
+      color: BASE_COLORS.TEXT_DARK,
+      opacity: 0.7,
+    },
+    actionsColumn: {
+      marginTop: 32,
+      gap: 12,
+    },
+    button: {
+      height: 44,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    buttonPrimary: {
+      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
+    },
+    buttonSecondary: {
+      backgroundColor: BASE_COLORS.WHITE,
+      borderWidth: 1,
+      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
+    },
+    buttonText: { color: BASE_COLORS.WHITE, fontWeight: "bold" },
+    buttonSecondaryText: { color: BASE_COLORS.TEXT_DARK, fontWeight: "bold" },
+    brewCard: {
+      width: 140,
+      marginRight: 12,
+      backgroundColor: BASE_COLORS.WHITE,
+      borderRadius: 10,
+      padding: 8,
+      borderWidth: 1,
+      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
+    },
+    brewImage: {
+      width: "100%",
+      height: 110,
+      borderRadius: 8,
+      marginBottom: 6,
+    },
+    brewName: {
+      fontSize: 14,
+      fontFamily: FontFamilies.HEADING,
+      color: BASE_COLORS.TEXT_DARK,
+      marginBottom: 2,
+    },
+    brewMeta: {
+      fontSize: 12,
+      color: BASE_COLORS.TEXT_DARK,
+      opacity: 0.8,
+    },
+  });
 
-        <ThemedText style={styles.label}>Volledige naam</ThemedText>
-        <TextInput
-          value={fullName}
-          onChangeText={setFullName}
-          placeholder="Volledige naam"
-          placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-          style={styles.input}
-        />
-
-        <ThemedText style={styles.label}>Biografie</ThemedText>
-        <TextInput
-          value={bio}
-          onChangeText={setBio}
-          placeholder="Vertel iets over jezelf"
-          placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-          style={[styles.input, styles.textarea]}
-          multiline
-          numberOfLines={4}
-        />
-      </View>
-
-      <View style={styles.actionsRow}>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonSecondary]}
-          onPress={onSignOut}
-        >
-          <Text style={styles.buttonSecondaryText}>Afmelden</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonPrimary]}
-          onPress={onSave}
-          disabled={saving}
-        >
-          <Text style={styles.buttonText}>
-            {saving ? "Opslaan…" : "Opslaan"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  return <AccountInner />;
 }
-
-const styles = StyleSheet.create({
-  center: { alignItems: "center", justifyContent: "center" },
-  title: {
-    paddingTop: 25,
-    fontSize: 36,
-    fontWeight: "bold",
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-    marginBottom: 10,
-  },
-  section: { marginTop: 12 },
-  avatarRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: BASE_COLORS.LIGHT_BG || "#eee",
-  },
-  avatarTouch: { borderRadius: 48 },
-  avatarFallback: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  initials: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  label: {
-    marginTop: 12,
-    marginBottom: 6,
-    fontSize: 16,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  input: {
-    backgroundColor: BASE_COLORS.LIGHT_BG || "#f6f6f6",
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: BASE_COLORS.TEXT_DARK,
-    borderWidth: 1,
-    borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-  },
-  textarea: { minHeight: 90, textAlignVertical: "top" },
-  actionsRow: {
-    marginTop: 24,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  button: {
-    height: 40,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonPrimary: { backgroundColor: BASE_COLORS.ACCENT_PRIMARY },
-  buttonSecondary: {
-    backgroundColor: BASE_COLORS.WHITE,
-    borderWidth: 1,
-    borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-  },
-  buttonText: { color: BASE_COLORS.WHITE, fontWeight: "bold" },
-  buttonSecondaryText: { color: BASE_COLORS.TEXT_DARK, fontWeight: "bold" },
-});
