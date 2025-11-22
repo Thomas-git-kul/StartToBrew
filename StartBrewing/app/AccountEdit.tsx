@@ -1,17 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Dimensions,
-} from "react-native";
-import { Avatar } from "react-native-paper";
+import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, Dimensions } from "react-native";
+import { Avatar, Button } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -22,6 +12,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
+import TextInput from "@/components/textInput";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -252,6 +243,7 @@ export default function EditAccount() {
       <SafeAreaView>
         <ActivityIndicator 
           color={BASE_COLORS.ACCENT_PRIMARY}
+          animating size="large"
         />
       </SafeAreaView>
     );
@@ -279,7 +271,6 @@ export default function EditAccount() {
       className="flex-1, mx-3"
         style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
         keyboardShouldPersistTaps="handled"
       >
         <TouchableOpacity
@@ -310,180 +301,109 @@ export default function EditAccount() {
             />
           )}
         </TouchableOpacity>
+        <ThemedText type="tips" style={{color: BASE_COLORS.STONE400}} className="mb-5">Tap to change</ThemedText>
 
-          <View>
-            <ThemedText style={styles.label}>Gebruikersnaam</ThemedText>
-            <TextInput
-              value={username}
-              onChangeText={setUsername}
-              placeholder="jouw_naam"
-              placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-              style={styles.input}
-              autoCapitalize="none"
-            />
-
-            <ThemedText style={styles.label}>Email</ThemedText>
+        <ThemedText type="subTitle" className="mb-1">Update personal information</ThemedText>
+        <View className="flex-row gap-3 flex-wrap">
+          <View style={{ width: "47%" }}>
+            <View className="flex-1">
               <TextInput
-                value={mail}
-                editable={false}
-                placeholder="Email"
-                placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-                style={[styles.input, { backgroundColor: '#e0e0e0' }]}
-                autoCapitalize="none"
+                placeholder="First Name"
+                onChangeText={setFirstname}
+                value={firstname}
               />
-
-            <ThemedText style={styles.label}>Huidig wachtwoord</ThemedText>
+            </View>
+          </View>
+          <View className="flex-1">
             <TextInput
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              placeholder="Huidig wachtwoord"
-              placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-              style={styles.input}
-              autoCapitalize="none"
-              secureTextEntry
-            />
-            {currentPasswordError ? (
-              <ThemedText style={{ color: 'red', marginBottom: 8 }}>{currentPasswordError}</ThemedText>
-            ) : null}
-
-            <ThemedText style={styles.label}>Nieuw wachtwoord</ThemedText>
-            <TextInput
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder="Nieuw wachtwoord"
-              placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-              style={styles.input}
-              autoCapitalize="none"
-              secureTextEntry
-            />
-            {newPassword.length > 0 && newPassword.length < 6 && (
-              <ThemedText style={{ color: 'red', marginBottom: 4 }}>Minimaal 6 tekens</ThemedText>
-            )}
-            {newPassword.length > 0 && !/[A-Z]/.test(newPassword) && (
-              <ThemedText style={{ color: 'red', marginBottom: 4 }}>Minimaal 1 hoofdletter</ThemedText>
-            )}
-            {newPassword.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) && (
-              <ThemedText style={{ color: 'red', marginBottom: 8 }}>Minimaal 1 speciaal teken</ThemedText>
-            )}
-
-            <ThemedText style={styles.label}>Bevestig nieuw wachtwoord</ThemedText>
-            <TextInput
-              value={confirmNewPassword}
-              onChangeText={setConfirmNewPassword}
-              placeholder="Herhaal nieuw wachtwoord"
-              placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-              style={styles.input}
-              autoCapitalize="none"
-              secureTextEntry
-            />
-            {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
-              <ThemedText style={{ color: 'red', marginBottom: 8 }}>Wachtwoorden komen niet overeen</ThemedText>
-            )}
-            {passwordError ? (
-              <ThemedText style={{ color: 'red', marginBottom: 8 }}>{passwordError}</ThemedText>
-            ) : null}
-
-            <ThemedText style={styles.label}>Voornaam</ThemedText>
-            <TextInput
-              value={firstname}
-              onChangeText={setFirstname}
-              placeholder="Voornaam"
-              placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-              style={styles.input}
-            />
-
-            <ThemedText style={styles.label}>Achternaam</ThemedText>
-            <TextInput
-              value={lastname}
+              placeholder="Last Name"
               onChangeText={setLastname}
-              placeholder="Achternaam"
-              placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-              style={styles.input}
-            />
-
-            {/* Volledige naam veld verwijderd */}
-
-            <ThemedText style={styles.label}>Biografie</ThemedText>
-            <TextInput
-              value={bio}
-              onChangeText={setBio}
-              placeholder="Vertel iets over jezelf"
-              placeholderTextColor={BASE_COLORS.TEXT_DARK || "#999"}
-              style={[styles.input, styles.textarea]}
-              multiline
-              numberOfLines={4}
+              value={lastname}
             />
           </View>
+        </View>
+        <TextInput
+          placeholder="Email"
+          onChangeText={setMail}
+          value={mail}
+        />
 
-          <View style={styles.actionsRow}>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonSecondary]}
-              onPress={() => router.push("/Account")}
-            >
-              <Text style={styles.buttonSecondaryText}>Terug</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonPrimary]}
-              onPress={onSave}
-              disabled={saving}
-            >
-              <Text style={[styles.buttonText, hasError ? { color: BASE_COLORS.TEXT_DARK } : {}]}>
-                {saving ? "Opslaan…" : "Opslaan"}
-              </Text>
-            </TouchableOpacity>
-          </View>
+        <ThemedText type="subTitle" className="mt-3 mb-1">Update account information</ThemedText>
+        <TextInput
+          placeholder="Username"
+          onChangeText={setUsername}
+          value={username}
+        />
+        <TextInput
+          placeholder="Biography"
+          onChangeText={setBio}
+          value={bio}
+          multiline
+          numberOfLines={4}
+        />
+
+        <ThemedText type="subTitle" className="mt-3 mb-1">Change password</ThemedText>
+        <TextInput
+          placeholder="Current Password"
+          onChangeText={setCurrentPassword}
+          value={currentPassword}
+          secureTextEntry
+        />
+        {currentPasswordError ? (
+          <ThemedText style={{ color: 'red', marginBottom: 8 }}>{currentPasswordError}</ThemedText>
+        ) : null}
+        <TextInput
+          placeholder="New Password"
+          onChangeText={setNewPassword}
+          value={newPassword}
+          secureTextEntry
+        />
+        {newPassword.length > 0 && newPassword.length < 6 && (
+          <ThemedText style={{ color: 'red', marginBottom: 4 }}>Minimaal 6 tekens</ThemedText>
+        )}
+        {newPassword.length > 0 && !/[A-Z]/.test(newPassword) && (
+          <ThemedText style={{ color: 'red', marginBottom: 4 }}>Minimaal 1 hoofdletter</ThemedText>
+        )}
+        {newPassword.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) && (
+          <ThemedText style={{ color: 'red', marginBottom: 8 }}>Minimaal 1 speciaal teken</ThemedText>
+        )}
+        <TextInput
+          placeholder="Confirm New Password"
+          onChangeText={setConfirmNewPassword}
+          value={confirmNewPassword}
+          secureTextEntry
+        />
+        {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
+          <ThemedText style={{ color: 'red', marginBottom: 8 }}>Wachtwoorden komen niet overeen</ThemedText>
+        )}
+        {passwordError ? (
+          <ThemedText style={{ color: 'red', marginBottom: 8 }}>{passwordError}</ThemedText>
+        ) : null}
+
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Button
+            mode="contained"
+            onPress={onSave}
+            disabled={saving}
+            loading={saving} 
+            labelStyle={{ 
+              fontSize: Math.min(14 * scale, 24),
+              color: BASE_COLORS.WHITE,
+              fontFamily: FontFamilies.BODY,            
+            }}
+            style={{
+              borderRadius: 20,
+              marginBlock: 15,
+              backgroundColor: BASE_COLORS.TEXT_DARK,
+            }}
+          >Save</Button>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  center: { alignItems: "center", justifyContent: "center" },
-  title: {
-    paddingTop: 25,
-    fontSize: 36,
-    fontWeight: "bold",
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-    marginBottom: 10,
-  },
-  label: {
-    marginTop: 12,
-    marginBottom: 6,
-    fontSize: 16,
-    fontFamily: FontFamilies.HEADING,
-    color: BASE_COLORS.TEXT_DARK,
-  },
-  input: {
-    backgroundColor: BASE_COLORS.LIGHT_BG || "#f6f6f6",
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: BASE_COLORS.TEXT_DARK,
-    borderWidth: 1,
-    borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-  },
-  textarea: { minHeight: 90, textAlignVertical: "top" },
-  actionsRow: {
-    marginTop: 24,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  button: {
-    height: 40,
-    paddingHorizontal: 16,
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonPrimary: { backgroundColor: BASE_COLORS.ACCENT_PRIMARY },
-  buttonSecondary: {
-    backgroundColor: BASE_COLORS.WHITE,
-    borderWidth: 1,
-    borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-  },
-  buttonText: { color: BASE_COLORS.WHITE, fontWeight: "bold" },
-  buttonSecondaryText: { color: BASE_COLORS.TEXT_DARK, fontWeight: "bold" },
-});
