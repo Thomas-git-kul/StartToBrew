@@ -9,6 +9,7 @@ import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { Cpu, Plus } from "lucide-react-native";
+import { Cpu, Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
@@ -23,24 +24,14 @@ interface Beer {
   style: string | null;
 }
 
-interface BrewRow {
-  id_brew: number;
-  name: string;
-  recipe_slug: string | null;
-}
-
-interface InProgressBrew {
-  id: number;
-  name: string;
-  progress: number;
-}
-
-function HomePageContent() {
+export default function HomePage() {
   useFonts();
   const router = useRouter();
   const [beers, setBeers] = useState<Beer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [inProgress, setInProgress] = useState<InProgressBrew[]>([]);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
 
   const [inProgress, setInProgress] = useState<InProgressBrew[]>([]);
@@ -196,7 +187,7 @@ function HomePageContent() {
         showsVerticalScrollIndicator={false}
         style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
       >
-        {/* In progress section  */}
+        {/* In progress section */}
         <ThemedText type="title">In progress</ThemedText>
         <View>
           {inProgress.length === 0 ? (
@@ -211,6 +202,7 @@ function HomePageContent() {
                 />
               ))
             )}
+
         </View>
 
         <ThemedText type="title">Popular recipes</ThemedText>
