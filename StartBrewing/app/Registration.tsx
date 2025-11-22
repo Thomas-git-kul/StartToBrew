@@ -181,7 +181,7 @@ export default function Registration() {
               <TextInput
                 value={firstname}
                 onChangeText={setFirstname}
-                label="Firstname"
+                placeholder="Firstname"
               />
             </View>
           </View>
@@ -189,7 +189,7 @@ export default function Registration() {
             <TextInput
               value={lastname}
               onChangeText={setLastname}
-              label="Lastname"
+              placeholder="Lastname"
             />
           </View>
         </View>
@@ -199,7 +199,7 @@ export default function Registration() {
         </ThemedText>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <TextInput value={day} onChangeText={setDay} label="DD" />
+            <TextInput value={day} onChangeText={setDay} placeholder="DD" />
             {day.length > 0 && (!/^([0-2][0-9]|3[01])$/.test(day)) && (
               <ThemedText style={{ color: 'red', marginBottom: 8 }}>
                 Invalid day (01-31)
@@ -207,7 +207,7 @@ export default function Registration() {
             )}
           </View>
           <View style={{ width: "25%" }}>
-            <TextInput value={month} onChangeText={setMonth} label="MM" />
+            <TextInput value={month} onChangeText={setMonth} placeholder="MM" />
             {month.length > 0 && (!/^(0[1-9]|1[0-2])$/.test(month)) && (
               <ThemedText style={{ color: 'red', marginBottom: 8 }}>
                 Invalid month (01-12)
@@ -215,7 +215,7 @@ export default function Registration() {
             )}
           </View>
           <View style={{ width: "50%" }}>
-            <TextInput value={year} onChangeText={setYear} label="YYYY" />
+            <TextInput value={year} onChangeText={setYear} placeholder="YYYY" />
             {year.length > 0 && (!/^\d{4}$/.test(year)) && (
               <ThemedText style={{ color: 'red', marginBottom: 8 }}>
                 Invalid year (e.g. 1990)
@@ -227,7 +227,7 @@ export default function Registration() {
         <ThemedText type="subTitle" className="mt-6">
           Contact information
         </ThemedText>
-        <TextInput value={email} onChangeText={text => { setEmail(text); setEmailInUseError(false); }} label="Email" />
+        <TextInput value={email} onChangeText={text => { setEmail(text); setEmailInUseError(false); }} placeholder="Email" />
         {email.length > 0 && (!/^\S+@\S+\.\S+$/.test(email)) && (
           <ThemedText style={{ color: 'red', marginBottom: 8 }}>
             Invalid email format
@@ -245,7 +245,7 @@ export default function Registration() {
         <TextInput
           value={username}
           onChangeText={text => { setUsername(text); setUsernameInUseError(false); }}
-          label="Username"
+          placeholder="Username"
         />
         {usernameInUseError && (
           <ThemedText style={{ color: 'red', marginBottom: 8 }}>
@@ -255,7 +255,7 @@ export default function Registration() {
         <TextInput
           value={password}
           onChangeText={setPassword}
-          label="Password"
+          placeholder="Password"
           secureTextEntry
         />
         {password.length > 0 && password.length < 6 && (
@@ -276,7 +276,7 @@ export default function Registration() {
         <TextInput
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          label="Confirm Password"
+          placeholder="Confirm Password"
           secureTextEntry
         />
         {confirmPassword.length > 0 && password !== confirmPassword && (

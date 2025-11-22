@@ -87,9 +87,9 @@ export default function Auth() {
       </ThemedText>
 
       <View className="gap-1 mx-5 mb-8">
-        <TextInput label="Email or Username" value={identifier} onChangeText={setIdentifier} />
+        <TextInput placeholder="Email or Username" value={identifier} onChangeText={setIdentifier} />
         <TextInput
-          label="Password"
+          placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
