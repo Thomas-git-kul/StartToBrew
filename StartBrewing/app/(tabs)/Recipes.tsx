@@ -136,7 +136,7 @@ export default function Recipes() {
         backgroundColor: BASE_COLORS.LIGHT_BG,
       }}
     >
-      <Header title="Recipes" />
+      <Header title="Test Recipes" />
 
       {/* Searchbar */}
       <Searchbar
