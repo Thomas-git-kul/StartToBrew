@@ -12,6 +12,8 @@ import {
   ThemeProvider as NavigationThemeProvider,
 } from "@react-navigation/native";
 
+import { FavoritesProvider } from "@/context/FavoritesContext";
+
 // React Native Paper (MD3)
 import {
   MD3DarkTheme as PaperDarkTheme,
@@ -44,6 +46,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
         <NavigationThemeProvider value={theme}>
+          <FavoritesProvider>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen
@@ -51,6 +54,7 @@ export default function RootLayout() {
                 options={{ presentation: "modal", title: "Modal" }}
               />
             </Stack>
+          </FavoritesProvider>
           <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
         </NavigationThemeProvider>
       </PaperProvider>
