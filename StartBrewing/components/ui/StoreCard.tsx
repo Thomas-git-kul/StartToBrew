@@ -26,40 +26,51 @@ export default function StoreCard({ image, title, price, onPress }: StoreCardPro
           height: Math.min(CARD_HEIGHT, 290),
           marginBottom: 18,
           backgroundColor: BASE_COLORS.WHITE,
-          borderRadius: 16,
-          overflow: "hidden"
+          borderRadius: 12,
+          overflow: "hidden",
+          shadowColor: BASE_COLORS.STONE700,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.07,
         }}
       >
-        <View style={{ flexGrow: 1 }} className="flex-col px-3 pt-3">
-          {/* Image */}
+        <View style={{ flex: 1, paddingBottom: 48, justifyContent: "space-between" }}>
           <Image
             source={typeof image === "string" ? { uri: image } : image}
             style={{
               width: "100%",
-              height: Math.min(CARD_HEIGHT * 0.55, 160),
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              marginBottom: 3
+              height: Math.min(CARD_HEIGHT * 0.5, 160),
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
+              marginBottom: 3,
             }}
             resizeMode="cover"
           />
 
-          {/* Title */}
+          <View style={{height: Math.min(CARD_HEIGHT * 0.3, 160),}}>
+            <Text
+              style={{
+                paddingHorizontal: 12,
+                fontSize: Math.min(14 * scale, 20),
+                fontFamily: FontFamilies.BODY,
+                color: BASE_COLORS.STONE700,
+              }}
+              numberOfLines={2}
+            >
+              {title}
+            </Text>
+          </View>
+
           <Text
             style={{
-              fontSize: Math.min(17 * scale, 20),
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              paddingHorizontal: 12,
+              marginBottom: 12,
+              fontSize: Math.min(15 * scale, 18),
               fontFamily: FontFamilies.BODY_BOLD,
               color: BASE_COLORS.ACCENT_PRIMARY,
             }}
-          >{title}</Text>
-
-          {/* Price */}
-          <Text
-          style={{
-            fontSize: Math.min(15 * scale, 18),
-            fontFamily: FontFamilies.BODY,
-            color: BASE_COLORS.STONE600
-          }}
           >{price}</Text>
         </View>
       </Card>

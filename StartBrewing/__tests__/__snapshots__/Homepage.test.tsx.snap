@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<HomePage /> matches snapshot 1`] = `
+exports[`<HomePage /> snapshot 1`] = `
 <View
   className="flex-1"
 >
@@ -10,6 +10,7 @@ exports[`<HomePage /> matches snapshot 1`] = `
     </Text>
   </View>
   <RCTScrollView
+    showsVerticalScrollIndicator={false}
     style={
       {
         "backgroundColor": "#eee",
@@ -52,9 +53,11 @@ exports[`<HomePage /> matches snapshot 1`] = `
           onResponderTerminationRequest={[Function]}
           onStartShouldSetResponder={[Function]}
         >
-          <Text>
-            Hazy IPA
-          </Text>
+          <View>
+            <Text>
+              Hazy IPA
+            </Text>
+          </View>
         </View>
         <View
           accessibilityState={
@@ -87,9 +90,11 @@ exports[`<HomePage /> matches snapshot 1`] = `
           onResponderTerminationRequest={[Function]}
           onStartShouldSetResponder={[Function]}
         >
-          <Text>
-            Belgian Tripel
-          </Text>
+          <View>
+            <Text>
+              Belgian Tripel
+            </Text>
+          </View>
         </View>
         <View
           accessibilityState={
@@ -122,24 +127,217 @@ exports[`<HomePage /> matches snapshot 1`] = `
           onResponderTerminationRequest={[Function]}
           onStartShouldSetResponder={[Function]}
         >
-          <Text>
-            American Pale Ale
-          </Text>
+          <View>
+            <Text>
+              American Pale Ale
+            </Text>
+          </View>
         </View>
       </View>
       <Text>
         Popular recipes
       </Text>
       <View
-        style={
-          {
-            "alignItems": "center",
-            "height": 200,
-            "justifyContent": "center",
-          }
-        }
+        className="items-center justify-center my-4"
       >
-        <ActivityIndicator />
+        <View
+          accessibilityRole="progressbar"
+          accessibilityState={
+            {
+              "busy": true,
+            }
+          }
+          accessible={true}
+          style={
+            [
+              {
+                "alignItems": "center",
+                "justifyContent": "center",
+              },
+              undefined,
+            ]
+          }
+        >
+          <View
+            collapsable={false}
+            style={
+              {
+                "height": 24,
+                "opacity": 1,
+                "width": 24,
+              }
+            }
+          >
+            <View
+              collapsable={false}
+              style={
+                {
+                  "alignItems": "center",
+                  "bottom": 0,
+                  "justifyContent": "center",
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                }
+              }
+            >
+              <View
+                collapsable={false}
+                style={
+                  {
+                    "height": 24,
+                    "transform": [
+                      {
+                        "rotate": "45deg",
+                      },
+                    ],
+                    "width": 24,
+                  }
+                }
+              >
+                <View
+                  collapsable={false}
+                  style={
+                    {
+                      "height": 12,
+                      "overflow": "hidden",
+                      "width": 24,
+                    }
+                  }
+                >
+                  <View
+                    collapsable={false}
+                    style={
+                      {
+                        "height": 24,
+                        "transform": [
+                          {
+                            "translateY": 0,
+                          },
+                          {
+                            "rotate": "-165deg",
+                          },
+                        ],
+                        "width": 24,
+                      }
+                    }
+                  >
+                    <View
+                      collapsable={false}
+                      style={
+                        {
+                          "height": 12,
+                          "overflow": "hidden",
+                          "width": 24,
+                        }
+                      }
+                    >
+                      <View
+                        collapsable={false}
+                        style={
+                          {
+                            "borderColor": "#f00",
+                            "borderRadius": 12,
+                            "borderWidth": 2.4,
+                            "height": 24,
+                            "width": 24,
+                          }
+                        }
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+            <View
+              collapsable={false}
+              style={
+                {
+                  "alignItems": "center",
+                  "bottom": 0,
+                  "justifyContent": "center",
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                }
+              }
+            >
+              <View
+                collapsable={false}
+                style={
+                  {
+                    "height": 24,
+                    "transform": [
+                      {
+                        "rotate": "45deg",
+                      },
+                    ],
+                    "width": 24,
+                  }
+                }
+              >
+                <View
+                  collapsable={false}
+                  style={
+                    {
+                      "height": 12,
+                      "overflow": "hidden",
+                      "top": 12,
+                      "width": 24,
+                    }
+                  }
+                >
+                  <View
+                    collapsable={false}
+                    style={
+                      {
+                        "height": 24,
+                        "transform": [
+                          {
+                            "translateY": -12,
+                          },
+                          {
+                            "rotate": "345deg",
+                          },
+                        ],
+                        "width": 24,
+                      }
+                    }
+                  >
+                    <View
+                      collapsable={false}
+                      style={
+                        {
+                          "height": 12,
+                          "overflow": "hidden",
+                          "width": 24,
+                        }
+                      }
+                    >
+                      <View
+                        collapsable={false}
+                        style={
+                          {
+                            "borderColor": "#f00",
+                            "borderRadius": 12,
+                            "borderWidth": 2.4,
+                            "height": 24,
+                            "width": 24,
+                          }
+                        }
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+        <Text>
+          Loading recipes...
+        </Text>
       </View>
     </View>
   </RCTScrollView>
@@ -282,105 +480,9 @@ exports[`<HomePage /> matches snapshot 1`] = `
               }
               testID="cross-fade-icon-current"
             >
-              <RNSVGSvgView
-                align="xMidYMid"
-                bbHeight={24}
-                bbWidth={24}
-                fill="none"
-                focusable={false}
-                height={24}
-                meetOrSlice={0}
-                minX={0}
-                minY={0}
-                stroke="#eee"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                style={
-                  [
-                    {
-                      "backgroundColor": "transparent",
-                      "borderWidth": 0,
-                    },
-                    {
-                      "flex": 0,
-                      "height": 24,
-                      "width": 24,
-                    },
-                  ]
-                }
-                vbHeight={24}
-                vbWidth={24}
-                width={24}
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <RNSVGGroup
-                  fill={null}
-                  propList={
-                    [
-                      "fill",
-                      "stroke",
-                      "strokeWidth",
-                      "strokeLinecap",
-                      "strokeLinejoin",
-                    ]
-                  }
-                  stroke={
-                    {
-                      "payload": 4293848814,
-                      "type": 0,
-                    }
-                  }
-                  strokeLinecap={1}
-                  strokeLinejoin={1}
-                  strokeWidth={2}
-                >
-                  <RNSVGPath
-                    d="M5 12h14"
-                    fill={null}
-                    propList={
-                      [
-                        "fill",
-                        "stroke",
-                        "strokeWidth",
-                        "strokeLinecap",
-                        "strokeLinejoin",
-                      ]
-                    }
-                    stroke={
-                      {
-                        "payload": 4293848814,
-                        "type": 0,
-                      }
-                    }
-                    strokeLinecap={1}
-                    strokeLinejoin={1}
-                    strokeWidth={2}
-                  />
-                  <RNSVGPath
-                    d="M12 5v14"
-                    fill={null}
-                    propList={
-                      [
-                        "fill",
-                        "stroke",
-                        "strokeWidth",
-                        "strokeLinecap",
-                        "strokeLinejoin",
-                      ]
-                    }
-                    stroke={
-                      {
-                        "payload": 4293848814,
-                        "type": 0,
-                      }
-                    }
-                    strokeLinecap={1}
-                    strokeLinejoin={1}
-                    strokeWidth={2}
-                  />
-                </RNSVGGroup>
-              </RNSVGSvgView>
+              <Text>
+                Plus
+              </Text>
             </View>
           </View>
         </View>

@@ -1,37 +1,46 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { View, ScrollView, Image, Pressable, FlatList, Dimensions } from "react-native";
 import { FAB } from "react-native-paper";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useFonts } from "@/hooks/use-fonts";
 import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
-import { nanoid } from 'nanoid/non-secure';
 import { CirclePlus, CircleMinus } from "lucide-react-native";
+import { supabase } from "../supabase";
 
 const { width } = Dimensions.get("window");
 const IMAGE_WIDTH = width - 20;
 const IMAGE_HEIGHT = IMAGE_WIDTH * 0.75;
 
+const exampleImages: Record<number, any> = {
+  1: require("@/assets/images/malt.png"),
+  2: require("@/assets/images/hop.png"),
+  3: require("@/assets/images/yeast.png"),
+  4: require("@/assets/images/starterkit2.png"),
+  5: require("@/assets/images/Airlock.png"),
+  6: require("@/assets/images/measurement.png"),
+};
+
 export default function StoreItem() {
   useFonts();
 
   const router = useRouter();
+  const { id } = useLocalSearchParams() as { id?: number };
+  const { categoryNumber } = useLocalSearchParams() as { categoryNumber?: number };
+  // console.log("CategoryNumber:", categoryNumber);
 
-  const [product] = useState({
-    id: nanoid(),
-    title: "Starter Brew Kit IPA",
-    description:
-      "Slightly bitter with a fruity undertone. This IPA has a moderate alcohol content of 5.1% ABV. Brew 5 liters of your own beer at home in just a few hours. Includes milled all-grain mix and practical brewing guide with tips & tricks.",
-    basePrice: 32.99,
-    images: [
-      { id: nanoid(), source: require("@/assets/images/Starterkit.png") },
-      { id: nanoid(), source: require("@/assets/images/starterkit2.png") },
-    ],
-  });
+  const [loading, setLoading] = useState(true);
+  const [item, setItem] = useState<{
+    id: string;
+    name: string;
+    category: number;
+    description: string;
+    price: number;
+    images: { id: string; source: any }[];
+  } | null>(null);
 
   const [quantity, setQuantity] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -44,41 +53,204 @@ export default function StoreItem() {
 
   // Calculate total price dynamically
   const totalPrice = useMemo(
-    () => product.basePrice * quantity,
-    [product.basePrice, quantity]
+    () => (item?.price ?? 0) * quantity,
+    [item?.price, quantity]
   );
+
+  const handleAddToOrder = async () => {
+    if (!item) return;
+
+    const isStarterKit = Number(categoryNumber) === 4;
+
+    try {
+      // Get logged-in user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error("Error fetching user:", userError?.message);
+        return;
+      }
+      const userId = user.id;
+      console.log("userId:", userId);
+
+      // Check if the item (store_item or starter_kit) already exists in the cart
+      const { data: existingCart, error: existingError } = await supabase
+        .from("shopping_cart")
+        .select(`
+          id_cart,
+          quantity,
+          user_shopping_cart!inner (
+            user_id
+          )
+        `)
+        .eq("store_item_id", item.id)
+        .eq("starter_kit", isStarterKit)
+        .eq("user_shopping_cart.user_id", userId)
+        .maybeSingle();
+
+      if (existingError && existingError.code !== "PGRST116") {
+        console.error("Error checking existing cart:", existingError.message);
+        return;
+      }
+
+      if (existingCart) {
+        // Update quantity if already in cart
+        const newQuantity = existingCart.quantity + quantity;
+        const { error: updateError } = await supabase
+          .from("shopping_cart")
+          .update({ quantity: newQuantity })
+          .eq("id_cart", existingCart.id_cart);
+        if (updateError) {
+          console.error("Error updating cart quantity:", updateError.message);
+          return;
+        }
+      } else {
+        // Insert new cart row
+        const { data: cartData, error: insertCartError } = await supabase
+          .from("shopping_cart")
+          .insert([{
+            store_item_id: item.id,
+            quantity,
+            starter_kit: isStarterKit
+          }])
+          .select()
+          .single();
+
+        if (insertCartError) {
+          console.error("Error inserting into shopping_cart:", insertCartError.message);
+          return;
+        }
+
+        // Map cart row to user
+        const { error: mapError } = await supabase
+          .from("user_shopping_cart")
+          .insert([{ user_id: user.id, cart_id: cartData.id_cart }]);
+
+        if (mapError) {
+          console.error("Error mapping cart to user:", mapError.message);
+          return;
+        }
+      }
+
+      console.log("Item added to shopping cart successfully");
+      router.push("/Store");
+
+    } catch (err: any) {
+      console.error("Unexpected order creation error:", err.message ?? err);
+    }
+  };
+    
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        let data: any;
+        let error: any;
+
+        if (Number(categoryNumber) === 4) {
+          // Starter kit
+          ({ data, error } = await supabase
+            .from("starter_kits")
+            .select("id_starter_kit, name, description, price")
+            .eq("id_starter_kit", id)
+            .single());
+            if (data) {
+              data.id = data.id_starter_kit;
+            }
+        } else {
+          // Regular store item
+          ({ data, error } = await supabase
+            .from("store_items")
+            .select("id_store_item, name, category_id, price")
+            .eq("id_store_item", id)
+            .single());
+            if (data) {
+              data.id = data.id_store_item; // map to common field
+            }
+        }
+
+        if (error) {
+          console.warn("Supabase fetch item error:", error.message);
+          if (mounted) setItem(null);
+          return;
+        }
+
+        if (mounted && data) {
+          setItem({
+            id: data.id,
+            name: data.name ?? "Untitled Item",
+            category: categoryNumber ?? 0,
+            description: data.description ?? "No description available.",
+            price: data.price ?? 0,
+            images: [
+              {
+                id: "0",
+                source: exampleImages[Number(categoryNumber)] 
+                  || require("@/assets/images/Premiumkit.png"),
+              },
+            ],
+          });
+        }
+      } catch (e: any) {
+        console.warn("Supabase fetch exception:", e?.message ?? e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    load();
+    return () => { mounted = false; };
+  }, [id, categoryNumber]);
 
   return (
       <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
         {/* Header */}
         <Header
-          title={product.title}
+          title={item?.name ?? (loading ? "Loading…" : "Item")}
           iconName="ArrowRight"
           onIconPress={() => router.push("/Store")}
           actionTestID="back-button"
         />
 
         {/* Scrollable Content */}
-        <ScrollView className="flex-1 mx-3" showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          className="flex-1 mx-3" 
+          showsVerticalScrollIndicator={false}
+        >
           {/* Image Carousel */}
           <View>
             <FlatList
-              data={product.images}
+              data={item?.images ?? []} // Ensure fallback is an empty array
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <Image
-                  source={item.source}
-                  style={{
-                    borderRadius: 20,
-                    width: IMAGE_WIDTH,
-                    height: IMAGE_HEIGHT,
-                  }}
-                  resizeMode="cover"
-                />
-              )}
+              keyExtractor={(image, index) => `${image.id ?? index}`} // Use index as fallback
+              renderItem={({ item: image }) => {
+                return (
+                  <View
+                    style={{
+                      width: IMAGE_WIDTH,
+                      height: IMAGE_HEIGHT,
+                      borderRadius: 20,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Image
+                      source={image.source}
+                      style={{
+                        width: "100%",
+                        height:"100%"
+                      }}
+                      resizeMode="cover"
+                    />
+                  </View>
+                );
+              }}
               onMomentumScrollEnd={(ev) => {
                 const index = Math.round(
                   ev.nativeEvent.contentOffset.x / ev.nativeEvent.layoutMeasurement.width
@@ -99,7 +271,7 @@ export default function StoreItem() {
                 gap: 6,
               }}
             >
-              {product.images.map((_, i) => (
+              {item?.images?.map((_, i: number) => (
                 <View
                   key={i}
                   style={{
@@ -138,7 +310,7 @@ export default function StoreItem() {
           </View>
 
           <ThemedText type="defaultText" className="mb-3">
-            {product.description}
+            {item?.description ?? (loading ? "Loading…" : "Item")}
           </ThemedText>
         </ScrollView>
 
@@ -162,7 +334,7 @@ export default function StoreItem() {
               hitSlop={8}
               style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
             >
-              <CircleMinus size={20} color={BASE_COLORS.STONE500} />
+              <CircleMinus size={30} color={BASE_COLORS.STONE500} />
             </Pressable>
 
             <ThemedText type="numbers" style={{ marginHorizontal: 12 }}>
@@ -175,7 +347,7 @@ export default function StoreItem() {
               hitSlop={8}
               style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
             >
-              <CirclePlus size={20} color={BASE_COLORS.STONE500} />
+              <CirclePlus size={30} color={BASE_COLORS.STONE500} />
             </Pressable>
           </View>
 
@@ -183,27 +355,19 @@ export default function StoreItem() {
             label="Add to order"
             mode="elevated"
             testID="fab-add-to-order"
-            onPress={() =>
-              router.push({
-                pathname: "/Store",
-                params: {
-                  id: product.id,
-                  title: product.title,
-                  quantity,
-                  price: totalPrice,
-                },
-              })
-            }
+            onPress={handleAddToOrder}
             style={{
               backgroundColor: BASE_COLORS.TEXT_DARK,
-              paddingHorizontal: 24,
-              paddingVertical: 12,
-              borderRadius: 12,
+              borderRadius: 20,
+
             }}
             color={BASE_COLORS.WHITE}
             theme={{
               fonts: {
-                labelLarge: { fontFamily: FontFamilies.BODY_BOLD, fontSize: 16 },
+                labelLarge: {
+                  fontSize: 16,
+                  fontFamily: FontFamilies.BODY,
+                },
               },
             }}
           />

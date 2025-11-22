@@ -1,30 +1,34 @@
-import React, { useEffect, useState } from "react";
-import { View, ScrollView, ActivityIndicator } from "react-native";
-import { Searchbar} from "react-native-paper";
+import React, { useState, useEffect } from "react";
+import { View, ScrollView } from "react-native";
+import { Searchbar, ActivityIndicator } from "react-native-paper";
 import { Search, X } from "lucide-react-native";
-import BeerCard from '@/components/ui/RecipeCard';
+import BeerCard from "@/components/ui/RecipeCard";
 import { BASE_COLORS } from "@/constants/Colors";
 import { useRouter } from "expo-router";
-import Header from '@/components/header';
+import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
-import { supabase } from "../../supabase";
+import { ThemedText } from "@/components/themed-text";
+import { supabase } from "@/supabase";
+import { getBeerImageSource } from "@/hooks/beer-image";
 
 interface Beer {
-  recipe_slug?: string;
+  recipe_slug: string;
   name: string;
   rating: number;
   reviews: number;
   image: any;
-  description: string;
+  description: string | null;
+  style: string | null;
 }
 
 export default function Recipes() {
   useFonts();
   const router = useRouter();
 
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [recipes, setRecipes] = useState<Beer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // helper to check whether an item matches the query
   const filterMatches = (item: Beer, q: string) => {
@@ -33,46 +37,92 @@ export default function Recipes() {
     return item.name.toLowerCase().includes(lower);
   };
 
+  const toggleFavorite = (slug: string) => {
+    // placeholder, hier kan later echte favorite-logica in
+    setRecipes((prev) =>
+      prev.map((beer) => (beer.recipe_slug === slug ? { ...beer } : beer))
+    );
+  };
+
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
+    const fetchRecipes = async () => {
       try {
-        const { data, error } = await supabase
+        setLoading(true);
+        setError(null);
+
+        const { data: recipesData, error: recipesError } = await supabase
           .from("recipes")
-          .select("recipe_slug,name,description,rating")
-          .limit(50);
+          .select(
+            "recipe_slug, name, description, rating, haze_level, srm_target, style"
+          );
 
-        if (error) {
-          console.warn("Supabase recipes(fetch) error:", error.message);
-          if (mounted) setRecipes([]);
-          return;
+        if (recipesError) throw recipesError;
+
+        const slugs = (recipesData || []).map((r: any) => r.recipe_slug);
+
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from("recipe_reviews")
+          .select("recipe_slug, rating")
+          .in("recipe_slug", slugs.length ? slugs : [""]);
+
+        if (reviewsError) throw reviewsError;
+
+        // aggregate
+        const agg: Record<string, { count: number; avg: number }> = {};
+        (reviewsData || []).forEach((r: any) => {
+          const slug = r.recipe_slug;
+          if (!agg[slug]) agg[slug] = { count: 0, avg: 0 };
+          agg[slug].count += 1;
+          agg[slug].avg += (r.rating ?? 0);
+        });
+        Object.keys(agg).forEach((k) => {
+          agg[k].avg = agg[k].count ? agg[k].avg / agg[k].count : 0;
+        });
+
+        const mapped: Beer[] = (recipesData || []).map((r: any) => {
+          const a = agg[r.recipe_slug];
+          const avgRating = a ? a.avg : r.rating ?? 0;
+          // twee decimalen precisie
+          const rating = parseFloat(avgRating.toFixed(2));
+          return {
+            recipe_slug: r.recipe_slug,
+            name: r.name,
+            rating,
+            reviews: a ? a.count : 0,
+            image: getBeerImageSource(r.haze_level, r.srm_target),
+            description: r.description ?? null,
+            style: r.style ?? null,
+          };
+        });
+
+        const shuffled = [...mapped];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
-
-        const mapped: Beer[] = (data ?? []).map((row: any) => ({
-          recipe_slug: row.recipe_slug ?? undefined,
-          name: row.name ?? "Untitled Recipe",
-          rating: typeof row.rating === "number" ? row.rating : Number(row.rating ?? 0),
-          description: row.description ?? "",
-          reviews: 0,
-          image: require("@/assets/images/default-beer.png"),
-        }));
-
-        if (mounted) setRecipes(mapped);
+        setRecipes(shuffled);
       } catch (e: any) {
-        console.warn("Supabase fetch exception:", e?.message ?? e);
+        console.error("Error loading recipes", e);
+        setError(
+          e.message ?? "Unable to load recipes."
+        );
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
     };
 
-    load();
-    return () => {
-      mounted = false;
-    };
+    fetchRecipes();
   }, []);
 
+  const filteredRecipes = recipes.filter((b) => filterMatches(b, searchQuery));
+
   return (
-    <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+    <View
+      className="flex-1"
+      style={{
+        backgroundColor: BASE_COLORS.LIGHT_BG,
+      }}
+    >
       <Header title="Recipes" />
 
       {/* Searchbar */}
@@ -82,7 +132,11 @@ export default function Recipes() {
         onChangeText={setSearchQuery}
         inputStyle={{ color: BASE_COLORS.STONE700 }}
         icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
-        clearIcon={searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined}
+        clearIcon={
+          searchQuery
+            ? () => <X size={18} color={BASE_COLORS.STONE500} />
+            : undefined
+        }
         onClearIconPress={() => setSearchQuery("")}
         style={{
           backgroundColor: BASE_COLORS.WHITE,
@@ -92,31 +146,42 @@ export default function Recipes() {
         }}
       />
 
-      {/* Recipes */}
       {loading ? (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator 
+            animating size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
+          <ThemedText type="defaultText" className="mt-3">
+            Loading recipes...
+          </ThemedText>
+        </View>
+      ) : error ? (
+        <View className="flex-1 items-center justify-center px-6">
+          <ThemedText type="title" className="mb-2 text-center">
+            Oeps
+          </ThemedText>
+          <ThemedText type="defaultText" className="text-center">
+            {error}
+          </ThemedText>
         </View>
       ) : (
         <ScrollView>
-          {!searchQuery ? (
-            <View>
-              {recipes.map((beer, index) => (
-                <BeerCard
-                  key={index}
-                  {...beer}
-                  onPress={() => router.push(({ pathname: "/SpecificRecipe", params: { slug: beer.recipe_slug } } as any))}
-                  onToggleFavorite={() => {}}
-                />
-              ))}
-            </View>
-          ) : (
-            <View>
-              {recipes.filter((b) => filterMatches(b, searchQuery)).map((beer, index) => (
-                <BeerCard key={index} {...beer} />
-              ))}
-            </View>
-          )}
+          <View>
+            {filteredRecipes.map((beer) => (
+              <BeerCard
+                key={beer.recipe_slug}
+                {...beer}
+                onPress={() =>
+                  router.push({
+                    pathname: "/SpecificRecipe",
+                    params: { recipe_slug: beer.recipe_slug },
+                  })
+                }
+                onToggleFavorite={() => toggleFavorite(beer.recipe_slug)}
+              />
+            ))}
+          </View>
         </ScrollView>
       )}
     </View>

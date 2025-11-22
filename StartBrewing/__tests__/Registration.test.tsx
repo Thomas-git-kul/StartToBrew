@@ -1,24 +1,37 @@
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 
-// 1. AsyncStorage mock to prevent NativeModule errors
+// 1. AsyncStorage mock
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock")
 );
 
-// 2. Supabase mock so createClient doesn't require env vars
+// 2. useFonts-hook mock (zodat er geen echte fonts geladen worden)
+jest.mock("@/hooks/use-fonts", () => ({
+  useFonts: () => {},
+}));
+
+// 3. Supabase mock: auth.signUp + from().upsert
 const mockSignUp = jest.fn().mockResolvedValue({
-  data: { session: null }, // triggers "Check your inbox" path
+  data: { user: { id: "mock-user-id" }, session: null },
   error: null,
 });
+const mockUpsert = jest.fn().mockResolvedValue({
+  data: null,
+  error: null,
+});
+
 jest.mock("@/supabase", () => ({
   supabase: {
     auth: {
       signUp: mockSignUp,
     },
+    from: jest.fn(() => ({
+      upsert: mockUpsert,
+    })),
   },
 }));
 
-// 3. Router mock so router.replace does not navigate
+// 4. Router mock
 const mockReplace = jest.fn();
 jest.mock("expo-router", () => ({
   router: {
@@ -28,7 +41,7 @@ jest.mock("expo-router", () => ({
   },
 }));
 
-// 4. UI dependent mocks
+// 5. UI-dependent mocks
 jest.mock("expo-checkbox", () => {
   const { Text } = require("react-native");
   return ({ value, onValueChange }: any) => (
@@ -69,7 +82,7 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
-// Import the component AFTER all mocks
+// Component pas NA alle mocks importeren
 import Registration from "../app/Registration";
 
 describe("<Registration />", () => {
@@ -94,7 +107,6 @@ describe("<Registration />", () => {
     const { getByRole } = render(<Registration />);
     const checkbox = getByRole("checkbox");
     fireEvent.press(checkbox);
-    // you can check accessibilityState.checked if needed
     expect(checkbox.props.accessibilityState.checked).toBe(true);
   });
 
@@ -109,9 +121,8 @@ describe("<Registration />", () => {
 
     fireEvent.press(button);
 
-    await waitFor(() =>
-      expect(getByText("Create account")).toBeTruthy() // button still exists
-    );
+    await waitFor(() => expect(getByText("Create account")).toBeTruthy());
+    // optioneel: expect(mockSignUp).not.toHaveBeenCalled();
   });
 
   it("matches snapshot", () => {
