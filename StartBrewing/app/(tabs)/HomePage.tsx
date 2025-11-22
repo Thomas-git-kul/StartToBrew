@@ -123,6 +123,50 @@ function HomePageContent() {
         .from("brews")
         .select("id_brew, name, recipe_slug")
         .eq("user_id", user.id) 
+        .in ("status_id", [1,2]) as { data: BrewRow[] | null; error: any };
+
+      if (brewsError) {
+        console.warn("Failed to load brews:", brewsError.message);
+      }
+
+      interface PhaseRow {
+        phase_id: string;
+      }
+
+      const inProgressResult = brews?.length
+        ? await Promise.all(
+            brews.map(async (brew) => {
+              const { data: phases } = await supabase
+                .from("phases")
+                .select("phase_id")
+                .eq("recipe_slug", brew.recipe_slug) as {data: PhaseRow[] | null};
+
+              const phaseIds = phases?.map(p => p.phase_id) ?? [];
+
+              const { data: totalSteps } = await supabase
+                .from("steps")
+                .select("step_id")
+                .in("phase_id", phaseIds);
+
+    const loadProgress = async () => {
+    setLoading(true);
+
+    try {
+      // 1️⃣ Haal user info op
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        if (mounted) {
+          setInProgress([]);
+          setBeers([]);
+        }
+        return;
+      }
+
+      // 2️⃣ Haal in-progress brews op
+      const { data: brews, error: brewsError } = await supabase
+        .from("brews")
+        .select("id_brew, name, recipe_slug")
+        .eq("user_id", user.id) 
         .in ("status_id", [1,2]);
 
       if (brewsError) {
