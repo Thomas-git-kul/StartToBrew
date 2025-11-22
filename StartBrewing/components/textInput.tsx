@@ -30,49 +30,56 @@ export default function CustomTextInput({
   maxLength,
 }: textInputProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  const borderColor = focused
+    ? BASE_COLORS.ACCENT_PRIMARY
+    : BASE_COLORS.STONE300;
 
   return (
-    <View style={{ marginBottom: 12 }}>
-      <View className="">
-        <TextInput
-          placeholder={placeholder}
-          onChangeText={onChangeText}
-          value={value}
-          secureTextEntry={secureTextEntry && !showPassword}
-          multiline={multiline}
-          numberOfLines={numberOfLines}
-          keyboardType={keyboardType}
-          maxLength={maxLength}
+    <View 
+      style={{ 
+        marginBottom: 12,
+      }}
+    >
+      <TextInput
+        placeholder={placeholder}
+        onChangeText={onChangeText}
+        value={value}
+        secureTextEntry={secureTextEntry && !showPassword}
+        multiline={multiline}
+        numberOfLines={numberOfLines}
+        keyboardType={keyboardType}
+        maxLength={maxLength}
 
-          placeholderTextColor={BASE_COLORS.STONE400}
-          selectionColor={BASE_COLORS.ACCENT_PRIMARY}
-          style={{
-            backgroundColor: BASE_COLORS.WHITE,
-            borderRadius: 6,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            fontSize: Math.min(14 * scale, 20),
-            fontFamily: FontFamilies.BODY_LIGHT,
-            color: BASE_COLORS.STONE700,
-            borderWidth: 1,
-            borderColor: BASE_COLORS.STONE300,
-          }}
-        />
-
-        {/* Password Toggle Icon */}
-        {secureTextEntry && (
-          <Pressable
-            onPress={() => setShowPassword((prev) => !prev)}
-            className="absolute right-4 top-1/2 -translate-y-1/2"
-          >
-            {showPassword ? (
-              <EyeOff size={Math.min(14 * scale, 30)} color={BASE_COLORS.STONE300} />
-            ) : (
-              <Eye size={Math.min(20 * scale, 30)} color={BASE_COLORS.STONE300} />
-            )}
-          </Pressable>
-        )}
-      </View>
+        placeholderTextColor={BASE_COLORS.STONE400}
+        selectionColor={BASE_COLORS.ACCENT_PRIMARY}
+        style={{
+          backgroundColor: BASE_COLORS.WHITE,
+          borderRadius: 6,
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+          fontSize: Math.min(14 * scale, 20),
+          fontFamily: FontFamilies.BODY_LIGHT,
+          color: BASE_COLORS.STONE700,
+          borderWidth: 1,
+          borderColor: borderColor,
+        }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+      />
+      {secureTextEntry && (
+        <Pressable
+          onPress={() => setShowPassword((prev) => !prev)}
+          className="absolute right-4 top-1/2 -translate-y-1/2"
+        >
+          {showPassword ? (
+            <EyeOff size={Math.min(20 * scale, 30)} color={BASE_COLORS.STONE300} />
+          ) : (
+            <Eye size={Math.min(20 * scale, 30)} color={BASE_COLORS.STONE300} />
+          )}
+        </Pressable>
+      )}
     </View>
   );
 }
