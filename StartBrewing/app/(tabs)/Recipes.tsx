@@ -137,7 +137,6 @@ export default function Recipes() {
       }}
     >
       <Header title="Recipes" />
-      <title>Recipes</title>
       {/* Searchbar */}
       <Searchbar
         placeholder="Search"
