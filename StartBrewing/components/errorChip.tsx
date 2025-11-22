@@ -29,14 +29,11 @@ export default function HeaderBar({ text }: ErrorProps) {
       textStyle={{
           color: RED,
           fontFamily: FontFamilies.BODY,
-          fontSize: Math.min(14 * scale, 20),
+          fontSize: Math.min(13 * scale, 20),
           marginTop: 8,
       }}
       style={{
-        marginRight: 10,
         backgroundColor: LIGHT_RED,
-        borderWidth: 1,
-        height: Math.min(40 * scale, 50),
         marginBottom: 6,
         alignItems: "center",
         alignSelf: "flex-start",

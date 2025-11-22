@@ -205,8 +205,14 @@ export default function EditAccount() {
         }
         const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
         if (pwError) {
-          Alert.alert("Error", `Failed to save password: ${pwError.message}`);
+          if (pwError.status === 422) {
+            setPasswordError("New and current password cannot be the same");
+          } else {
+            setPasswordError(`Failed to save password: ${pwError.message}`);
+          }
           return;
+        } else {
+          setPasswordError("");
         }
       }
       // Save other fields
@@ -235,12 +241,6 @@ export default function EditAccount() {
     }
   }, [router, userId, username, fullName, bio, mail, firstname, lastname, currentPassword, newPassword, confirmNewPassword, authEmail, saving]);
 
-  const onSignOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    Alert.alert("Logged out");
-    router.replace("/Auth");
-  }, []);
-
   if (loading) {
     return (
       <SafeAreaView>
@@ -251,14 +251,6 @@ export default function EditAccount() {
       </SafeAreaView>
     );
   }
-  
-  const hasError = Boolean(
-    ((passwordError && !passwordError.includes('New password cannot be the same as your current password')) ||
-    (newPassword.length > 0 && newPassword.length < 6) ||
-    (newPassword.length > 0 && !/[A-Z]/.test(newPassword)) ||
-    (newPassword.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword))) &&
-    !(passwordError && passwordError.includes('New password cannot be the same as your current password'))
-  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
@@ -381,16 +373,14 @@ export default function EditAccount() {
           value={confirmNewPassword}
           secureTextEntry
         />
-        {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
-          <View className="mb-5">
-            <ErrorChip text="Passwords don't match"/>
-          </View>
-        )}
-        {passwordError ? (
-          <View className="mb-5">
-            <ErrorChip text={passwordError}/>
-          </View>
-        ) : null}
+        <View className="mb-5">
+          {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
+              <ErrorChip text="Passwords don't match"/>
+          )}
+          {passwordError ? (
+              <ErrorChip text={passwordError}/>
+          ) : null}
+        </View>
 
         <View
           style={{
@@ -410,7 +400,7 @@ export default function EditAccount() {
             }}
             style={{
               borderRadius: 20,
-              marginBlock: 15,
+              marginBottom: 15,
               backgroundColor: BASE_COLORS.TEXT_DARK,
             }}
           >Save</Button>

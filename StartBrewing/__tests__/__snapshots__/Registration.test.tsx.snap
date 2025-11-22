@@ -395,7 +395,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             {
               "color": undefined,
               "fontFamily": undefined,
-              "fontSize": 16,
+              "fontSize": 20,
             },
             undefined,
             undefined,
@@ -422,261 +422,36 @@ exports[`<Registration /> matches snapshot 1`] = `
             className="flex-1"
           >
             <View
-              style={{}}
+              style={
+                {
+                  "marginBottom": 12,
+                }
+              }
             >
-              <View
-                pointerEvents="none"
+              <TextInput
+                keyboardType="default"
+                multiline={false}
+                onBlur={[Function]}
+                onChangeText={[Function]}
+                onFocus={[Function]}
+                placeholder="Firstname"
+                secureTextEntry={false}
+                selectionColor="#f00"
                 style={
-                  [
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 6,
-                    },
-                    false,
-                    {
-                      "backgroundColor": "#fff",
-                      "borderColor": "rgba(121, 116, 126, 1)",
-                      "borderRadius": 4,
-                      "borderWidth": 1,
-                    },
-                    undefined,
-                  ]
+                  {
+                    "backgroundColor": "#fff",
+                    "borderColor": undefined,
+                    "borderRadius": 6,
+                    "borderWidth": 1,
+                    "color": undefined,
+                    "fontFamily": undefined,
+                    "fontSize": 20,
+                    "paddingHorizontal": 12,
+                    "paddingVertical": 10,
+                  }
                 }
-                testID="text-input-outline"
+                value=""
               />
-              <View
-                style={
-                  [
-                    {
-                      "flexGrow": 1,
-                      "paddingBottom": 0,
-                    },
-                    {
-                      "minHeight": 56,
-                      "paddingTop": 8,
-                    },
-                  ]
-                }
-              >
-                <View
-                  pointerEvents="none"
-                  style={
-                    [
-                      {
-                        "bottom": 0,
-                        "left": 0,
-                        "position": "absolute",
-                        "right": 0,
-                        "top": 0,
-                      },
-                      {
-                        "overflow": "hidden",
-                      },
-                      {
-                        "zIndex": 3,
-                      },
-                    ]
-                  }
-                >
-                  <View
-                    collapsable={false}
-                    pointerEvents="none"
-                    style={
-                      {
-                        "bottom": 0,
-                        "left": 0,
-                        "opacity": 1,
-                        "position": "absolute",
-                        "right": 0,
-                        "top": 0,
-                        "transform": [
-                          {
-                            "translateX": 0,
-                          },
-                        ],
-                        "width": 750,
-                      }
-                    }
-                  >
-                    <View
-                      style={
-                        {
-                          "width": 73,
-                        }
-                      }
-                    >
-                      <Text
-                        collapsable={false}
-                        maxFontSizeMultiplier={1.5}
-                        numberOfLines={1}
-                        style={
-                          {
-                            "backgroundColor": "#fff",
-                            "color": "transparent",
-                            "fontFamily": "System",
-                            "fontSize": 16,
-                            "fontWeight": undefined,
-                            "height": 0,
-                            "left": 8,
-                            "letterSpacing": 0.15,
-                            "lineHeight": undefined,
-                            "opacity": -0.6666666666666667,
-                            "paddingHorizontal": 0,
-                            "position": "absolute",
-                            "textAlign": "left",
-                            "top": 33,
-                            "transform": [
-                              {
-                                "translateX": 0,
-                              },
-                              {
-                                "translateY": 0,
-                              },
-                              {
-                                "scale": 1,
-                              },
-                              {
-                                "scaleY": 1,
-                              },
-                            ],
-                            "width": -16,
-                            "writingDirection": "ltr",
-                          }
-                        }
-                        testID="text-input-outlined-label-background"
-                      />
-                      <Text
-                        collapsable={false}
-                        maxFontSizeMultiplier={1.5}
-                        numberOfLines={1}
-                        onLayout={[Function]}
-                        onTextLayout={[Function]}
-                        style={
-                          {
-                            "color": "#f00",
-                            "fontFamily": "System",
-                            "fontSize": 16,
-                            "fontWeight": undefined,
-                            "left": 0,
-                            "letterSpacing": 0.15,
-                            "lineHeight": undefined,
-                            "maxWidth": 73,
-                            "opacity": 0,
-                            "paddingHorizontal": 16,
-                            "position": "absolute",
-                            "textAlign": "left",
-                            "top": 32,
-                            "transform": [
-                              {
-                                "translateX": 0,
-                              },
-                              {
-                                "translateY": 0,
-                              },
-                              {
-                                "scale": 1,
-                              },
-                            ],
-                            "writingDirection": "ltr",
-                          }
-                        }
-                        testID="text-input-outlined-label-active"
-                      >
-                        Firstname
-                      </Text>
-                      <Text
-                        collapsable={false}
-                        maxFontSizeMultiplier={1.5}
-                        numberOfLines={1}
-                        style={
-                          {
-                            "color": "rgba(73, 69, 79, 1)",
-                            "fontFamily": "System",
-                            "fontSize": 16,
-                            "fontWeight": undefined,
-                            "left": 0,
-                            "letterSpacing": 0.15,
-                            "lineHeight": undefined,
-                            "maxWidth": 73,
-                            "opacity": 0,
-                            "paddingHorizontal": 16,
-                            "position": "absolute",
-                            "textAlign": "left",
-                            "top": 32,
-                            "transform": [
-                              {
-                                "translateX": 0,
-                              },
-                              {
-                                "translateY": 0,
-                              },
-                              {
-                                "scale": 1,
-                              },
-                            ],
-                            "writingDirection": "ltr",
-                          }
-                        }
-                        testID="text-input-outlined-label-inactive"
-                      >
-                        Firstname
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-                <TextInput
-                  className="mb-2"
-                  cursorColor="#f00"
-                  editable={true}
-                  maxFontSizeMultiplier={1.5}
-                  multiline={false}
-                  onBlur={[Function]}
-                  onChangeText={[Function]}
-                  onFocus={[Function]}
-                  onLayout={[Function]}
-                  placeholderTextColor="transparent"
-                  secureTextEntry={false}
-                  selectionColor="#f00"
-                  style={
-                    [
-                      {
-                        "flexGrow": 1,
-                        "margin": 0,
-                      },
-                      {
-                        "height": 48,
-                      },
-                      {
-                        "paddingBottom": 0,
-                        "paddingTop": 0,
-                      },
-                      {
-                        "color": "rgba(28, 27, 31, 1)",
-                        "fontFamily": "System",
-                        "fontSize": 16,
-                        "fontWeight": undefined,
-                        "letterSpacing": 0.15,
-                        "lineHeight": undefined,
-                        "minWidth": 65,
-                        "paddingHorizontal": 16,
-                        "textAlign": "left",
-                        "textAlignVertical": "center",
-                      },
-                      undefined,
-                      [
-                        {},
-                      ],
-                      undefined,
-                    ]
-                  }
-                  testID="text-input-outlined"
-                  underlineColorAndroid="transparent"
-                  value=""
-                />
-              </View>
             </View>
           </View>
         </View>
@@ -684,261 +459,36 @@ exports[`<Registration /> matches snapshot 1`] = `
           className="flex-1"
         >
           <View
-            style={{}}
+            style={
+              {
+                "marginBottom": 12,
+              }
+            }
           >
-            <View
-              pointerEvents="none"
+            <TextInput
+              keyboardType="default"
+              multiline={false}
+              onBlur={[Function]}
+              onChangeText={[Function]}
+              onFocus={[Function]}
+              placeholder="Lastname"
+              secureTextEntry={false}
+              selectionColor="#f00"
               style={
-                [
-                  {
-                    "bottom": 0,
-                    "left": 0,
-                    "position": "absolute",
-                    "right": 0,
-                    "top": 6,
-                  },
-                  false,
-                  {
-                    "backgroundColor": "#fff",
-                    "borderColor": "rgba(121, 116, 126, 1)",
-                    "borderRadius": 4,
-                    "borderWidth": 1,
-                  },
-                  undefined,
-                ]
+                {
+                  "backgroundColor": "#fff",
+                  "borderColor": undefined,
+                  "borderRadius": 6,
+                  "borderWidth": 1,
+                  "color": undefined,
+                  "fontFamily": undefined,
+                  "fontSize": 20,
+                  "paddingHorizontal": 12,
+                  "paddingVertical": 10,
+                }
               }
-              testID="text-input-outline"
+              value=""
             />
-            <View
-              style={
-                [
-                  {
-                    "flexGrow": 1,
-                    "paddingBottom": 0,
-                  },
-                  {
-                    "minHeight": 56,
-                    "paddingTop": 8,
-                  },
-                ]
-              }
-            >
-              <View
-                pointerEvents="none"
-                style={
-                  [
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                    },
-                    {
-                      "overflow": "hidden",
-                    },
-                    {
-                      "zIndex": 3,
-                    },
-                  ]
-                }
-              >
-                <View
-                  collapsable={false}
-                  pointerEvents="none"
-                  style={
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "opacity": 1,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                      ],
-                      "width": 750,
-                    }
-                  }
-                >
-                  <View
-                    style={
-                      {
-                        "width": 73,
-                      }
-                    }
-                  >
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      style={
-                        {
-                          "backgroundColor": "#fff",
-                          "color": "transparent",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "height": 0,
-                          "left": 8,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "opacity": -0.6666666666666667,
-                          "paddingHorizontal": 0,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 33,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                            {
-                              "scaleY": 1,
-                            },
-                          ],
-                          "width": -16,
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-background"
-                    />
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      onLayout={[Function]}
-                      onTextLayout={[Function]}
-                      style={
-                        {
-                          "color": "#f00",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "left": 0,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "maxWidth": 73,
-                          "opacity": 0,
-                          "paddingHorizontal": 16,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 32,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                          ],
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-active"
-                    >
-                      Lastname
-                    </Text>
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      style={
-                        {
-                          "color": "rgba(73, 69, 79, 1)",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "left": 0,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "maxWidth": 73,
-                          "opacity": 0,
-                          "paddingHorizontal": 16,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 32,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                          ],
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-inactive"
-                    >
-                      Lastname
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <TextInput
-                className="mb-2"
-                cursorColor="#f00"
-                editable={true}
-                maxFontSizeMultiplier={1.5}
-                multiline={false}
-                onBlur={[Function]}
-                onChangeText={[Function]}
-                onFocus={[Function]}
-                onLayout={[Function]}
-                placeholderTextColor="transparent"
-                secureTextEntry={false}
-                selectionColor="#f00"
-                style={
-                  [
-                    {
-                      "flexGrow": 1,
-                      "margin": 0,
-                    },
-                    {
-                      "height": 48,
-                    },
-                    {
-                      "paddingBottom": 0,
-                      "paddingTop": 0,
-                    },
-                    {
-                      "color": "rgba(28, 27, 31, 1)",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "minWidth": 65,
-                      "paddingHorizontal": 16,
-                      "textAlign": "left",
-                      "textAlignVertical": "center",
-                    },
-                    undefined,
-                    [
-                      {},
-                    ],
-                    undefined,
-                  ]
-                }
-                testID="text-input-outlined"
-                underlineColorAndroid="transparent"
-                value=""
-              />
-            </View>
           </View>
         </View>
       </View>
@@ -954,7 +504,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             {
               "color": undefined,
               "fontFamily": undefined,
-              "fontSize": 16,
+              "fontSize": 20,
             },
             undefined,
             undefined,
@@ -974,261 +524,36 @@ exports[`<Registration /> matches snapshot 1`] = `
           className="flex-1"
         >
           <View
-            style={{}}
+            style={
+              {
+                "marginBottom": 12,
+              }
+            }
           >
-            <View
-              pointerEvents="none"
+            <TextInput
+              keyboardType="default"
+              multiline={false}
+              onBlur={[Function]}
+              onChangeText={[Function]}
+              onFocus={[Function]}
+              placeholder="DD"
+              secureTextEntry={false}
+              selectionColor="#f00"
               style={
-                [
-                  {
-                    "bottom": 0,
-                    "left": 0,
-                    "position": "absolute",
-                    "right": 0,
-                    "top": 6,
-                  },
-                  false,
-                  {
-                    "backgroundColor": "#fff",
-                    "borderColor": "rgba(121, 116, 126, 1)",
-                    "borderRadius": 4,
-                    "borderWidth": 1,
-                  },
-                  undefined,
-                ]
+                {
+                  "backgroundColor": "#fff",
+                  "borderColor": undefined,
+                  "borderRadius": 6,
+                  "borderWidth": 1,
+                  "color": undefined,
+                  "fontFamily": undefined,
+                  "fontSize": 20,
+                  "paddingHorizontal": 12,
+                  "paddingVertical": 10,
+                }
               }
-              testID="text-input-outline"
+              value=""
             />
-            <View
-              style={
-                [
-                  {
-                    "flexGrow": 1,
-                    "paddingBottom": 0,
-                  },
-                  {
-                    "minHeight": 56,
-                    "paddingTop": 8,
-                  },
-                ]
-              }
-            >
-              <View
-                pointerEvents="none"
-                style={
-                  [
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                    },
-                    {
-                      "overflow": "hidden",
-                    },
-                    {
-                      "zIndex": 3,
-                    },
-                  ]
-                }
-              >
-                <View
-                  collapsable={false}
-                  pointerEvents="none"
-                  style={
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "opacity": 1,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                      ],
-                      "width": 750,
-                    }
-                  }
-                >
-                  <View
-                    style={
-                      {
-                        "width": 73,
-                      }
-                    }
-                  >
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      style={
-                        {
-                          "backgroundColor": "#fff",
-                          "color": "transparent",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "height": 0,
-                          "left": 8,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "opacity": -0.6666666666666667,
-                          "paddingHorizontal": 0,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 33,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                            {
-                              "scaleY": 1,
-                            },
-                          ],
-                          "width": -16,
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-background"
-                    />
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      onLayout={[Function]}
-                      onTextLayout={[Function]}
-                      style={
-                        {
-                          "color": "#f00",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "left": 0,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "maxWidth": 73,
-                          "opacity": 0,
-                          "paddingHorizontal": 16,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 32,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                          ],
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-active"
-                    >
-                      DD
-                    </Text>
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      style={
-                        {
-                          "color": "rgba(73, 69, 79, 1)",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "left": 0,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "maxWidth": 73,
-                          "opacity": 0,
-                          "paddingHorizontal": 16,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 32,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                          ],
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-inactive"
-                    >
-                      DD
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <TextInput
-                className="mb-2"
-                cursorColor="#f00"
-                editable={true}
-                maxFontSizeMultiplier={1.5}
-                multiline={false}
-                onBlur={[Function]}
-                onChangeText={[Function]}
-                onFocus={[Function]}
-                onLayout={[Function]}
-                placeholderTextColor="transparent"
-                secureTextEntry={false}
-                selectionColor="#f00"
-                style={
-                  [
-                    {
-                      "flexGrow": 1,
-                      "margin": 0,
-                    },
-                    {
-                      "height": 48,
-                    },
-                    {
-                      "paddingBottom": 0,
-                      "paddingTop": 0,
-                    },
-                    {
-                      "color": "rgba(28, 27, 31, 1)",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "minWidth": 65,
-                      "paddingHorizontal": 16,
-                      "textAlign": "left",
-                      "textAlignVertical": "center",
-                    },
-                    undefined,
-                    [
-                      {},
-                    ],
-                    undefined,
-                  ]
-                }
-                testID="text-input-outlined"
-                underlineColorAndroid="transparent"
-                value=""
-              />
-            </View>
           </View>
         </View>
         <View
@@ -1239,261 +564,36 @@ exports[`<Registration /> matches snapshot 1`] = `
           }
         >
           <View
-            style={{}}
+            style={
+              {
+                "marginBottom": 12,
+              }
+            }
           >
-            <View
-              pointerEvents="none"
+            <TextInput
+              keyboardType="default"
+              multiline={false}
+              onBlur={[Function]}
+              onChangeText={[Function]}
+              onFocus={[Function]}
+              placeholder="MM"
+              secureTextEntry={false}
+              selectionColor="#f00"
               style={
-                [
-                  {
-                    "bottom": 0,
-                    "left": 0,
-                    "position": "absolute",
-                    "right": 0,
-                    "top": 6,
-                  },
-                  false,
-                  {
-                    "backgroundColor": "#fff",
-                    "borderColor": "rgba(121, 116, 126, 1)",
-                    "borderRadius": 4,
-                    "borderWidth": 1,
-                  },
-                  undefined,
-                ]
+                {
+                  "backgroundColor": "#fff",
+                  "borderColor": undefined,
+                  "borderRadius": 6,
+                  "borderWidth": 1,
+                  "color": undefined,
+                  "fontFamily": undefined,
+                  "fontSize": 20,
+                  "paddingHorizontal": 12,
+                  "paddingVertical": 10,
+                }
               }
-              testID="text-input-outline"
+              value=""
             />
-            <View
-              style={
-                [
-                  {
-                    "flexGrow": 1,
-                    "paddingBottom": 0,
-                  },
-                  {
-                    "minHeight": 56,
-                    "paddingTop": 8,
-                  },
-                ]
-              }
-            >
-              <View
-                pointerEvents="none"
-                style={
-                  [
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                    },
-                    {
-                      "overflow": "hidden",
-                    },
-                    {
-                      "zIndex": 3,
-                    },
-                  ]
-                }
-              >
-                <View
-                  collapsable={false}
-                  pointerEvents="none"
-                  style={
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "opacity": 1,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                      ],
-                      "width": 750,
-                    }
-                  }
-                >
-                  <View
-                    style={
-                      {
-                        "width": 73,
-                      }
-                    }
-                  >
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      style={
-                        {
-                          "backgroundColor": "#fff",
-                          "color": "transparent",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "height": 0,
-                          "left": 8,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "opacity": -0.6666666666666667,
-                          "paddingHorizontal": 0,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 33,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                            {
-                              "scaleY": 1,
-                            },
-                          ],
-                          "width": -16,
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-background"
-                    />
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      onLayout={[Function]}
-                      onTextLayout={[Function]}
-                      style={
-                        {
-                          "color": "#f00",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "left": 0,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "maxWidth": 73,
-                          "opacity": 0,
-                          "paddingHorizontal": 16,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 32,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                          ],
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-active"
-                    >
-                      MM
-                    </Text>
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      style={
-                        {
-                          "color": "rgba(73, 69, 79, 1)",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "left": 0,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "maxWidth": 73,
-                          "opacity": 0,
-                          "paddingHorizontal": 16,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 32,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                          ],
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-inactive"
-                    >
-                      MM
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <TextInput
-                className="mb-2"
-                cursorColor="#f00"
-                editable={true}
-                maxFontSizeMultiplier={1.5}
-                multiline={false}
-                onBlur={[Function]}
-                onChangeText={[Function]}
-                onFocus={[Function]}
-                onLayout={[Function]}
-                placeholderTextColor="transparent"
-                secureTextEntry={false}
-                selectionColor="#f00"
-                style={
-                  [
-                    {
-                      "flexGrow": 1,
-                      "margin": 0,
-                    },
-                    {
-                      "height": 48,
-                    },
-                    {
-                      "paddingBottom": 0,
-                      "paddingTop": 0,
-                    },
-                    {
-                      "color": "rgba(28, 27, 31, 1)",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "minWidth": 65,
-                      "paddingHorizontal": 16,
-                      "textAlign": "left",
-                      "textAlignVertical": "center",
-                    },
-                    undefined,
-                    [
-                      {},
-                    ],
-                    undefined,
-                  ]
-                }
-                testID="text-input-outlined"
-                underlineColorAndroid="transparent"
-                value=""
-              />
-            </View>
           </View>
         </View>
         <View
@@ -1504,261 +604,36 @@ exports[`<Registration /> matches snapshot 1`] = `
           }
         >
           <View
-            style={{}}
+            style={
+              {
+                "marginBottom": 12,
+              }
+            }
           >
-            <View
-              pointerEvents="none"
+            <TextInput
+              keyboardType="default"
+              multiline={false}
+              onBlur={[Function]}
+              onChangeText={[Function]}
+              onFocus={[Function]}
+              placeholder="YYYY"
+              secureTextEntry={false}
+              selectionColor="#f00"
               style={
-                [
-                  {
-                    "bottom": 0,
-                    "left": 0,
-                    "position": "absolute",
-                    "right": 0,
-                    "top": 6,
-                  },
-                  false,
-                  {
-                    "backgroundColor": "#fff",
-                    "borderColor": "rgba(121, 116, 126, 1)",
-                    "borderRadius": 4,
-                    "borderWidth": 1,
-                  },
-                  undefined,
-                ]
+                {
+                  "backgroundColor": "#fff",
+                  "borderColor": undefined,
+                  "borderRadius": 6,
+                  "borderWidth": 1,
+                  "color": undefined,
+                  "fontFamily": undefined,
+                  "fontSize": 20,
+                  "paddingHorizontal": 12,
+                  "paddingVertical": 10,
+                }
               }
-              testID="text-input-outline"
+              value=""
             />
-            <View
-              style={
-                [
-                  {
-                    "flexGrow": 1,
-                    "paddingBottom": 0,
-                  },
-                  {
-                    "minHeight": 56,
-                    "paddingTop": 8,
-                  },
-                ]
-              }
-            >
-              <View
-                pointerEvents="none"
-                style={
-                  [
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                    },
-                    {
-                      "overflow": "hidden",
-                    },
-                    {
-                      "zIndex": 3,
-                    },
-                  ]
-                }
-              >
-                <View
-                  collapsable={false}
-                  pointerEvents="none"
-                  style={
-                    {
-                      "bottom": 0,
-                      "left": 0,
-                      "opacity": 1,
-                      "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                      ],
-                      "width": 750,
-                    }
-                  }
-                >
-                  <View
-                    style={
-                      {
-                        "width": 73,
-                      }
-                    }
-                  >
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      style={
-                        {
-                          "backgroundColor": "#fff",
-                          "color": "transparent",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "height": 0,
-                          "left": 8,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "opacity": -0.6666666666666667,
-                          "paddingHorizontal": 0,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 33,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                            {
-                              "scaleY": 1,
-                            },
-                          ],
-                          "width": -16,
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-background"
-                    />
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      onLayout={[Function]}
-                      onTextLayout={[Function]}
-                      style={
-                        {
-                          "color": "#f00",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "left": 0,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "maxWidth": 73,
-                          "opacity": 0,
-                          "paddingHorizontal": 16,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 32,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                          ],
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-active"
-                    >
-                      YYYY
-                    </Text>
-                    <Text
-                      collapsable={false}
-                      maxFontSizeMultiplier={1.5}
-                      numberOfLines={1}
-                      style={
-                        {
-                          "color": "rgba(73, 69, 79, 1)",
-                          "fontFamily": "System",
-                          "fontSize": 16,
-                          "fontWeight": undefined,
-                          "left": 0,
-                          "letterSpacing": 0.15,
-                          "lineHeight": undefined,
-                          "maxWidth": 73,
-                          "opacity": 0,
-                          "paddingHorizontal": 16,
-                          "position": "absolute",
-                          "textAlign": "left",
-                          "top": 32,
-                          "transform": [
-                            {
-                              "translateX": 0,
-                            },
-                            {
-                              "translateY": 0,
-                            },
-                            {
-                              "scale": 1,
-                            },
-                          ],
-                          "writingDirection": "ltr",
-                        }
-                      }
-                      testID="text-input-outlined-label-inactive"
-                    >
-                      YYYY
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <TextInput
-                className="mb-2"
-                cursorColor="#f00"
-                editable={true}
-                maxFontSizeMultiplier={1.5}
-                multiline={false}
-                onBlur={[Function]}
-                onChangeText={[Function]}
-                onFocus={[Function]}
-                onLayout={[Function]}
-                placeholderTextColor="transparent"
-                secureTextEntry={false}
-                selectionColor="#f00"
-                style={
-                  [
-                    {
-                      "flexGrow": 1,
-                      "margin": 0,
-                    },
-                    {
-                      "height": 48,
-                    },
-                    {
-                      "paddingBottom": 0,
-                      "paddingTop": 0,
-                    },
-                    {
-                      "color": "rgba(28, 27, 31, 1)",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "minWidth": 65,
-                      "paddingHorizontal": 16,
-                      "textAlign": "left",
-                      "textAlignVertical": "center",
-                    },
-                    undefined,
-                    [
-                      {},
-                    ],
-                    undefined,
-                  ]
-                }
-                testID="text-input-outlined"
-                underlineColorAndroid="transparent"
-                value=""
-              />
-            </View>
           </View>
         </View>
       </View>
@@ -1774,7 +649,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             {
               "color": undefined,
               "fontFamily": undefined,
-              "fontSize": 16,
+              "fontSize": 20,
             },
             undefined,
             undefined,
@@ -1788,261 +663,36 @@ exports[`<Registration /> matches snapshot 1`] = `
         Contact information
       </Text>
       <View
-        style={{}}
+        style={
+          {
+            "marginBottom": 12,
+          }
+        }
       >
-        <View
-          pointerEvents="none"
+        <TextInput
+          keyboardType="default"
+          multiline={false}
+          onBlur={[Function]}
+          onChangeText={[Function]}
+          onFocus={[Function]}
+          placeholder="Email"
+          secureTextEntry={false}
+          selectionColor="#f00"
           style={
-            [
-              {
-                "bottom": 0,
-                "left": 0,
-                "position": "absolute",
-                "right": 0,
-                "top": 6,
-              },
-              false,
-              {
-                "backgroundColor": "#fff",
-                "borderColor": "rgba(121, 116, 126, 1)",
-                "borderRadius": 4,
-                "borderWidth": 1,
-              },
-              undefined,
-            ]
+            {
+              "backgroundColor": "#fff",
+              "borderColor": undefined,
+              "borderRadius": 6,
+              "borderWidth": 1,
+              "color": undefined,
+              "fontFamily": undefined,
+              "fontSize": 20,
+              "paddingHorizontal": 12,
+              "paddingVertical": 10,
+            }
           }
-          testID="text-input-outline"
+          value=""
         />
-        <View
-          style={
-            [
-              {
-                "flexGrow": 1,
-                "paddingBottom": 0,
-              },
-              {
-                "minHeight": 56,
-                "paddingTop": 8,
-              },
-            ]
-          }
-        >
-          <View
-            pointerEvents="none"
-            style={
-              [
-                {
-                  "bottom": 0,
-                  "left": 0,
-                  "position": "absolute",
-                  "right": 0,
-                  "top": 0,
-                },
-                {
-                  "overflow": "hidden",
-                },
-                {
-                  "zIndex": 3,
-                },
-              ]
-            }
-          >
-            <View
-              collapsable={false}
-              pointerEvents="none"
-              style={
-                {
-                  "bottom": 0,
-                  "left": 0,
-                  "opacity": 1,
-                  "position": "absolute",
-                  "right": 0,
-                  "top": 0,
-                  "transform": [
-                    {
-                      "translateX": 0,
-                    },
-                  ],
-                  "width": 750,
-                }
-              }
-            >
-              <View
-                style={
-                  {
-                    "width": 73,
-                  }
-                }
-              >
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  style={
-                    {
-                      "backgroundColor": "#fff",
-                      "color": "transparent",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "height": 0,
-                      "left": 8,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "opacity": -0.6666666666666667,
-                      "paddingHorizontal": 0,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 33,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                        {
-                          "scaleY": 1,
-                        },
-                      ],
-                      "width": -16,
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-background"
-                />
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  onLayout={[Function]}
-                  onTextLayout={[Function]}
-                  style={
-                    {
-                      "color": "#f00",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "left": 0,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "maxWidth": 73,
-                      "opacity": 0,
-                      "paddingHorizontal": 16,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 32,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                      ],
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-active"
-                >
-                  Email
-                </Text>
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  style={
-                    {
-                      "color": "rgba(73, 69, 79, 1)",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "left": 0,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "maxWidth": 73,
-                      "opacity": 0,
-                      "paddingHorizontal": 16,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 32,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                      ],
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-inactive"
-                >
-                  Email
-                </Text>
-              </View>
-            </View>
-          </View>
-          <TextInput
-            className="mb-2"
-            cursorColor="#f00"
-            editable={true}
-            maxFontSizeMultiplier={1.5}
-            multiline={false}
-            onBlur={[Function]}
-            onChangeText={[Function]}
-            onFocus={[Function]}
-            onLayout={[Function]}
-            placeholderTextColor="transparent"
-            secureTextEntry={false}
-            selectionColor="#f00"
-            style={
-              [
-                {
-                  "flexGrow": 1,
-                  "margin": 0,
-                },
-                {
-                  "height": 48,
-                },
-                {
-                  "paddingBottom": 0,
-                  "paddingTop": 0,
-                },
-                {
-                  "color": "rgba(28, 27, 31, 1)",
-                  "fontFamily": "System",
-                  "fontSize": 16,
-                  "fontWeight": undefined,
-                  "letterSpacing": 0.15,
-                  "lineHeight": undefined,
-                  "minWidth": 65,
-                  "paddingHorizontal": 16,
-                  "textAlign": "left",
-                  "textAlignVertical": "center",
-                },
-                undefined,
-                [
-                  {},
-                ],
-                undefined,
-              ]
-            }
-            testID="text-input-outlined"
-            underlineColorAndroid="transparent"
-            value=""
-          />
-        </View>
       </View>
       <Text
         className="mt-6"
@@ -2056,7 +706,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             {
               "color": undefined,
               "fontFamily": undefined,
-              "fontSize": 16,
+              "fontSize": 20,
             },
             undefined,
             undefined,
@@ -2070,774 +720,361 @@ exports[`<Registration /> matches snapshot 1`] = `
         Account
       </Text>
       <View
-        style={{}}
-      >
-        <View
-          pointerEvents="none"
-          style={
-            [
-              {
-                "bottom": 0,
-                "left": 0,
-                "position": "absolute",
-                "right": 0,
-                "top": 6,
-              },
-              false,
-              {
-                "backgroundColor": "#fff",
-                "borderColor": "rgba(121, 116, 126, 1)",
-                "borderRadius": 4,
-                "borderWidth": 1,
-              },
-              undefined,
-            ]
+        style={
+          {
+            "marginBottom": 12,
           }
-          testID="text-input-outline"
+        }
+      >
+        <TextInput
+          keyboardType="default"
+          multiline={false}
+          onBlur={[Function]}
+          onChangeText={[Function]}
+          onFocus={[Function]}
+          placeholder="Username"
+          secureTextEntry={false}
+          selectionColor="#f00"
+          style={
+            {
+              "backgroundColor": "#fff",
+              "borderColor": undefined,
+              "borderRadius": 6,
+              "borderWidth": 1,
+              "color": undefined,
+              "fontFamily": undefined,
+              "fontSize": 20,
+              "paddingHorizontal": 12,
+              "paddingVertical": 10,
+            }
+          }
+          value=""
+        />
+      </View>
+      <View
+        style={
+          {
+            "marginBottom": 12,
+          }
+        }
+      >
+        <TextInput
+          keyboardType="default"
+          multiline={false}
+          onBlur={[Function]}
+          onChangeText={[Function]}
+          onFocus={[Function]}
+          placeholder="Password"
+          secureTextEntry={true}
+          selectionColor="#f00"
+          style={
+            {
+              "backgroundColor": "#fff",
+              "borderColor": undefined,
+              "borderRadius": 6,
+              "borderWidth": 1,
+              "color": undefined,
+              "fontFamily": undefined,
+              "fontSize": 20,
+              "paddingHorizontal": 12,
+              "paddingVertical": 10,
+            }
+          }
+          value=""
         />
         <View
-          style={
-            [
-              {
-                "flexGrow": 1,
-                "paddingBottom": 0,
-              },
-              {
-                "minHeight": 56,
-                "paddingTop": 8,
-              },
-            ]
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
           }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          className="absolute right-4 top-1/2 -translate-y-1/2"
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
         >
-          <View
-            pointerEvents="none"
+          <RNSVGSvgView
+            align="xMidYMid"
+            bbHeight={30}
+            bbWidth={30}
+            fill="none"
+            focusable={false}
+            height={30}
+            meetOrSlice={0}
+            minX={0}
+            minY={0}
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
             style={
               [
                 {
-                  "bottom": 0,
-                  "left": 0,
-                  "position": "absolute",
-                  "right": 0,
-                  "top": 0,
+                  "backgroundColor": "transparent",
+                  "borderWidth": 0,
                 },
                 {
-                  "overflow": "hidden",
-                },
-                {
-                  "zIndex": 3,
+                  "flex": 0,
+                  "height": 30,
+                  "width": 30,
                 },
               ]
             }
+            vbHeight={24}
+            vbWidth={24}
+            width={30}
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <View
-              collapsable={false}
-              pointerEvents="none"
-              style={
+            <RNSVGGroup
+              fill={null}
+              propList={
+                [
+                  "fill",
+                  "stroke",
+                  "strokeWidth",
+                  "strokeLinecap",
+                  "strokeLinejoin",
+                ]
+              }
+              stroke={
                 {
-                  "bottom": 0,
-                  "left": 0,
-                  "opacity": 1,
-                  "position": "absolute",
-                  "right": 0,
-                  "top": 0,
-                  "transform": [
-                    {
-                      "translateX": 0,
-                    },
-                  ],
-                  "width": 750,
+                  "type": 2,
                 }
               }
+              strokeLinecap={1}
+              strokeLinejoin={1}
+              strokeWidth={2}
             >
-              <View
-                style={
+              <RNSVGPath
+                d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+                fill={null}
+                propList={
+                  [
+                    "fill",
+                    "stroke",
+                    "strokeWidth",
+                    "strokeLinecap",
+                    "strokeLinejoin",
+                  ]
+                }
+                stroke={
                   {
-                    "width": 73,
+                    "type": 2,
                   }
                 }
-              >
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  style={
-                    {
-                      "backgroundColor": "#fff",
-                      "color": "transparent",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "height": 0,
-                      "left": 8,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "opacity": -0.6666666666666667,
-                      "paddingHorizontal": 0,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 33,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                        {
-                          "scaleY": 1,
-                        },
-                      ],
-                      "width": -16,
-                      "writingDirection": "ltr",
-                    }
+                strokeLinecap={1}
+                strokeLinejoin={1}
+                strokeWidth={2}
+              />
+              <RNSVGCircle
+                cx="12"
+                cy="12"
+                fill={null}
+                propList={
+                  [
+                    "fill",
+                    "stroke",
+                    "strokeWidth",
+                    "strokeLinecap",
+                    "strokeLinejoin",
+                  ]
+                }
+                r="3"
+                stroke={
+                  {
+                    "type": 2,
                   }
-                  testID="text-input-outlined-label-background"
-                />
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  onLayout={[Function]}
-                  onTextLayout={[Function]}
-                  style={
-                    {
-                      "color": "#f00",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "left": 0,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "maxWidth": 73,
-                      "opacity": 0,
-                      "paddingHorizontal": 16,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 32,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                      ],
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-active"
-                >
-                  Username
-                </Text>
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  style={
-                    {
-                      "color": "rgba(73, 69, 79, 1)",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "left": 0,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "maxWidth": 73,
-                      "opacity": 0,
-                      "paddingHorizontal": 16,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 32,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                      ],
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-inactive"
-                >
-                  Username
-                </Text>
-              </View>
-            </View>
-          </View>
-          <TextInput
-            className="mb-2"
-            cursorColor="#f00"
-            editable={true}
-            maxFontSizeMultiplier={1.5}
-            multiline={false}
-            onBlur={[Function]}
-            onChangeText={[Function]}
-            onFocus={[Function]}
-            onLayout={[Function]}
-            placeholderTextColor="transparent"
-            secureTextEntry={false}
-            selectionColor="#f00"
-            style={
-              [
-                {
-                  "flexGrow": 1,
-                  "margin": 0,
-                },
-                {
-                  "height": 48,
-                },
-                {
-                  "paddingBottom": 0,
-                  "paddingTop": 0,
-                },
-                {
-                  "color": "rgba(28, 27, 31, 1)",
-                  "fontFamily": "System",
-                  "fontSize": 16,
-                  "fontWeight": undefined,
-                  "letterSpacing": 0.15,
-                  "lineHeight": undefined,
-                  "minWidth": 65,
-                  "paddingHorizontal": 16,
-                  "textAlign": "left",
-                  "textAlignVertical": "center",
-                },
-                undefined,
-                [
-                  {},
-                ],
-                undefined,
-              ]
-            }
-            testID="text-input-outlined"
-            underlineColorAndroid="transparent"
-            value=""
-          />
+                }
+                strokeLinecap={1}
+                strokeLinejoin={1}
+                strokeWidth={2}
+              />
+            </RNSVGGroup>
+          </RNSVGSvgView>
         </View>
       </View>
       <View
-        style={{}}
-      >
-        <View
-          pointerEvents="none"
-          style={
-            [
-              {
-                "bottom": 0,
-                "left": 0,
-                "position": "absolute",
-                "right": 0,
-                "top": 6,
-              },
-              false,
-              {
-                "backgroundColor": "#fff",
-                "borderColor": "rgba(121, 116, 126, 1)",
-                "borderRadius": 4,
-                "borderWidth": 1,
-              },
-              undefined,
-            ]
+        style={
+          {
+            "marginBottom": 12,
           }
-          testID="text-input-outline"
+        }
+      >
+        <TextInput
+          keyboardType="default"
+          multiline={false}
+          onBlur={[Function]}
+          onChangeText={[Function]}
+          onFocus={[Function]}
+          placeholder="Confirm Password"
+          secureTextEntry={true}
+          selectionColor="#f00"
+          style={
+            {
+              "backgroundColor": "#fff",
+              "borderColor": undefined,
+              "borderRadius": 6,
+              "borderWidth": 1,
+              "color": undefined,
+              "fontFamily": undefined,
+              "fontSize": 20,
+              "paddingHorizontal": 12,
+              "paddingVertical": 10,
+            }
+          }
+          value=""
         />
         <View
-          style={
-            [
-              {
-                "flexGrow": 1,
-                "paddingBottom": 0,
-              },
-              {
-                "minHeight": 56,
-                "paddingTop": 8,
-              },
-            ]
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
           }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          className="absolute right-4 top-1/2 -translate-y-1/2"
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
         >
-          <View
-            pointerEvents="none"
+          <RNSVGSvgView
+            align="xMidYMid"
+            bbHeight={30}
+            bbWidth={30}
+            fill="none"
+            focusable={false}
+            height={30}
+            meetOrSlice={0}
+            minX={0}
+            minY={0}
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
             style={
               [
                 {
-                  "bottom": 0,
-                  "left": 0,
-                  "position": "absolute",
-                  "right": 0,
-                  "top": 0,
+                  "backgroundColor": "transparent",
+                  "borderWidth": 0,
                 },
                 {
-                  "overflow": "hidden",
-                },
-                {
-                  "zIndex": 3,
+                  "flex": 0,
+                  "height": 30,
+                  "width": 30,
                 },
               ]
             }
+            vbHeight={24}
+            vbWidth={24}
+            width={30}
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <View
-              collapsable={false}
-              pointerEvents="none"
-              style={
+            <RNSVGGroup
+              fill={null}
+              propList={
+                [
+                  "fill",
+                  "stroke",
+                  "strokeWidth",
+                  "strokeLinecap",
+                  "strokeLinejoin",
+                ]
+              }
+              stroke={
                 {
-                  "bottom": 0,
-                  "left": 0,
-                  "opacity": 1,
-                  "position": "absolute",
-                  "right": 0,
-                  "top": 0,
-                  "transform": [
-                    {
-                      "translateX": 0,
-                    },
-                  ],
-                  "width": 750,
+                  "type": 2,
                 }
               }
+              strokeLinecap={1}
+              strokeLinejoin={1}
+              strokeWidth={2}
             >
-              <View
-                style={
+              <RNSVGPath
+                d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+                fill={null}
+                propList={
+                  [
+                    "fill",
+                    "stroke",
+                    "strokeWidth",
+                    "strokeLinecap",
+                    "strokeLinejoin",
+                  ]
+                }
+                stroke={
                   {
-                    "width": 73,
+                    "type": 2,
                   }
                 }
-              >
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  style={
-                    {
-                      "backgroundColor": "#fff",
-                      "color": "transparent",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "height": 0,
-                      "left": 8,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "opacity": -0.6666666666666667,
-                      "paddingHorizontal": 0,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 33,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                        {
-                          "scaleY": 1,
-                        },
-                      ],
-                      "width": -16,
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-background"
-                />
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  onLayout={[Function]}
-                  onTextLayout={[Function]}
-                  style={
-                    {
-                      "color": "#f00",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "left": 0,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "maxWidth": 73,
-                      "opacity": 0,
-                      "paddingHorizontal": 16,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 32,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                      ],
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-active"
-                >
-                  Password
-                </Text>
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  style={
-                    {
-                      "color": "rgba(73, 69, 79, 1)",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "left": 0,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "maxWidth": 73,
-                      "opacity": 0,
-                      "paddingHorizontal": 16,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 32,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                      ],
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-inactive"
-                >
-                  Password
-                </Text>
-              </View>
-            </View>
-          </View>
-          <TextInput
-            className="mb-2"
-            cursorColor="#f00"
-            editable={true}
-            maxFontSizeMultiplier={1.5}
-            multiline={false}
-            onBlur={[Function]}
-            onChangeText={[Function]}
-            onFocus={[Function]}
-            onLayout={[Function]}
-            placeholderTextColor="transparent"
-            secureTextEntry={true}
-            selectionColor="#f00"
-            style={
-              [
-                {
-                  "flexGrow": 1,
-                  "margin": 0,
-                },
-                {
-                  "height": 48,
-                },
-                {
-                  "paddingBottom": 0,
-                  "paddingTop": 0,
-                },
-                {
-                  "color": "rgba(28, 27, 31, 1)",
-                  "fontFamily": "System",
-                  "fontSize": 16,
-                  "fontWeight": undefined,
-                  "letterSpacing": 0.15,
-                  "lineHeight": undefined,
-                  "minWidth": 65,
-                  "paddingHorizontal": 16,
-                  "textAlign": "left",
-                  "textAlignVertical": "center",
-                },
-                undefined,
-                [
-                  {},
-                ],
-                undefined,
-              ]
-            }
-            testID="text-input-outlined"
-            underlineColorAndroid="transparent"
-            value=""
-          />
-        </View>
-      </View>
-      <View
-        style={{}}
-      >
-        <View
-          pointerEvents="none"
-          style={
-            [
-              {
-                "bottom": 0,
-                "left": 0,
-                "position": "absolute",
-                "right": 0,
-                "top": 6,
-              },
-              false,
-              {
-                "backgroundColor": "#fff",
-                "borderColor": "rgba(121, 116, 126, 1)",
-                "borderRadius": 4,
-                "borderWidth": 1,
-              },
-              undefined,
-            ]
-          }
-          testID="text-input-outline"
-        />
-        <View
-          style={
-            [
-              {
-                "flexGrow": 1,
-                "paddingBottom": 0,
-              },
-              {
-                "minHeight": 56,
-                "paddingTop": 8,
-              },
-            ]
-          }
-        >
-          <View
-            pointerEvents="none"
-            style={
-              [
-                {
-                  "bottom": 0,
-                  "left": 0,
-                  "position": "absolute",
-                  "right": 0,
-                  "top": 0,
-                },
-                {
-                  "overflow": "hidden",
-                },
-                {
-                  "zIndex": 3,
-                },
-              ]
-            }
-          >
-            <View
-              collapsable={false}
-              pointerEvents="none"
-              style={
-                {
-                  "bottom": 0,
-                  "left": 0,
-                  "opacity": 1,
-                  "position": "absolute",
-                  "right": 0,
-                  "top": 0,
-                  "transform": [
-                    {
-                      "translateX": 0,
-                    },
-                  ],
-                  "width": 750,
+                strokeLinecap={1}
+                strokeLinejoin={1}
+                strokeWidth={2}
+              />
+              <RNSVGCircle
+                cx="12"
+                cy="12"
+                fill={null}
+                propList={
+                  [
+                    "fill",
+                    "stroke",
+                    "strokeWidth",
+                    "strokeLinecap",
+                    "strokeLinejoin",
+                  ]
                 }
-              }
-            >
-              <View
-                style={
+                r="3"
+                stroke={
                   {
-                    "width": 73,
+                    "type": 2,
                   }
                 }
-              >
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  style={
-                    {
-                      "backgroundColor": "#fff",
-                      "color": "transparent",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "height": 0,
-                      "left": 8,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "opacity": -0.6666666666666667,
-                      "paddingHorizontal": 0,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 33,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                        {
-                          "scaleY": 1,
-                        },
-                      ],
-                      "width": -16,
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-background"
-                />
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  onLayout={[Function]}
-                  onTextLayout={[Function]}
-                  style={
-                    {
-                      "color": "#f00",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "left": 0,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "maxWidth": 73,
-                      "opacity": 0,
-                      "paddingHorizontal": 16,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 32,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                      ],
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-active"
-                >
-                  Confirm Password
-                </Text>
-                <Text
-                  collapsable={false}
-                  maxFontSizeMultiplier={1.5}
-                  numberOfLines={1}
-                  style={
-                    {
-                      "color": "rgba(73, 69, 79, 1)",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                      "fontWeight": undefined,
-                      "left": 0,
-                      "letterSpacing": 0.15,
-                      "lineHeight": undefined,
-                      "maxWidth": 73,
-                      "opacity": 0,
-                      "paddingHorizontal": 16,
-                      "position": "absolute",
-                      "textAlign": "left",
-                      "top": 32,
-                      "transform": [
-                        {
-                          "translateX": 0,
-                        },
-                        {
-                          "translateY": 0,
-                        },
-                        {
-                          "scale": 1,
-                        },
-                      ],
-                      "writingDirection": "ltr",
-                    }
-                  }
-                  testID="text-input-outlined-label-inactive"
-                >
-                  Confirm Password
-                </Text>
-              </View>
-            </View>
-          </View>
-          <TextInput
-            className="mb-2"
-            cursorColor="#f00"
-            editable={true}
-            maxFontSizeMultiplier={1.5}
-            multiline={false}
-            onBlur={[Function]}
-            onChangeText={[Function]}
-            onFocus={[Function]}
-            onLayout={[Function]}
-            placeholderTextColor="transparent"
-            secureTextEntry={true}
-            selectionColor="#f00"
-            style={
-              [
-                {
-                  "flexGrow": 1,
-                  "margin": 0,
-                },
-                {
-                  "height": 48,
-                },
-                {
-                  "paddingBottom": 0,
-                  "paddingTop": 0,
-                },
-                {
-                  "color": "rgba(28, 27, 31, 1)",
-                  "fontFamily": "System",
-                  "fontSize": 16,
-                  "fontWeight": undefined,
-                  "letterSpacing": 0.15,
-                  "lineHeight": undefined,
-                  "minWidth": 65,
-                  "paddingHorizontal": 16,
-                  "textAlign": "left",
-                  "textAlignVertical": "center",
-                },
-                undefined,
-                [
-                  {},
-                ],
-                undefined,
-              ]
-            }
-            testID="text-input-outlined"
-            underlineColorAndroid="transparent"
-            value=""
-          />
+                strokeLinecap={1}
+                strokeLinejoin={1}
+                strokeWidth={2}
+              />
+            </RNSVGGroup>
+          </RNSVGSvgView>
         </View>
       </View>
       <View
