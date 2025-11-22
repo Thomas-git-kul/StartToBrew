@@ -8,7 +8,7 @@ import { useFavorites } from "@/context/FavoritesContext";
 import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
-import { Cpu, Plus } from "lucide-react-native";
+import { Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
@@ -27,6 +27,12 @@ interface InProgressBrew {
   id: string | number;
   name: string;
   progress: number;
+}
+
+interface BrewRow {
+  id_brew: number;
+  name: string;
+  recipe_slug: string;
 }
 
 function HomePageContent() {
@@ -105,119 +111,59 @@ function HomePageContent() {
       }
     };
     const loadProgress = async () => {
-    setLoading(true);
-
-    try {
-      // 1️⃣ Haal user info op
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        if (mounted) {
-          setInProgress([]);
-          setBeers([]);
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          if (mounted) {
+            setInProgress([]);
+            setBeers([]);
+          }
+          return;
         }
-        return;
-      }
-
-      // 2️⃣ Haal in-progress brews op
-      const { data: brews, error: brewsError } = await supabase
-        .from("brews")
-        .select("id_brew, name, recipe_slug")
-        .eq("user_id", user.id) 
-        .in ("status_id", [1,2]) as { data: BrewRow[] | null; error: any };
-
-      if (brewsError) {
-        console.warn("Failed to load brews:", brewsError.message);
-      }
-
-      interface PhaseRow {
-        phase_id: string;
-      }
-
-      const inProgressResult = brews?.length
-        ? await Promise.all(
-            brews.map(async (brew) => {
-              const { data: phases } = await supabase
-                .from("phases")
-                .select("phase_id")
-                .eq("recipe_slug", brew.recipe_slug) as {data: PhaseRow[] | null};
-
-              const phaseIds = phases?.map(p => p.phase_id) ?? [];
-
-              const { data: totalSteps } = await supabase
-                .from("steps")
-                .select("step_id")
-                .in("phase_id", phaseIds);
-
-    const loadProgress = async () => {
-    setLoading(true);
-
-    try {
-      // 1️⃣ Haal user info op
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        if (mounted) {
-          setInProgress([]);
-          setBeers([]);
+        const { data: brews, error: brewsError } = await supabase
+          .from("brews")
+          .select("id_brew, name, recipe_slug")
+          .eq("user_id", user.id)
+          .in("status_id", [1, 2]);
+        if (brewsError) {
+          console.warn("Failed to load brews:", brewsError.message);
         }
-        return;
-      }
-
-      // 2️⃣ Haal in-progress brews op
-      const { data: brews, error: brewsError } = await supabase
-        .from("brews")
-        .select("id_brew, name, recipe_slug")
-        .eq("user_id", user.id) 
-        .in ("status_id", [1,2]);
-
-      if (brewsError) {
-        console.warn("Failed to load brews:", brewsError.message);
-      }
-
-      interface PhaseRow {
-        phase_id: string;
-      }
-
-      const inProgressResult = brews?.length
-        ? await Promise.all(
-            brews.map(async (brew: any) => {
-              const { data: phases } = await supabase
-                .from("phases")
-                .select("phase_id")
-                .eq("recipe_slug", brew.recipe_slug) as {data: PhaseRow[] | null};
-
-              const phaseIds = phases?.map(p => p.phase_id) ?? [];
-
-              const { data: totalSteps } = await supabase
-                .from("steps")
-                .select("step_id")
-                .in("phase_id", phaseIds);
-
-              const { data: completedSteps } = await supabase
-                .from("brew_steps")
-                .select("step_id")
-                .eq("id_brew", brew.id_brew)
-                .eq("status", "completed");
-
-              const progress =
-                totalSteps && completedSteps
+        interface PhaseRow { phase_id: string; }
+        const inProgressResult = brews?.length
+          ? await Promise.all(
+              brews.map(async (brew: BrewRow) => {
+                const { data: phases } = await supabase
+                  .from("phases")
+                  .select("phase_id")
+                  .eq("recipe_slug", brew.recipe_slug) as { data: PhaseRow[] | null };
+                const phaseIds = phases?.map(p => p.phase_id) ?? [];
+                const { data: totalSteps } = await supabase
+                  .from("steps")
+                  .select("step_id")
+                  .in("phase_id", phaseIds);
+                const { data: completedSteps } = await supabase
+                  .from("brew_steps")
+                  .select("step_id")
+                  .eq("id_brew", brew.id_brew)
+                  .eq("status", "completed");
+                const progress = totalSteps && completedSteps
                   ? completedSteps.length / totalSteps.length
                   : 0;
-
-              return { id: brew.id_brew, name: brew.name, progress };
-            })
-          )
-        : [];
-
-      if (mounted) {
-        const sortedResult = inProgressResult.sort((a, b) => a.progress - b.progress);
-        setInProgress(sortedResult);
+                return { id: brew.id_brew, name: brew.name, progress };
+              })
+            )
+          : [];
+        if (mounted) {
+          const sortedResult = inProgressResult.sort((a, b) => a.progress - b.progress);
+          setInProgress(sortedResult);
+        }
+      } catch (e: any) {
+        console.warn("Failed to load homepage data:", e?.message ?? e);
+      } finally {
+        if (mounted) setLoading(false);
       }
-    } catch (e: any) {
-      console.warn("Failed to load homepage data:", e?.message ?? e);
-    } finally {
-      if (mounted) setLoading(false);
-    }
-  };
+    };
 
     loadProgress();
     fetchPopularRecipes();
