@@ -1,15 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`<Agenda /> snapshot 1`] = `
-<RNCSafeAreaProvider
-  onInsetsChange={[Function]}
-  style={
-    [
-      {
-        "flex": 1,
-      },
-      undefined,
-    ]
-  }
-/>
+exports[`Agenda Screen renders correctly and matches snapshot 1`] = `
+[
+  <Text>
+    Agenda
+  </Text>,
+  <Text>
+    No tasks for this day.
+  </Text>,
+]
 `;

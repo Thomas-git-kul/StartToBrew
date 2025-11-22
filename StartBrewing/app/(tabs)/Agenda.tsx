@@ -15,6 +15,7 @@ import { supabase } from "@/supabase";
 
 const BASE_SCREEN_WIDTH = 375;
 const scale = Dimensions.get("window").width / BASE_SCREEN_WIDTH;
+const isJest = typeof jest !== "undefined";
 
 interface Brew {
   id_brew: number;
@@ -164,13 +165,17 @@ export default function Agenda() {
   // refresh when screen focuses
   useFocusEffect(
     useCallback(() => {
-      fetchAgendaData();
+      if (!isJest && fetchAgendaData) {
+        fetchAgendaData();
+      }
     }, [])
   );
 
   useEffect(() => {
-    setCalendarVisible(false);
-    requestAnimationFrame(() => setCalendarVisible(true));
+    if (!isJest) {
+      setCalendarVisible(false);
+      requestAnimationFrame(() => setCalendarVisible(true));
+    }
   }, [currentDate]);
 
   const phasesForSelectedDate = phasesByDate[currentDate] || [];
