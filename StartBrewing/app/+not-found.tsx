@@ -17,7 +17,7 @@ export default function NotFound() {
         </ThemedText>
 
         <ThemedText type="subTitle" style={styles.message}>
-          The page you are trying to reach doesn't exist or has been removed.
+          The page you are trying to reach doesn&apos;t exist or has been removed.
           Check the URL or go back to the home page.
         </ThemedText>
 
