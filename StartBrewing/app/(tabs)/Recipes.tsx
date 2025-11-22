@@ -193,7 +193,7 @@ export default function Recipes() {
       ) : showOnlyFavorites && favoriteSlugs.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6">
           <ThemedText type="defaultText" className="text-center">
-            You don't have any favorites at the moment.
+            You don&apos;t have any favorites at the moment.
           </ThemedText>
         </View>
       ) : (
