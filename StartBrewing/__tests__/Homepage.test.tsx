@@ -247,7 +247,7 @@ jest.mock("@/supabase", () => {
   const DB: Record<string, any> = {
     recipes: { data: recipesData, error: null },
     recipe_reviews: { data: reviewData, error: null },
-    brews: { data: [{ id_brew: 1, name: "Hazy IPA", recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60" }], error: null },
+    brews: { data: [{ id_brew: 1, name: "Hazy IPA", recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60", user_id: "test-user", status_id: 1 }], error: null },
     phases: { data: [{ phase_id: "PH1" }], error: null },
     steps: { data: [{ step_id: 1 }, { step_id: 2 }], error: null },
     brew_steps: { data: [{ step_id: 1 }], error: null },
@@ -265,6 +265,7 @@ jest.mock("@/supabase", () => {
           // Return an object that supports a second .eq call and thenable
           const intermediate = {
             eq: (_col2?: string, _val2?: any) => Promise.resolve(tableData),
+            in: (_col3?: string, _val3?: any) => Promise.resolve(tableData),
             then: (cb: any) => Promise.resolve(tableData).then(cb),
             catch: (cb: any) => Promise.resolve(tableData).catch(cb),
           };
