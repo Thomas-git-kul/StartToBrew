@@ -9,7 +9,6 @@ import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { Cpu, Plus } from "lucide-react-native";
-import { Cpu, Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
@@ -24,7 +23,13 @@ interface Beer {
   style: string | null;
 }
 
-export default function HomePage() {
+interface InProgressBrew {
+  id: string | number;
+  name: string;
+  progress: number;
+}
+
+function HomePageContent() {
   useFonts();
   const router = useRouter();
   const [beers, setBeers] = useState<Beer[]>([]);
@@ -33,8 +38,6 @@ export default function HomePage() {
 
   const [inProgress, setInProgress] = useState<InProgressBrew[]>([]);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
-
-  const [inProgress, setInProgress] = useState<InProgressBrew[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -120,7 +123,7 @@ export default function HomePage() {
         .from("brews")
         .select("id_brew, name, recipe_slug")
         .eq("user_id", user.id) 
-        .in ("status_id", [1,2]) as { data: BrewRow[] | null; error: any };
+        .in ("status_id", [1,2]);
 
       if (brewsError) {
         console.warn("Failed to load brews:", brewsError.message);
@@ -132,7 +135,7 @@ export default function HomePage() {
 
       const inProgressResult = brews?.length
         ? await Promise.all(
-            brews.map(async (brew) => {
+            brews.map(async (brew: any) => {
               const { data: phases } = await supabase
                 .from("phases")
                 .select("phase_id")

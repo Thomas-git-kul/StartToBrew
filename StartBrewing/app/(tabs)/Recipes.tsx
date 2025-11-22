@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { View, ScrollView, Pressable } from "react-native";
 import { Searchbar, ActivityIndicator } from "react-native-paper";
-import { Search, X, Heart, HeartPlus } from "lucide-react-native";
-import BeerCard from "@/components/ui/RecipeCard";
+import { Search, X, Heart} from "lucide-react-native";
+import BeerCard from "../../components/ui/RecipeCard";
 import { useFavorites } from "@/context/FavoritesContext";
 import { BASE_COLORS } from "@/constants/Colors";
 import { useRouter } from "expo-router";
-import Header from "@/components/header";
+import Header from "../../components/header";
 import { useFonts } from "@/hooks/use-fonts";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "../../components/themed-text";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
 
@@ -21,6 +21,15 @@ interface Beer {
   description: string | null;
   style: string | null;
 }
+// Debug: log imported components to help tests identify undefined imports
+// (temporary; remove after debugging)
+// eslint-disable-next-line no-console
+console.log('DEBUG Imports:', {
+  HeaderExists: typeof Header !== 'undefined',
+  BeerCardExists: typeof BeerCard !== 'undefined',
+  SearchbarExists: typeof Searchbar !== 'undefined',
+  ThemedTextExists: typeof ThemedText !== 'undefined',
+});
 
   // ...existing code...
 export default function Recipes() {
@@ -42,13 +51,8 @@ export default function Recipes() {
   };
 
   // Use global toggleFavorite from FavoritesContext. We still keep a
-  // small effect to auto-disable the showOnlyFavorites view if the
-  // user's favorites become empty.
-  useEffect(() => {
-    if (showOnlyFavorites && favoriteSlugs.length === 0) {
-      setShowOnlyFavorites(false);
-    }
-  }, [favoriteSlugs, showOnlyFavorites]);
+  // Removed auto-disable of favorites view; instead we show an
+  // informational message when there are no favorites.
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -186,6 +190,12 @@ export default function Recipes() {
             {error}
           </ThemedText>
         </View>
+      ) : showOnlyFavorites && favoriteSlugs.length === 0 ? (
+        <View className="flex-1 items-center justify-center px-6">
+          <ThemedText type="defaultText" className="text-center">
+            You don't have any favorites at the moment.
+          </ThemedText>
+        </View>
       ) : (
         <ScrollView>
           <View>
@@ -206,6 +216,13 @@ export default function Recipes() {
                 }
               />
             ))}
+            {showOnlyFavorites && filteredRecipes.length === 0 && favoriteSlugs.length > 0 && (
+              <View className="items-center mt-6 px-6">
+                <ThemedText type="defaultText" className="text-center">
+                  No favorites match your search.
+                </ThemedText>
+              </View>
+            )}
           </View>
         </ScrollView>
       )}

@@ -114,6 +114,7 @@ jest.mock("@/constants/Colors", () => ({
     STONE300: "#E5E7EB",
     STONE500: "#6B7280",
     STONE700: "#374151",
+    ACCENT_PRIMARY: "#FF6600",
   },
 }));
 
@@ -122,8 +123,17 @@ jest.mock("lucide-react-native", () => {
   return {
     Search: () => <Text>SearchIcon</Text>,
     X: () => <Text>XIcon</Text>,
+    Heart: () => <Text>HeartIcon</Text>,
   };
 });
+
+// Mock FavoritesContext used in Recipes.tsx
+jest.mock("@/context/FavoritesContext", () => ({
+  useFavorites: () => ({
+    favoriteSlugs: [],
+    toggleFavorite: jest.fn(),
+  }),
+}));
 
 jest.mock("@/components/ui/RecipeCard", () => {
   const { View, Text, Pressable } = require("react-native");
@@ -225,6 +235,7 @@ describe("Recipes screen", () => {
       pathname: "/SpecificRecipe",
       params: {
         recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
+        isFavorite: "false",
       },
     });
   });

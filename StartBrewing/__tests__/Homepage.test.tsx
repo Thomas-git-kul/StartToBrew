@@ -1,6 +1,7 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import { NavigationContainer } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 jest.spyOn(console, "error").mockImplementation(() => {});
@@ -256,35 +257,40 @@ jest.mock("@/supabase", () => {
   // Factory that returns chainable objects for select().in().eq()
   const chainable = (tableKey: string) => {
     const tableData = DB[tableKey] ?? { data: [], error: null };
-
-    const select = (_cols?: string) => {
-      // returned object supports .in(...) and .eq(...).eq(...)
-      const result = {
-        in: (_col?: string, _vals?: any[]) => Promise.resolve(tableData),
-        eq: (_col?: string, _val?: any) => {
-          // Return an object that supports a second .eq call and thenable
-          const intermediate = {
-            eq: (_col2?: string, _val2?: any) => Promise.resolve(tableData),
-            in: (_col3?: string, _val3?: any) => Promise.resolve(tableData),
-            then: (cb: any) => Promise.resolve(tableData).then(cb),
-            catch: (cb: any) => Promise.resolve(tableData).catch(cb),
-          };
-          return intermediate;
-        },
-        then: (cb: any) => Promise.resolve(tableData).then(cb),
-        catch: (cb: any) => Promise.resolve(tableData).catch(cb),
-      };
-      return result;
+    const result = {
+      select: (_cols?: string) => {
+        const sel = {
+          in: (_col?: string, _vals?: any[]) => Promise.resolve(tableData),
+          eq: (_col?: string, _val?: any) => {
+            const intermediate = {
+              eq: (_col2?: string, _val2?: any) => Promise.resolve(tableData),
+              in: (_col3?: string, _val3?: any) => Promise.resolve(tableData),
+              then: (cb: any) => Promise.resolve(tableData).then(cb),
+              catch: (cb: any) => Promise.resolve(tableData).catch(cb),
+            };
+            return intermediate;
+          },
+          then: (cb: any) => Promise.resolve(tableData).then(cb),
+          catch: (cb: any) => Promise.resolve(tableData).catch(cb),
+        };
+        return sel;
+      },
+      insert: (payload?: any) => Promise.resolve({ data: payload, error: null }),
+      delete: () => Promise.resolve({ data: null, error: null }),
+      in: (_col?: string, _vals?: any[]) => Promise.resolve(tableData),
+      eq: (_col?: string, _val?: any) => Promise.resolve(tableData),
+      then: (cb: any) => Promise.resolve(tableData).then(cb),
+      catch: (cb: any) => Promise.resolve(tableData).catch(cb),
     };
 
-    // select sometimes is awaited directly (no chaining), so also provide thenable select
-    return { select };
+    return result;
   };
 
   return {
     supabase: {
       auth: {
         getUser: () => Promise.resolve({ data: { user: { id: "test-user" } } }),
+        getSession: () => Promise.resolve({ data: { session: { user: { id: "test-user" } } } }),
       },
       from: (table: string) => {
         // Some code expects .select().in(...), some expects .select(...).eq(...).eq(...)
@@ -304,7 +310,11 @@ jest.mock("@/supabase", () => {
 ------------------------------- */
 
 const renderWithNavigation = (ui: React.ReactElement) =>
-  render(<NavigationContainer>{ui}</NavigationContainer>);
+  render(
+    <NavigationContainer>
+      <FavoritesProvider>{ui}</FavoritesProvider>
+    </NavigationContainer>
+  );
 
 /* ------------------------------
    TESTS
@@ -357,12 +367,14 @@ describe("<HomePage />", () => {
     const card = await findByText("Den Ballaste Point Sculpin IPA 60");
     fireEvent.press(card);
 
-    expect(pushMock).toHaveBeenCalledWith({
-      pathname: "/SpecificRecipe",
-      params: {
-        recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
-      },
-    });
+    expect(pushMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathname: "/SpecificRecipe",
+        params: expect.objectContaining({
+          recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
+        }),
+      })
+    );
   });
 
   it("toont de in-progress brews in de 'In progress' sectie", async () => {
