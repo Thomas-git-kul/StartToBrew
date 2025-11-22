@@ -34,7 +34,7 @@ jobs:
       - run: npm install
 
       - name: Build web export
-        run: npm run build:web
+        run: npm run build
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
