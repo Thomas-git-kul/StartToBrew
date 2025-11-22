@@ -7,7 +7,7 @@ import BeerCard from "@/components/ui/RecipeCard";
 import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
-import { Plus } from "lucide-react-native";
+import { Cpu, Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
@@ -182,7 +182,8 @@ export default function HomePage() {
         : [];
 
       if (mounted) {
-        setInProgress(inProgressResult);
+        const sortedResult = inProgressResult.sort((a, b) => a.progress - b.progress);
+        setInProgress(sortedResult);
       }
     } catch (e: any) {
       console.warn("Failed to load homepage data:", e?.message ?? e);

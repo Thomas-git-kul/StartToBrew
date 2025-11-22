@@ -179,7 +179,11 @@ function Progress() {
           ...(isLastStep? { status_id: 3 } : {})
          })
         .eq("id_brew", brewId);
-        console.log('brews updated');
+
+      if (isLastStep) {
+        router.push("/HomePage");
+        return;
+      }
 
       await loadStep(); // ✅ gewoon de loadStep opnieuw aanroepen
     } catch (error) {
