@@ -101,5 +101,3 @@ TabLayout.displayName = "TabLayout";
 
 export default TabLayout;
 
-
-
