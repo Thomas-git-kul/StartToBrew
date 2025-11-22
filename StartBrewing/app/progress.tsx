@@ -159,7 +159,11 @@ function Progress() {
 
   //const goToNextStep = () => router.push('/progress?step=nextStep');
   const goToNextStep = async () => {
-    if (!brewId || !stepData?.step_id) return;
+    console.log('goToNextStep called');
+    if (!brewId || !stepData?.step_id) {
+       console.log("Aborted goToNextStep: missing brewId or stepData.step_id", { brewId, stepData });
+    return;
+    }
     console.log('Marking step as completed:', brewId, stepData.step_id);
 
     try {
@@ -168,15 +172,17 @@ function Progress() {
         .update({ status: "completed", completed_at: new Date().toISOString() })
         .eq("id_brew", brewId)
         .eq("step_id", stepData.step_id);
+        console.log('brew_steps updated');
 
       await supabase
         .from("brews")
         .update({ last_step_id: stepData.next_step_id })
         .eq("id_brew", brewId);
+        console.log('brews updated');
 
       await loadStep(); // ✅ gewoon de loadStep opnieuw aanroepen
     } catch (error) {
-      console.error(error);
+      console.error("goToNextStep error:", error);
     }
   };
 
