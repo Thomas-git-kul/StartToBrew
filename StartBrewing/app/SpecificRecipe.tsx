@@ -223,7 +223,7 @@ export default function SpecificRecipe() {
     }
   };
 
-   const brewRecipe = async () => {
+  const brewRecipe = async () => {
   if (!recipe_slug || !recipe?.name) {
     console.warn("Cannot start brew: missing slug or recipe name.");
     return;
