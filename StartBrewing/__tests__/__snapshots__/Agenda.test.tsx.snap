@@ -1,12 +1,32 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Agenda Screen renders correctly and matches snapshot 1`] = `
-[
+exports[`Agenda / renders correctly and matches snapshot 1`] = `
+<View>
   <Text>
     Agenda
-  </Text>,
+  </Text>
+  <Text>
+    Calendar
+  </Text>
+  <View
+    data-expanded={false}
+    onClick={[Function]}
+  >
+    <View>
+      <Text>
+        Phase 1
+      </Text>
+      <Text>
+        • 
+        Step 1
+         (
+        60
+         min)
+      </Text>
+    </View>
+  </View>
   <Text>
     No tasks for this day.
-  </Text>,
-]
+  </Text>
+</View>
 `;
