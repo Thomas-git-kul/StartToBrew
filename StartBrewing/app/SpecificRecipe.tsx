@@ -356,6 +356,7 @@ export default function SpecificRecipe() {
     >
       <Header
         title={recipe?.name ?? (loading ? "Loading…" : "Recipe")}
+        /*title="Recipe"*/
         iconName="ArrowRight"
         onIconPress={() => router.push("/Recipes" as any)}
         actionTestID="cart-button"
@@ -363,19 +364,18 @@ export default function SpecificRecipe() {
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator animating size="large" />
+          <ActivityIndicator 
+            animating size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY} 
+          />
           <ThemedText type="defaultText" className="mt-3">
             Loading recipe...
           </ThemedText>
         </View>
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
-          <ThemedText type="title" className="mb-2 text-center">
-            Oops
-          </ThemedText>
-          <ThemedText type="defaultText" className="text-center">
-            {error}
-          </ThemedText>
+          <ThemedText type="title" className="mb-2 text-center">Oops</ThemedText>
+          <ThemedText type="defaultText" className="text-center">{error}</ThemedText>
         </View>
       ) : (
         <ScrollView
@@ -383,14 +383,15 @@ export default function SpecificRecipe() {
           contentContainerStyle={{ paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
         >
+          <ThemedText type="title">{recipe?.name}</ThemedText>
           {/* Image */}
           <View className="items-center mb-5">
             <View
               style={{
                 width: "100%",
-                aspectRatio: 3 / 4, // bredere dan hoog; pas aan naar smaak
+                aspectRatio: 3 / 4, 
                 borderRadius: 16,
-                overflow: "hidden", // alles buiten de hoekjes afknippen
+                overflow: "hidden",
               }}
             >
               <Image
