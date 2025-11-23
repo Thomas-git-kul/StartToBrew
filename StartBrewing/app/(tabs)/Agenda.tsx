@@ -69,101 +69,109 @@ export default function Agenda() {
     new Date().toISOString().split("T")[0]
   );
   const [calendarVisible, setCalendarVisible] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   async function fetchAgendaData() {
-    const user = supabase.auth.getUser();
+    setLoading(true);
+    try{
+      const user = supabase.auth.getUser();
 
-    const { data: brewsData, error: brewErr } = await supabase
-      .from("brews")
-      .select(`id_brew, name, start_date, recipe_slug`)
-      .eq("user_id", (await user).data.user?.id)
-      .in("status_id", [1, 2]);
+      const { data: brewsData, error: brewErr } = await supabase
+        .from("brews")
+        .select(`id_brew, name, start_date, recipe_slug`)
+        .eq("user_id", (await user).data.user?.id)
+        .in("status_id", [1, 2]);
 
-    if (brewErr) {
-      console.error(brewErr);
-      return;
-    }
-    const brews: Brew[] = brewsData as Brew[];
+      if (brewErr) {
+        console.error(brewErr);
+        return;
+      }
+      const brews: Brew[] = brewsData as Brew[];
 
-    // console.log("brews fetched: ", brews)
+      // console.log("brews fetched: ", brews)
 
-    const { data: phasesData, error: phaseErr } = await supabase
-      .from("phases")
-      .select("*");
+      const { data: phasesData, error: phaseErr } = await supabase
+        .from("phases")
+        .select("*");
 
-    const phases: Phase[] = phasesData as Phase[];
+      const phases: Phase[] = phasesData as Phase[];
 
-    const { data: stepsData, error: stepErr } = await supabase
-      .from("steps")
-      .select('step_id, phase_id, title,start_offset_min, duration_min')
-      .order('phase_id', { ascending: true });
+      const { data: stepsData, error: stepErr } = await supabase
+        .from("steps")
+        .select('step_id, phase_id, title,start_offset_min, duration_min')
+        .order('phase_id', { ascending: true });
 
-    if (phaseErr || stepErr) {
-      console.error(phaseErr || stepErr);
-      return;
-    }
-    const steps: Step[] = stepsData as Step[];
-    const agenda: Record<string, any[]> = {};
+      if (phaseErr || stepErr) {
+        console.error(phaseErr || stepErr);
+        return;
+      }
+      const steps: Step[] = stepsData as Step[];
+      const agenda: Record<string, any[]> = {};
 
-    brews.forEach((brew) => {
-    const brewPhases = phases.filter((p) => p.recipe_slug === brew.recipe_slug);
+      brews.forEach((brew) => {
+      const brewPhases = phases.filter((p) => p.recipe_slug === brew.recipe_slug);
 
-    // Startdatum in lokale tijd
-    let currentStepTime = new Date(brew.start_date);
-    currentStepTime.setHours(0, 0, 0, 0);
+      // Startdatum in lokale tijd
+      let currentStepTime = new Date(brew.start_date);
+      currentStepTime.setHours(0, 0, 0, 0);
 
-    // Bereken alle stappen van deze brew
-    brewPhases.forEach((phase) => {
-      const phaseSteps = steps.filter((s) => s.phase_id === phase.phase_id).sort((a, b) => a.step_id.localeCompare(b.step_id, undefined, { numeric: true }));
+      // Bereken alle stappen van deze brew
+      brewPhases.forEach((phase) => {
+        const phaseSteps = steps.filter((s) => s.phase_id === phase.phase_id).sort((a, b) => a.step_id.localeCompare(b.step_id, undefined, { numeric: true }));
 
-      phaseSteps.forEach((step) => {
-        let stepDurationDays = 0;
-        if (step.duration_min && step.duration_min > 0) {
-          const durationHours = step.duration_min / 60;
-          if (durationHours >= 24) {
-            stepDurationDays = Math.floor(durationHours / 24);
-          }
-        }
-
-        const stepDate = new Date(currentStepTime);
-        if (stepDurationDays > 0) {
-          stepDate.setDate(stepDate.getDate() + stepDurationDays);
-        }
-
-        // Bereken dag string
-        const dayStr = `${stepDate.getFullYear()}-${(stepDate.getMonth()+1).toString().padStart(2,'0')}-${stepDate.getDate().toString().padStart(2,'0')}`;
-
-      
-          if (!agenda[dayStr]) agenda[dayStr] = [];
-
-          // Vind of er al een entry voor deze brew bestaat op deze dag
-          let brewEntry = agenda[dayStr].find((b) => b.beer === brew.name);
-          if (!brewEntry) {
-            brewEntry = { beer: brew.name, id_brew: brew.id_brew, phases: [] };
-            agenda[dayStr].push(brewEntry);
+        phaseSteps.forEach((step) => {
+          let stepDurationDays = 0;
+          if (step.duration_min && step.duration_min > 0) {
+            const durationHours = step.duration_min / 60;
+            if (durationHours >= 24) {
+              stepDurationDays = Math.floor(durationHours / 24);
+            }
           }
 
-          // Voeg fase + stap toe
-          let phaseEntry = brewEntry.phases.find((p: PhaseEntry) => p.title === phase.name);
-          if (!phaseEntry) {
-            phaseEntry = { title: phase.name, steps: [] };
-            brewEntry.phases.push(phaseEntry);
-          }
-
-          // Voeg stap toe
-          phaseEntry.steps.push({
-            text: step.title,
-            time: step.duration_min,
-          });
+          const stepDate = new Date(currentStepTime);
           if (stepDurationDays > 0) {
-            currentStepTime.setDate(currentStepTime.getDate() + stepDurationDays);
+            stepDate.setDate(stepDate.getDate() + stepDurationDays);
           }
+
+          // Bereken dag string
+          const dayStr = `${stepDate.getFullYear()}-${(stepDate.getMonth()+1).toString().padStart(2,'0')}-${stepDate.getDate().toString().padStart(2,'0')}`;
+
+        
+            if (!agenda[dayStr]) agenda[dayStr] = [];
+
+            // Vind of er al een entry voor deze brew bestaat op deze dag
+            let brewEntry = agenda[dayStr].find((b) => b.beer === brew.name);
+            if (!brewEntry) {
+              brewEntry = { beer: brew.name, id_brew: brew.id_brew, phases: [] };
+              agenda[dayStr].push(brewEntry);
+            }
+
+            // Voeg fase + stap toe
+            let phaseEntry = brewEntry.phases.find((p: PhaseEntry) => p.title === phase.name);
+            if (!phaseEntry) {
+              phaseEntry = { title: phase.name, steps: [] };
+              brewEntry.phases.push(phaseEntry);
+            }
+
+            // Voeg stap toe
+            phaseEntry.steps.push({
+              text: step.title,
+              time: step.duration_min,
+            });
+            if (stepDurationDays > 0) {
+              currentStepTime.setDate(currentStepTime.getDate() + stepDurationDays);
+            }
+        });
       });
     });
-  });
 
-    setPhasesByDate(agenda);
-    await AsyncStorage.setItem("phasesByDate", JSON.stringify(agenda));
+      setPhasesByDate(agenda);
+      await AsyncStorage.setItem("phasesByDate", JSON.stringify(agenda));
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
   }
 
   // refresh when screen focuses
@@ -254,87 +262,98 @@ export default function Agenda() {
           />
         </View>
       )}
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {phasesForSelectedDate.length === 0 ? (
-          <ThemedText>No tasks for this day.</ThemedText>
-        ) : (
-          phasesForSelectedDate.map((brew: BrewEntry, brewIndex: number) => (
-            <Card
-              key={brewIndex}
-              style={{
-                marginBottom: 5,
-                backgroundColor: BASE_COLORS.WHITE,
-                borderRadius: 15,
-                padding: 10,
-                outlineColor: BASE_COLORS.STONE500,
-                outlineWidth: 1,
-                shadowColor: BASE_COLORS.STONE700,
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.07,
-              }}
-            >
-              <View
+
+      {loading ? (
+        <View className="items-center justify-center my-4">
+          <ActivityIndicator 
+            animating size="small" 
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
+          <ThemedText type="defaultText" className="mt-2">Loading progress...</ThemedText>
+        </View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {phasesForSelectedDate.length === 0 ? (
+            <ThemedText>No tasks for this day.</ThemedText>
+          ) : (
+            phasesForSelectedDate.map((brew: BrewEntry, brewIndex: number) => (
+              <Card
+                key={brewIndex}
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 8,
+                  marginBottom: 5,
+                  backgroundColor: BASE_COLORS.WHITE,
+                  borderRadius: 15,
+                  padding: 10,
+                  outlineColor: BASE_COLORS.STONE500,
+                  outlineWidth: 1,
+                  shadowColor: BASE_COLORS.STONE700,
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.07,
                 }}
               >
-                <Text style={{
-                  fontSize: Math.min(18 * scale, 22),
-                  fontFamily: FontFamilies.BODY_BOLD,
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-                >{brew.beer}</Text>
-                <Button onPress={() => {
-                  router.push({ pathname: "/progress", params: { id: brew.id_brew } });
-                  // console.log(`Brew ID: ${brew.id_brew}`);
-                }}>
-                  <Text 
-                    style={{ 
-                      fontSize: Math.min(16 * scale, 22),
-                      fontFamily: FontFamilies.BODY,
-                      color: BASE_COLORS.TEXT_DARK,
-                    }}
-                  >Progress</Text>
-                </Button>
-              </View>
-
-              {brew.phases.map((phase: PhaseEntry, phaseIndex: number) => (
-                <View key={phaseIndex} className="mb-4">
-                  <ThemedText type="subTitle">{phase.title}</ThemedText>
-                  {phase.steps.map((step, stepIndex) => (
-                    <View key={stepIndex} className="flex-row items-center ml-4 mt-1">
-                      <ThemedText>
-                        • {step.text}
-                      </ThemedText>
-                      {step.time != null && (
-                        <Chip
-                          style={{
-                            marginLeft: 10,
-                            height: Math.min( 21 * scale, 40),
-                            alignItems: "center",
-                            backgroundColor: BASE_COLORS.STONE100,
-                          }}
-                          textStyle={{
-                            fontSize: Math.min( 12 * scale, 20),
-                            color: BASE_COLORS.TEXT_DARK,
-                            fontFamily: FontFamilies.BODY,
-                          }}
-                          icon={() => <Clock size={Math.min( 12 * scale, 20)} color={BASE_COLORS.TEXT_DARK} />}
-                        >
-                          {formatDuration(step.time)}
-                        </Chip>
-                      )}
-                    </View>
-                  ))}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text style={{
+                    fontSize: Math.min(18 * scale, 22),
+                    fontFamily: FontFamilies.BODY_BOLD,
+                    color: BASE_COLORS.TEXT_DARK,
+                  }}
+                  >{brew.beer}</Text>
+                  <Button onPress={() => {
+                    router.push({ pathname: "/progress", params: { id: brew.id_brew } });
+                    // console.log(`Brew ID: ${brew.id_brew}`);
+                  }}>
+                    <Text 
+                      style={{ 
+                        fontSize: Math.min(16 * scale, 22),
+                        fontFamily: FontFamilies.BODY,
+                        color: BASE_COLORS.TEXT_DARK,
+                      }}
+                    >Progress</Text>
+                  </Button>
                 </View>
-              ))}
-            </Card>
-          ))
-        )}
-      </ScrollView>
+
+                {brew.phases.map((phase: PhaseEntry, phaseIndex: number) => (
+                  <View key={phaseIndex} className="mb-4">
+                    <ThemedText type="subTitle">{phase.title}</ThemedText>
+                    {phase.steps.map((step, stepIndex) => (
+                      <View key={stepIndex} className="flex-row items-center ml-4 mt-1">
+                        <ThemedText>
+                          • {step.text}
+                        </ThemedText>
+                        {step.time != null && (
+                          <Chip
+                            style={{
+                              marginLeft: 10,
+                              height: Math.min( 21 * scale, 40),
+                              alignItems: "center",
+                              backgroundColor: BASE_COLORS.STONE100,
+                            }}
+                            textStyle={{
+                              fontSize: Math.min( 12 * scale, 20),
+                              color: BASE_COLORS.TEXT_DARK,
+                              fontFamily: FontFamilies.BODY,
+                            }}
+                            icon={() => <Clock size={Math.min( 12 * scale, 20)} color={BASE_COLORS.TEXT_DARK} />}
+                          >
+                            {formatDuration(step.time)}
+                          </Chip>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ))}
+              </Card>
+            ))
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
