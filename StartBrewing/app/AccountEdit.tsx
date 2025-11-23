@@ -320,6 +320,7 @@ export default function EditAccount() {
           placeholder="Email"
           onChangeText={setMail}
           value={mail}
+          keyboardType="email-address"
         />
 
         <ThemedText type="subTitle" className="mt-3 mb-1">Update account information</ThemedText>
