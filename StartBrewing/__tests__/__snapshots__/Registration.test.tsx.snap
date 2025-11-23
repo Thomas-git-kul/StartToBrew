@@ -130,7 +130,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
             testID="appbar-content-title-text"
           >
-            No account yet?
+            Sign Up to StartToBrew
           </Text>
         </View>
         <View
@@ -376,11 +376,6 @@ exports[`<Registration /> matches snapshot 1`] = `
   </View>,
   <RCTScrollView
     className="px-3"
-    contentContainerStyle={
-      {
-        "paddingBottom": 120,
-      }
-    }
     showsVerticalScrollIndicator={false}
   >
     <View>
@@ -414,7 +409,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         <View
           style={
             {
-              "width": "50%",
+              "width": "47%",
             }
           }
         >
@@ -493,7 +488,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         </View>
       </View>
       <Text
-        className="mt-6"
+        className="mt-2"
         style={
           [
             {
@@ -531,7 +526,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
           >
             <TextInput
-              keyboardType="default"
+              keyboardType="numeric"
               multiline={false}
               onBlur={[Function]}
               onChangeText={[Function]}
@@ -571,7 +566,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
           >
             <TextInput
-              keyboardType="default"
+              keyboardType="numeric"
               multiline={false}
               onBlur={[Function]}
               onChangeText={[Function]}
@@ -611,7 +606,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
           >
             <TextInput
-              keyboardType="default"
+              keyboardType="numeric"
               multiline={false}
               onBlur={[Function]}
               onChangeText={[Function]}
@@ -637,8 +632,11 @@ exports[`<Registration /> matches snapshot 1`] = `
           </View>
         </View>
       </View>
+      <View
+        className="mb-3"
+      />
       <Text
-        className="mt-6"
+        className="mt-2"
         style={
           [
             {
@@ -670,7 +668,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         }
       >
         <TextInput
-          keyboardType="default"
+          keyboardType="email-address"
           multiline={false}
           onBlur={[Function]}
           onChangeText={[Function]}
@@ -1078,7 +1076,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         </View>
       </View>
       <View
-        className="flex-row items-center my-4"
+        className="flex-row items-center mt-4 mb-10"
       >
         <Text
           accessibilityRole="checkbox"
@@ -1122,7 +1120,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         style={
           {
             "alignItems": "center",
-            "marginBottom": 32,
+            "marginBottom": 25,
           }
         }
       >
@@ -1139,7 +1137,6 @@ exports[`<Registration /> matches snapshot 1`] = `
               },
               "shadowOpacity": 0,
               "shadowRadius": 0,
-              "width": 220,
             }
           }
           testID="button-container-outer-layer"
@@ -1265,7 +1262,7 @@ exports[`<Registration /> matches snapshot 1`] = `
                           {
                             "color": "#fff",
                             "fontFamily": "System",
-                            "fontSize": 14,
+                            "fontSize": 24,
                           },
                         ],
                       ],

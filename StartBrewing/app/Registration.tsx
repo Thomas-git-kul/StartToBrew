@@ -167,7 +167,7 @@ export default function Registration() {
       }}
     >
       <Header
-        title="Sign up to StartToBrew"
+        title="Sign Up to StartToBrew"
         iconName="ArrowRight"
         onIconPress={() => router.push("/Auth")}
         actionTestID="registration-button"
