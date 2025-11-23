@@ -46,5 +46,7 @@ export default function Index() {
     return <Redirect href="/Auth" />;
   }
 
+  // unknown routes are handled by the catch-all file `app/[...NotFound].tsx`
+
   return <Redirect href="/(tabs)/HomePage" />;
 }
