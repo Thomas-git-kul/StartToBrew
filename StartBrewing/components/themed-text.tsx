@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
   },
   accentDark: {
     fontSize: Math.min(17 * scale, 22),
-    fontFamily: FontFamilies.BODY_BLACK,
-    color: BASE_COLORS.TEXT_DARK,
+    fontFamily: FontFamilies.BODY,
+    color: BASE_COLORS.STONE700,
   },
   numbers: {
     fontSize: Math.min(22 * scale, 30),
