@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, Image, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { View, Image, ScrollView, TouchableOpacity, Alert, Dimensions } from "react-native";
 import {FAB, Modal, Portal, Chip, ActivityIndicator,} from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -12,6 +12,10 @@ import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getBeerImageSource } from "@/hooks/beer-image";
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BASE_SCREEN_WIDTH = 375; 
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 type Recipe = {
   recipe_slug: string;
@@ -64,11 +68,13 @@ export default function SpecificRecipe() {
   const [hasUserReviewed, setHasUserReviewed] = useState(false);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
   const isFavorite = recipe_slug ? (favoriteSlugs || []).includes(String(recipe_slug)) : false;
+  const [isFavoriteIconFilled, setIsFavoriteIconFilled] = useState(isFavorite);
 
   const handleToggleFavorite = async () => {
     if (!recipe_slug) return;
     try {
       await toggleFavorite(String(recipe_slug));
+      setIsFavoriteIconFilled((prev) => !prev);
     } catch (e: any) {
       Alert.alert("Favorite failed", e?.message ?? "Could not toggle favorite");
     }
@@ -355,13 +361,12 @@ export default function SpecificRecipe() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
       <Header
-        title={recipe?.name ?? (loading ? "Loading…" : "Recipe")}
-        /*title="Recipe"*/
-        iconName="ArrowRight"
-        onIconPress={() => router.push("/Recipes" as any)}
-        actionTestID="cart-button"
+        title="Recipe"
+        iconName={isFavoriteIconFilled ? "Heart" : "HeartPlus"}
+        filled={isFavoriteIconFilled}
+        onIconPress={handleToggleFavorite}
+        actionTestID="heart-button"
       />
-
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator 
@@ -380,12 +385,17 @@ export default function SpecificRecipe() {
       ) : (
         <ScrollView
           className="flex-1 mx-3"
-          contentContainerStyle={{ paddingBottom: 80 }}
+          contentContainerStyle={{ paddingBottom: 70 }}
           showsVerticalScrollIndicator={false}
         >
-          <ThemedText type="title">{recipe?.name}</ThemedText>
+
+          <View className="">
+            <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
+          </View>
+          
+
           {/* Image */}
-          <View className="items-center mb-5">
+          <View className="items-center ">
             <View
               style={{
                 width: "100%",
@@ -400,10 +410,12 @@ export default function SpecificRecipe() {
                   width: "100%",
                   height: "100%",
                 }}
-                resizeMode="cover" // vult box en cropt waar nodig
+                resizeMode="cover"
               />
             </View>
           </View>
+
+
 
           {/* Rating */}
           <View className="flex-row items-center justify-center mb-3 gap-2">
@@ -434,23 +446,6 @@ export default function SpecificRecipe() {
                 <ThemedText type="subTitle">Add Review</ThemedText>
               </TouchableOpacity>
             )}
-            <View style={{ flex: 1 }} />
-            <TouchableOpacity
-              onPress={handleToggleFavorite}
-              accessibilityLabel={`favorite-${recipe?.name ?? "recipe"}`}
-              hitSlop={8}
-              style={{ marginLeft: 12 }}
-            >
-              {isFavorite ? (
-                <Heart
-                  size={24}
-                  stroke={BASE_COLORS.ACCENT_PRIMARY}
-                  fill={BASE_COLORS.ACCENT_PRIMARY}
-                />
-              ) : (
-                <HeartPlus size={24} stroke={BASE_COLORS.STONE300} />
-              )}
-            </TouchableOpacity>
           </View>
 
           {/* Specs chips */}

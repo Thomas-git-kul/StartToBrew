@@ -9,16 +9,25 @@ const iconMap: Record<string, LucideIcon> = {
   Calendar1: Icons.Calendar1,
   ArrowRight: Icons.ArrowRight,
   House: Icons.House,
+  HeartPlus: Icons.HeartPlus,
+  Heart: Icons.Heart,
 };
 
 interface HeaderBarProps {
   title: string;
-  iconName?: keyof typeof iconMap; // restrict to keys of iconMap
+  iconName?: keyof typeof iconMap;
+  filled?: boolean;
   onIconPress?: () => void;
   actionTestID?: string;
 }
 
-export default function HeaderBar({ title, iconName, onIconPress, actionTestID }: HeaderBarProps) {
+export default function HeaderBar({
+  title,
+  iconName,
+  onIconPress,
+  actionTestID,
+  filled=false,
+}: HeaderBarProps) {
   const IconComponent = iconName ? iconMap[iconName] : undefined;
 
   return (
@@ -30,7 +39,14 @@ export default function HeaderBar({ title, iconName, onIconPress, actionTestID }
 
       {IconComponent && onIconPress && (
         <Appbar.Action
-          icon={() => <IconComponent size={28} color={BASE_COLORS.TEXT_DARK} strokeWidth={2} />}
+          icon={() => (
+            <IconComponent
+              size={28}
+              stroke={filled ? BASE_COLORS.ACCENT_PRIMARY : BASE_COLORS.TEXT_DARK}
+              strokeWidth={2}
+              fill={filled ? BASE_COLORS.ACCENT_PRIMARY : "transparent"}
+            />
+          )}
           onPress={onIconPress}
           testID={actionTestID}
         />
