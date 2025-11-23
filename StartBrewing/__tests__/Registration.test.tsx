@@ -92,7 +92,7 @@ describe("<Registration />", () => {
 
   it("renders the main header correctly", () => {
     const { getByText } = render(<Registration />);
-    expect(getByText("No account yet?")).toBeTruthy();
+    expect(getByText("Sign Up to StartToBrew")).toBeTruthy();
   });
 
   it("renders all section labels", () => {

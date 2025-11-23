@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     color: BASE_COLORS.STONE600
   },
   subTitle: {
-    fontSize: Math.min(14 * scale, 16), 
+    fontSize: Math.min(14 * scale, 20), 
     fontFamily: FontFamilies.BODY_LIGHT,
     color: BASE_COLORS.STONE700,
   },
