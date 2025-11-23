@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Alert, ScrollView, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "react-native-paper";
+import { Button, ActivityIndicator } from "react-native-paper";
 import CheckBox from "expo-checkbox";
 import { router } from "expo-router";
 import { supabase } from "@/supabase";
@@ -157,6 +157,24 @@ export default function Registration() {
     }
 
     router.replace("/(tabs)/HomePage");
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center"
+        style={{
+          backgroundColor: BASE_COLORS.LIGHT_BG
+        }}
+      >
+        <ActivityIndicator 
+            animating size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
+          <ThemedText type="defaultText" className="mt-3">
+            Loading account information...
+          </ThemedText>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -322,7 +340,7 @@ export default function Registration() {
               fontFamily: FontFamilies.BODY,
               color: BASE_COLORS.WHITE,
             }}
-          >{loading ? "Creating account..." : "Create account"}</Button>
+          >{"Create account"}</Button>
         </View>
       </ScrollView>
     </SafeAreaView>

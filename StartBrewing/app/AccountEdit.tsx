@@ -243,11 +243,18 @@ export default function EditAccount() {
 
   if (loading) {
     return (
-      <SafeAreaView>
+      <SafeAreaView className="flex-1 items-center justify-center"
+        style={{
+          backgroundColor: BASE_COLORS.LIGHT_BG
+        }}
+      >
         <ActivityIndicator 
-          color={BASE_COLORS.ACCENT_PRIMARY}
-          animating size="large"
-        />
+            animating size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
+          <ThemedText type="defaultText" className="mt-3">
+            Loading account information...
+          </ThemedText>
       </SafeAreaView>
     );
   }
