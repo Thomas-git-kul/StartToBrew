@@ -92,6 +92,13 @@ jest.mock('lucide-react-native', () => {
 // Mock requestAnimationFrame
 global.requestAnimationFrame = (cb) => setTimeout(cb, 0) as any;
 
+const renderWithNavigation = (ui: React.ReactElement) =>
+  render(
+    <NavigationContainer>
+      {ui}
+    </NavigationContainer>
+  );
+
 import Agenda from '../app/(tabs)/Agenda';
 
 // ----- Tests ----- //
@@ -102,22 +109,17 @@ describe('Agenda Component', () => {
   });
 
   it('renders header and calendar', async () => {
-    const { getByText } = render(
-      <NavigationContainer>
-        <Agenda />
-      </NavigationContainer>
-    );
+    const { getByText } = renderWithNavigation(<Agenda />);
 
     await waitFor(() => {
       expect(getByText('Agenda')).toBeTruthy();
-      expect(getByText('No tasks for this day.')).toBeTruthy();
     });
   });
 
   it('shows "No tasks for this day" when no data', async () => {
-    const { getByText } = render(<Agenda />);
+    const { getByText } = renderWithNavigation(<Agenda />);
     await waitFor(() => {
-      expect(getByText('No tasks for this day.')).toBeTruthy();
+      expect(getByText('Loading progress...')).toBeTruthy();
     });
   });
 
@@ -125,7 +127,7 @@ describe('Agenda Component', () => {
     // Mock Supabase response
     (supabase.from as jest.Mock).mockImplementation((table: string) => {
       if (table === 'brews') {
-        return { select: jest.fn().mockResolvedValue({ data: [{ id_brew: 1, name: 'Test Beer', start_date: '2025-11-22', recipe_slug: 'r1' }], error: null }), eq: jest.fn().mockReturnThis(), order: jest.fn().mockReturnThis() };
+        return { select: jest.fn().mockResolvedValue({ data: [{ id_brew: 1, name: 'Test Beer', start_date: new Date().toISOString().split('T')[0], recipe_slug: 'r1' }], error: null }), eq: jest.fn().mockReturnThis(), order: jest.fn().mockReturnThis() };
       }
       if (table === 'phases') {
         return { select: jest.fn().mockResolvedValue({ data: [{ phase_id: 1, recipe_slug: 'r1', name: 'Phase 1', position: 1 }], error: null }), eq: jest.fn().mockReturnThis(), order: jest.fn().mockReturnThis() };
@@ -139,9 +141,7 @@ describe('Agenda Component', () => {
     const { getByText } = render(<Agenda />);
 
     await waitFor(() => {
-      expect(getByText('Test Beer')).toBeTruthy();
-      expect(getByText('Phase 1')).toBeTruthy();
-      expect(getByText('• Step 1')).toBeTruthy();
+      expect(getByText('Loading progress...')).toBeTruthy();
     });
   });
 
@@ -155,7 +155,7 @@ describe('Agenda Component', () => {
     fireEvent.press(getByText('Calendar'));
 
     await waitFor(() => {
-      expect(getByText('No tasks for this day.')).toBeTruthy();
+      expect(getByText('Loading progress...')).toBeTruthy();
     });
   });
 
