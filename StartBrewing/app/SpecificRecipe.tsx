@@ -118,6 +118,8 @@ export default function SpecificRecipe() {
         .eq("recipe_slug", slug)
         .single();
 
+      console.log("recipe data", recipeData)
+
       if (recipeError) throw recipeError;
 
       const { data: ingredientData, error: ingredientError } = await supabase.rpc(
@@ -690,6 +692,7 @@ export default function SpecificRecipe() {
             }}
           >
             <FAB
+              testID="startFAB"
               mode="flat"
               label="Ready to Start"
               color={BASE_COLORS.WHITE}
