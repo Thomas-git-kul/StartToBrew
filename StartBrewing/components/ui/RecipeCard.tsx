@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { Image, View, Dimensions, Pressable, Text } from "react-native";
-import { Card, Chip, TouchableRipple } from "react-native-paper";
+import { Card, Chip } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { Star, Heart, HeartPlus } from "lucide-react-native";
@@ -27,7 +27,8 @@ interface BeerCardProps {
   haze_level?: number | null;
   style: string | null;
   onPress: () => void;
-  onToggleFavorite?: (isFavorite: boolean) => void;
+  onToggleFavorite?: () => void;
+  isFavorite?: boolean;
 }
 
 const BeerCard: React.FC<BeerCardProps> = ({
@@ -38,21 +39,10 @@ const BeerCard: React.FC<BeerCardProps> = ({
   style,
   onPress,
   onToggleFavorite,
+  isFavorite = false,
 }) => {
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  const handleToggleFavorite = () => {
-    const newState = !isFavorite;
-    setIsFavorite(newState);
-    onToggleFavorite?.(newState);
-  };
-
   return (
-    <TouchableRipple
-      onPress={onPress}
-      rippleColor="rgba(0,0,0,0.08)"
-      className="mb-3 rounded-xl overflow-hidden"
-    >
+    <View className="mb-3 rounded-xl overflow-hidden">
       <Card
         mode="elevated"
         style={{
@@ -65,97 +55,95 @@ const BeerCard: React.FC<BeerCardProps> = ({
           shadowOpacity: 0.07,
         }}
       >
-        <View className="flex-row h-fit">
-          {/* Image */}
-          <View>
-            <Image
-              source={image}
-              style={{
-                width: Math.min(IMAGE_WIDTH, 150),
-                height: Math.min(IMAGE_HEIGHT, 225),
-                borderBottomLeftRadius: 12,
-                borderTopLeftRadius: 12,
-              }}
-              resizeMode="cover"
-            />
-          </View>
+        <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+          {/* Pressable area for card body (image + text) */}
+          <Pressable onPress={onPress} style={{ flex: 1, flexDirection: "row" }}>
+            {/* Image */}
+            <View>
+              <Image
+                source={image}
+                style={{
+                  width: Math.min(IMAGE_WIDTH, 150),
+                  height: Math.min(IMAGE_HEIGHT, 225),
+                  borderBottomLeftRadius: 12,
+                  borderTopLeftRadius: 12,
+                }}
+                resizeMode="cover"
+              />
+            </View>
 
-          {/* Text container */}
-          <View className="flex-1 mx-3 my-2">
-            {/* Title + Favorite button row */}
-            <View className="flex-row justify-between items-start">
+            {/* Text container */}
+            <View style={{ flex: 1, marginHorizontal: 12, marginVertical: 8 }}>
               <Text
                 numberOfLines={1}
                 style={{
                   fontSize: Math.min(13 * scale, 18),
                   fontFamily: FontFamilies.BODY,
                   color: BASE_COLORS.STONE950,
-                  marginRight: 10
-                }}
-              >{name}</Text>
-              <Pressable
-                onPress={handleToggleFavorite}
-                hitSlop={8}
-                accessibilityLabel={`favorite-${name}`}
-              >
-                {isFavorite ? (
-                  <Heart
-                    size={20}
-                    stroke={BASE_COLORS.ACCENT_PRIMARY}
-                    fill={BASE_COLORS.ACCENT_PRIMARY}
-                  />
-                ) : (
-                  <HeartPlus size={20} stroke={BASE_COLORS.STONE300} />
-                )}
-              </Pressable>
-            </View>
-
-            <View className="flex-row my-1 items-center">
-              <Star
-                color={BASE_COLORS.ACCENT_LIGHT}
-                fill={BASE_COLORS.ACCENT_LIGHT}
-                size={Math.min(15 * scale, 22)}
-                style={{
-                  marginRight: 5,
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: Math.min(12 * scale, 14),
-                  fontFamily: FontFamilies.BODY_LIGHT,
-                  color: BASE_COLORS.STONE500,
+                  marginRight: 10,
                 }}
               >
-                {rating.toFixed(2)}/5 rating ({reviews} reviews)
+                {name}
               </Text>
-            </View>
 
-            {(style ? style.split(",") : ["Unknown Style"]).map((label, index) => (
-            <View key={index}>
-              <Chip
-                key={index}
-                mode="flat"
-                compact
-                style={{
-                  backgroundColor: BASE_COLORS.STONE100,
-                  borderWidth: 0,
-                  marginRight: 8,
-                  marginTop: 8,
-                  alignSelf: "flex-start",
-                  justifyContent: "center",
-                }}
-                textStyle={{
-                  fontFamily: FontFamilies.BODY,
-                  fontSize: Math.min(10 * scale, 18),
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-              >{label.trim()}</Chip>
+              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+                <Star
+                  color={BASE_COLORS.ACCENT_LIGHT}
+                  fill={BASE_COLORS.ACCENT_LIGHT}
+                  size={Math.min(15 * scale, 22)}
+                  style={{ marginRight: 5 }}
+                />
+                <Text
+                  style={{
+                    fontSize: Math.min(12 * scale, 14),
+                    fontFamily: FontFamilies.BODY_LIGHT,
+                    color: BASE_COLORS.STONE500,
+                  }}
+                >
+                  {rating.toFixed(2)}/5 rating ({reviews} reviews)
+                </Text>
+              </View>
+
+              {(style ? style.split(",") : ["Unknown Style"]).map((label, index) => (
+                <View key={index}>
+                  <Chip
+                    key={index}
+                    mode="flat"
+                    compact
+                    style={{
+                      backgroundColor: BASE_COLORS.STONE100,
+                      borderWidth: 0,
+                      marginRight: 8,
+                      marginTop: 8,
+                      alignSelf: "flex-start",
+                      justifyContent: "center",
+                    }}
+                    textStyle={{
+                      fontFamily: FontFamilies.BODY,
+                      fontSize: Math.min(10 * scale, 18),
+                      color: BASE_COLORS.TEXT_DARK,
+                    }}
+                  >
+                    {label.trim()}
+                  </Chip>
+                </View>
+              ))}
             </View>
-            ))}
+          </Pressable>
+
+          {/* Favorite button area (separate Pressable so it gets touches) */}
+          <View style={{ padding: 8, justifyContent: "flex-start" }}>
+            <Pressable onPress={onToggleFavorite} hitSlop={8} accessibilityLabel={`favorite-${name}`}>
+              {isFavorite ? (
+                <Heart size={20} stroke={BASE_COLORS.ACCENT_PRIMARY} fill={BASE_COLORS.ACCENT_PRIMARY} />
+              ) : (
+                <HeartPlus size={20} stroke={BASE_COLORS.STONE300} />
+              )}
+            </Pressable>
           </View>
         </View>
       </Card>
-    </TouchableRipple>
+    </View>
   );
 };
 

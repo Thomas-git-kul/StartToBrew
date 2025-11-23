@@ -71,7 +71,8 @@ export default function Agenda() {
     const { data: brewsData, error: brewErr } = await supabase
       .from("brews")
       .select(`id_brew, name, start_date, recipe_slug`)
-      .eq("user_id", (await user).data.user?.id);
+      .eq("user_id", (await user).data.user?.id)
+      .in("status_id", [1, 2]); // Alleen actieve brews
 
     if (brewErr) {
       console.error(brewErr);

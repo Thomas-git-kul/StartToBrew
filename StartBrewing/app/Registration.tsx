@@ -1,18 +1,21 @@
 import { useState } from "react";
-import { View, Alert, ScrollView } from "react-native";
+import { View, Alert, ScrollView, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "react-native-paper";
+import { Button, ActivityIndicator } from "react-native-paper";
 import CheckBox from "expo-checkbox";
 import { router } from "expo-router";
 import { supabase } from "@/supabase";
 import { useFonts } from "@/hooks/use-fonts";
-
 import { ThemedText } from "@/components/themed-text";
 import TextInput from "@/components/textInput";
 import { BASE_COLORS } from "@/constants/Colors";
-
 import { FontFamilies } from "@/constants/Fonts";
 import Header from "@/components/header";
+import ErrorChip from "@/components/errorChip";
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BASE_SCREEN_WIDTH = 375; 
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 export default function Registration() {
   useFonts();
@@ -156,6 +159,24 @@ export default function Registration() {
     router.replace("/(tabs)/HomePage");
   }
 
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center"
+        style={{
+          backgroundColor: BASE_COLORS.LIGHT_BG
+        }}
+      >
+        <ActivityIndicator 
+            animating size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
+          <ThemedText type="defaultText" className="mt-3">
+            Loading account information...
+          </ThemedText>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView
       className="flex-1"
@@ -164,24 +185,23 @@ export default function Registration() {
       }}
     >
       <Header
-        title="No account yet?"
+        title="Sign Up to StartToBrew"
         iconName="ArrowRight"
         onIconPress={() => router.push("/Auth")}
         actionTestID="registration-button"
       />
       <ScrollView
         className="px-3"
-        contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
         <ThemedText type="subTitle">Full Name</ThemedText>
         <View className="flex-row gap-3 w-full">
-          <View style={{ width: "50%" }}>
+          <View style={{ width: "47%" }}>
             <View className="flex-1">
               <TextInput
                 value={firstname}
                 onChangeText={setFirstname}
-                label="Firstname"
+                placeholder="Firstname"
               />
             </View>
           </View>
@@ -189,54 +209,44 @@ export default function Registration() {
             <TextInput
               value={lastname}
               onChangeText={setLastname}
-              label="Lastname"
+              placeholder="Lastname"
             />
           </View>
         </View>
 
-        <ThemedText type="subTitle" className="mt-6">
-          Birth Date
-        </ThemedText>
+        <ThemedText type="subTitle" className="mt-2">Birth Date</ThemedText>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <TextInput value={day} onChangeText={setDay} label="DD" />
-            {day.length > 0 && (!/^([0-2][0-9]|3[01])$/.test(day)) && (
-              <ThemedText style={{ color: 'red', marginBottom: 8 }}>
-                Invalid day (01-31)
-              </ThemedText>
-            )}
+            <TextInput value={day} onChangeText={setDay} placeholder="DD" keyboardType="numeric"/>
           </View>
           <View style={{ width: "25%" }}>
-            <TextInput value={month} onChangeText={setMonth} label="MM" />
-            {month.length > 0 && (!/^(0[1-9]|1[0-2])$/.test(month)) && (
-              <ThemedText style={{ color: 'red', marginBottom: 8 }}>
-                Invalid month (01-12)
-              </ThemedText>
-            )}
+            <TextInput value={month} onChangeText={setMonth} placeholder="MM" keyboardType="numeric"/>
           </View>
           <View style={{ width: "50%" }}>
-            <TextInput value={year} onChangeText={setYear} label="YYYY" />
-            {year.length > 0 && (!/^\d{4}$/.test(year)) && (
-              <ThemedText style={{ color: 'red', marginBottom: 8 }}>
-                Invalid year (e.g. 1990)
-              </ThemedText>
-            )}
+            <TextInput value={year} onChangeText={setYear} placeholder="YYYY" keyboardType="numeric"/>
           </View>
         </View>
+        <View className="mb-3">
+          {day.length > 0 && (!/^([0-2][0-9]|3[01])$/.test(day)) && (
+            <ErrorChip text="Invalid day (01-31)"/>
+          )}
+          {month.length > 0 && (!/^(0[1-9]|1[0-2])$/.test(month)) && (
+            <ErrorChip text="Invalid month (01-12)"/>
+          )}
+          {year.length > 0 && (!/^\d{4}$/.test(year)) && (
+            <ErrorChip text="Invalid year (e.g. 1990)"/>
+          )}
+        </View>
 
-        <ThemedText type="subTitle" className="mt-6">
+        <ThemedText type="subTitle" className="mt-2">
           Contact information
         </ThemedText>
-        <TextInput value={email} onChangeText={text => { setEmail(text); setEmailInUseError(false); }} label="Email" />
+        <TextInput value={email} onChangeText={text => { setEmail(text); setEmailInUseError(false); }} placeholder="Email" keyboardType="email-address"/>
         {email.length > 0 && (!/^\S+@\S+\.\S+$/.test(email)) && (
-          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
-            Invalid email format
-          </ThemedText>
+          <ErrorChip text="Invalid email address"/>
         )}
         {emailInUseError && (
-          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
-            This email is already in use
-          </ThemedText>
+          <ErrorChip text="This email is already in use"/>
         )}
 
         <ThemedText type="subTitle" className="mt-6">
@@ -245,58 +255,54 @@ export default function Registration() {
         <TextInput
           value={username}
           onChangeText={text => { setUsername(text); setUsernameInUseError(false); }}
-          label="Username"
+          placeholder="Username"
         />
         {usernameInUseError && (
-          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
-            This username is already in use
-          </ThemedText>
+          <View className="mb-5">
+            <ErrorChip text="This username is already in use"/>
+          </View>
         )}
         <TextInput
           value={password}
           onChangeText={setPassword}
-          label="Password"
+          placeholder="Password"
           secureTextEntry
         />
-        {password.length > 0 && password.length < 6 && (
-          <ThemedText style={{ color: 'red', marginBottom: 4 }}>
-            Password must be at least 6 characters
-          </ThemedText>
-        )}
-        {password.length > 0 && !/[A-Z]/.test(password) && (
-          <ThemedText style={{ color: 'red', marginBottom: 4 }}>
-            Password must contain at least one uppercase letter
-          </ThemedText>
-        )}
-        {password.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
-          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
-            Password must contain at least one special character
-          </ThemedText>
+        {password.length > 0 && (password.length < 6 || !/[A-Z]/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) && (
+          <View className="mb-5">
+            {password.length < 6 && (
+              <ErrorChip text="Enter at least 6 characters" />
+            )}
+            {!/[A-Z]/.test(password) && (
+              <ErrorChip text="Enter at least 1 capital letter" />
+            )}
+            {!/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
+              <ErrorChip text="Enter at least 1 special character" />
+            )}
+          </View>
         )}
         <TextInput
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          label="Confirm Password"
+          placeholder="Confirm Password"
           secureTextEntry
         />
         {confirmPassword.length > 0 && password !== confirmPassword && (
-          <ThemedText style={{ color: 'red', marginBottom: 8 }}>
-            Passwords do not match
-          </ThemedText>
+          <View className="mb-5">
+            <ErrorChip text="Passwords don't match"/>
+          </View>
         )}
 
-        <View className="flex-row items-center my-4">
+        <View className="flex-row items-center mt-4 mb-10">
           <CheckBox
             value={agree}
             onValueChange={setAgree}
-            color={BASE_COLORS.TEXT_DARK}
-            style={{ marginRight: 8, height: 24, width: 24 }}
+            color={BASE_COLORS.ACCENT_PRIMARY}
+            style={{ marginLeft: 2, marginRight: 8, height: 24, width: 24 }}
           />
-          <ThemedText className="defaultText">
-            I agree to the terms and conditions
-          </ThemedText>
+          <ThemedText className="defaultText">I agree to the terms and conditions</ThemedText>
         </View>
-        <View style={{ alignItems: "center", marginBottom: 32 }}>
+        <View style={{ alignItems: "center", marginBottom: 25 }}>
           <Button
             mode="contained"
             onPress={signUpWithEmail}
@@ -326,18 +332,15 @@ export default function Registration() {
               backgroundColor:
                 agree && lastname.trim() && firstname.trim() && day.trim() && month.trim() && year.trim() && email.trim() && username.trim() && password.trim() && confirmPassword.trim()
                   ? BASE_COLORS.TEXT_DARK
-                  : BASE_COLORS.STONE200,
+                  : BASE_COLORS.STONE300,
               borderRadius: 20,
-              width: 220,
             }}
             labelStyle={{
-              fontSize: 14,
+              fontSize: Math.min(16 * scale, 24),
               fontFamily: FontFamilies.BODY,
               color: BASE_COLORS.WHITE,
             }}
-          >
-            {loading ? "Creating account..." : "Create account"}
-          </Button>
+          >{"Create account"}</Button>
         </View>
       </ScrollView>
     </SafeAreaView>

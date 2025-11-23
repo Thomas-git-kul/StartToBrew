@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, Pressable } from "react-native";
 import { Searchbar, ActivityIndicator } from "react-native-paper";
-import { Search, X } from "lucide-react-native";
-import BeerCard from "@/components/ui/RecipeCard";
+import { Search, X, Heart} from "lucide-react-native";
+import BeerCard from "../../components/ui/RecipeCard";
+import { useFavorites } from "@/context/FavoritesContext";
 import { BASE_COLORS } from "@/constants/Colors";
 import { useRouter } from "expo-router";
-import Header from "@/components/header";
+import Header from "../../components/header";
 import { useFonts } from "@/hooks/use-fonts";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "../../components/themed-text";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
 
@@ -20,8 +21,19 @@ interface Beer {
   description: string | null;
   style: string | null;
 }
+// Debug: log imported components to help tests identify undefined imports
+// (temporary; remove after debugging)
+// eslint-disable-next-line no-console
+console.log('DEBUG Imports:', {
+  HeaderExists: typeof Header !== 'undefined',
+  BeerCardExists: typeof BeerCard !== 'undefined',
+  SearchbarExists: typeof Searchbar !== 'undefined',
+  ThemedTextExists: typeof ThemedText !== 'undefined',
+});
 
+  // ...existing code...
 export default function Recipes() {
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   useFonts();
   const router = useRouter();
 
@@ -29,6 +41,7 @@ export default function Recipes() {
   const [recipes, setRecipes] = useState<Beer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { favoriteSlugs, toggleFavorite } = useFavorites();
 
   // helper to check whether an item matches the query
   const filterMatches = (item: Beer, q: string) => {
@@ -37,25 +50,22 @@ export default function Recipes() {
     return item.name.toLowerCase().includes(lower);
   };
 
-  const toggleFavorite = (slug: string) => {
-    // placeholder, hier kan later echte favorite-logica in
-    setRecipes((prev) =>
-      prev.map((beer) => (beer.recipe_slug === slug ? { ...beer } : beer))
-    );
-  };
+  // Use global toggleFavorite from FavoritesContext. We still keep a
+  // Removed auto-disable of favorites view; instead we show an
+  // informational message when there are no favorites.
 
   useEffect(() => {
-    const fetchRecipes = async () => {
+    const fetchAll = async () => {
       try {
         setLoading(true);
         setError(null);
+        // Note: user session and favorites are handled globally by FavoritesProvider
 
         const { data: recipesData, error: recipesError } = await supabase
           .from("recipes")
           .select(
             "recipe_slug, name, description, rating, haze_level, srm_target, style"
           );
-
         if (recipesError) throw recipesError;
 
         const slugs = (recipesData || []).map((r: any) => r.recipe_slug);
@@ -64,7 +74,6 @@ export default function Recipes() {
           .from("recipe_reviews")
           .select("recipe_slug, rating")
           .in("recipe_slug", slugs.length ? slugs : [""]);
-
         if (reviewsError) throw reviewsError;
 
         // aggregate
@@ -101,6 +110,8 @@ export default function Recipes() {
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
         setRecipes(shuffled);
+
+        // favorites are handled globally by FavoritesProvider
       } catch (e: any) {
         console.error("Error loading recipes", e);
         setError(
@@ -110,11 +121,13 @@ export default function Recipes() {
         setLoading(false);
       }
     };
-
-    fetchRecipes();
+    fetchAll();
   }, []);
 
-  const filteredRecipes = recipes.filter((b) => filterMatches(b, searchQuery));
+  let filteredRecipes = recipes.filter((b) => filterMatches(b, searchQuery));
+  if (showOnlyFavorites) {
+    filteredRecipes = filteredRecipes.filter((b) => favoriteSlugs.includes(b.recipe_slug));
+  }
 
   return (
     <View
@@ -146,6 +159,18 @@ export default function Recipes() {
         }}
       />
 
+      {/* Heart icon under searchbar: toggles showing only user's favorites */}
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 15 }}>
+        <Pressable onPress={() => setShowOnlyFavorites((prev) => !prev)} hitSlop={8} accessibilityLabel="toggle-favorites">
+          <Heart
+            size={28}
+            stroke={showOnlyFavorites ? BASE_COLORS.ACCENT_PRIMARY : BASE_COLORS.STONE300}
+            fill={showOnlyFavorites ? BASE_COLORS.ACCENT_PRIMARY : "transparent"}
+            style={{ marginLeft: 8 }}
+          />
+        </Pressable>
+      </View>
+
       {loading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator 
@@ -165,6 +190,12 @@ export default function Recipes() {
             {error}
           </ThemedText>
         </View>
+      ) : showOnlyFavorites && favoriteSlugs.length === 0 ? (
+        <View className="flex-1 items-center justify-center px-6">
+          <ThemedText type="defaultText" className="text-center">
+            You don&apos;t have any favorites at the moment.
+          </ThemedText>
+        </View>
       ) : (
         <ScrollView>
           <View>
@@ -172,15 +203,26 @@ export default function Recipes() {
               <BeerCard
                 key={beer.recipe_slug}
                 {...beer}
+                isFavorite={favoriteSlugs.includes(beer.recipe_slug)}
+                onToggleFavorite={() => toggleFavorite(beer.recipe_slug)}
                 onPress={() =>
                   router.push({
                     pathname: "/SpecificRecipe",
-                    params: { recipe_slug: beer.recipe_slug },
+                    params: {
+                      recipe_slug: beer.recipe_slug,
+                      isFavorite: favoriteSlugs.includes(beer.recipe_slug) ? "true" : "false",
+                    },
                   })
                 }
-                onToggleFavorite={() => toggleFavorite(beer.recipe_slug)}
               />
             ))}
+            {showOnlyFavorites && filteredRecipes.length === 0 && favoriteSlugs.length > 0 && (
+              <View className="items-center mt-6 px-6">
+                <ThemedText type="defaultText" className="text-center">
+                  No favorites match your search.
+                </ThemedText>
+              </View>
+            )}
           </View>
         </ScrollView>
       )}

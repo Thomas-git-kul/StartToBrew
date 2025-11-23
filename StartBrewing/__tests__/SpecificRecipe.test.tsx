@@ -204,6 +204,10 @@ jest.mock("@/supabase", () => ({
         data: { user: { id: "user-1" } },
         error: null,
       }),
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: null },
+        error: null,
+      }),
     },
 
     from: jest.fn((table) => {
@@ -305,6 +309,14 @@ jest.mock("@/supabase", () => ({
       return { data: [], error: null };
     }),
   },
+}));
+
+// FavoritesContext mock (component uses useFavorites)
+jest.mock("@/context/FavoritesContext", () => ({
+  useFavorites: () => ({
+    favoriteSlugs: [],
+    toggleFavorite: jest.fn(),
+  }),
 }));
 
 
