@@ -62,6 +62,7 @@ export default function SpecificRecipe() {
 
   const [reviewVisible, setReviewVisible] = useState(false);
   const [rating, setRating] = useState(0);
+  const [kitsVisible, setKitsVisible] = useState(false);
 
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
   const [reviewCount, setReviewCount] = useState<number>(0);
@@ -346,6 +347,7 @@ export default function SpecificRecipe() {
         ...row.starter_kit
       }));
       setKits(kits);
+      // console.log("Starterkits response:", kits)
 
     } catch (e: any) {
       console.error("Error fetching kits:", e.message);
@@ -558,7 +560,7 @@ export default function SpecificRecipe() {
             )}
           </View>
 
-          {/* Starterkit */}
+          {/* Starterkit 
           <View className="mt-2 mb-4">
             <ThemedText type="title" className="">Get your StarterKit now!</ThemedText>
             <ScrollView
@@ -581,6 +583,7 @@ export default function SpecificRecipe() {
               )}
             </ScrollView>
           </View>
+          */}
         </ScrollView>
       )}
 
@@ -590,16 +593,13 @@ export default function SpecificRecipe() {
           visible={reviewVisible}
           onDismiss={() => setReviewVisible(false)}
           contentContainerStyle={{
-            backgroundColor: BASE_COLORS.WHITE,
+            backgroundColor: BASE_COLORS.LIGHT_BG,
             padding: 20,
             borderRadius: 12,
             marginHorizontal: 30,
           }}
         >
-          <ThemedText type="title" className="text-center mb-4">
-            Rate this recipe
-          </ThemedText>
-
+          <ThemedText type="title" className="text-center mb-4">Rate this recipe</ThemedText>
           <View className="flex-row justify-center gap-3">
             {[1, 2, 3, 4, 5].map((value) => (
               <TouchableOpacity
@@ -624,6 +624,93 @@ export default function SpecificRecipe() {
         </Modal>
       </Portal>
 
+      {/* Modal for Starterkits */}
+      <Portal>
+        <Modal
+          visible={kitsVisible}
+          onDismiss={() => setKitsVisible(false)}
+          contentContainerStyle={{
+            backgroundColor: BASE_COLORS.LIGHT_BG,
+            padding: 20,
+            borderRadius: 12,
+            marginHorizontal: 12,
+            maxHeight: "85%",
+          }}
+        >
+          <ThemedText type="title" className="text-center mb-4">Get your StarterKit now!</ThemedText>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: 55,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+              }}
+            >
+              {kits.length === 0 ? (
+                <ThemedText type="defaultText">
+                  No starter kits available for this recipe.
+                </ThemedText>
+              ) : (
+                kits.map((kit) => (
+                  <View
+                    key={kit.id}
+                    style={{
+                      width: "49%",
+                    }}
+                  >
+                    <StoreCard
+                      image={require("@/assets/images/starterkit2.png")}
+                      title={`${kit.name} • ${kit.size_liters}L`}
+                      price={`€${kit.price.toFixed(2)}`}
+                      onPress={() => {
+                        setKitsVisible(false);
+                        router.push(({ 
+                          pathname: "/StoreItem", 
+                          params: { id: kit.id, categoryNumber: 4 } } as any))
+                      }}
+                    />
+                  </View>
+                ))
+              )}
+            </View>
+          </ScrollView>
+          <View
+            style={{
+              position: "absolute",
+              bottom: 15,
+              left: 0,
+              right: 0,
+              alignItems: "center",
+            }}
+          >
+            <FAB
+              mode="flat"
+              label="Ready to Start"
+              color={BASE_COLORS.WHITE}
+              onPress={brewRecipe}
+              style={{
+                backgroundColor: BASE_COLORS.TEXT_DARK,
+                borderRadius: 30,
+              }}
+              theme={{
+                fonts: {
+                  labelLarge: {
+                    fontSize: Math.min(16 * scale, 24),
+                    fontFamily: FontFamilies.BODY,
+                  },
+                },
+              }}
+            />
+          </View>
+        </Modal>
+      </Portal>
+
       <View
         style={{
           position: "absolute",
@@ -633,24 +720,27 @@ export default function SpecificRecipe() {
           alignItems: "center",
         }}
       >
-        <FAB
-          mode="flat"
-          label="Start Brewing"
-          color={BASE_COLORS.WHITE}
-          onPress={brewRecipe}
-          style={{
-            backgroundColor: BASE_COLORS.TEXT_DARK,
-            borderRadius: 30,
-          }}
-          theme={{
-            fonts: {
-              labelLarge: {
-                fontSize: Math.min(16 * scale, 24),
-                fontFamily: FontFamilies.BODY,
+        {!kitsVisible && (
+          <FAB
+            mode="flat"
+            label="Start Brewing"
+            color={BASE_COLORS.WHITE}
+            onPress={() => setKitsVisible(true)}
+            /*onPress={brewRecipe}*/
+            style={{
+              backgroundColor: BASE_COLORS.TEXT_DARK,
+              borderRadius: 30,
+            }}
+            theme={{
+              fonts: {
+                labelLarge: {
+                  fontSize: Math.min(16 * scale, 24),
+                  fontFamily: FontFamilies.BODY,
+                },
               },
-            },
-          }}
-        />
+            }}
+          />
+        )}
       </View>
     </SafeAreaView>
   );

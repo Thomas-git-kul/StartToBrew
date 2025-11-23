@@ -218,18 +218,25 @@ export default function StorePage() {
             backgroundColor: BASE_COLORS.WHITE,
             borderColor: BASE_COLORS.STONE300,
             borderWidth: 1,
-            marginBottom: 10,
+            marginBottom: 16,
           }}
         />
-        <View className="mt-1 mx-1 flex-row flex-wrap justify-between">
+        <View className="flex-row flex-wrap justify-between">
           {items.filter(filterMatches).map((item, index) => (
-            <StoreCard
+            <View
               key={index}
-              {...item}
-              onPress={() => router.push(({ 
-                pathname: "/StoreItem", 
-                params: { id: item.id, categoryNumber: item.categoryId } } as any))}
-            />
+              style={{
+                width: "48%",
+              }}
+            >
+              <StoreCard
+                key={index}
+                {...item}
+                onPress={() => router.push(({ 
+                  pathname: "/StoreItem", 
+                  params: { id: item.id, categoryNumber: item.categoryId } } as any))}
+              />
+            </View>
           ))}
         </View>
       </ScrollView>
