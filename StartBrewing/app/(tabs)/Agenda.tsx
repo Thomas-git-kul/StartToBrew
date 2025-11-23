@@ -1,21 +1,28 @@
 import { useCallback, useState, useEffect } from "react";
-import { View, ScrollView, Dimensions } from "react-native";
+import { View, ScrollView, Dimensions, Text } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "@/hooks/use-fonts";
 import { Calendar } from "react-native-calendars";
-import { List } from "react-native-paper";
+import { Card, Chip, Button, ActivityIndicator } from "react-native-paper";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { ThemedText } from "@/components/themed-text";
-import { ChevronDown, ChevronUp, ArrowBigRight } from "lucide-react-native";
+import { Clock, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { supabase } from "@/supabase";
 
 const BASE_SCREEN_WIDTH = 375;
 const scale = Dimensions.get("window").width / BASE_SCREEN_WIDTH;
 const isJest = typeof jest !== "undefined";
+
+function formatDuration(minutes: number) {
+  if (minutes >= 10080) return `${Math.floor(minutes / 10080)} week(s)`;
+  if (minutes >= 1440) return `${Math.floor(minutes / 1440)} day(s)`;
+  if (minutes >= 60) return `${Math.floor(minutes / 60)} h`;
+  return `${minutes} min`;
+}
 
 interface Brew {
   id_brew: number;
@@ -49,6 +56,7 @@ interface PhaseEntry {
 
 interface BrewEntry {
   beer: string;
+  id_brew: number,
   phases: PhaseEntry[];
 }
 
@@ -62,9 +70,6 @@ export default function Agenda() {
   );
   const [calendarVisible, setCalendarVisible] = useState(true);
 
-  // -----------------------------------------------------
-  // 🔥 1. Supabase data ophalen
-  // -----------------------------------------------------
   async function fetchAgendaData() {
     const user = supabase.auth.getUser();
 
@@ -72,13 +77,15 @@ export default function Agenda() {
       .from("brews")
       .select(`id_brew, name, start_date, recipe_slug`)
       .eq("user_id", (await user).data.user?.id)
-      .in("status_id", [1, 2]); // Alleen actieve brews
+      .in("status_id", [1, 2]);
 
     if (brewErr) {
       console.error(brewErr);
       return;
     }
     const brews: Brew[] = brewsData as Brew[];
+
+    // console.log("brews fetched: ", brews)
 
     const { data: phasesData, error: phaseErr } = await supabase
       .from("phases")
@@ -96,10 +103,6 @@ export default function Agenda() {
       return;
     }
     const steps: Step[] = stepsData as Step[];
-
-    // -----------------------------------------------------
-    // 🔥 2. Bouw een volledige agenda structuur op datum
-    // -----------------------------------------------------
     const agenda: Record<string, any[]> = {};
 
     brews.forEach((brew) => {
@@ -136,7 +139,7 @@ export default function Agenda() {
           // Vind of er al een entry voor deze brew bestaat op deze dag
           let brewEntry = agenda[dayStr].find((b) => b.beer === brew.name);
           if (!brewEntry) {
-            brewEntry = { beer: brew.name, phases: [] };
+            brewEntry = { beer: brew.name, id_brew: brew.id_brew, phases: [] };
             agenda[dayStr].push(brewEntry);
           }
 
@@ -181,9 +184,6 @@ export default function Agenda() {
 
   const phasesForSelectedDate = phasesByDate[currentDate] || [];
 
-  // -----------------------------------------------------
-  // 🔥 Kalender markeringen
-  // -----------------------------------------------------
   const markedDates: any = {};
 
   Object.keys(phasesByDate).forEach((date) => {
@@ -210,23 +210,6 @@ export default function Agenda() {
     },
   };
 
-  const [expandedStates, setExpandedStates] = useState<boolean[]>([]);
-
-  useEffect(() => {
-    setExpandedStates(phasesForSelectedDate.map(() => false));
-  }, [phasesForSelectedDate]);
-
-  const toggleAccordion = (index: number) => {
-    setExpandedStates((prev) => {
-      const copy = [...prev];
-      copy[index] = !copy[index];
-      return copy;
-    });
-  };
-
-  // -----------------------------------------------------
-  // 🔥 UI
-  // -----------------------------------------------------
   return (
     <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
@@ -240,10 +223,14 @@ export default function Agenda() {
 
       {calendarVisible && (
         <View
-          className="mx-1 my-1 rounded-2xl overflow-hidden shadow"
           style={{
             backgroundColor: BASE_COLORS.LIGHT_BG,
             borderRadius: 20,
+            overflow: "hidden",
+            shadowColor: BASE_COLORS.STONE700,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            marginBottom: 20
           }}
         >
           <Calendar
@@ -252,56 +239,99 @@ export default function Agenda() {
             markedDates={markedDates}
             markingType="custom"
             onDayPress={(day) => setCurrentDate(day.dateString)}
+            theme={{
+              todayTextColor: BASE_COLORS.ACCENT_PRIMARY,
+              textMonthFontFamily: FontFamilies.BODY,
+              textDayHeaderFontFamily: FontFamilies.BODY,
+            }}
+            renderArrow={(direction) => {
+              if (direction === "left") {
+                return <ChevronLeft color={BASE_COLORS.ACCENT_PRIMARY} size={24} />;
+              } else {
+                return <ChevronRight color={BASE_COLORS.ACCENT_PRIMARY} size={24} />;
+              }
+            }}
           />
         </View>
       )}
-
-      <ScrollView className="px-1 mt-3" showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false}>
         {phasesForSelectedDate.length === 0 ? (
           <ThemedText>No tasks for this day.</ThemedText>
         ) : (
           phasesForSelectedDate.map((brew: BrewEntry, brewIndex: number) => (
-            <View
+            <Card
               key={brewIndex}
-              className="p-1 mb-1"
               style={{
+                marginBottom: 5,
                 backgroundColor: BASE_COLORS.WHITE,
                 borderRadius: 15,
-                elevation: 3,
+                padding: 10,
+                outlineColor: BASE_COLORS.STONE500,
+                outlineWidth: 1,
+                shadowColor: BASE_COLORS.STONE700,
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.07,
               }}
             >
-              <List.Accordion
-                title={brew.beer}
-                expanded={expandedStates[brewIndex]}
-                onPress={() => toggleAccordion(brewIndex)}
-                titleStyle={{
-                  fontFamily: FontFamilies.BODY_BOLD,
-                  fontSize: Math.min(18 * scale, 22),
-                  color: BASE_COLORS.ACCENT_PRIMARY,
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 8,
                 }}
-                right={(props) =>
-                  expandedStates[brewIndex] ? (
-                    <ChevronUp color={BASE_COLORS.ACCENT_PRIMARY} />
-                  ) : (
-                    <ChevronDown color={BASE_COLORS.ACCENT_PRIMARY} />
-                  )
-                }
               >
-                {brew.phases.map((phase: PhaseEntry, phaseIndex: number) => (
-                  <View key={phaseIndex} className="ml-4 mb-1">
-                    <ThemedText type="subTitle">{phase.title}</ThemedText>
-                    {phase.steps.map((step, stepIndex) => (
-                      <View key={stepIndex} className="flex-row items-center ml-6">
-                        <ThemedText>
-                          • {step.text}
-                          {step.time ? ` (${step.time} min)` : ""}
-                        </ThemedText>
-                      </View>
-                    ))}
-                  </View>
-                ))}
-              </List.Accordion>
-            </View>
+                <Text style={{
+                  fontSize: Math.min(18 * scale, 22),
+                  fontFamily: FontFamilies.BODY_BOLD,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+                >{brew.beer}</Text>
+                <Button onPress={() => {
+                  router.push({ pathname: "/progress", params: { id: brew.id_brew } });
+                  // console.log(`Brew ID: ${brew.id_brew}`);
+                }}>
+                  <Text 
+                    style={{ 
+                      fontSize: Math.min(16 * scale, 22),
+                      fontFamily: FontFamilies.BODY,
+                      color: BASE_COLORS.TEXT_DARK,
+                    }}
+                  >Progress</Text>
+                </Button>
+              </View>
+
+              {brew.phases.map((phase: PhaseEntry, phaseIndex: number) => (
+                <View key={phaseIndex} className="mb-4">
+                  <ThemedText type="subTitle">{phase.title}</ThemedText>
+                  {phase.steps.map((step, stepIndex) => (
+                    <View key={stepIndex} className="flex-row items-center ml-4 mt-1">
+                      <ThemedText>
+                        • {step.text}
+                      </ThemedText>
+                      {step.time != null && (
+                        <Chip
+                          style={{
+                            marginLeft: 10,
+                            height: Math.min( 21 * scale, 40),
+                            alignItems: "center",
+                            backgroundColor: BASE_COLORS.STONE100,
+                          }}
+                          textStyle={{
+                            fontSize: Math.min( 12 * scale, 20),
+                            color: BASE_COLORS.TEXT_DARK,
+                            fontFamily: FontFamilies.BODY,
+                          }}
+                          icon={() => <Clock size={Math.min( 12 * scale, 20)} color={BASE_COLORS.TEXT_DARK} />}
+                        >
+                          {formatDuration(step.time)}
+                        </Chip>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </Card>
           ))
         )}
       </ScrollView>
