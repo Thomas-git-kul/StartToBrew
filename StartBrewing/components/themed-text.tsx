@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   titleBlack: {
     fontSize: Math.min(22 * scale, 30),
     fontFamily: FontFamilies.BODY_BOLD,
-    color: BASE_COLORS.STONE600
+    color: BASE_COLORS.STONE700
   },
   subTitle: {
     fontSize: Math.min(14 * scale, 20), 
@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
   },
   accentDark: {
     fontSize: Math.min(17 * scale, 22),
-    fontFamily: FontFamilies.BODY_BLACK,
-    color: BASE_COLORS.TEXT_DARK,
+    fontFamily: FontFamilies.BODY,
+    color: BASE_COLORS.STONE700,
   },
   numbers: {
     fontSize: Math.min(22 * scale, 30),

@@ -8,6 +8,12 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 // Mock expo-router
 // --------------------------
 const pushMock = jest.fn();
+jest.mock("expo-router", () => ({ useRouter: jest.fn() }));
+
+jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
+jest.mock("@/hooks/beer-image", () => ({
+  getBeerImageSource: () => ({ uri: "test-beer-image" }),
+}));
 
 /* ------------------------------
    MOCK DATA (recipes + ingredients)
@@ -165,8 +171,7 @@ jest.mock("react-native-paper", () => {
       </TouchableOpacity>
     ),
     Portal: ({ children }: any) => <>{children}</>,
-    Modal: ({ visible, children }: any) =>
-      visible ? <View>{children}</View> : null,
+    Modal: ({ visible, children }: any) => (visible ? <View>{children}</View> : null),
     Chip: ({ children }: any) => (
       <View>
         <Text>{children}</Text>
@@ -176,6 +181,11 @@ jest.mock("react-native-paper", () => {
       const { View } = require("react-native");
       return <View />;
     },
+    Button: ({ onPress, children }: any) => (
+      <TouchableOpacity onPress={onPress}>
+        <Text>{children}</Text>
+      </TouchableOpacity>
+    ),
   };
 });
 
@@ -336,30 +346,33 @@ describe("<SpecificRecipe />", () => {
     mockPush.mockClear();
   });
 
-  it("rendered titel van het recept", async () => {
+  it("renders the title of the recipe", async () => {
     const { findByText } = renderWithNavigation(<SpecificRecipe />);
     expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
   });
 
-  it("toont Start Brewing knop", async () => {
+  it("show startbrewing button", async () => {
     const { findByText } = renderWithNavigation(<SpecificRecipe />);
     expect(await findByText("Start Brewing")).toBeTruthy();
   });
 
-  it("navigates naar /progress bij Start Brewing", async () => {
-    const { getByText } = renderWithNavigation(<SpecificRecipe />);
-    await waitFor(() => getByText("Start Brewing"));
+  it("it opens the kits modal window when startbrewing is pressed and it routes to progress", async () => {
+    const { findByText, queryByText, getByTestId } = renderWithNavigation(<SpecificRecipe />);
+    expect(queryByText("Get your StarterKit now!")).toBeNull();
 
-    await act(async () => {
-      fireEvent.press(getByText("Start Brewing"));
-      // wacht even voor de async Supabase calls
-      await new Promise((res) => setTimeout(res, 10));
+    const startBtn = await findByText("Start Brewing");
+    fireEvent.press(startBtn);
+
+    const modalTitle = await findByText("Get your StarterKit now!");
+    expect(modalTitle).toBeTruthy();
+
+    await waitFor(() => {
+      fireEvent.press(getByTestId("startFAB"));
+      expect(mockPush).toHaveBeenCalledWith("../progress");
     });
-
-    expect(mockPush).toHaveBeenCalledWith("../progress");
   });
 
-  it("opent review modal en laat sterren klikken", async () => {
+  it("opens review modal and allows to click the stars", async () => {
     const { findByText, findAllByTestId, queryByText } = renderWithNavigation(
       <SpecificRecipe />
     );
