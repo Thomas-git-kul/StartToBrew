@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { View, ScrollView, Dimensions, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { Searchbar, ActivityIndicator, Chip, Button, Modal, Portal } from "react-native-paper";
 import { Search, X, Check} from "lucide-react-native";
@@ -250,220 +250,94 @@ export default function Recipes() {
     { id: "rating", name: "Rating" },
   ];
 
-  /* Small inline "menu" components rendered below chips for simplicity */
-  const MenuPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    return <View style={styles.menuPanel}>{children}</View>;
+  const handleApply = () => setOpenMenu(null);
+
+  const handleClear = () => {
+    switch (openMenu) {
+      case "style":
+        setSelectedStyles([]);
+        setOpenMenu(null);
+        break;
+      case "abv":
+        setAbvMin(""); setAbvMax("");
+        setOpenMenu(null);
+        break;
+      case "ibu":
+        setIbuMin(""); setIbuMax("");
+        setOpenMenu(null);
+        break;
+      case "srm":
+        setSrmMin(""); setSrmMax("");
+        setOpenMenu(null);
+        break;
+      case "rating":
+        setRatingMin(""); setRatingMax("");
+        setOpenMenu(null);
+        break;
+      case "difficulty":
+        setSelectedDifficulties([]);
+        setOpenMenu(null);
+        break;
+      case "haze":
+        setSelectedHazeLevels([]);
+        setOpenMenu(null);
+        break;
+    }
   };
 
   /* Render the open menu below the chips so it won't be clipped */
-  const renderOpenMenu = () => {
-    if (!openMenu) return null;
-
-    if (openMenu === "style") {
-      return (
-        <MenuPanel>
-          <Text style={styles.menuTitle}>Select style(s)</Text>
-          <ScrollView style={{ maxHeight: 180 }}>
+  const renderMenuContent = () => {
+    switch (openMenu) {
+      case "style":
+        return (
+          <ScrollView style={{ maxHeight: 250 }}>
+            <Text style={styles.menuTitle}>Select style(s)</Text>
             <View style={styles.optionsRow}>
-              {availableStyles.length === 0 ? (
-                <Text>No styles available</Text>
-              ) : (
-                availableStyles.map((s) => {
-                  const selected = selectedStyles.includes(s);
-                  return (
-                    <TouchableOpacity
-                      key={s}
-                      onPress={() => toggleArrayValue(selectedStyles, s, setSelectedStyles)}
-                      style={[styles.optionChip, selected && styles.optionChipSelected]}
-                    >
-                      <Text style={[styles.optionChipText, selected && styles.optionChipTextSelected]}>
-                        {s}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })
-              )}
+              {availableStyles.map((s) => (
+                <TouchableOpacity
+                  key={s}
+                  onPress={() => toggleArrayValue(selectedStyles, s, setSelectedStyles)}
+                  style={[styles.optionChip, selectedStyles.includes(s) && styles.optionChipSelected]}
+                >
+                  <Text style={[styles.optionChipText, selectedStyles.includes(s) && styles.optionChipTextSelected]}>{s}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.menuActions}>
             </View>
           </ScrollView>
-          <View style={styles.menuActions}>
-            <Button mode="text" onPress={() => setSelectedStyles([])}>Clear</Button>
-            <Button mode="contained" onPress={() => setOpenMenu(null)}>Apply</Button>
-          </View>
-        </MenuPanel>
-      );
-    }
+        );
+      case "abv":
+        const abvValues = recipes
+          .map((r) => r.abv_target)
+          .filter((v): v is number => typeof v === "number");
 
-    if (openMenu === "abv") {
-      return (
-        <MenuPanel>
-          <Text style={styles.menuTitle}>ABV range (min - max)</Text>
-          <View style={styles.rowInputs}>
-            <TextInput
-              placeholder="min"
-              value={abvMin}
-              keyboardType="numeric"
-              onChangeText={setAbvMin}
-              style={styles.numericInput}
-            />
-            <TextInput
-              placeholder="max"
-              value={abvMax}
-              keyboardType="numeric"
-              onChangeText={setAbvMax}
-              style={styles.numericInput}
-            />
-          </View>
-          <View style={styles.menuActions}>
-            <Button mode="text" onPress={() => { setAbvMin(""); setAbvMax(""); }}>Clear</Button>
-            <Button mode="contained" onPress={() => setOpenMenu(null)}>Apply</Button>
-          </View>
-        </MenuPanel>
-      );
-    }
+        const abvDatabaseMin = abvValues.length ? Math.min(...abvValues) : 0;
+        const abvDatabaseMax = abvValues.length ? Math.max(...abvValues) : 0;
 
-    if (openMenu === "ibu") {
-      return (
-        <MenuPanel>
-          <Text style={styles.menuTitle}>IBU range (min - max)</Text>
-          <View style={styles.rowInputs}>
-            <TextInput
-              placeholder="min"
-              value={ibuMin}
-              keyboardType="numeric"
-              onChangeText={setIbuMin}
-              style={styles.numericInput}
-            />
-            <TextInput
-              placeholder="max"
-              value={ibuMax}
-              keyboardType="numeric"
-              onChangeText={setIbuMax}
-              style={styles.numericInput}
-            />
+        return (
+          <View>
+            <ThemedText type="subTitle">ABV range</ThemedText>
+            <View style={[styles.rowInputs, { flexShrink: 1 }]}>
+              <TextInput
+                placeholder={abvDatabaseMin.toString()}
+                value={abvMin}
+                keyboardType="numeric"
+                onChangeText={setAbvMin}
+                style={[styles.numericInput, { flex: 1 }]}
+              />
+              <TextInput
+                placeholder={abvDatabaseMax.toString()}
+                value={abvMax}
+                keyboardType="numeric"
+                onChangeText={setAbvMax}
+                style={[styles.numericInput, { flex: 1 }]}
+              />
+            </View>
           </View>
-          <View style={styles.menuActions}>
-            <Button mode="text" onPress={() => { setIbuMin(""); setIbuMax(""); }}>Clear</Button>
-            <Button mode="contained" onPress={() => setOpenMenu(null)}>Apply</Button>
-          </View>
-        </MenuPanel>
-      );
+        );
+      default: return null;
     }
-
-    if (openMenu === "srm") {
-      return (
-        <MenuPanel>
-          <Text style={styles.menuTitle}>SRM range (min - max)</Text>
-          <View style={styles.rowInputs}>
-            <TextInput
-              placeholder="min"
-              value={srmMin}
-              keyboardType="numeric"
-              onChangeText={setSrmMin}
-              style={styles.numericInput}
-            />
-            <TextInput
-              placeholder="max"
-              value={srmMax}
-              keyboardType="numeric"
-              onChangeText={setSrmMax}
-              style={styles.numericInput}
-            />
-          </View>
-          <View style={styles.menuActions}>
-            <Button mode="text" onPress={() => { setSrmMin(""); setSrmMax(""); }}>Clear</Button>
-            <Button mode="contained" onPress={() => setOpenMenu(null)}>Apply</Button>
-          </View>
-        </MenuPanel>
-      );
-    }
-
-    if (openMenu === "rating") {
-      return (
-        <MenuPanel>
-          <Text style={styles.menuTitle}>Rating range (min - max)</Text>
-          <View style={styles.rowInputs}>
-            <TextInput
-              placeholder="min"
-              value={ratingMin}
-              keyboardType="numeric"
-              onChangeText={setRatingMin}
-              style={styles.numericInput}
-            />
-            <TextInput
-              placeholder="max"
-              value={ratingMax}
-              keyboardType="numeric"
-              onChangeText={setRatingMax}
-              style={styles.numericInput}
-            />
-          </View>
-          <View style={styles.menuActions}>
-            <Button mode="text" onPress={() => { setRatingMin(""); setRatingMax(""); }}>Clear</Button>
-            <Button mode="contained" onPress={() => setOpenMenu(null)}>Apply</Button>
-          </View>
-        </MenuPanel>
-      );
-    }
-
-    if (openMenu === "difficulty") {
-      return (
-        <MenuPanel>
-          <Text style={styles.menuTitle}>Difficulty</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {["beginner", "intermediate", "master"].map((d) => {
-              const sel = selectedDifficulties.includes(d);
-              return (
-                <TouchableOpacity
-                  key={d}
-                  onPress={() => toggleArrayValue(selectedDifficulties, d, setSelectedDifficulties)}
-                  style={[styles.optionChip, sel && styles.optionChipSelected]}
-                >
-                  <Text style={[styles.optionChipText, sel && styles.optionChipTextSelected]}>{d}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          <View style={styles.menuActions}>
-            <Button mode="text" onPress={() => setSelectedDifficulties([])}>Clear</Button>
-            <Button mode="contained" onPress={() => setOpenMenu(null)}>Apply</Button>
-          </View>
-        </MenuPanel>
-      );
-    }
-
-    if (openMenu === "haze") {
-      return (
-        <MenuPanel>
-          <Text style={styles.menuTitle}>Haze level(s)</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {availableHazeLevels.length === 0 ? (
-              <Text>No haze options</Text>
-            ) : (
-              availableHazeLevels.map((h) => {
-                const sel = selectedHazeLevels.includes(h);
-                return (
-                  <TouchableOpacity
-                    key={String(h)}
-                    onPress={() => toggleArrayValue(selectedHazeLevels, h, setSelectedHazeLevels)}
-                    style={[styles.optionChip, sel && styles.optionChipSelected]}
-                  >
-                    <Text style={[styles.optionChipText, sel && styles.optionChipTextSelected]}>
-                      {String(h)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </View>
-          <View style={styles.menuActions}>
-            <Button mode="text" onPress={() => setSelectedHazeLevels([])}>Clear</Button>
-            <Button mode="contained" onPress={() => setOpenMenu(null)}>Apply</Button>
-          </View>
-        </MenuPanel>
-      );
-    }
-
-    return null;
   };
 
   return (
@@ -478,37 +352,46 @@ export default function Recipes() {
       {/* Horizontal scrollable category chips */}
       <View style={{ paddingVertical: 8 }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {filterCategories.map((cat) => {
-            const isActive =
-              (cat.id === "favorites" && showOnlyFavorites) || openMenu === cat.id;
+          {filterCategories.map((cat) => {  
+            const isActive = (() => {
+              switch (cat.id) {
+                case "favorites":
+                  return showOnlyFavorites;
+                case "style":
+                  return openMenu === "style" || selectedStyles.length > 0;
+                case "abv":
+                  return openMenu === "abv" || abvMin !== "" || abvMax !== "";
+                case "ibu":
+                  return openMenu === "ibu" || ibuMin !== "" || ibuMax !== "";
+                case "srm":
+                  return openMenu === "srm" || srmMin !== "" || srmMax !== "";
+                case "rating":
+                  return openMenu === "rating" || ratingMin !== "" || ratingMax !== "";
+                case "difficulty":
+                  return openMenu === "difficulty" || selectedDifficulties.length > 0;
+                case "haze":
+                  return openMenu === "haze" || selectedHazeLevels.length > 0;
+                default:
+                  return false;
+              }
+            })();
+
             return (
               <View key={cat.id} style={{ marginRight: 8 }}>
                 <Chip
                   mode="flat"
                   selected={isActive}
                   onPress={() => {
-                    if (cat.id === "favorites") {
-                      setShowOnlyFavorites((prev) => !prev);
-                      setOpenMenu(null);
-                      return;
-                    }
-                    setOpenMenu((prev) => (prev === cat.id ? null : (cat.id as any)));
+                    if (cat.id === "favorites") { setShowOnlyFavorites((prev) => !prev); setOpenMenu(null); return; }
+                    setOpenMenu(prev => prev === cat.id ? null : cat.id as any);
                   }}
-                  icon={
-                    isActive
-                      ? () => (
-                          <View style={{ flexDirection: "row", alignItems: "center" }}>
-                            <Check size={Math.min(14 * scale, 20)} color={BASE_COLORS.WHITE} />
-                          </View>
-                        )
-                      : undefined
-                  }
-                  textStyle={{
-                    color: isActive ? BASE_COLORS.WHITE : BASE_COLORS.STONE500,
+                  icon={isActive ? () => <Check size={Math.min(14 * scale, 20)} color={BASE_COLORS.WHITE} /> : undefined}
+                  textStyle={{ 
+                    color: isActive ? BASE_COLORS.WHITE : BASE_COLORS.STONE500, 
                     fontFamily: FontFamilies.BODY,
                     fontSize: Math.min(14 * scale, 16),
                   }}
-                  style={{
+                  style={{ 
                     backgroundColor: isActive ? BASE_COLORS.ACCENT_PRIMARY : BASE_COLORS.WHITE,
                     borderColor: isActive ? BASE_COLORS.WHITE : BASE_COLORS.STONE300,
                     borderWidth: 1,
@@ -520,14 +403,52 @@ export default function Recipes() {
                 >{cat.name}</Chip>
               </View>
             );
-          })}
+            })}
         </ScrollView>
-
-        {/* Render whichever menu is open below the chips (so it won't be clipped) */}
-        <View style={{ paddingHorizontal: 12, marginTop: 6 }}>
-          {renderOpenMenu()}
-        </View>
       </View>
+
+      <Portal>
+          <Modal 
+            dismissable={false}
+            visible={!!openMenu} 
+            onDismiss={() => setOpenMenu(null)} 
+            contentContainerStyle={{
+              position: "absolute",
+              top: 100,
+              backgroundColor: 'white',
+              margin: 20,
+              padding: 16,
+              borderRadius: 12,
+              maxHeight: 400,
+            }}
+          >
+            {renderMenuContent()}
+            <View style={styles.menuActions}>
+              <Button 
+                mode="text"
+                onPress={handleClear}
+                labelStyle={{
+                  fontSize: Math.min(14 * scale, 20), 
+                  fontFamily: FontFamilies.BODY_LIGHT,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >Clear</Button>
+              <Button 
+                mode="contained" 
+                onPress={handleApply}
+                labelStyle={{ 
+                  fontSize: Math.min(14 * scale, 24),
+                  color: BASE_COLORS.WHITE,
+                  fontFamily: FontFamilies.BODY,            
+                }}
+                style={{
+                  borderRadius: 20,
+                  backgroundColor: BASE_COLORS.TEXT_DARK,
+                }}
+              >Apply</Button>
+            </View>
+          </Modal>
+        </Portal>
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
