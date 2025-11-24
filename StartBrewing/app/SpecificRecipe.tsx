@@ -1,17 +1,22 @@
 import { useState, useEffect } from "react";
-import { View, Image, ScrollView, TouchableOpacity, Alert } from "react-native";
-import {FAB, Modal, Portal, Chip, ActivityIndicator,} from "react-native-paper";
+import { View, Image, ScrollView, TouchableOpacity, Alert, Dimensions } from "react-native";
+import {FAB, Modal, Portal, Chip, ActivityIndicator, Button } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
-import { Star, Heart, HeartPlus } from "lucide-react-native";
+import { Star, Wheat, Hop, } from "lucide-react-native";
 import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getBeerImageSource } from "@/hooks/beer-image";
+import StoreCard from "@/components/ui/StoreCard";
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BASE_SCREEN_WIDTH = 375; 
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 type Recipe = {
   recipe_slug: string;
@@ -57,6 +62,7 @@ export default function SpecificRecipe() {
 
   const [reviewVisible, setReviewVisible] = useState(false);
   const [rating, setRating] = useState(0);
+  const [kitsVisible, setKitsVisible] = useState(false);
 
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
   const [reviewCount, setReviewCount] = useState<number>(0);
@@ -64,11 +70,14 @@ export default function SpecificRecipe() {
   const [hasUserReviewed, setHasUserReviewed] = useState(false);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
   const isFavorite = recipe_slug ? (favoriteSlugs || []).includes(String(recipe_slug)) : false;
+  const [isFavoriteIconFilled, setIsFavoriteIconFilled] = useState(isFavorite);
+  const [kits, setKits] = useState<any[]>([]);
 
   const handleToggleFavorite = async () => {
     if (!recipe_slug) return;
     try {
       await toggleFavorite(String(recipe_slug));
+      setIsFavoriteIconFilled((prev) => !prev);
     } catch (e: any) {
       Alert.alert("Favorite failed", e?.message ?? "Could not toggle favorite");
     }
@@ -108,6 +117,8 @@ export default function SpecificRecipe() {
         )
         .eq("recipe_slug", slug)
         .single();
+
+      console.log("recipe data", recipeData)
 
       if (recipeError) throw recipeError;
 
@@ -312,11 +323,52 @@ export default function SpecificRecipe() {
     }
   };
 
+  const fetchStarterKits = async (slug: string) => {
+    try {
+      const { data, error } = await supabase
+      .from("recipe_kits")
+      .select(`
+        id_starter_kit,
+        starter_kit:starter_kits (
+          name,
+          description,
+          size_liters,
+          price,
+          is_active
+        )
+      `)
+      .eq("recipe_slug", slug);
+
+      // console.log("Starterkits response:", data, "error:", error);
+
+      if (error) throw error;
+
+      // flatten
+      const kits = data?.map((row: any) => ({
+        id: row.id_starter_kit,
+        ...row.starter_kit
+      }));
+      setKits(kits);
+      // console.log("Starterkits response:", kits)
+
+    } catch (e: any) {
+      console.error("Error fetching kits:", e.message);
+      return [];
+    }
+  };
+
   useEffect(() => {
     if (!recipe_slug) return;
     fetchRecipeBundle(recipe_slug);
     checkUserReviewed(recipe_slug);
+    fetchStarterKits(recipe_slug);
   }, [recipe_slug]);
+
+  const hazeLevels: Record<number, String> = {
+    1: "clear",
+    2: "light haze",
+    3: "hazy",
+  }
 
   const chips: { key: string; label: string }[] = [];
   if (recipe?.style) chips.push({ key: "style", label: recipe.style });
@@ -336,7 +388,10 @@ export default function SpecificRecipe() {
       "★".repeat(recipe.difficulty) + "☆".repeat(3 - recipe.difficulty);
     chips.push({ key: "difficulty", label: `Difficulty ${stars}` });
   }
-
+  if (recipe?.haze_level != null) {
+    const haze = hazeLevels[recipe.haze_level] || "clear";
+    chips.push({ key: "haze", label: haze as string });
+  }
   
   const displayedRating =
     recipe?.rating != null && !Number.isNaN(recipe.rating)
@@ -355,42 +410,47 @@ export default function SpecificRecipe() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
       <Header
-        title={recipe?.name ?? (loading ? "Loading…" : "Recipe")}
-        iconName="ArrowRight"
-        onIconPress={() => router.push("/Recipes" as any)}
-        actionTestID="cart-button"
+        title="Recipe"
+        iconName={isFavoriteIconFilled ? "Heart" : "HeartPlus"}
+        filled={isFavoriteIconFilled}
+        onIconPress={handleToggleFavorite}
+        actionTestID="heart-button"
       />
-
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator animating size="large" />
+          <ActivityIndicator 
+            animating size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY} 
+          />
           <ThemedText type="defaultText" className="mt-3">
             Loading recipe...
           </ThemedText>
         </View>
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
-          <ThemedText type="title" className="mb-2 text-center">
-            Oops
-          </ThemedText>
-          <ThemedText type="defaultText" className="text-center">
-            {error}
-          </ThemedText>
+          <ThemedText type="title" className="mb-2 text-center">Oops</ThemedText>
+          <ThemedText type="defaultText" className="text-center">{error}</ThemedText>
         </View>
       ) : (
         <ScrollView
           className="flex-1 mx-3"
-          contentContainerStyle={{ paddingBottom: 80 }}
+          contentContainerStyle={{ paddingBottom: 70 }}
           showsVerticalScrollIndicator={false}
         >
+          
+          {/* Title */}
+          <View>
+            <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
+          </View>
+
           {/* Image */}
           <View className="items-center mb-5">
             <View
               style={{
                 width: "100%",
-                aspectRatio: 3 / 4, // bredere dan hoog; pas aan naar smaak
+                aspectRatio: 3 / 4, 
                 borderRadius: 16,
-                overflow: "hidden", // alles buiten de hoekjes afknippen
+                overflow: "hidden",
               }}
             >
               <Image
@@ -399,15 +459,15 @@ export default function SpecificRecipe() {
                   width: "100%",
                   height: "100%",
                 }}
-                resizeMode="cover" // vult box en cropt waar nodig
+                resizeMode="cover"
               />
             </View>
           </View>
 
           {/* Rating */}
-          <View className="flex-row items-center justify-center mb-3 gap-2">
+          <View className="flex-row mb-5 gap-2 items-center">
             <Star
-              size={22}
+              size={Math.min(22 * scale, 35)}
               color={BASE_COLORS.ACCENT_LIGHT}
               fill={BASE_COLORS.ACCENT_LIGHT}
             />
@@ -417,65 +477,63 @@ export default function SpecificRecipe() {
               <ThemedText
                 type="subTitle"
                 testID="already-reviewed-label"
-                style={{ marginLeft: 8 }}
-              >
-                You reviewed ✓
-              </ThemedText>
+                style={{ 
+                  position: "absolute",
+                  right: 0, 
+                }}
+              >You reviewed ✓</ThemedText>
             ) : (
-              <TouchableOpacity
+              <Button
+                testID="review-button"
                 onPress={() => setReviewVisible(true)}
                 style={{
-                  marginLeft: 8,
-                  paddingVertical: 4,
-                  paddingHorizontal: 10,
+                  position: "absolute",
+                  right: 0,
                 }}
               >
-                <ThemedText type="subTitle">Add Review</ThemedText>
-              </TouchableOpacity>
+                <ThemedText type="subTitle" style={{ color: BASE_COLORS.TEXT_DARK }}>Add Review</ThemedText>
+              </Button>
+              /*
+             <Button
+                onPress={() => setReviewVisible(true)}
+                labelStyle={{ 
+                  fontSize: Math.min(12 * scale, 24),
+                  color: BASE_COLORS.STONE700,
+                  fontFamily: FontFamilies.BODY_LIGHT,            
+                }}
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  borderRadius: 20,
+                  backgroundColor: BASE_COLORS.AMBER200,
+                }}
+              >Add Review</Button>
+              */
             )}
-            <View style={{ flex: 1 }} />
-            <TouchableOpacity
-              onPress={handleToggleFavorite}
-              accessibilityLabel={`favorite-${recipe?.name ?? "recipe"}`}
-              hitSlop={8}
-              style={{ marginLeft: 12 }}
-            >
-              {isFavorite ? (
-                <Heart
-                  size={24}
-                  stroke={BASE_COLORS.ACCENT_PRIMARY}
-                  fill={BASE_COLORS.ACCENT_PRIMARY}
-                />
-              ) : (
-                <HeartPlus size={24} stroke={BASE_COLORS.STONE300} />
-              )}
-            </TouchableOpacity>
           </View>
 
           {/* Specs chips */}
           {chips.length > 0 && (
-            <View className="flex-row flex-wrap gap-2 mb-4">
+            <View className="flex-row flex-wrap gap-x-2 gap-y-2 mb-5">
               {chips.map((chip) => (
                 <Chip
                   key={chip.key}
                   mode="flat"
+                  compact
                   style={{
-                    backgroundColor: BASE_COLORS.STONE300,
-                    borderRadius: 999,
+                    backgroundColor: BASE_COLORS.STONE200,
                     borderWidth: 0,
                   }}
                   textStyle={{
                     fontFamily: FontFamilies.BODY,
-                    fontSize: 13,
+                    fontSize: Math.min(12 * scale, 18),
                     color: BASE_COLORS.TEXT_DARK,
                   }}
-                >
-                  {chip.label}
-                </Chip>
+                >{chip.label}</Chip>
               ))}
             </View>
           )}
-
+                
           {/* Description */}
           {recipe?.description && (
             <ThemedText type="defaultText" className="mb-3">
@@ -485,14 +543,9 @@ export default function SpecificRecipe() {
 
           {/* Ingredients */}
           <View className="mt-2 mb-4">
-            <ThemedText type="title" className="mb-2">
-              Ingredients
-            </ThemedText>
-
+            <ThemedText type="defaultText" className="">Ingredients:</ThemedText>
             {ingredients.length === 0 ? (
-              <ThemedText type="defaultText">
-                No ingredients found for this recipe.
-              </ThemedText>
+              <ThemedText type="defaultText">No ingredients found for this recipe.</ThemedText>
             ) : (
               ingredients.map((item) => (
                 <View
@@ -508,6 +561,31 @@ export default function SpecificRecipe() {
               ))
             )}
           </View>
+
+          {/* Starterkit 
+          <View className="mt-2 mb-4">
+            <ThemedText type="title" className="">Get your StarterKit now!</ThemedText>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="mt-3"
+            >
+              {kits.length === 0 ? (
+                <ThemedText type="defaultText" className="ml-1">No starter kits available for this recipe.</ThemedText>
+              ) : (
+                kits.map((kit) => (
+                  <StoreCard
+                    key={kit.id_starter_kit}
+                    image={require("@/assets/images/starterkit2.png")}
+                    title={`${kit.name} • ${kit.size_liters}L`}
+                    price={`$${kit.price.toFixed(2)}`}
+                    onPress={() => router.push(`/store/starter-kit/${kit.id_starter_kit}`)}
+                  />
+                ))
+              )}
+            </ScrollView>
+          </View>
+          */}
         </ScrollView>
       )}
 
@@ -517,16 +595,13 @@ export default function SpecificRecipe() {
           visible={reviewVisible}
           onDismiss={() => setReviewVisible(false)}
           contentContainerStyle={{
-            backgroundColor: BASE_COLORS.WHITE,
+            backgroundColor: BASE_COLORS.LIGHT_BG,
             padding: 20,
             borderRadius: 12,
             marginHorizontal: 30,
           }}
         >
-          <ThemedText type="title" className="text-center mb-4">
-            Rate this recipe
-          </ThemedText>
-
+          <ThemedText type="title" className="text-center mb-4">Rate this recipe</ThemedText>
           <View className="flex-row justify-center gap-3">
             {[1, 2, 3, 4, 5].map((value) => (
               <TouchableOpacity
@@ -551,6 +626,94 @@ export default function SpecificRecipe() {
         </Modal>
       </Portal>
 
+      {/* Modal for Starterkits */}
+      <Portal>
+        <Modal
+          visible={kitsVisible}
+          onDismiss={() => setKitsVisible(false)}
+          contentContainerStyle={{
+            backgroundColor: BASE_COLORS.LIGHT_BG,
+            padding: 20,
+            borderRadius: 12,
+            marginHorizontal: 12,
+            maxHeight: "85%",
+          }}
+        >
+          <ThemedText type="title" className="text-center mb-4">Get your StarterKit now!</ThemedText>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: 55,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+              }}
+            >
+              {kits.length === 0 ? (
+                <ThemedText type="defaultText">
+                  No starter kits available for this recipe.
+                </ThemedText>
+              ) : (
+                kits.map((kit) => (
+                  <View
+                    key={kit.id}
+                    style={{
+                      width: "49%",
+                    }}
+                  >
+                    <StoreCard
+                      image={require("@/assets/images/starterkit2.png")}
+                      title={`${kit.name} • ${kit.size_liters}L`}
+                      price={`€${kit.price.toFixed(2)}`}
+                      onPress={() => {
+                        setKitsVisible(false);
+                        router.push(({ 
+                          pathname: "/StoreItem", 
+                          params: { id: kit.id, categoryNumber: 4 } } as any))
+                      }}
+                    />
+                  </View>
+                ))
+              )}
+            </View>
+          </ScrollView>
+          <View
+            style={{
+              position: "absolute",
+              bottom: 15,
+              left: 0,
+              right: 0,
+              alignItems: "center",
+            }}
+          >
+            <FAB
+              testID="startFAB"
+              mode="flat"
+              label="Ready to Start"
+              color={BASE_COLORS.WHITE}
+              onPress={brewRecipe}
+              style={{
+                backgroundColor: BASE_COLORS.TEXT_DARK,
+                borderRadius: 30,
+              }}
+              theme={{
+                fonts: {
+                  labelLarge: {
+                    fontSize: Math.min(16 * scale, 24),
+                    fontFamily: FontFamilies.BODY,
+                  },
+                },
+              }}
+            />
+          </View>
+        </Modal>
+      </Portal>
+
       <View
         style={{
           position: "absolute",
@@ -560,24 +723,27 @@ export default function SpecificRecipe() {
           alignItems: "center",
         }}
       >
-        <FAB
-          mode="elevated"
-          label="Start Brewing"
-          color={BASE_COLORS.WHITE}
-          onPress={brewRecipe}
-          style={{
-            backgroundColor: BASE_COLORS.TEXT_DARK,
-            borderRadius: 20,
-          }}
-          theme={{
-            fonts: {
-              labelLarge: {
-                fontSize: 16,
-                fontFamily: FontFamilies.BODY,
+        {!kitsVisible && (
+          <FAB
+            mode="flat"
+            label="Start Brewing"
+            color={BASE_COLORS.WHITE}
+            onPress={() => setKitsVisible(true)}
+            /*onPress={brewRecipe}*/
+            style={{
+              backgroundColor: BASE_COLORS.TEXT_DARK,
+              borderRadius: 30,
+            }}
+            theme={{
+              fonts: {
+                labelLarge: {
+                  fontSize: Math.min(16 * scale, 24),
+                  fontFamily: FontFamilies.BODY,
+                },
               },
-            },
-          }}
-        />
+            }}
+          />
+        )}
       </View>
     </SafeAreaView>
   );
