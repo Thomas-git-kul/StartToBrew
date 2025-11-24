@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, ScrollView, Dimensions, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { View, ScrollView, Dimensions, StyleSheet, Text, FlatList } from "react-native";
 import { Searchbar, ActivityIndicator, Chip, Button, Modal, Portal } from "react-native-paper";
 import { Search, X, Check} from "lucide-react-native";
 import BeerCard from "../../components/ui/RecipeCard";
@@ -285,60 +285,165 @@ export default function Recipes() {
     }
   };
 
-  /* Render the open menu below the chips so it won't be clipped */
+  const getFilterTitle = () => {
+    switch (openMenu) {
+      case "style":
+        return "Select style(s)";
+      case "abv":
+        return "ABV range";
+      case "ibu":
+        return "IBU range";
+      case "srm":
+        return "SRM range";
+      case "rating":
+        return "Rating range";
+      case "difficulty":
+        return "Select difficulty";
+      case "haze":
+        return "Select haze(s)";
+      default:
+        return "";
+    }
+  };
+
   const renderMenuContent = () => {
     switch (openMenu) {
       case "style":
         return (
-          <ScrollView style={{ maxHeight: 250 }}>
-            <Text style={styles.menuTitle}>Select style(s)</Text>
-            <View style={styles.optionsRow}>
-              {availableStyles.map((s) => (
-                <TouchableOpacity
-                  key={s}
-                  onPress={() => toggleArrayValue(selectedStyles, s, setSelectedStyles)}
-                  style={[styles.optionChip, selectedStyles.includes(s) && styles.optionChipSelected]}
-                >
-                  <Text style={[styles.optionChipText, selectedStyles.includes(s) && styles.optionChipTextSelected]}>{s}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={styles.menuActions}>
-            </View>
-          </ScrollView>
+          <View className="flex-row flex-wrap gap-x-2 gap-y-2 mb-4">
+            {availableStyles.map((s) => (
+              <Button
+                key={s}
+                onPress={() => toggleArrayValue(selectedStyles, s, setSelectedStyles)}
+                style={[styles.optionButton, selectedStyles.includes(s) && styles.optionButtonSelected]}
+              >
+                <Text style={[styles.optionButtonText, selectedStyles.includes(s) && styles.optionButtonTextSelected]}>
+                  {s}
+                </Text>
+              </Button>
+            ))}
+          </View>
         );
+
       case "abv":
-        const abvValues = recipes
-          .map((r) => r.abv_target)
+      case "ibu":
+      case "srm":
+      case "rating": {
+        const values = recipes
+          .map((r) => {
+            switch (openMenu) {
+              case "abv": return r.abv_target;
+              case "ibu": return r.ibu_target;
+              case "srm": return r.srm_target;
+              case "rating": return r.rating;
+            }
+          })
           .filter((v): v is number => typeof v === "number");
 
-        const abvDatabaseMin = abvValues.length ? Math.min(...abvValues) : 0;
-        const abvDatabaseMax = abvValues.length ? Math.max(...abvValues) : 0;
+        const dbMin = values.length ? Math.min(...values) : 0;
+        const dbMax = values.length ? Math.max(...values) : 0;
+
+        const [min, setMin] = (() => {
+          switch (openMenu) {
+            case "abv": return [abvMin, setAbvMin];
+            case "ibu": return [ibuMin, setIbuMin];
+            case "srm": return [srmMin, setSrmMin];
+            case "rating": return [ratingMin, setRatingMin];
+          }
+        })();
+
+        const [max, setMax] = (() => {
+          switch (openMenu) {
+            case "abv": return [abvMax, setAbvMax];
+            case "ibu": return [ibuMax, setIbuMax];
+            case "srm": return [srmMax, setSrmMax];
+            case "rating": return [ratingMax, setRatingMax];
+          }
+        })();
+
+        const unit = openMenu === "abv" ? "%" : "";
 
         return (
           <View>
-            <ThemedText type="subTitle">ABV range</ThemedText>
-            <View style={[styles.rowInputs, { flexShrink: 1 }]}>
-              <TextInput
-                placeholder={abvDatabaseMin.toString()}
-                value={abvMin}
-                keyboardType="numeric"
-                onChangeText={setAbvMin}
-                style={[styles.numericInput, { flex: 1 }]}
-              />
-              <TextInput
-                placeholder={abvDatabaseMax.toString()}
-                value={abvMax}
-                keyboardType="numeric"
-                onChangeText={setAbvMax}
-                style={[styles.numericInput, { flex: 1 }]}
-              />
+            <View className="flex-row items-center gap-2">
+              <ThemedText type="inputSug" className="mb-3">min</ThemedText>
+              <View style={{ width: "20%" }}>
+                <TextInput
+                  placeholder={dbMin.toString()}
+                  value={min}
+                  keyboardType="numeric"
+                  onChangeText={setMin}
+                />
+              </View>
+              <ThemedText type="inputSug" className="mb-1">{unit}</ThemedText>
+            </View>
+            <View className="flex-row items-center gap-2">
+              <ThemedText type="inputSug" className="mb-3">max</ThemedText>
+              <View style={{ width: "20%" }}>
+                <TextInput
+                  placeholder={dbMax.toString()}
+                  value={max}
+                  keyboardType="numeric"
+                  onChangeText={setMax}
+                />
+              </View>
+              <ThemedText type="inputSug" className="mb-1">{unit}</ThemedText>
             </View>
           </View>
         );
-      default: return null;
+      }
+
+      case "difficulty": {
+        const difficultyMap: Record<number, string> = {
+          1: "beginner",
+          2: "intermediate",
+          3: "master",
+        };
+        return (
+          <View className="flex-row flex-wrap gap-x-2 gap-y-2 mb-4">
+            {Object.values(difficultyMap).map((level) => (
+              <Button
+                key={level}
+                onPress={() => toggleArrayValue(selectedDifficulties, level, setSelectedDifficulties)}
+                style={[styles.optionButton, selectedDifficulties.includes(level) && styles.optionButtonSelected]}
+              >
+                <Text style={[styles.optionButtonText, selectedDifficulties.includes(level) && styles.optionButtonTextSelected]}>
+                  {level}
+                </Text>
+              </Button>
+            ))}
+          </View>
+        );
+      }
+
+      case "haze": {
+        const hazeMap: Record<number, string> = {
+          1: "clear",
+          2: "light haze",
+          3: "hazy",
+        };
+        return (
+          <View className="flex-row flex-wrap gap-x-2 gap-y-2 mb-4">
+            {availableHazeLevels.map((level) => (
+              <Button
+                key={level}
+                onPress={() => toggleArrayValue(selectedHazeLevels, level, setSelectedHazeLevels)}
+                style={[styles.optionButton, selectedHazeLevels.includes(level) && styles.optionButtonSelected]}
+              >
+                <Text style={[styles.optionButtonText, selectedHazeLevels.includes(level) && styles.optionButtonTextSelected]}>
+                  {hazeMap[level] ?? level}
+                </Text>
+              </Button>
+            ))}
+          </View>
+        );
+      }
+
+      default:
+        return null;
     }
   };
+
 
   return (
     <SafeAreaView
@@ -352,7 +457,23 @@ export default function Recipes() {
       {/* Horizontal scrollable category chips */}
       <View style={{ paddingVertical: 8 }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {filterCategories.map((cat) => {  
+          {([...filterCategories].sort((a, b) => {
+            const isSelected = (cat: typeof filterCategories[0]) => {
+              switch (cat.id) {
+                case "favorites": return showOnlyFavorites;
+                case "style": return selectedStyles.length > 0;
+                case "abv": return abvMin !== "" || abvMax !== "";
+                case "ibu": return ibuMin !== "" || ibuMax !== "";
+                case "srm": return srmMin !== "" || srmMax !== "";
+                case "rating": return ratingMin !== "" || ratingMax !== "";
+                case "difficulty": return selectedDifficulties.length > 0;
+                case "haze": return selectedHazeLevels.length > 0;
+                default: return false;
+              }
+            };
+
+            return isSelected(b) && !isSelected(a) ? 1 : isSelected(a) && !isSelected(b) ? -1 : 0;
+          })).map((cat) => {  
             const isActive = (() => {
               switch (cat.id) {
                 case "favorites":
@@ -382,7 +503,7 @@ export default function Recipes() {
                   mode="flat"
                   selected={isActive}
                   onPress={() => {
-                    if (cat.id === "favorites") { setShowOnlyFavorites((prev) => !prev); setOpenMenu(null); return; }
+                    if (cat.id === "favorites") { setShowOnlyFavorites(prev => !prev); setOpenMenu(null); return; }
                     setOpenMenu(prev => prev === cat.id ? null : cat.id as any);
                   }}
                   icon={isActive ? () => <Check size={Math.min(14 * scale, 20)} color={BASE_COLORS.WHITE} /> : undefined}
@@ -403,7 +524,7 @@ export default function Recipes() {
                 >{cat.name}</Chip>
               </View>
             );
-            })}
+          })}
         </ScrollView>
       </View>
 
@@ -413,17 +534,20 @@ export default function Recipes() {
             visible={!!openMenu} 
             onDismiss={() => setOpenMenu(null)} 
             contentContainerStyle={{
+              backgroundColor: BASE_COLORS.LIGHT_BG,
               position: "absolute",
-              top: 100,
-              backgroundColor: 'white',
-              margin: 20,
+              top: 125,
+              left: 20,
+              right: 20,
               padding: 16,
               borderRadius: 12,
               maxHeight: 400,
+
             }}
           >
+            <ThemedText type="subTitle" className="mb-2">{getFilterTitle()}</ThemedText>
             {renderMenuContent()}
-            <View style={styles.menuActions}>
+            <View className="flex-row justify-between">
               <Button 
                 mode="text"
                 onPress={handleClear}
@@ -469,125 +593,105 @@ export default function Recipes() {
             {error}
           </ThemedText>
         </View>
-      ) : showOnlyFavorites && favoriteSlugs.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <ThemedText type="defaultText" className="text-center">
-            You don&apos;t have any favorites at the moment.
-          </ThemedText>
-        </View>
       ) : (
-        <ScrollView>
-          {/* Searchbar */}
-          <Searchbar
-            placeholder="Search"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            inputStyle={{ color: BASE_COLORS.STONE700 }}
-            icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
-            clearIcon={
-              searchQuery
-                ? () => <X size={18} color={BASE_COLORS.STONE500} />
-                : undefined
-            }
-            onClearIconPress={() => setSearchQuery("")}
-            style={{
-              backgroundColor: BASE_COLORS.WHITE,
-              borderColor: BASE_COLORS.STONE300,
-              borderWidth: 1,
-              marginBottom: 15,
-            }}
-          />
-          <View>
-            {filteredRecipes.map((beer) => (
-              <BeerCard
-                key={beer.recipe_slug}
-                {...beer}
-                isFavorite={favoriteSlugs.includes(beer.recipe_slug)}
-                onToggleFavorite={() => toggleFavorite(beer.recipe_slug)}
-                onPress={() =>
-                  router.push({
-                    pathname: "/SpecificRecipe",
-                    params: {
-                      recipe_slug: beer.recipe_slug,
-                      isFavorite: favoriteSlugs.includes(beer.recipe_slug) ? "true" : "false",
-                    },
-                  })
-                }
-              />
-            ))}
-            {showOnlyFavorites && filteredRecipes.length === 0 && favoriteSlugs.length > 0 && (
-              <View className="items-center mt-6 px-6">
-                <ThemedText type="defaultText" className="text-center">
-                  No favorites match your search.
-                </ThemedText>
-              </View>
-            )}
-          </View>
-        </ScrollView>
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          data={filteredRecipes}
+          keyExtractor={(item) => item.recipe_slug}
+          renderItem={({ item }) => (
+            <BeerCard
+              {...item}
+              isFavorite={favoriteSlugs.includes(item.recipe_slug)}
+              onToggleFavorite={() => toggleFavorite(item.recipe_slug)}
+              onPress={() =>
+                router.push({
+                  pathname: "/SpecificRecipe",
+                  params: {
+                    recipe_slug: item.recipe_slug,
+                    isFavorite: favoriteSlugs.includes(item.recipe_slug) ? "true" : "false",
+                  },
+                })
+              }
+            />
+          )}
+          ListHeaderComponent={
+            <Searchbar
+              placeholder="Search"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              inputStyle={{ color: BASE_COLORS.STONE700 }}
+              icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+              clearIcon={searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined}
+              onClearIconPress={() => setSearchQuery("")}
+              style={{
+                backgroundColor: BASE_COLORS.WHITE,
+                borderColor: BASE_COLORS.STONE300,
+                borderWidth: 1,
+                marginBottom: 15,
+              }}
+            />
+          }
+          ListEmptyComponent={
+            <View className="items-center mt-6 px-6">
+              <ThemedText type="defaultText" className="text-center mb-2">
+                No recipes match this filter.
+              </ThemedText>
+              <Button
+                mode="contained"
+                onPress={() => {
+                  // Clear all filters
+                  setSelectedStyles([]);
+                  setAbvMin("");
+                  setAbvMax("");
+                  setIbuMin("");
+                  setIbuMax("");
+                  setSrmMin("");
+                  setSrmMax("");
+                  setRatingMin("");
+                  setRatingMax("");
+                  setSelectedDifficulties([]);
+                  setSelectedHazeLevels([]);
+                  setShowOnlyFavorites(false);
+                  setSearchQuery("");
+                }}
+                labelStyle={{ 
+                  fontSize: Math.min(14 * scale, 24),
+                  color: BASE_COLORS.WHITE,
+                  fontFamily: FontFamilies.BODY,            
+                }}
+                style={{
+                  borderRadius: 20,
+                  backgroundColor: BASE_COLORS.TEXT_DARK,
+                }}
+              >Clear Filters</Button>
+            </View>
+          }
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
       )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  menuPanel: {
-    marginTop: 8,
-    marginBottom: 6,
-    marginRight: 8,
-    padding: 10,
-    width: 300,
-    backgroundColor: "white",
-    borderRadius: 8,
-    borderColor: "#e6e6e6",
+  optionButton: {
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 3,
+    borderColor: BASE_COLORS.STONE200,
+    borderRadius: 30,
+    backgroundColor: BASE_COLORS.WHITE,
   },
-  menuTitle: {
-    fontSize: 14,
-    marginBottom: 8,
-    color: "#333",
-    fontWeight: "600",
-  },
-  optionsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  optionChip: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 20,
-    marginRight: 8,
-    marginBottom: 8,
-    backgroundColor: "white",
-  },
-  optionChipSelected: {
+  optionButtonSelected: {
     backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
     borderColor: BASE_COLORS.ACCENT_PRIMARY,
   },
-  optionChipText: {
-    fontSize: 13,
-    color: "#333",
+  optionButtonText: {
+    color: BASE_COLORS.STONE600,
+    fontSize: Math.min(12 * scale, 18), 
+    fontFamily: FontFamilies.BODY,
   },
-  optionChipTextSelected: {
-    color: "white",
-    fontWeight: "600",
-  },
-  menuActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-  },
-  rowInputs: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  numericInput: {
-    flex: 1,
-    marginRight: 8,
+  optionButtonTextSelected: {
+    color: BASE_COLORS.WHITE,
+    fontSize: Math.min(12 * scale, 18), 
+    fontFamily: FontFamilies.BODY,
   },
 });
