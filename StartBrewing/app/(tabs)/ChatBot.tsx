@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, TextInput, Button, ScrollView, Text, ActivityIndicator, StyleSheet, Image, Platform } from 'react-native';
 import Gemini from 'gemini-ai';  // let op welke SDK je gebruikt
 import Markdown from 'react-native-markdown-display';
@@ -22,6 +22,12 @@ export default function HomeScreen() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+
+  const scrollViewRef = useRef<ScrollView>(null);
+  
+  useEffect(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [messages]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -118,7 +124,7 @@ export default function HomeScreen() {
 
   return (
       <View style={styles.container}>
-        <ScrollView style={styles.chat} contentContainerStyle={{ paddingBottom: 10 }}>
+        <ScrollView ref={scrollViewRef} style={styles.chat} contentContainerStyle={{ paddingBottom: 10 }}>
           {messages.map((msg, i) => (
             <View key={i} style={msg.from === 'user' ? styles.userMsg : styles.botMsg}>
               {/* Foto tonen als die er is */}
