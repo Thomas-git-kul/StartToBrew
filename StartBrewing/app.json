@@ -56,8 +56,13 @@
         }
       ],
       "expo-secure-store",
-      "expo-sqlite"
-    ],
+      "expo-sqlite",
+      "expo-image-picker",
+      {
+      "photosPermission": "De app heeft toegang tot je foto's nodig om afbeeldingen te kunnen uploaden.",
+      "cameraPermission": "De app heeft toegang tot de camera nodig om een foto te maken."
+    }
+  ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
