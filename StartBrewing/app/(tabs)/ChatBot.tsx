@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, TextInput, Button, ScrollView, Text, ActivityIndicator, StyleSheet, Image, Platform } from 'react-native';
-import Gemini from 'gemini-ai';  // let op welke SDK je gebruikt
+import { View, TextInput, ScrollView, Text, ActivityIndicator, StyleSheet, Image, Platform, TouchableOpacity, Alert, KeyboardAvoidingView } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import * as ImagePicker from 'expo-image-picker';
-import { TouchableOpacity, Alert } from 'react-native';
+import { BASE_COLORS } from '@/constants/Colors';
+import { FontFamilies } from '@/constants/Fonts';
+import { useFonts } from 'expo-font';
+import { useRouter } from 'expo-router';
+import Header from '@/components/header';
 
 const ipadress = 'http://192.168.1.36:3001/api/chat';
 const localhost = 'http://localhost:3001/api/chat';
@@ -17,13 +20,14 @@ type ChatMessage = {
 
 export default function HomeScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { from: 'bot', text: 'Hey! Where can I help you with?' },
+    { from: 'bot', text: 'Hey! How can I  help you today?' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const router = useRouter();
   
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -67,7 +71,7 @@ export default function HomeScreen() {
         body.image = image.base64;
       }
 
-      const res = await fetch(ipadress, {
+      const res = await fetch(localhost, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -123,60 +127,91 @@ export default function HomeScreen() {
   };
 
   return (
-      <View style={styles.container}>
-        <ScrollView ref={scrollViewRef} style={styles.chat} contentContainerStyle={{ paddingBottom: 10 }}>
+  <View 
+    className="flex-1"
+    style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+  >
+    <Header
+      title="ChatBot"
+      iconName="ArrowRight"
+      onIconPress={() => router.push("/progress" as any)}
+    />
+
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
+      <View style={{ flex: 1 }}>
+        
+        <ScrollView 
+          ref={scrollViewRef} 
+          style={styles.chat} 
+          contentContainerStyle={{ paddingBottom: 120 }} // extra ruimte voor input
+        >
           {messages.map((msg, i) => (
             <View key={i} style={msg.from === 'user' ? styles.userMsg : styles.botMsg}>
-              {/* Foto tonen als die er is */}
               {msg.data && (
                 <Image
                   source={{ uri: `data:image/jpeg;base64,${msg.data}` }}
                   style={{ width: 150, height: 150, marginBottom: 4, borderRadius: 8 }}
                 />
               )}
-              {/* Tekst altijd tonen als die er is */}
-              {msg.text && <Markdown>{msg.text}</Markdown>}
+              {msg.text && (msg.from === 'user' ? (
+                <Markdown style={{ body: { color: BASE_COLORS.WHITE } }}>{msg.text}</Markdown>
+              ) : (
+                <Markdown>{msg.text}</Markdown>
+              ))}
             </View>
           ))}
+
           {loading && <ActivityIndicator size="large" style={{ marginTop: 10 }} />}
         </ScrollView>
 
-      {image && (
-        <View style={styles.previewContainer}>
-          <Text style={{ marginBottom: 4 }}>Preview:</Text>
-          <Image
-            source={{ uri: image.uri }}
-            style={{ width: 150, height: 150, borderRadius: 8 }}
-          />
+        {image && (
+          <View style={styles.previewContainer}>
+            <Image
+              source={{ uri: image.uri }}
+              style={{ width: 150, height: 150, borderRadius: 8 }}
+            />
+          </View>
+        )}
+
+        {/* INPUT ROW absoluut onderaan */}
+          <View style={styles.inputRow}>
+            <TouchableOpacity
+              style={[styles.plusButton, { backgroundColor: BASE_COLORS.TEXT_DARK }]}
+              onPress={pickOrTakePhoto}
+            >
+              <Text style={styles.sendButtonText}>+</Text>
+            </TouchableOpacity>
+
+            <TextInput
+              style={styles.input}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Type a message..."
+            />
+
+            <View style={styles.buttonGroup}>
+              <TouchableOpacity
+                onPress={send}
+                style={[styles.sendButton, { backgroundColor: BASE_COLORS.TEXT_DARK }]}
+              >
+                <Text style={styles.sendButtonText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      )}
-
-  <View style={styles.inputRow}>
-    {/* Plus knop */}
-    <TouchableOpacity style={styles.plusButton} onPress={pickOrTakePhoto}>
-      <Text style={styles.plusText}>+</Text>
-    </TouchableOpacity>
-
-    {/* Input veld */}
-    <TextInput
-      style={styles.input}
-      value={input}
-      onChangeText={setInput}
-      placeholder="Typ een bericht..."
-    />
-    <View style={styles.buttonGroup}>
-      <Button title="Stuur" onPress={send} />
-    </View>
+    </KeyboardAvoidingView>
   </View>
-</View>
-
-  );
-}
+);
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f2f2',
+    backgroundColor: BASE_COLORS.LIGHT_BG,
   },
   chat: {
     flex: 1,
@@ -185,7 +220,7 @@ const styles = StyleSheet.create({
   },
   userMsg: {
     alignSelf: 'flex-end',
-    backgroundColor: '#DCF8C6',
+    backgroundColor: BASE_COLORS.TEXT_DARK,
     marginVertical: 4,
     padding: 10,
     borderRadius: 16,
@@ -193,7 +228,7 @@ const styles = StyleSheet.create({
   },
   botMsg: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FFF',
+    backgroundColor: BASE_COLORS.WHITE,
     marginVertical: 4,
     padding: 10,
     borderRadius: 16,
@@ -206,20 +241,18 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderColor: '#ddd',
   },
   plusButton: {
     width: 40,
     height: 40,
+    backgroundColor: BASE_COLORS.TEXT_DARK,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#007AFF',
+    marginRight: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
   },
   plusText: {
     color: '#fff',
@@ -233,10 +266,25 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
     backgroundColor: '#fff',
+    fontFamily: FontFamilies.BODY_LIGHT,
   },
   buttonGroup: {
     marginLeft: 8,
+  },
+  sendButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 60,
+    minHeight: 40,
+  },
+  sendButtonText: {
+    color: BASE_COLORS.WHITE,
+    fontSize: 16,
+    fontFamily: FontFamilies.BODY,
   },
 });
