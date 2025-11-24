@@ -55,9 +55,10 @@ export default function HomeScreen() {
     setLoading(true);
 
     try {
-      const body: { prompt: string; image?: string } = { prompt: input };
-      if (image && image.base64 != null) {
-        body.image = image.base64; // base64 string van de foto
+      const promptText = input || "[image]";
+      const body: { prompt: string; image?: string } = { prompt: promptText };
+      if (image?.base64) {
+        body.image = image.base64;
       }
 
       const res = await fetch(ipadress, {
@@ -77,29 +78,6 @@ export default function HomeScreen() {
     }
   };
 
-  /*
-  const pickOrTakePhoto = async () => {
-    Alert.alert(
-      "Foto",
-      "Kies een optie",
-      [
-        {
-          text: "Upload foto",
-          onPress: pickImage
-        },
-        {
-          text: "Neem foto",
-          onPress: takePhoto
-        },
-        {
-          text: "Annuleer",
-          style: "cancel"
-        }
-      ]
-    );
-  };
-  */
-
   const pickImageWeb = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -109,7 +87,12 @@ export default function HomeScreen() {
       if (file) {
         const reader = new FileReader();
         reader.onload = () => {
-          setImage({ uri: reader.result as string, base64: undefined } as any);
+          let uri = reader.result as string;
+          let base64 = undefined;
+          if (uri.startsWith('data:')) {
+            base64 = uri.split(',')[1]; // strip "data:image/...;base64,"
+          }
+          setImage({ uri, base64 } as any);
         };
         reader.readAsDataURL(file); // base64 voor web is dataURL
       }
