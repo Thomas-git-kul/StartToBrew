@@ -5,7 +5,7 @@ import { GoogleGenAI } from '@google/genai';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 const model = 'gemini-2.5-flash';
 
@@ -16,11 +16,11 @@ const ai = new GoogleGenAI({
 app.post('/api/chat', async (req, res) => {
   const { prompt, image } = req.body;
 
-  if (!prompt) return res.status(400).json({ error: "No prompt provided" });
+  if (!prompt && !image) return res.status(400).json({ error: "No prompt or image provided" });
 
   try {
-    const parts = [{ text: prompt }];
-
+    const parts = [];
+    if (prompt) parts.push({ text: prompt });
     if (image) {
       parts.push({
         inlineData: {
@@ -34,7 +34,6 @@ app.post('/api/chat', async (req, res) => {
       model,
       contents: [{ role: "user", parts }],
     });
-    console.log("Gemiini API result:", JSON.stringify(result, null, 2));
 
     if (!result?.candidates?.length) {
       return res.status(500).json({ error: "No response from Gemini API" });
