@@ -317,7 +317,7 @@ export default function SpecificRecipe() {
         console.error("Error inserting brew_steps:", brewStepsError.message);
       }
 
-      router.push("../progress");
+      router.push({ pathname: "/progress", params: { id: brewId } });
     } catch (e: any) {
       console.error("Exception during brew start:", e.message ?? e);
     }
@@ -696,7 +696,10 @@ export default function SpecificRecipe() {
               mode="flat"
               label="Ready to Start"
               color={BASE_COLORS.WHITE}
-              onPress={brewRecipe}
+              onPress={() => {
+                setKitsVisible(false);
+                brewRecipe();
+              }}
               style={{
                 backgroundColor: BASE_COLORS.TEXT_DARK,
                 borderRadius: 30,
