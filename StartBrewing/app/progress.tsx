@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, ScrollView, Pressable, ActivityIndicator } from "react-native";
-import { Card, FAB } from "react-native-paper";
+import { View, ScrollView, Dimensions, ActivityIndicator } from "react-native";
+import { Card, FAB, Chip } from "react-native-paper";
 import { Timer, Thermometer, Play, CheckCheck, Lightbulb } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Header from '@/components/header';
@@ -11,6 +11,10 @@ import { useFonts } from "@/hooks/use-fonts";
 import { FontFamilies } from "@/constants/Fonts";
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from "@/supabase";
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BASE_SCREEN_WIDTH = 375; 
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 const testStep = {
   beer: "black IPA",
@@ -216,8 +220,8 @@ function Progress() {
 
   const currentStep = stepData;
   const hasTimer = currentStep.duration_total && currentStep.duration_total > 0;
-  const hasPhase2 = currentStep.title2 && currentStep.description2;
-  const hasTemp = currentStep.temp !== undefined;
+  // const hasPhase2 = currentStep.title2 && currentStep.description2;
+  const hasTemp = currentStep.temp !== null;
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
@@ -227,30 +231,41 @@ function Progress() {
         onIconPress={() => router.push("/HomePage" as any)}
       />
         <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
-          <ThemedText type="titleBlack">{currentStep.beer}</ThemedText>
-          <ThemedText type="title">{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</ThemedText>
+          <ThemedText type="titleBlack" className="mb-2">{currentStep.beer}</ThemedText>
+          <View className="flex-row justify-between items-center mb-3">
+            <ThemedText type="title">{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</ThemedText>
+            { hasTemp && (
+              <Chip
+                style={{
+                  marginLeft: 10,
+                  height: Math.min( 35 * scale, 50),
+                  alignItems: "center",
+                  backgroundColor: BASE_COLORS.WHITE,
+                  shadowColor: BASE_COLORS.STONE700,
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.07,
+                }}
+                textStyle={{
+                  fontSize: Math.min( 18 * scale, 30),
+                  color: BASE_COLORS.STONE800,
+                  fontFamily: FontFamilies.BODY,
+                }}
+                icon={() => <Thermometer size={Math.min( 25 * scale, 50)} color={BASE_COLORS.STONE600}/>}
+              >{`${currentStep.temp}°C`}</Chip>
+            )}
+          </View>
 
           <Card
             style={{
-              marginHorizontal: 40,
               padding: 20,
               borderRadius: 16,
               backgroundColor: BASE_COLORS.WHITE,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 4,
-              elevation: 5,
+              shadowColor: BASE_COLORS.STONE700,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.07,
               alignItems: "center",
             }}
           >
-            <View className="flex-row items-center mb-4">
-              <Thermometer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
-              <ThemedText type="title" className="ml-2">
-                {hasTemp ? `${currentStep.temp}°C` : "No specific temperature"}
-              </ThemedText>
-            </View>
-
             <View className="flex-row items-center">
               <Timer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
               <ThemedText type="title" className="ml-2 mr-4">
@@ -275,22 +290,12 @@ function Progress() {
 
           {((phase === 1 && currentStep.tips1) || (phase === 2 && currentStep.tips2)) && (
             <View className="mt-2 flex-row items-start">
-              <Pressable testID="lightbulb-button" onPress={() => setTipsVisible(!tipsVisible)}>
-                <Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />
-              </Pressable>
-              {tipsVisible && (
-                <ThemedText
-                  type="tips"
-                  className="ml-2 flex-shrink"
-                  style={{ flexShrink: 1 }}
-                >
-                  {phase === 1 ? currentStep.tips1 : currentStep.tips2 ?? "No tips available."}
-                </ThemedText>
-              )}
+              <Lightbulb size={ Math.min(30 * scale, 50) } color={BASE_COLORS.ACCENT_LIGHT} className="mr-2"/>
+              <ThemedText type="tips">{phase === 1 ? currentStep.tips1 : currentStep.tips2 ?? "No tips available."}</ThemedText>
             </View>
           )}
         </ScrollView>
-
+      {/*
       {showConfetti && (
         <ConfettiCannon
           testID="confetti-cannon"
@@ -300,6 +305,7 @@ function Progress() {
           autoStart={true}
         />
       )}
+      */}
 
       <FAB
         testID="fab-button"
