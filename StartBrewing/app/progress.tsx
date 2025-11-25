@@ -192,10 +192,24 @@ function Progress() {
   };
 
 
-  if (loading || !stepData) {
+  if (loading) {
     return (
-      <SafeAreaView className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" testID="loading-indicator"/>
+      <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+        <ActivityIndicator 
+          animating size="large"
+          color={BASE_COLORS.ACCENT_PRIMARY} 
+        />
+        <ThemedText type="defaultText" className="mt-3">
+          Loading recipe...
+        </ThemedText>
+      </SafeAreaView>
+    );
+  } if (!stepData) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+        <ThemedText type="defaultText" className="mt-3">
+          Failed to load progress...
+        </ThemedText>
       </SafeAreaView>
     );
   }
@@ -208,74 +222,74 @@ function Progress() {
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
-        title={`${currentStep.beer} Progress`}
+        title={"Progress"}
         iconName="House"
         onIconPress={() => router.push("/HomePage" as any)}
       />
+        <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
+          <ThemedText type="titleBlack">{currentStep.beer}</ThemedText>
+          <ThemedText type="title">{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</ThemedText>
 
-      <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
-        <ThemedText type="titleBlack">{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</ThemedText>
-
-        <Card
-          style={{
-            marginHorizontal: 40,
-            padding: 20,
-            borderRadius: 16,
-            backgroundColor: BASE_COLORS.WHITE,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            elevation: 5,
-            alignItems: "center",
-          }}
-        >
-          <View className="flex-row items-center mb-4">
-            <Thermometer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
-            <ThemedText type="title" className="ml-2">
-              {hasTemp ? `${currentStep.temp}°C` : "No specific temperature"}
-            </ThemedText>
-          </View>
-
-          <View className="flex-row items-center">
-            <Timer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
-            <ThemedText type="title" className="ml-2 mr-4">
-              {hasTimer ? `${Math.floor(remainingTime / 60)}m ${remainingTime % 60}s` : "No timer"}
-            </ThemedText>
-          </View>
-        </Card>
-
-        <View className="mt-4">
-          {(phase === 1 ? currentStep.description1 : currentStep.description2 ?? currentStep.description1)
-            ?.split(".")
-            .map((sentence: string, index: number) => {
-              const clean = sentence.trim();
-              if (!clean) return null;
-              return (
-                <ThemedText key={index} type="defaultText" className="mb-2">
-                  {clean}.
-                </ThemedText>
-              );
-            })}
-        </View>
-
-        {((phase === 1 && currentStep.tips1) || (phase === 2 && currentStep.tips2)) && (
-          <View className="mt-2 flex-row items-start">
-            <Pressable testID="lightbulb-button" onPress={() => setTipsVisible(!tipsVisible)}>
-              <Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />
-            </Pressable>
-            {tipsVisible && (
-              <ThemedText
-                type="tips"
-                className="ml-2 flex-shrink"
-                style={{ flexShrink: 1 }}
-              >
-                {phase === 1 ? currentStep.tips1 : currentStep.tips2 ?? "No tips available."}
+          <Card
+            style={{
+              marginHorizontal: 40,
+              padding: 20,
+              borderRadius: 16,
+              backgroundColor: BASE_COLORS.WHITE,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+              elevation: 5,
+              alignItems: "center",
+            }}
+          >
+            <View className="flex-row items-center mb-4">
+              <Thermometer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
+              <ThemedText type="title" className="ml-2">
+                {hasTemp ? `${currentStep.temp}°C` : "No specific temperature"}
               </ThemedText>
-            )}
+            </View>
+
+            <View className="flex-row items-center">
+              <Timer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
+              <ThemedText type="title" className="ml-2 mr-4">
+                {hasTimer ? `${Math.floor(remainingTime / 60)}m ${remainingTime % 60}s` : "No timer"}
+              </ThemedText>
+            </View>
+          </Card>
+
+          <View className="mt-4">
+            {(phase === 1 ? currentStep.description1 : currentStep.description2 ?? currentStep.description1)
+              ?.split(".")
+              .map((sentence: string, index: number) => {
+                const clean = sentence.trim();
+                if (!clean) return null;
+                return (
+                  <ThemedText key={index} type="defaultText" className="mb-2">
+                    {clean}.
+                  </ThemedText>
+                );
+              })}
           </View>
-        )}
-      </ScrollView>
+
+          {((phase === 1 && currentStep.tips1) || (phase === 2 && currentStep.tips2)) && (
+            <View className="mt-2 flex-row items-start">
+              <Pressable testID="lightbulb-button" onPress={() => setTipsVisible(!tipsVisible)}>
+                <Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />
+              </Pressable>
+              {tipsVisible && (
+                <ThemedText
+                  type="tips"
+                  className="ml-2 flex-shrink"
+                  style={{ flexShrink: 1 }}
+                >
+                  {phase === 1 ? currentStep.tips1 : currentStep.tips2 ?? "No tips available."}
+                </ThemedText>
+              )}
+            </View>
+          )}
+        </ScrollView>
 
       {showConfetti && (
         <ConfettiCannon
