@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, ScrollView, Dimensions, ActivityIndicator } from "react-native";
+import { View, ScrollView, Dimensions, ActivityIndicator, Text } from "react-native";
 import { Card, FAB, Chip } from "react-native-paper";
 import { Timer, Thermometer, Play, CheckCheck, Lightbulb } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -11,27 +11,16 @@ import { useFonts } from "@/hooks/use-fonts";
 import { FontFamilies } from "@/constants/Fonts";
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from "@/supabase";
+import { CountdownCircleTimer } from 'react-native-countdown-circle-timer';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
-const testStep = {
-  beer: "black IPA",
-  title1: "60-min Citra",
-  title2: "15-min Mosaic",
-  description1: "At T-60: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
-  description2: "At T-15: briefly kill the flame to prevent foam, add hops, then resume boil. Stir to break up the hop cone; keep a steady (not violent) boil. Lid off during the boil to drive off DMS. Resume countdown for next addition.",
-  duration_offset: 6,
-  duration_total: 10,
-  temp: 100,
-  tips1: "Lower the heat briefly before adding hops to prevent sudden foaming.",
-  tips2: "Lower the heat briefly before adding hops to prevent sudden foaming.",
-};
-
-function Progress() {
+export default function Progress() {
   useFonts();
   const router = useRouter();
+
   const { id } = useLocalSearchParams() as { id?: string };
   const brewId = id ? Number(id) : undefined;
 
@@ -40,9 +29,7 @@ function Progress() {
   const [phase, setPhase] = useState(1);
   const [remainingTime, setRemainingTime] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
-  const [tipsVisible, setTipsVisible] = useState(false);
   const [phaseDone, setPhaseDone] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
 
   const loadStep = async () => {
     setLoading(true);
@@ -50,7 +37,6 @@ function Progress() {
         const { data: userData } = await supabase.auth.getUser();
         const user = userData?.user;
         if (!user) {
-          setStepData(testStep);
           setLoading(false);
           return;
         }
@@ -63,7 +49,6 @@ function Progress() {
         console.log('brew:',brew);
 
         if (!brew) {
-          setStepData(testStep);
           setLoading(false);
           return;
         }
@@ -116,14 +101,10 @@ function Progress() {
         setPhaseDone(!(mapped.duration_total > 0));
       } catch (e) {
         console.error(e);
-        setStepData(testStep);
-        setRemainingTime(testStep.duration_offset ?? testStep.duration_total ?? 0);
-        setPhaseDone(!(testStep.duration_total > 0));
       }
       setLoading(false);
     }
 
-  
   // Fetch step data
   useEffect(() => {
     loadStep();
@@ -134,34 +115,10 @@ function Progress() {
   if (!stepData) return;
 
   const hasTimer = stepData.duration_total && stepData.duration_total > 0;
-  const hasPhase2 = stepData.title2 && stepData.description2;
 
   if (!hasTimer) return;
-
-  const interval = setInterval(() => {
-    if (timerActive && remainingTime > 0) {
-      setRemainingTime(prev => prev - 1);
-    } else if (timerActive && remainingTime === 0) {
-      if (phase === 1 && hasPhase2 && stepData.duration_offset) {
-        setTimerActive(false);
-        setPhase(2);
-        setRemainingTime(stepData.duration_total - stepData.duration_offset);
-      } else {
-        setTimerActive(false);
-        setPhaseDone(true);
-        setShowConfetti(true);
-      }
-    }
-  }, 1000);
-
-  // Correct cleanup
-  return () => {
-    clearInterval(interval);
-  };
 }, [timerActive, remainingTime, phase, stepData]);
 
-
-  //const goToNextStep = () => router.push('/progress?step=nextStep');
   const goToNextStep = async () => {
     if (!brewId || !stepData?.step_id) {
        console.log("Aborted goToNextStep: missing brewId or stepData.step_id", { brewId, stepData });
@@ -189,12 +146,11 @@ function Progress() {
         return;
       }
 
-      await loadStep(); // ✅ gewoon de loadStep opnieuw aanroepen
+      await loadStep();
     } catch (error) {
       console.error("goToNextStep error:", error);
     }
   };
-
 
   if (loading) {
     return (
@@ -218,16 +174,19 @@ function Progress() {
     );
   }
 
+  const phase1Duration = stepData.duration_offset ?? 0;
+  const phase2Duration = (stepData.duration_total ?? 0) - phase1Duration;
+  const hasPhase2 = Boolean(stepData.title2 && stepData.description2 && phase2Duration > 0);
+
   const currentStep = stepData;
   const hasTimer = currentStep.duration_total && currentStep.duration_total > 0;
-  // const hasPhase2 = currentStep.title2 && currentStep.description2;
   const hasTemp = currentStep.temp !== null;
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
         title={"Progress"}
-        iconName="House"
+        iconName="ArrowRight"
         onIconPress={() => router.push("/HomePage" as any)}
       />
         <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
@@ -259,6 +218,7 @@ function Progress() {
             style={{
               padding: 20,
               borderRadius: 16,
+              marginBlock: 12,
               backgroundColor: BASE_COLORS.WHITE,
               shadowColor: BASE_COLORS.STONE700,
               shadowOffset: { width: 0, height: 1 },
@@ -266,12 +226,41 @@ function Progress() {
               alignItems: "center",
             }}
           >
-            <View className="flex-row items-center">
-              <Timer size={24} color={BASE_COLORS.ACCENT_PRIMARY} />
-              <ThemedText type="title" className="ml-2 mr-4">
-                {hasTimer ? `${Math.floor(remainingTime / 60)}m ${remainingTime % 60}s` : "No timer"}
-              </ThemedText>
-            </View>
+            <CountdownCircleTimer
+              key={`${phase}`}  // resets when phase changes
+              isPlaying={timerActive}
+              duration={phase === 1 ? phase1Duration * 60 : phase2Duration * 60}
+              colors={["#4B5563", "#9CA3AF", "#111827"]}
+              colorsTime={[phase1Duration * 60, (phase1Duration * 60) / 2, 0]}
+              strokeWidth={10}
+              onComplete={() => {
+                if (phase === 1 && hasPhase2) {
+                  // Stop, switch to phase 2
+                  setTimerActive(false);
+                  setPhase(2);
+                  return { shouldRepeat: false };
+                }
+
+                // Step completely finished
+                setPhaseDone(true);
+                setTimerActive(false);
+                // setShowConfetti(true);
+
+                return { shouldRepeat: false };
+              }}
+            >
+              {({ remainingTime }) => (
+                <Text
+                  style={{
+                    fontSize: Math.min(22 * scale, 28),
+                    color: BASE_COLORS.STONE800,
+                    fontFamily: FontFamilies.BODY,
+                  }}
+                >
+                  {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
+                </Text>
+              )}
+            </CountdownCircleTimer>
           </Card>
 
           <View className="mt-4">
@@ -281,9 +270,7 @@ function Progress() {
                 const clean = sentence.trim();
                 if (!clean) return null;
                 return (
-                  <ThemedText key={index} type="defaultText" className="mb-2">
-                    {clean}.
-                  </ThemedText>
+                  <ThemedText key={index} type="defaultText" className="mb-2">{clean}.</ThemedText>
                 );
               })}
           </View>
@@ -317,9 +304,9 @@ function Progress() {
         label={phaseDone ? "Next Step" : hasTimer ? "Start Timer" : "Next Step"}
         color={BASE_COLORS.WHITE}
         onPress={() => {
-          if (!phaseDone && hasTimer && !timerActive) setTimerActive(true);
-          else goToNextStep();
-        }}
+  if (!phaseDone && hasTimer && !timerActive) setTimerActive(true);
+  else goToNextStep();
+}}
         disabled={(!phaseDone && hasTimer && timerActive) || false}
         style={{ 
           position: 'absolute',
@@ -340,5 +327,3 @@ function Progress() {
     </SafeAreaView>
   );
 }
-
-export default Progress;
