@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, ScrollView, Dimensions, ActivityIndicator, Text } from "react-native";
-import { Card, FAB, Chip } from "react-native-paper";
+import { Card, FAB, Chip, Button } from "react-native-paper";
 import { Timer, Thermometer, Play, CheckCheck, Lightbulb } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Header from '@/components/header';
@@ -190,35 +190,20 @@ export default function Progress() {
         onIconPress={() => router.push("/HomePage" as any)}
       />
         <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
-          <ThemedText type="titleBlack" className="mb-2">{currentStep.beer}</ThemedText>
-          <View className="flex-row justify-between items-center mb-3">
-            <ThemedText type="title">{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</ThemedText>
-            { hasTemp && (
-              <Chip
-                style={{
-                  marginLeft: 10,
-                  height: Math.min( 35 * scale, 50),
-                  alignItems: "center",
-                  backgroundColor: BASE_COLORS.WHITE,
-                  shadowColor: BASE_COLORS.STONE700,
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.07,
-                }}
-                textStyle={{
-                  fontSize: Math.min( 18 * scale, 30),
-                  color: BASE_COLORS.STONE800,
-                  fontFamily: FontFamilies.BODY,
-                }}
-                icon={() => <Thermometer size={Math.min( 25 * scale, 50)} color={BASE_COLORS.STONE600}/>}
-              >{`${currentStep.temp}°C`}</Chip>
-            )}
-          </View>
+          <ThemedText type="title" className="mb-2">{currentStep.beer}</ThemedText>
+          <Text 
+            className=""
+            style={{
+              fontSize: Math.min(18 * scale, 26),
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.STONE700
+            }}
+          >{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</Text>
 
           <Card
             style={{
-              padding: 20,
-              borderRadius: 16,
-              marginBlock: 12,
+              padding: 16,
+              borderRadius: 8,
               backgroundColor: BASE_COLORS.WHITE,
               shadowColor: BASE_COLORS.STONE700,
               shadowOffset: { width: 0, height: 1 },
@@ -263,6 +248,46 @@ export default function Progress() {
             </CountdownCircleTimer>
           </Card>
 
+          <View className="flex-row justify-between items-center my-2">
+            { hasTemp && (
+              <Chip
+                style={{
+                  height: Math.min(45 * scale, 65),
+                  alignItems: "center",
+                  backgroundColor: BASE_COLORS.WHITE,
+                  shadowColor: BASE_COLORS.STONE700,
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.07,
+                }}
+                textStyle={{
+                  fontSize: Math.min( 20 * scale, 40),
+                  color: BASE_COLORS.ACCENT_PRIMARY,
+                  fontFamily: FontFamilies.BODY,
+                }}
+                icon={() => <Thermometer size={Math.min( 26 * scale, 50)} color={BASE_COLORS.ACCENT_PRIMARY} strokeWidth={2}/>}
+              >{`${currentStep.temp}°C`}</Chip>
+            )}
+            { hasTimer && (
+              <Button 
+                mode="contained"
+                onPress={() => {
+                  if (!phaseDone && hasTimer && !timerActive) setTimerActive(true);
+                }}
+                labelStyle={{ 
+                  fontSize: Math.min(16 * scale, 24),
+                  color: BASE_COLORS.WHITE,
+                  fontFamily: FontFamilies.BODY,            
+                }}
+                style={{
+                  borderRadius: 20,
+                  backgroundColor: BASE_COLORS.TEXT_DARK,
+                }}
+              >
+                <Play/>
+              </Button>
+            )}
+          </View>
+
           <View className="mt-4">
             {(phase === 1 ? currentStep.description1 : currentStep.description2 ?? currentStep.description1)
               ?.split(".")
@@ -293,37 +318,39 @@ export default function Progress() {
         />
       )}
       */}
-
-      <FAB
+      <Button
         testID="fab-button"
-        mode="elevated"
+        mode="contained"
         icon={(props) => {
-          if (phaseDone) return <CheckCheck {...props} />;
-          if (hasTimer) return <Play {...props} />;
+          return <CheckCheck {...props} size={Math.min(24 * scale, 34)} />;
         }}
-        label={phaseDone ? "Next Step" : hasTimer ? "Start Timer" : "Next Step"}
-        color={BASE_COLORS.WHITE}
         onPress={() => {
-  if (!phaseDone && hasTimer && !timerActive) setTimerActive(true);
-  else goToNextStep();
-}}
-        disabled={(!phaseDone && hasTimer && timerActive) || false}
+          if (!phaseDone && hasTimer && !timerActive) setTimerActive(true);
+          else goToNextStep();
+        }}
+        textColor={BASE_COLORS.WHITE}
+        buttonColor={BASE_COLORS.TEXT_DARK}
+        disabled={(!phaseDone) || false}
         style={{ 
           position: 'absolute',
-          bottom: 30, 
+          bottom: 20, 
           right: 20,
-          backgroundColor: timerActive && !phaseDone ? BASE_COLORS.STONE400 : BASE_COLORS.TEXT_DARK,
-          borderRadius: 20,
+          borderRadius: 30,
+          padding: 6,
         }}
         theme={{
+          colors: {
+            onSurfaceDisabled: BASE_COLORS.STONE400,
+            surfaceDisabled: BASE_COLORS.STONE300,
+          },
           fonts: {
             labelLarge: {
-              fontSize: 16,
+              fontSize: Math.min(18 * scale, 26),
               fontFamily: FontFamilies.BODY,
             },
           },
         }}
-      />
+      >Next Step</Button>
     </SafeAreaView>
   );
 }
