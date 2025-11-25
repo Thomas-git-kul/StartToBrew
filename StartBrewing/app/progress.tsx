@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, ScrollView, Dimensions, ActivityIndicator, Text } from "react-native";
 import { Card, FAB, Chip, Button } from "react-native-paper";
-import { Timer, Thermometer, Play, CheckCheck, Lightbulb } from "lucide-react-native";
+import { Pause, Thermometer, Play, CheckCheck, Lightbulb } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Header from '@/components/header';
 import { BASE_COLORS } from '@/constants/Colors';
@@ -264,14 +264,16 @@ export default function Progress() {
                   color: BASE_COLORS.ACCENT_PRIMARY,
                   fontFamily: FontFamilies.BODY,
                 }}
-                icon={() => <Thermometer size={Math.min( 26 * scale, 50)} color={BASE_COLORS.ACCENT_PRIMARY} strokeWidth={2}/>}
+                icon={() => <Thermometer size={Math.min( 26 * scale, 36)} color={BASE_COLORS.ACCENT_PRIMARY} strokeWidth={2}/>}
               >{`${currentStep.temp}°C`}</Chip>
             )}
             { hasTimer && (
               <Button 
                 mode="contained"
                 onPress={() => {
-                  if (!phaseDone && hasTimer && !timerActive) setTimerActive(true);
+                  if (!phaseDone && hasTimer) {
+                    setTimerActive((prev) => !prev);
+                  }
                 }}
                 labelStyle={{ 
                   fontSize: Math.min(16 * scale, 24),
@@ -279,11 +281,15 @@ export default function Progress() {
                   fontFamily: FontFamilies.BODY,            
                 }}
                 style={{
-                  borderRadius: 20,
+                  borderRadius: 30,
                   backgroundColor: BASE_COLORS.TEXT_DARK,
                 }}
               >
-                <Play/>
+                {timerActive ? (
+                  <Pause size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE}/>
+                ) : (
+                  <Play size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE} />
+                )}
               </Button>
             )}
           </View>
