@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { View, Image, ScrollView, TouchableOpacity, Alert, Dimensions } from "react-native";
-import {FAB, Modal, Portal, Chip, ActivityIndicator, Button } from "react-native-paper";
+import {FAB, Modal, Portal, Chip, ActivityIndicator, Button, TextInput } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
@@ -62,6 +62,7 @@ export default function SpecificRecipe() {
 
   const [reviewVisible, setReviewVisible] = useState(false);
   const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
   const [kitsVisible, setKitsVisible] = useState(false);
 
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
@@ -186,6 +187,7 @@ export default function SpecificRecipe() {
         recipe_slug: recipe_slug,
         rating: value,
         account_id: user.id,
+        review_text: reviewText && reviewText.length > 0 ? reviewText : null,
       });
       if (insertError) {
         throw insertError;
@@ -218,6 +220,8 @@ export default function SpecificRecipe() {
       await fetchRecipeBundle(recipe_slug);
       // Markeer dat user nu gereviewd heeft en dubbelcheck
       setHasUserReviewed(true);
+      // clear review text after successful submit
+      setReviewText("");
       checkUserReviewed(recipe_slug);
     } catch (e: any) {
       Alert.alert("Review mislukt", e.message ?? "Onbekende fout bij opslaan review");
@@ -602,6 +606,23 @@ export default function SpecificRecipe() {
           }}
         >
           <ThemedText type="title" className="text-center mb-4">Rate this recipe</ThemedText>
+          <TextInput
+            mode="outlined"
+            label="Write a review (optional)"
+            placeholder="Share your thoughts about this beer..."
+            placeholderTextColor={BASE_COLORS.STONE300}
+            value={reviewText}
+            onChangeText={setReviewText}
+            multiline
+            numberOfLines={4}
+            outlineColor={BASE_COLORS.ACCENT_PRIMARY}
+            activeOutlineColor={BASE_COLORS.ACCENT_PRIMARY}
+            selectionColor={BASE_COLORS.ACCENT_PRIMARY}
+            textColor="#000000"
+            theme={{ colors: { text: '#000000', placeholder: BASE_COLORS.STONE300 } }}
+            style={{ marginBottom: 12, backgroundColor: BASE_COLORS.LIGHT_BG, color: '#000000' }}
+          />
+
           <View className="flex-row justify-center gap-3">
             {[1, 2, 3, 4, 5].map((value) => (
               <TouchableOpacity
@@ -614,7 +635,7 @@ export default function SpecificRecipe() {
                   stroke={
                     value <= rating
                       ? BASE_COLORS.ACCENT_LIGHT
-                      : BASE_COLORS.STONE300
+                      : BASE_COLORS.ACCENT_PRIMARY
                   }
                   fill={
                     value <= rating ? BASE_COLORS.ACCENT_LIGHT : "transparent"
