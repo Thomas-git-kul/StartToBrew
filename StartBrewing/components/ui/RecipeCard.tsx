@@ -19,13 +19,13 @@ interface BeerCardProps {
   reviews: number;
   image: any;
   description: string | null;
+  style: string | null;
   batch_size_l?: number | null;
   abv_target?: number | null;
   ibu_target?: number | null;
   srm_target?: number | null;
   difficulty?: number | null;
   haze_level?: number | null;
-  style: string | null;
   onPress: () => void;
   onToggleFavorite?: () => void;
   isFavorite?: boolean;
@@ -50,7 +50,7 @@ const BeerCard: React.FC<BeerCardProps> = ({
           backgroundColor: BASE_COLORS.WHITE,
           shadowColor: BASE_COLORS.STONE700,
           shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.07,
+          shadowOpacity: 0.15,
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
