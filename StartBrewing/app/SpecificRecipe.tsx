@@ -13,6 +13,7 @@ import { supabase } from "@/supabase";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import StoreCard from "@/components/ui/StoreCard";
+import ReviewCard from "@/components/ui/ReviewCard";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -66,6 +67,7 @@ export default function SpecificRecipe() {
   const [kitsVisible, setKitsVisible] = useState(false);
 
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
+  const [reviews, setReviews] = useState<Array<{ rating: number; review_text: string | null; created_at?: string | null }>>([]);
   const [reviewCount, setReviewCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [hasUserReviewed, setHasUserReviewed] = useState(false);
@@ -218,6 +220,8 @@ export default function SpecificRecipe() {
 
       // Refetch local bundle voor UI
       await fetchRecipeBundle(recipe_slug);
+      // Refresh the reviews list so the newly submitted review appears immediately
+      await fetchReviews(recipe_slug);
       // Markeer dat user nu gereviewd heeft en dubbelcheck
       setHasUserReviewed(true);
       // clear review text after successful submit
@@ -361,11 +365,58 @@ export default function SpecificRecipe() {
     }
   };
 
+  const fetchReviews = async (slug: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("recipe_reviews")
+        .select("rating, review_text, created_at, account_id")
+        .eq("recipe_slug", slug)
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+
+      const rows = data || [];
+
+      // Fetch usernames for each review (profiles table stores username)
+      const reviewsWithUser = await Promise.all(
+        rows.map(async (r: any) => {
+          try {
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("username")
+              .eq("id", r.account_id)
+              .maybeSingle();
+            return {
+              rating: r.rating,
+              review_text: r.review_text,
+              created_at: r.created_at,
+              username: profileData?.username ?? null,
+            };
+          } catch (e) {
+            return {
+              rating: r.rating,
+              review_text: r.review_text,
+              created_at: r.created_at,
+              username: null,
+            };
+          }
+        })
+      );
+
+      setReviews(reviewsWithUser);
+    } catch (e: any) {
+      console.error("Error fetching reviews:", e.message || e);
+      setReviews([]);
+    }
+  };
+
   useEffect(() => {
     if (!recipe_slug) return;
     fetchRecipeBundle(recipe_slug);
     checkUserReviewed(recipe_slug);
     fetchStarterKits(recipe_slug);
+    fetchReviews(recipe_slug);
   }, [recipe_slug]);
 
   const hazeLevels: Record<number, String> = {
@@ -407,6 +458,11 @@ export default function SpecificRecipe() {
     recipe != null
       ? getBeerImageSource(recipe.haze_level, recipe.srm_target)
       : require("@/assets/images/default-beer.png");
+
+  // only show reviews that contain text
+  const displayedReviews = (reviews || []).filter(
+    (r) => r.review_text && String(r.review_text).trim().length > 0
+  );
 
   return (
     <SafeAreaView
@@ -561,6 +617,20 @@ export default function SpecificRecipe() {
                     {item.amount_g != null ? `${item.amount_g} g ` : ""}
                     {item.ingredient_name} {item.kind ? `(${item.kind})` : ""}
                   </ThemedText>
+                </View>
+              ))
+            )}
+          </View>
+
+          {/* Reviews section */}
+          <View className="mt-2 mb-4">
+            <ThemedText type="defaultText" className="mb-2">Reviews:</ThemedText>
+            {displayedReviews.length === 0 ? (
+              <ThemedText type="defaultText">This beer has no reviews yet.</ThemedText>
+            ) : (
+              displayedReviews.map((r, idx) => (
+                <View key={idx} className="ml-1">
+                  <ReviewCard review={r as any} />
                 </View>
               ))
             )}
