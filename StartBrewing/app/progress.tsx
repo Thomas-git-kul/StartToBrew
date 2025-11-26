@@ -16,6 +16,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
+/*
 const TIMER_COLORS = [
   BASE_COLORS.AMBER500,
   BASE_COLORS.AMBER600,
@@ -42,7 +43,7 @@ function computePhases(duration_total: number, duration_offset: number) {
   return {
     mode: "two",
     step1_time: duration_offset,
-    step2_time: duration_total - duration_offset,
+    step2_time: duration_total,
   };
 }
 
@@ -53,6 +54,7 @@ function makeColorStops(durationSeconds: number, count: number) {
   const step = durationSeconds / count;
   return Array.from({ length: count }, (_, i) => Math.max(0, Math.ceil(durationSeconds - step * i)));
 }
+*/
 
 export default function Progress() {
   useFonts();
@@ -71,8 +73,7 @@ export default function Progress() {
     setLoading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
-      const user = userData?.user;
-      if (!user) {
+      if (!userData?.user) {
         setLoading(false);
         return;
       }
@@ -89,7 +90,8 @@ export default function Progress() {
         setLoading(false);
         return;
       }
-
+      
+      // Load phases and steps
       const { data: phases } = await supabase
         .from("phases")
         .select("*")
@@ -110,6 +112,7 @@ export default function Progress() {
 
       const currentIndex = allSteps.findIndex(s => s.step_id === brew.last_step_id);
       const currentStep = allSteps[currentIndex];
+      // const previousStep = allSteps[currentIndex - 1] ?? null;
       const nextStep = allSteps[currentIndex + 1];
 
       const {data: tips} = await supabase
@@ -118,28 +121,62 @@ export default function Progress() {
         .eq("step_id", brew.last_step_id)
         .single();
       // console.log('tips:',tips);
+      
+      // Determine if there is multiple steps
+      const nextHasOffset =
+        nextStep &&
+        nextStep.start_offset_min &&
+        nextStep.start_offset_min > 0;
+      let mapped;
+      if (nextHasOffset) {
+      const afterNextStep = allSteps[currentIndex + 2] ?? null;
 
-      const mapped = {
-        step_id: currentStep.step_id ?? null,
-        beer: brew?.name ?? '',
-        title1: currentStep?.title ?? '',
-        title2: nextStep?.title_2 ?? null,
-        description1: currentStep?.description_md ?? '',
-        description2: nextStep?.description_md_2 ?? null,
-        duration_offset: currentStep?.start_offset_min ?? 0,
-        duration_total: currentStep?.duration_min ?? 0,
-        temp: currentStep?.temp_c_target ?? null,
-        tips1: tips?.tip_md ?? null,
-        tips2: tips?.tip_md_2 ?? null,
-        next_step_id: nextStep?.step_id?? null,
+      mapped = {
+        mode: "two",
+        beer: brew.name,
+        temp: nextStep.temp_c_target ?? null,
+        current_step_id: currentStep.step_id,
+        next_step_id: nextStep.step_id,
+        after_next_step_id: afterNextStep?.step_id ?? null,   // ← ADD THIS LINE
+        step1: {
+          title: currentStep.title,
+          desc: currentStep.description_md,
+          tips: tips?.tip_md ?? null,
+          duration_sec: nextStep.start_offset_min ?? 0,
+        },
+        step2: {
+          title: nextStep.title,
+          desc: nextStep.description_md,
+          tips: tips?.tip_md ?? null,
+          duration_sec: nextStep.duration_min ?? 0,
+        },
       };
+    } else {
+        mapped = {
+          mode: "single",
+          beer: brew.name,
+          temp: currentStep.temp_c_target ?? null,
+          current_step_id: currentStep.step_id,
+          next_step_id: nextStep?.step_id ?? null,
+          step1: {
+            title: currentStep.title,
+            desc: currentStep.description_md,
+            tips: tips?.tip_md ?? null,
+            duration_sec: (currentStep.duration_min ?? 0) /* * 60*/,
+          },
+          step2: null,
+        };
+      }
 
       setStepData(mapped);
+
+      console.log("stepData: ", mapped);
 
       // reset timer state after reload
       setPhase(1);
       setTimerActive(false);
-      setPhaseDone(!(mapped.duration_total > 0));
+      setPhaseDone(mapped.mode === "single" && mapped.step1.duration_sec === 0);
+
 
     } catch (e) {
       console.error('loadStep error', e);
@@ -152,6 +189,7 @@ export default function Progress() {
     loadStep();
   }, [loadStep]);
 
+  /*
   const { mode, step1_time, step2_time } = useMemo(() => {
     if (!stepData) return { mode: 'single' as const, step1_time: 0, step2_time: 0 };
     return computePhases(stepData.duration_total, stepData.duration_offset);
@@ -161,15 +199,14 @@ export default function Progress() {
   const hasTemp = stepData?.temp !== null && stepData?.temp !== undefined;
 
   // durations in seconds for CountdownCircleTimer
-  const step1Sec = Math.max(0, Math.round((step1_time ?? 0) /* * 60 */));
-  const step2Sec = Math.max(0, Math.round((step2_time ?? 0) /* * 60 */));
+  const step1Sec = Math.max(0, Math.round((step1_time ?? 0)  * 60));
+  const step2Sec = Math.max(0, Math.round((step2_time ?? 0)  * 60 ));
   const durationSec = phase === 1 ? step1Sec : step2Sec;
 
   const colorsTime = useMemo(() => makeColorStops(durationSec || 1, TIMER_COLORS.length), [durationSec]);
 
   // color stops (must match TIMER_COLORS length)
 
-  /*
   // Timer logic
   useEffect(() => {
     if (!stepData) return;
@@ -179,24 +216,79 @@ export default function Progress() {
     if (!hasTimer) return;
   }, [timerActive, remainingTime, phase, stepData]);
   */
+  
+  const durationSec = phase === 1
+    ? stepData?.step1?.duration_sec ?? 0
+    : stepData?.step2?.duration_sec ?? 0;
+
+  const hasTimer = durationSec > 0;
+  const hasTemp = stepData?.temp != null;
 
   const goToNextStep = useCallback(async () => {
-    if (!brewId || !stepData?.step_id) return;
-    try {
-      await supabase
-        .from("brew_steps")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
-        .eq("id_brew", brewId)
-        .eq("step_id", stepData.step_id);
+    if (!brewId || !stepData?.current_step_id) {
+      console.log("Aborted goToNextStep: missing brewId or current_step_id", { brewId, stepData });
+      return;
+    }
 
+    try {
+      const updates = [];
+
+      // Always complete the current step
+      updates.push({
+        step_id: stepData.current_step_id
+      });
+
+      // If two steps form one → also complete step2
+      if (stepData.mode === "two" && stepData.next_step_id) {
+        updates.push({
+          step_id: stepData.next_step_id
+        });
+      }
+
+      for (const u of updates) {
+        await supabase
+          .from("brew_steps")
+          .update({
+            status: "completed",
+            completed_at: new Date().toISOString()
+          })
+          .eq("id_brew", brewId)
+          .eq("step_id", u.step_id);
+      }
+      
+      /*
       const isLastStep = !stepData.next_step_id;
 
       await supabase
         .from("brews")
-        .update({ last_step_id: stepData.next_step_id,
-          ...(isLastStep? { status_id: 3 } : {})
-         })
+        .update({
+          last_step_id: stepData.next_step_id,
+          ...(isLastStep ? { status_id: 3 } : {})
+        })
         .eq("id_brew", brewId);
+      */
+
+      let newLastStepId;
+
+      if (stepData.mode === "two") {
+        // Skip both currentStep + nextStep → go to the step AFTER nextStep
+        const afterMergedStep = stepData.after_next_step_id ?? null;
+        newLastStepId = afterMergedStep;
+      } else {
+        // normal single-step behaviour
+        newLastStepId = stepData.next_step_id;
+      }
+
+      const isLastStep = !newLastStepId;
+
+      await supabase
+        .from("brews")
+        .update({
+          last_step_id: newLastStepId,
+          ...(isLastStep ? { status_id: 3 } : {})
+        })
+        .eq("id_brew", brewId);
+
 
       if (isLastStep) {
         router.push("/HomePage");
@@ -230,6 +322,10 @@ export default function Progress() {
       </SafeAreaView>
     );
   }
+
+  const title = phase === 1 ? stepData.step1.title : stepData.step2?.title ?? stepData.step1.title;
+  const desc = phase === 1 ? stepData.step1.desc : stepData.step2?.desc ?? stepData.step1.desc;
+  const tips = phase === 1 ? stepData.step1.tips : stepData.step2?.tips;
 
   /*
   const phase1Duration = stepData.duration_total - stepData.duration_offset;
@@ -266,12 +362,11 @@ export default function Progress() {
               color: BASE_COLORS.STONE700
             }}
           >
-            {phase === 1 ? stepData.title1 : stepData.title2 ?? stepData.title1}
+            {title}
           </Text>
           { hasTemp && (
             <Chip
               style={{
-                marginBottom: 8,
                 alignItems: "center",
                 backgroundColor: BASE_COLORS.WHITE,
                 shadowColor: BASE_COLORS.STONE700,
@@ -287,6 +382,18 @@ export default function Progress() {
             >{`${stepData.temp}°C`}</Chip>
           )}
         </View>
+        {stepData.mode === "two" && phase === 1 && (
+          <Text
+            style={{
+              fontSize: Math.min(15 * scale, 22),
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.STONE600,
+              marginTop: -4
+            }}
+          >
+            (+ {stepData.step2.title})
+          </Text>
+        )}
         
         { hasTimer && (
         <Card
@@ -306,75 +413,54 @@ export default function Progress() {
             isPlaying={timerActive}
             isGrowing={true}
             rotation="counterclockwise"
-            duration={Math.max(1, durationSec)}            
-            //initialRemainingTime={phase1Duration}
-            colors={["#4B5563", "#9CA3AF", "#111827"]}
-            colorsTime={[Math.max(1, durationSec) * 60, (Math.max(1, durationSec) * 60) / 2, 0]}
-            /*
+            duration={Math.max(1, durationSec)}      
             colors={[
-              BASE_COLORS.AMBER500,
-              BASE_COLORS.AMBER600,
-              BASE_COLORS.AMBER700,
-              BASE_COLORS.AMBER800,
               BASE_COLORS.AMBER900,
+              BASE_COLORS.AMBER500,
             ]}
             colorsTime={[
-              duration - step * 1,
-              duration - step * 2,
-              duration - step * 3,
-              duration - step * 4,
-              duration - step * 5,
+              Math.max(1, durationSec),
+              0
             ]}
-            */
-            trailColor={BASE_COLORS.STONE300}
+            trailColor={!phaseDone ? BASE_COLORS.STONE300 : BASE_COLORS.TEXT_DARK}
             strokeWidth={10}
             onComplete={() => {
-              if (mode === 'two' && phase === 1) {
+                if (stepData.mode === "two" && phase === 1) {
+                  // Move to phase 2
+                  setTimerActive(false);
+                  setPhase(2);
+                  return { shouldRepeat: false };
+                }
+                // Final phase done
+                setPhaseDone(true);
                 setTimerActive(false);
-                setPhase(2);
                 return { shouldRepeat: false };
-              }
-              setPhaseDone(true);
-              setTimerActive(false);
-              return { shouldRepeat: false };
               }}
           >
             {({ remainingTime }) => (
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: "center" }}>
                 <Text
                   style={{
-                  fontSize: Math.min(22 * scale, 28),
-                  color: BASE_COLORS.STONE800,
-                  fontFamily: FontFamilies.BODY,
-                  marginBottom: 8,
+                    fontSize: Math.min(22 * scale, 28),
+                    color: BASE_COLORS.STONE800,
+                    fontFamily: FontFamilies.BODY,
+                    marginBottom: 8,
                   }}
-                  >
+                >
                   {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
                 </Text>
                 <Button
                   mode="contained"
                   compact
-                  onPress={() => {
-                    if (!phaseDone && hasTimer) setTimerActive((p) => !p);
-                  }}
-                  labelStyle={{
-                    fontSize: Math.min(16 * scale, 24),
-                    color: BASE_COLORS.WHITE,
-                    fontFamily: FontFamilies.BODY,
-                  }}
-                  style={{
-                    borderRadius: 30,
-                    backgroundColor: BASE_COLORS.TEXT_DARK,
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    elevation: 0,
-                  }}
-                  >
-                    {timerActive ? (
-                      <Pause size={Math.min(18 * scale, 26)} strokeWidth={1.2} color={BASE_COLORS.WHITE} />
-                    ) : (
-                      <Play size={Math.min(18 * scale, 26)} strokeWidth={1.2} color={BASE_COLORS.WHITE} />
-                    )}
+                  disabled={phaseDone}
+                  onPress={() => setTimerActive((p) => !p)}
+                  style={{ borderRadius: 30, backgroundColor: !phaseDone ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200, paddingInline: 8 }}
+                >
+                  {timerActive ? (
+                    <Pause size={Math.min(18 * scale, 26)} color={BASE_COLORS.WHITE} fill={BASE_COLORS.WHITE}  strokeWidth={0.5}/>
+                  ) : (
+                    <Play size={Math.min(18 * scale, 26)} color={BASE_COLORS.WHITE} fill={BASE_COLORS.WHITE} strokeWidth={1}/>
+                  )}
                 </Button>
               </View>
             )}
@@ -383,21 +469,21 @@ export default function Progress() {
         )}
 
         <View className="mt-2">
-          {(phase === 1 ? stepData.description1 : stepData.description2 ?? stepData.description1)
-            ?.split(".")
-            .map((sentence: string, index: number) => {
-              const clean = sentence.trim();
-              if (!clean) return null;
-              return (
-                <ThemedText key={index} type="defaultText" className="mb-2">{clean}.</ThemedText>
-              );
-            })}
+          {desc?.split(".").map((s: string, i: number) => {
+            const clean = s.trim();
+            if (!clean) return null;
+            return (
+              <ThemedText key={i} type="defaultText" className="mb-2">
+                {clean}.
+              </ThemedText>
+            );
+          })}
         </View>
 
-        {((phase === 1 && stepData.tips1) || (phase === 2 && stepData.tips2)) && (
+        {tips && (
           <View className="mt-2 flex-row items-start">
             <Lightbulb size={ Math.min(30 * scale, 50) } color={BASE_COLORS.ACCENT_LIGHT} className="mr-2"/>
-            <ThemedText type="tips">{phase === 1 ? stepData.tips1 : stepData.tips2 ?? "No tips available."}</ThemedText>
+            <ThemedText type="tips">{tips}</ThemedText>
           </View>
         )}
       </ScrollView>
@@ -409,10 +495,10 @@ export default function Progress() {
           return <CheckCheck {...props} size={Math.min(24 * scale, 34)} />;
         }}
         onPress={() => {
-          if (!phaseDone && hasTimer && !timerActive) setTimerActive(true);
-          else goToNextStep();
+          if (!phaseDone) return;
+          goToNextStep();
         }}
-        disabled={(!phaseDone) || false}
+        disabled={!phaseDone}
         color={BASE_COLORS.WHITE}
         style={{ 
           borderRadius: 30,
