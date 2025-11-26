@@ -195,18 +195,40 @@ export default function Progress() {
         contentContainerStyle={{ paddingBottom: 85 }}
       >
         <ThemedText type="title" className="mb-2">{currentStep.beer}</ThemedText>
-        <Text 
-          className=""
-          style={{
-            fontSize: Math.min(18 * scale, 26),
-            fontFamily: FontFamilies.BODY,
-            color: BASE_COLORS.STONE700
-          }}
-        >{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</Text>
+        <View className="flex-row justify-between items-center">
+          <Text
+            style={{
+              fontSize: Math.min(18 * scale, 26),
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.STONE700
+            }}
+          >
+            {phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}
+          </Text>
+          { hasTemp && (
+            <Chip
+              style={{
+                marginBottom: 8,
+                alignItems: "center",
+                backgroundColor: BASE_COLORS.WHITE,
+                shadowColor: BASE_COLORS.STONE700,
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.07,
+              }}
+              textStyle={{
+                fontSize: Math.min( 17 * scale, 26),
+                color: BASE_COLORS.STONE500,
+                fontFamily: FontFamilies.BODY,
+              }}
+              icon={(props) => <Thermometer size={props.size} color={BASE_COLORS.STONE500} strokeWidth={0.5} fill={BASE_COLORS.AMBER600} />}
+            >{`${currentStep.temp}°C`}</Chip>
+          )}
+        </View>
         
         { hasTimer && (
         <Card
           style={{
+            marginBlock: 12,
             padding: 16,
             borderRadius: 8,
             backgroundColor: BASE_COLORS.WHITE,
@@ -285,55 +307,7 @@ export default function Progress() {
         </Card>
         )}
 
-        <View className="flex-row justify-between items-center my-2">
-          { hasTemp && (
-            <Chip
-              style={{
-                padding: 12,
-                alignItems: "center",
-                backgroundColor: BASE_COLORS.WHITE,
-                shadowColor: BASE_COLORS.STONE700,
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.07,
-              }}
-              textStyle={{
-                fontSize: Math.min( 17 * scale, 26),
-                color: BASE_COLORS.ACCENT_PRIMARY,
-                fontFamily: FontFamilies.BODY,
-              }}
-              icon={(props) => <Thermometer size={props.size} color={BASE_COLORS.ACCENT_PRIMARY} strokeWidth={2}/>}
-            >{`${currentStep.temp}°C`}</Chip>
-          )}
-          {/*
-          { hasTimer && (
-            <Button 
-              mode="contained"
-              onPress={() => {
-                if (!phaseDone && hasTimer) {
-                  setTimerActive((prev) => !prev);
-                }
-              }}
-              labelStyle={{ 
-                fontSize: Math.min(16 * scale, 24),
-                color: BASE_COLORS.WHITE,
-                fontFamily: FontFamilies.BODY,            
-              }}
-              style={{
-                borderRadius: 30,
-                backgroundColor: BASE_COLORS.TEXT_DARK,
-              }}
-            >
-              {timerActive ? (
-                <Pause size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE}/>
-              ) : (
-                <Play size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE} />
-              )}
-            </Button>
-          )}
-          */}
-        </View>
-
-        <View className="mt-4">
+        <View className="mt-2">
           {(phase === 1 ? currentStep.description1 : currentStep.description2 ?? currentStep.description1)
             ?.split(".")
             .map((sentence: string, index: number) => {
