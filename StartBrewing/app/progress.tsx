@@ -199,7 +199,8 @@ export default function Progress() {
               color: BASE_COLORS.STONE700
             }}
           >{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</Text>
-
+          
+          { hasTimer && (
           <Card
             style={{
               padding: 16,
@@ -247,6 +248,7 @@ export default function Progress() {
               )}
             </CountdownCircleTimer>
           </Card>
+          )}
 
           <View className="flex-row justify-between items-center my-2">
             { hasTemp && (
