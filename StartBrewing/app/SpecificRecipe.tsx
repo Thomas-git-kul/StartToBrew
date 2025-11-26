@@ -279,9 +279,19 @@ export default function SpecificRecipe() {
 
       const firstStepId = firstStepData.step_id;
 
+      const { data: previousBrews, error: prevError } = await supabase
+        .from("brews")
+        .select("id_brew")
+        .eq("user_id", user.id)
+        .eq("recipe_slug", recipe_slug);
+
+      const brewNumber = (previousBrews?.length || 0) + 1;
+
+      const brewName = brewNumber === 1 ? recipe.name : `${recipe.name} (#${brewNumber})`;
+
       const newBrew = {
         user_id: user.id,
-        name: recipe.name,
+        name: brewName,
         start_date: new Date().toISOString(),
         status_id: 1,
         recipe_slug: recipe_slug,
