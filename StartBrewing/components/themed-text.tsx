@@ -10,7 +10,7 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'defaultText' | 'title' | 'subTitle' | 'accentPrimary' | 'accentDark' | 'numbers' | 'titleBlack' | 'tips';
+  type?: 'defaultText' | 'title' | 'subTitle' | 'inputSug' | 'accentDark' | 'numbers' | 'titleBlack' | 'tips';
 };
 
 export function ThemedText({
@@ -29,7 +29,7 @@ export function ThemedText({
         type === 'defaultText' ? styles.defaultText : undefined,
         type === 'title' ? styles.title : undefined,
         type === 'subTitle' ? styles.subTitle : undefined,
-        type === 'accentPrimary' ? styles.accentPrimary : undefined,
+        type === 'inputSug' ? styles.inputSug : undefined,
         type === 'accentDark' ? styles.accentDark : undefined,
         type === 'numbers' ? styles.numbers : undefined,
         type === 'titleBlack' ? styles.titleBlack : undefined,
@@ -57,10 +57,10 @@ const styles = StyleSheet.create({
     fontFamily: FontFamilies.BODY_LIGHT,
     color: BASE_COLORS.STONE700,
   },
-  accentPrimary: {
-    fontSize: Math.min(10 * scale, 14), 
+  inputSug: {
+    fontSize: Math.min(16 * scale, 20), 
     fontFamily: FontFamilies.BODY_LIGHT,
-    color: BASE_COLORS.STONE500,
+    color: BASE_COLORS.STONE600,
   },
   accentDark: {
     fontSize: Math.min(15 * scale, 22),
