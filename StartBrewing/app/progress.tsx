@@ -160,7 +160,7 @@ export default function Progress() {
           color={BASE_COLORS.ACCENT_PRIMARY} 
         />
         <ThemedText type="defaultText" className="mt-3">
-          Loading recipe...
+          Loading progress...
         </ThemedText>
       </SafeAreaView>
     );
@@ -189,175 +189,173 @@ export default function Progress() {
         iconName="ArrowRight"
         onIconPress={() => router.push("/HomePage" as any)}
       />
-        <ScrollView className="px-5" showsVerticalScrollIndicator={false}>
-          <ThemedText type="title" className="mb-2">{currentStep.beer}</ThemedText>
-          <Text 
-            className=""
-            style={{
-              fontSize: Math.min(18 * scale, 26),
-              fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.STONE700
-            }}
-          >{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</Text>
-          
-          { hasTimer && (
-          <Card
-            style={{
-              padding: 16,
-              borderRadius: 8,
-              backgroundColor: BASE_COLORS.WHITE,
-              shadowColor: BASE_COLORS.STONE700,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.07,
-              alignItems: "center",
+      <ScrollView 
+        className="px-5" 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 85 }}
+      >
+        <ThemedText type="title" className="mb-2">{currentStep.beer}</ThemedText>
+        <Text 
+          className=""
+          style={{
+            fontSize: Math.min(18 * scale, 26),
+            fontFamily: FontFamilies.BODY,
+            color: BASE_COLORS.STONE700
+          }}
+        >{phase === 1 ? currentStep.title1 : currentStep.title2 ?? currentStep.title1}</Text>
+        
+        { hasTimer && (
+        <Card
+          style={{
+            padding: 16,
+            borderRadius: 8,
+            backgroundColor: BASE_COLORS.WHITE,
+            shadowColor: BASE_COLORS.STONE700,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.07,
+            alignItems: "center",
+          }}
+        >
+          <CountdownCircleTimer
+            key={`${phase}`}
+            isPlaying={timerActive}
+            isGrowing={true}
+            rotation="counterclockwise"
+            duration={phase === 1 ? phase1Duration /* * 60 */ : phase2Duration /* * 60 */}
+            initialRemainingTime={phase1Duration}
+            colors={[BASE_COLORS.TEXT_DARK, BASE_COLORS.ACCENT_PRIMARY, BASE_COLORS.ACCENT_LIGHT]}
+            colorsTime={[phase1Duration /* * 60 */, (phase1Duration /* * 60 */) / 2, 0]}
+            // trailColor={BASE_COLORS.STONE400}
+            strokeWidth={10}
+            onComplete={() => {
+              if (phase === 1 && hasPhase2) {
+                // Stop, switch to phase 2
+                setTimerActive(false);
+                setPhase(2);
+                return { shouldRepeat: false };
+              }
+
+              // Step completely finished
+              setPhaseDone(true);
+              setTimerActive(false);
+              // setShowConfetti(true);
+
+              return { shouldRepeat: false };
             }}
           >
-            <CountdownCircleTimer
-              key={`${phase}`}  // resets when phase changes
-              isPlaying={timerActive}
-              duration={phase === 1 ? phase1Duration * 60 : phase2Duration * 60}
-              colors={["#4B5563", "#9CA3AF", "#111827"]}
-              colorsTime={[phase1Duration * 60, (phase1Duration * 60) / 2, 0]}
-              strokeWidth={10}
-              onComplete={() => {
-                if (phase === 1 && hasPhase2) {
-                  // Stop, switch to phase 2
-                  setTimerActive(false);
-                  setPhase(2);
-                  return { shouldRepeat: false };
+            {({ remainingTime }) => (
+              <View style={{ alignItems: "center" }}>
+                <Text
+                  style={{
+                    fontSize: Math.min(22 * scale, 28),
+                    color: BASE_COLORS.STONE800,
+                    fontFamily: FontFamilies.BODY,
+                    marginBottom: 8,       // space above the button
+                  }}
+                >
+                  {/*{Math.floor(remainingTime / 60)}m */} {remainingTime % 60}s
+                </Text>
+
+                <Button 
+                  mode="contained"
+                  onPress={() => {
+                    if (!phaseDone && hasTimer) {
+                      setTimerActive((prev) => !prev);
+                    }
+                  }}
+                  labelStyle={{ 
+                    fontSize: Math.min(16 * scale, 24),
+                    color: BASE_COLORS.WHITE,
+                    fontFamily: FontFamilies.BODY,            
+                  }}
+                  style={{
+                    borderRadius: 30,
+                    backgroundColor: BASE_COLORS.TEXT_DARK,
+                  }}
+                >
+                  {timerActive ? (
+                    <Pause size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE}/>
+                  ) : (
+                    <Play size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE} />
+                  )}
+                </Button>
+              </View>
+            )}
+          </CountdownCircleTimer>
+        </Card>
+        )}
+
+        <View className="flex-row justify-between items-center my-2">
+          { hasTemp && (
+            <Chip
+              style={{
+                padding: 12,
+                alignItems: "center",
+                backgroundColor: BASE_COLORS.WHITE,
+                shadowColor: BASE_COLORS.STONE700,
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.07,
+              }}
+              textStyle={{
+                fontSize: Math.min( 17 * scale, 26),
+                color: BASE_COLORS.ACCENT_PRIMARY,
+                fontFamily: FontFamilies.BODY,
+              }}
+              icon={(props) => <Thermometer size={props.size} color={BASE_COLORS.ACCENT_PRIMARY} strokeWidth={2}/>}
+            >{`${currentStep.temp}°C`}</Chip>
+          )}
+          {/*
+          { hasTimer && (
+            <Button 
+              mode="contained"
+              onPress={() => {
+                if (!phaseDone && hasTimer) {
+                  setTimerActive((prev) => !prev);
                 }
-
-                // Step completely finished
-                setPhaseDone(true);
-                setTimerActive(false);
-                // setShowConfetti(true);
-
-                return { shouldRepeat: false };
+              }}
+              labelStyle={{ 
+                fontSize: Math.min(16 * scale, 24),
+                color: BASE_COLORS.WHITE,
+                fontFamily: FontFamilies.BODY,            
+              }}
+              style={{
+                borderRadius: 30,
+                backgroundColor: BASE_COLORS.TEXT_DARK,
               }}
             >
-              {({ remainingTime }) => (
-                <View style={{ alignItems: "center" }}>
-                  <Text
-                    style={{
-                      fontSize: Math.min(22 * scale, 28),
-                      color: BASE_COLORS.STONE800,
-                      fontFamily: FontFamilies.BODY,
-                      marginBottom: 8,       // space above the button
-                    }}
-                  >
-                    {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
-                  </Text>
-
-                  <Button 
-                    mode="contained"
-                    onPress={() => {
-                      if (!phaseDone && hasTimer) {
-                        setTimerActive((prev) => !prev);
-                      }
-                    }}
-                    labelStyle={{ 
-                      fontSize: Math.min(16 * scale, 24),
-                      color: BASE_COLORS.WHITE,
-                      fontFamily: FontFamilies.BODY,            
-                    }}
-                    style={{
-                      borderRadius: 30,
-                      backgroundColor: BASE_COLORS.TEXT_DARK,
-                    }}
-                  >
-                    {timerActive ? (
-                      <Pause size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE}/>
-                    ) : (
-                      <Play size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE} />
-                    )}
-                  </Button>
-                </View>
+              {timerActive ? (
+                <Pause size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE}/>
+              ) : (
+                <Play size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE} />
               )}
-            </CountdownCircleTimer>
-          </Card>
+            </Button>
           )}
+          */}
+        </View>
 
-          <View className="flex-row justify-between items-center my-2">
-            { hasTemp && (
-              <Chip
-                style={{
-                  padding: 12,
-                  alignItems: "center",
-                  backgroundColor: BASE_COLORS.WHITE,
-                  shadowColor: BASE_COLORS.STONE700,
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.07,
-                }}
-                textStyle={{
-                  fontSize: Math.min( 17 * scale, 26),
-                  color: BASE_COLORS.ACCENT_PRIMARY,
-                  fontFamily: FontFamilies.BODY,
-                }}
-                icon={(props) => <Thermometer size={props.size} color={BASE_COLORS.ACCENT_PRIMARY} strokeWidth={2}/>}
-              >{`${currentStep.temp}°C`}</Chip>
-            )}
-            {/*
-            { hasTimer && (
-              <Button 
-                mode="contained"
-                onPress={() => {
-                  if (!phaseDone && hasTimer) {
-                    setTimerActive((prev) => !prev);
-                  }
-                }}
-                labelStyle={{ 
-                  fontSize: Math.min(16 * scale, 24),
-                  color: BASE_COLORS.WHITE,
-                  fontFamily: FontFamilies.BODY,            
-                }}
-                style={{
-                  borderRadius: 30,
-                  backgroundColor: BASE_COLORS.TEXT_DARK,
-                }}
-              >
-                {timerActive ? (
-                  <Pause size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE}/>
-                ) : (
-                  <Play size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE} />
-                )}
-              </Button>
-            )}
-            */}
+        <View className="mt-4">
+          {(phase === 1 ? currentStep.description1 : currentStep.description2 ?? currentStep.description1)
+            ?.split(".")
+            .map((sentence: string, index: number) => {
+              const clean = sentence.trim();
+              if (!clean) return null;
+              return (
+                <ThemedText key={index} type="defaultText" className="mb-2">{clean}.</ThemedText>
+              );
+            })}
+        </View>
+
+        {((phase === 1 && currentStep.tips1) || (phase === 2 && currentStep.tips2)) && (
+          <View className="mt-2 flex-row items-start">
+            <Lightbulb size={ Math.min(30 * scale, 50) } color={BASE_COLORS.ACCENT_LIGHT} className="mr-2"/>
+            <ThemedText type="tips">{phase === 1 ? currentStep.tips1 : currentStep.tips2 ?? "No tips available."}</ThemedText>
           </View>
-
-          <View className="mt-4">
-            {(phase === 1 ? currentStep.description1 : currentStep.description2 ?? currentStep.description1)
-              ?.split(".")
-              .map((sentence: string, index: number) => {
-                const clean = sentence.trim();
-                if (!clean) return null;
-                return (
-                  <ThemedText key={index} type="defaultText" className="mb-2">{clean}.</ThemedText>
-                );
-              })}
-          </View>
-
-          {((phase === 1 && currentStep.tips1) || (phase === 2 && currentStep.tips2)) && (
-            <View className="mt-2 flex-row items-start">
-              <Lightbulb size={ Math.min(30 * scale, 50) } color={BASE_COLORS.ACCENT_LIGHT} className="mr-2"/>
-              <ThemedText type="tips">{phase === 1 ? currentStep.tips1 : currentStep.tips2 ?? "No tips available."}</ThemedText>
-            </View>
-          )}
-        </ScrollView>
-      {/*
-      {showConfetti && (
-        <ConfettiCannon
-          testID="confetti-cannon"
-          count={200} 
-          origin={{ x: -10, y: 0 }}
-          fadeOut={true}
-          autoStart={true}
-        />
-      )}
-      */}
-      <Button
+        )}
+      </ScrollView>
+      <FAB
         testID="fab-button"
-        mode="contained"
+        mode="flat"
+        label="Next Step"
         icon={(props) => {
           return <CheckCheck {...props} size={Math.min(24 * scale, 34)} />;
         }}
@@ -365,29 +363,29 @@ export default function Progress() {
           if (!phaseDone && hasTimer && !timerActive) setTimerActive(true);
           else goToNextStep();
         }}
-        textColor={BASE_COLORS.WHITE}
-        buttonColor={BASE_COLORS.TEXT_DARK}
         disabled={(!phaseDone) || false}
+        color={BASE_COLORS.WHITE}
         style={{ 
+          borderRadius: 30,
+          backgroundColor: !phaseDone ? 
+            BASE_COLORS.STONE200 :
+            BASE_COLORS.TEXT_DARK,
           position: 'absolute',
           bottom: 20, 
           right: 20,
-          borderRadius: 30,
-          padding: 6,
         }}
         theme={{
           colors: {
             onSurfaceDisabled: BASE_COLORS.STONE400,
-            surfaceDisabled: BASE_COLORS.STONE300,
           },
           fonts: {
             labelLarge: {
-              fontSize: Math.min(18 * scale, 26),
+              fontSize: Math.min(16 * scale, 24),
               fontFamily: FontFamilies.BODY,
             },
           },
         }}
-      >Next Step</Button>
+      />
     </SafeAreaView>
   );
 }
