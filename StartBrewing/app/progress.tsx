@@ -9,7 +9,7 @@ import { BASE_COLORS } from '@/constants/Colors';
 import { ThemedText } from '@/components/themed-text';
 import { useFonts } from "@/hooks/use-fonts";
 import { FontFamilies } from "@/constants/Fonts";
-import ConfettiCannon from 'react-native-confetti-cannon';
+// import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from "@/supabase";
 import { CountdownCircleTimer } from 'react-native-countdown-circle-timer';
 
@@ -236,15 +236,42 @@ export default function Progress() {
               }}
             >
               {({ remainingTime }) => (
-                <Text
-                  style={{
-                    fontSize: Math.min(22 * scale, 28),
-                    color: BASE_COLORS.STONE800,
-                    fontFamily: FontFamilies.BODY,
-                  }}
-                >
-                  {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
-                </Text>
+                <View style={{ alignItems: "center" }}>
+                  <Text
+                    style={{
+                      fontSize: Math.min(22 * scale, 28),
+                      color: BASE_COLORS.STONE800,
+                      fontFamily: FontFamilies.BODY,
+                      marginBottom: 8,       // space above the button
+                    }}
+                  >
+                    {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
+                  </Text>
+
+                  <Button 
+                    mode="contained"
+                    onPress={() => {
+                      if (!phaseDone && hasTimer) {
+                        setTimerActive((prev) => !prev);
+                      }
+                    }}
+                    labelStyle={{ 
+                      fontSize: Math.min(16 * scale, 24),
+                      color: BASE_COLORS.WHITE,
+                      fontFamily: FontFamilies.BODY,            
+                    }}
+                    style={{
+                      borderRadius: 30,
+                      backgroundColor: BASE_COLORS.TEXT_DARK,
+                    }}
+                  >
+                    {timerActive ? (
+                      <Pause size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE}/>
+                    ) : (
+                      <Play size={Math.min(24 * scale, 34)} strokeWidth={0} fill={BASE_COLORS.WHITE} />
+                    )}
+                  </Button>
+                </View>
               )}
             </CountdownCircleTimer>
           </Card>
@@ -254,7 +281,7 @@ export default function Progress() {
             { hasTemp && (
               <Chip
                 style={{
-                  height: Math.min(45 * scale, 65),
+                  padding: 12,
                   alignItems: "center",
                   backgroundColor: BASE_COLORS.WHITE,
                   shadowColor: BASE_COLORS.STONE700,
@@ -262,13 +289,14 @@ export default function Progress() {
                   shadowOpacity: 0.07,
                 }}
                 textStyle={{
-                  fontSize: Math.min( 20 * scale, 40),
+                  fontSize: Math.min( 17 * scale, 26),
                   color: BASE_COLORS.ACCENT_PRIMARY,
                   fontFamily: FontFamilies.BODY,
                 }}
-                icon={() => <Thermometer size={Math.min( 26 * scale, 36)} color={BASE_COLORS.ACCENT_PRIMARY} strokeWidth={2}/>}
+                icon={(props) => <Thermometer size={props.size} color={BASE_COLORS.ACCENT_PRIMARY} strokeWidth={2}/>}
               >{`${currentStep.temp}°C`}</Chip>
             )}
+            {/*
             { hasTimer && (
               <Button 
                 mode="contained"
@@ -294,6 +322,7 @@ export default function Progress() {
                 )}
               </Button>
             )}
+            */}
           </View>
 
           <View className="mt-4">
