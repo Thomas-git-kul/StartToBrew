@@ -31,7 +31,7 @@ interface Brew {
   recipe_slug: string | null;
   start_date: string;
   status: number;
-  last_step_id: Text;
+  last_step_id: String | null;
 }
 
 interface Phase {
@@ -49,6 +49,12 @@ interface Step {
   duration_min: number | null;
 }
 
+interface BrewStep {
+  step_id: string;
+  id_brew: number;
+  status: string;
+}
+
 interface PhaseEntry {
   title: string;
   steps: { text: string; time?: number | null }[];
@@ -58,6 +64,8 @@ interface BrewEntry {
   beer: string;
   id_brew: number,
   phases: PhaseEntry[];
+  showProgressButton?: boolean;
+  progressDate?: string;
 }
 
 export default function Agenda() {
@@ -78,7 +86,7 @@ export default function Agenda() {
 
       const { data: brewsData, error: brewErr } = await supabase
         .from("brews")
-        .select(`id_brew, name, start_date, recipe_slug`)
+        .select(`id_brew, name, start_date, recipe_slug, last_step_id`)
         .eq("user_id", (await user).data.user?.id)
         .in("status_id", [1, 2]);
 
@@ -108,6 +116,21 @@ export default function Agenda() {
       const steps: Step[] = stepsData as Step[];
       const agenda: Record<string, any[]> = {};
 
+      const { data: brewStepsData, error: brewStepsErr } = await supabase
+        .from("brew_steps")
+        .select('step_id, id_brew, status');
+
+      if (brewStepsErr) {
+        console.error(brewStepsErr);
+        return;
+      }
+
+      const brewStepStatusMap: Record<string, string> = {};
+      const brewStepsTyped = (brewStepsData ?? []) as BrewStep[];
+      brewStepsTyped.forEach((bs: BrewStep) => {
+        brewStepStatusMap[`${bs.id_brew}_${bs.step_id}`] = bs.status;
+      });
+
       brews.forEach((brew) => {
       const brewPhases = phases.filter((p) => p.recipe_slug === brew.recipe_slug);
 
@@ -117,9 +140,13 @@ export default function Agenda() {
 
       // Bereken alle stappen van deze brew
       brewPhases.forEach((phase) => {
-        const phaseSteps = steps.filter((s) => s.phase_id === phase.phase_id).sort((a, b) => a.step_id.localeCompare(b.step_id, undefined, { numeric: true }));
+        const phaseSteps = steps
+          .filter((s) => s.phase_id === phase.phase_id)
+          .sort((a, b) => a.step_id.localeCompare(b.step_id, undefined, { numeric: true }));
 
         phaseSteps.forEach((step) => {
+          const stepExecuted = brewStepStatusMap[`${brew.id_brew}_${step.step_id}`] === 'completed';
+
           let stepDurationDays = 0;
           if (step.duration_min && step.duration_min > 0) {
             const durationHours = step.duration_min / 60;
@@ -128,7 +155,7 @@ export default function Agenda() {
             }
           }
 
-          const stepDate = new Date(currentStepTime);
+          let stepDate = new Date(currentStepTime);
           if (stepDurationDays > 0) {
             stepDate.setDate(stepDate.getDate() + stepDurationDays);
           }
@@ -158,9 +185,15 @@ export default function Agenda() {
               text: step.title,
               time: step.duration_min,
             });
+
+            if (brew.last_step_id && String(step.step_id) === String(brew.last_step_id)) {
+              brewEntry.showProgressButton = true;
+              brewEntry.progressDate = dayStr;
+            }
+
             if (stepDurationDays > 0) {
               currentStepTime.setDate(currentStepTime.getDate() + stepDurationDays);
-            }
+            } 
         });
       });
     });
@@ -305,6 +338,7 @@ export default function Agenda() {
                     color: BASE_COLORS.TEXT_DARK,
                   }}
                   >{brew.beer}</Text>
+                  {brew.showProgressButton && brew.progressDate === currentDate && (
                   <Button onPress={() => {
                     router.push({ pathname: "/progress", params: { id: brew.id_brew } });
                     // console.log(`Brew ID: ${brew.id_brew}`);
@@ -316,7 +350,7 @@ export default function Agenda() {
                         color: BASE_COLORS.TEXT_DARK,
                       }}
                     >Progress</Text>
-                  </Button>
+                  </Button>)}
                 </View>
 
                 {brew.phases.map((phase: PhaseEntry, phaseIndex: number) => (
