@@ -14,13 +14,28 @@ jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
 
 jest.mock("@/components/header", () => {
   const { View, Text } = require("react-native");
-  return ({ title }: any) => <View><Text>{title}</Text></View>;
+  return ({ title }: any) => (
+    <View>
+      <Text>{title}</Text>
+    </View>
+  );
 });
 
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
 });
+
+// ⬇️ NIEUW: mock de user progress context
+jest.mock("@/context/UserProgressContext", () => ({
+  useUserProgressContext: () => ({
+    progress: null,
+    loading: false,
+    levelUp: null,
+    acknowledgeLevelUp: jest.fn(),
+    refreshProgress: jest.fn(),
+  }),
+}));
 
 // --- Supabase mock chain setup ---
 
@@ -36,17 +51,17 @@ jest.mock("@/supabase", () => {
         brew_id: "1",
         step_id: "1",
         position: 1,
-        done_at: null
-      }
-    ]
+        done_at: null,
+      },
+    ],
   });
 
   const mockBrewStepsSelect = jest.fn(() => ({
-    eq: mockBrewStepsEq
+    eq: mockBrewStepsEq,
   }));
 
   const mockBrewStepsUpdate = jest.fn(() => ({
-    eq: mockBrewStepsEq
+    eq: mockBrewStepsEq,
   }));
 
   const mockBrewsUpdateEq = jest.fn().mockResolvedValue({ data: {} });
@@ -57,26 +72,26 @@ jest.mock("@/supabase", () => {
       auth: {
         getUser: jest
           .fn()
-          .mockResolvedValue({ data: { user: { id: "test-user" } } })
+          .mockResolvedValue({ data: { user: { id: "test-user" } } }),
       },
 
       from: jest.fn((table) => {
         if (table === "brew_steps")
           return {
             select: mockBrewStepsSelect,
-            update: mockBrewStepsUpdate
+            update: mockBrewStepsUpdate,
           };
 
         if (table === "brews")
           return {
-            update: mockBrewsUpdate
+            update: mockBrewsUpdate,
           };
 
         if (table === "phases")
           return {
             select: jest.fn().mockResolvedValue({
-              data: [{ phase_id: 1, position: 1 }]
-            })
+              data: [{ phase_id: 1, position: 1 }],
+            }),
           };
 
         if (table === "steps")
@@ -94,15 +109,15 @@ jest.mock("@/supabase", () => {
                   start_offset_min: 0,
                   duration_min: 0.02,
                   next_step_id: null,
-                  temp_c_target: 100
-                }
-              ]
-            })
+                  temp_c_target: 100,
+                },
+              ],
+            }),
           };
 
         return {};
-      })
-    }
+      }),
+    },
   };
 });
 
@@ -111,7 +126,6 @@ const renderWithNavigation = (ui: React.ReactElement) =>
   render(<NavigationContainer>{ui}</NavigationContainer>);
 
 describe("<Progress />", () => {
-
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
     (useLocalSearchParams as jest.Mock).mockReturnValue({ id: "1" });
@@ -123,12 +137,18 @@ describe("<Progress />", () => {
     expect(await findByText("Failed to load progress...")).toBeTruthy();
   });
 
-  it("toont tips wanneer lightbulb gedrukt wordt", async () => { 
-    const { findByText } = renderWithNavigation(<Progress />); 
-    expect(await findByText("Failed to load progress...")).toBeTruthy(); 
+  it("toont tips wanneer lightbulb gedrukt wordt", async () => {
+    const { findByText } = renderWithNavigation(<Progress />);
+    expect(await findByText("Failed to load progress...")).toBeTruthy();
   });
 
-  /*
+  it("snapshot", () => {
+    const tree = renderWithNavigation(<Progress />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
+});
+
+/*
   it("navigates naar volgende stap via FAB en update Supabase", async () => {
     // 1. Enable fake timers
     jest.useFakeTimers();
@@ -185,9 +205,3 @@ describe("<Progress />", () => {
   expect(await findByText("60-min Citra")).toBeTruthy();
 });
 */
-
-  it("snapshot", () => {
-    const tree = renderWithNavigation(<Progress />).toJSON();
-    expect(tree).toMatchSnapshot();
-  });
-});

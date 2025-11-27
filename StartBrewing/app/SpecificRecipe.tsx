@@ -1,22 +1,38 @@
 import { useState, useEffect } from "react";
-import { View, Image, ScrollView, TouchableOpacity, Alert, Dimensions } from "react-native";
-import {FAB, Modal, Portal, Chip, ActivityIndicator, Button, TextInput } from "react-native-paper";
+import {
+  View,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Dimensions,
+} from "react-native";
+import {
+  FAB,
+  Modal,
+  Portal,
+  Chip,
+  ActivityIndicator,
+  Button,
+  TextInput,
+} from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
-import { Star, Wheat, Hop, } from "lucide-react-native";
+import { Star, Wheat, Hop } from "lucide-react-native";
 import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import StoreCard from "@/components/ui/StoreCard";
 import ReviewCard from "@/components/ui/ReviewCard";
+import { useUserProgressContext } from "@/context/UserProgressContext";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BASE_SCREEN_WIDTH = 375; 
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const BASE_SCREEN_WIDTH = 375;
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 type Recipe = {
@@ -65,14 +81,23 @@ export default function SpecificRecipe() {
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [kitsVisible, setKitsVisible] = useState(false);
+  const { refreshProgress } = useUserProgressContext();
 
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
-  const [reviews, setReviews] = useState<Array<{ rating: number; review_text: string | null; created_at?: string | null }>>([]);
+  const [reviews, setReviews] = useState<
+    Array<{
+      rating: number;
+      review_text: string | null;
+      created_at?: string | null;
+    }>
+  >([]);
   const [reviewCount, setReviewCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [hasUserReviewed, setHasUserReviewed] = useState(false);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
-  const isFavorite = recipe_slug ? (favoriteSlugs || []).includes(String(recipe_slug)) : false;
+  const isFavorite = recipe_slug
+    ? (favoriteSlugs || []).includes(String(recipe_slug))
+    : false;
   const [isFavoriteIconFilled, setIsFavoriteIconFilled] = useState(isFavorite);
   const [kits, setKits] = useState<any[]>([]);
 
@@ -121,14 +146,12 @@ export default function SpecificRecipe() {
         .eq("recipe_slug", slug)
         .single();
 
-      console.log("recipe data", recipeData)
+      console.log("recipe data", recipeData);
 
       if (recipeError) throw recipeError;
 
-      const { data: ingredientData, error: ingredientError } = await supabase.rpc(
-        "get_recipe_ingredients",
-        { _recipe_slug: slug }
-      );
+      const { data: ingredientData, error: ingredientError } =
+        await supabase.rpc("get_recipe_ingredients", { _recipe_slug: slug });
       if (ingredientError) throw ingredientError;
 
       const { data: reviewsData, error: reviewsError } = await supabase
@@ -139,11 +162,16 @@ export default function SpecificRecipe() {
 
       const count = (reviewsData || []).length;
       const avg = count
-        ? (reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) / count)
+        ? reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) /
+          count
         : null;
 
       const recipeWithRating = recipeData
-        ? { ...recipeData, rating: avg != null ? parseFloat(avg.toFixed(2)) : recipeData.rating }
+        ? {
+            ...recipeData,
+            rating:
+              avg != null ? parseFloat(avg.toFixed(2)) : recipeData.rating,
+          }
         : null;
 
       setRecipe(recipeWithRating);
@@ -161,7 +189,8 @@ export default function SpecificRecipe() {
     setRating(value);
     try {
       // Controleer of user sessie aanwezig is (web en native)
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
       if (sessionError) throw sessionError;
       const user = sessionData?.session?.user;
       if (!user) {
@@ -185,12 +214,14 @@ export default function SpecificRecipe() {
       }
 
       // Insert nieuwe review met account_id (jouw DB gebruikt `account_id`)
-      const { error: insertError } = await supabase.from("recipe_reviews").insert({
-        recipe_slug: recipe_slug,
-        rating: value,
-        account_id: user.id,
-        review_text: reviewText && reviewText.length > 0 ? reviewText : null,
-      });
+      const { error: insertError } = await supabase
+        .from("recipe_reviews")
+        .insert({
+          recipe_slug: recipe_slug,
+          rating: value,
+          account_id: user.id,
+          review_text: reviewText && reviewText.length > 0 ? reviewText : null,
+        });
       if (insertError) {
         throw insertError;
       }
@@ -204,7 +235,8 @@ export default function SpecificRecipe() {
 
       const count = (reviewsData || []).length;
       const avg = count
-        ? (reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) / count)
+        ? reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) /
+          count
         : null;
 
       // Werk de aggregate kolommen in recipes bij
@@ -228,7 +260,11 @@ export default function SpecificRecipe() {
       setReviewText("");
       checkUserReviewed(recipe_slug);
     } catch (e: any) {
-      Alert.alert("Review mislukt", e.message ?? "Onbekende fout bij opslaan review");
+      Alert.alert(
+        "Review mislukt",
+        e.message ?? "Onbekende fout bij opslaan review"
+      );
+      await refreshProgress();
     } finally {
       setReviewVisible(false);
     }
@@ -241,7 +277,10 @@ export default function SpecificRecipe() {
     }
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
       if (userError || !user) {
         console.error("Error fetching user for brew:", userError?.message);
         return;
@@ -254,7 +293,10 @@ export default function SpecificRecipe() {
         .order("position", { ascending: true });
 
       if (phasesError || !phasesData?.length) {
-        console.error("Error fetching phases:", phasesError?.message || "No phases found.");
+        console.error(
+          "Error fetching phases:",
+          phasesError?.message || "No phases found."
+        );
         return;
       }
 
@@ -273,7 +315,10 @@ export default function SpecificRecipe() {
         .single();
 
       if (firstStepError || !firstStepData) {
-        console.error("Error finding first step:", firstStepError?.message || "No starting step found.");
+        console.error(
+          "Error finding first step:",
+          firstStepError?.message || "No starting step found."
+        );
         return;
       }
 
@@ -287,7 +332,8 @@ export default function SpecificRecipe() {
 
       const brewNumber = (previousBrews?.length || 0) + 1;
 
-      const brewName = brewNumber === 1 ? recipe.name : `${recipe.name} (#${brewNumber})`;
+      const brewName =
+        brewNumber === 1 ? recipe.name : `${recipe.name} (#${brewNumber})`;
 
       const newBrew = {
         user_id: user.id,
@@ -316,7 +362,10 @@ export default function SpecificRecipe() {
         .in("phase_id", phaseIds);
 
       if (stepsError || !allSteps?.length) {
-        console.error("Error fetching steps:", stepsError?.message || "No steps found.");
+        console.error(
+          "Error fetching steps:",
+          stepsError?.message || "No steps found."
+        );
         return;
       }
 
@@ -344,8 +393,9 @@ export default function SpecificRecipe() {
   const fetchStarterKits = async (slug: string) => {
     try {
       const { data, error } = await supabase
-      .from("recipe_kits")
-      .select(`
+        .from("recipe_kits")
+        .select(
+          `
         id_starter_kit,
         starter_kit:starter_kits (
           name,
@@ -354,8 +404,9 @@ export default function SpecificRecipe() {
           price,
           is_active
         )
-      `)
-      .eq("recipe_slug", slug);
+      `
+        )
+        .eq("recipe_slug", slug);
 
       // console.log("Starterkits response:", data, "error:", error);
 
@@ -364,11 +415,10 @@ export default function SpecificRecipe() {
       // flatten
       const kits = data?.map((row: any) => ({
         id: row.id_starter_kit,
-        ...row.starter_kit
+        ...row.starter_kit,
       }));
       setKits(kits);
       // console.log("Starterkits response:", kits)
-
     } catch (e: any) {
       console.error("Error fetching kits:", e.message);
       return [];
@@ -433,7 +483,7 @@ export default function SpecificRecipe() {
     1: "clear",
     2: "light haze",
     3: "hazy",
-  }
+  };
 
   const chips: { key: string; label: string }[] = [];
   if (recipe?.style) chips.push({ key: "style", label: recipe.style });
@@ -457,7 +507,7 @@ export default function SpecificRecipe() {
     const haze = hazeLevels[recipe.haze_level] || "clear";
     chips.push({ key: "haze", label: haze as string });
   }
-  
+
   const displayedRating =
     recipe?.rating != null && !Number.isNaN(recipe.rating)
       ? recipe.rating.toFixed(2)
@@ -488,9 +538,10 @@ export default function SpecificRecipe() {
       />
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator 
-            animating size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY} 
+          <ActivityIndicator
+            animating
+            size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY}
           />
           <ThemedText type="defaultText" className="mt-3">
             Loading recipe...
@@ -498,8 +549,12 @@ export default function SpecificRecipe() {
         </View>
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
-          <ThemedText type="title" className="mb-2 text-center">Oops</ThemedText>
-          <ThemedText type="defaultText" className="text-center">{error}</ThemedText>
+          <ThemedText type="title" className="mb-2 text-center">
+            Oops
+          </ThemedText>
+          <ThemedText type="defaultText" className="text-center">
+            {error}
+          </ThemedText>
         </View>
       ) : (
         <ScrollView
@@ -507,7 +562,6 @@ export default function SpecificRecipe() {
           contentContainerStyle={{ paddingBottom: 70 }}
           showsVerticalScrollIndicator={false}
         >
-          
           {/* Title */}
           <View>
             <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
@@ -518,7 +572,7 @@ export default function SpecificRecipe() {
             <View
               style={{
                 width: "100%",
-                aspectRatio: 3 / 4, 
+                aspectRatio: 3 / 4,
                 borderRadius: 16,
                 overflow: "hidden",
               }}
@@ -547,11 +601,13 @@ export default function SpecificRecipe() {
               <ThemedText
                 type="subTitle"
                 testID="already-reviewed-label"
-                style={{ 
+                style={{
                   position: "absolute",
-                  right: 0, 
+                  right: 0,
                 }}
-              >You reviewed ✓</ThemedText>
+              >
+                You reviewed ✓
+              </ThemedText>
             ) : (
               <Button
                 testID="review-button"
@@ -561,7 +617,12 @@ export default function SpecificRecipe() {
                   right: 0,
                 }}
               >
-                <ThemedText type="subTitle" style={{ color: BASE_COLORS.TEXT_DARK }}>Add Review</ThemedText>
+                <ThemedText
+                  type="subTitle"
+                  style={{ color: BASE_COLORS.TEXT_DARK }}
+                >
+                  Add Review
+                </ThemedText>
               </Button>
               /*
              <Button
@@ -599,11 +660,13 @@ export default function SpecificRecipe() {
                     fontSize: Math.min(12 * scale, 18),
                     color: BASE_COLORS.TEXT_DARK,
                   }}
-                >{chip.label}</Chip>
+                >
+                  {chip.label}
+                </Chip>
               ))}
             </View>
           )}
-                
+
           {/* Description */}
           {recipe?.description && (
             <ThemedText type="defaultText" className="mb-3">
@@ -613,9 +676,13 @@ export default function SpecificRecipe() {
 
           {/* Ingredients */}
           <View className="mt-2 mb-4">
-            <ThemedText type="defaultText" className="">Ingredients:</ThemedText>
+            <ThemedText type="defaultText" className="">
+              Ingredients:
+            </ThemedText>
             {ingredients.length === 0 ? (
-              <ThemedText type="defaultText">No ingredients found for this recipe.</ThemedText>
+              <ThemedText type="defaultText">
+                No ingredients found for this recipe.
+              </ThemedText>
             ) : (
               ingredients.map((item) => (
                 <View
@@ -634,9 +701,13 @@ export default function SpecificRecipe() {
 
           {/* Reviews section */}
           <View className="mt-2 mb-4">
-            <ThemedText type="defaultText" className="mb-2">Reviews:</ThemedText>
+            <ThemedText type="defaultText" className="mb-2">
+              Reviews:
+            </ThemedText>
             {displayedReviews.length === 0 ? (
-              <ThemedText type="defaultText">This beer has no reviews yet.</ThemedText>
+              <ThemedText type="defaultText">
+                This beer has no reviews yet.
+              </ThemedText>
             ) : (
               displayedReviews.map((r, idx) => (
                 <View key={idx} className="ml-1">
@@ -685,7 +756,9 @@ export default function SpecificRecipe() {
             marginHorizontal: 30,
           }}
         >
-          <ThemedText type="title" className="text-center mb-4">Rate this recipe</ThemedText>
+          <ThemedText type="title" className="text-center mb-4">
+            Rate this recipe
+          </ThemedText>
           <TextInput
             mode="outlined"
             label="Write a review (optional)"
@@ -699,8 +772,14 @@ export default function SpecificRecipe() {
             activeOutlineColor={BASE_COLORS.ACCENT_PRIMARY}
             selectionColor={BASE_COLORS.ACCENT_PRIMARY}
             textColor="#000000"
-            theme={{ colors: { text: '#000000', placeholder: BASE_COLORS.STONE300 } }}
-            style={{ marginBottom: 12, backgroundColor: BASE_COLORS.LIGHT_BG, color: '#000000' }}
+            theme={{
+              colors: { text: "#000000", placeholder: BASE_COLORS.STONE300 },
+            }}
+            style={{
+              marginBottom: 12,
+              backgroundColor: BASE_COLORS.LIGHT_BG,
+              color: "#000000",
+            }}
           />
 
           <View className="flex-row justify-center gap-3">
@@ -740,7 +819,9 @@ export default function SpecificRecipe() {
             maxHeight: "85%",
           }}
         >
-          <ThemedText type="title" className="text-center mb-4">Get your StarterKit now!</ThemedText>
+          <ThemedText type="title" className="text-center mb-4">
+            Get your StarterKit now!
+          </ThemedText>
 
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -774,9 +855,10 @@ export default function SpecificRecipe() {
                       price={`€${kit.price.toFixed(2)}`}
                       onPress={() => {
                         setKitsVisible(false);
-                        router.push(({ 
-                          pathname: "/StoreItem", 
-                          params: { id: kit.id, categoryNumber: 4 } } as any))
+                        router.push({
+                          pathname: "/StoreItem",
+                          params: { id: kit.id, categoryNumber: 4 },
+                        } as any);
                       }}
                     />
                   </View>
