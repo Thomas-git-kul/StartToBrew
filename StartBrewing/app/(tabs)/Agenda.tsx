@@ -189,9 +189,22 @@ export default function Agenda() {
             if (step.duration_min) {
               stepDate = new Date(currentStepTime);
               stepDate.setMinutes(stepDate.getMinutes() + step.duration_min);
-              currentStepTime = new Date(stepDate);
-            }
+            } else {
+              stepDate = new Date(currentStepTime);
           }
+
+          // 🔥 HIER gebeurt de correctie
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          if (stepDate < today) {
+            // De eerste niet-completed stap ligt vóór vandaag → forceer vandaag
+            stepDate = new Date(today);
+            currentStepTime = new Date(today);
+          } else {
+            // Geen correctie → gewoon verder rekenen
+            currentStepTime = new Date(stepDate);
+          }}
 
           // Datum naar string
           const dayStr = `${stepDate.getFullYear()}-${(stepDate.getMonth() + 1)
