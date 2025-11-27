@@ -37,21 +37,22 @@ export function useUserProgress() {
 
       if (error || !data) return;
 
-      const prevLevel = progress?.level ?? null;
+      // const prevLevel = progress?.level ?? null;
       const newLevel = data.level as number;
-
-      if (prevLevel !== null && newLevel > prevLevel) {
-        setLevelUp({ from: prevLevel, to: newLevel });
-      }
-
-      setProgress({
-        level: newLevel,
-        total_xp: data.total_xp as number,
+      setProgress((prev) => {
+        const prevLevel = prev?.level ?? null;
+        if (prevLevel !== null && newLevel > prevLevel) {
+          setLevelUp({ from: prevLevel, to: newLevel });
+        }
+        return {
+          level: newLevel,
+          total_xp: data.total_xp as number,
+        };
       });
     } finally {
       setLoading(false);
     }
-  }, [progress]);
+  }, []); 
 
   useEffect(() => {
     fetchProgress();
