@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { View, ScrollView, Image, Pressable, FlatList, Dimensions } from "react-native";
+import { View, ScrollView, Image, Pressable, FlatList, Dimensions, Text } from "react-native";
 import { Button, Snackbar } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -33,7 +33,6 @@ export default function StoreItem() {
   const router = useRouter();
   const { id } = useLocalSearchParams() as { id?: number };
   const { categoryNumber } = useLocalSearchParams() as { categoryNumber?: number };
-  const { cartCount } = useLocalSearchParams() as { cartCount?: number };
   // console.log("cartCount:", cartCount);
 
   const [loading, setLoading] = useState(true);
@@ -49,6 +48,7 @@ export default function StoreItem() {
   const [quantity, setQuantity] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   // Format price in Euro
   const formatter = useMemo(
@@ -61,6 +61,36 @@ export default function StoreItem() {
     () => (item?.price ?? 0) * quantity,
     [item?.price, quantity]
   );
+
+  const loadCartCount = async () => {
+    try {
+      // Get the logged-in user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCartCount(0);
+        return;
+      }
+
+      // Fetch only rows for that user
+      const { data, error } = await supabase
+        .from("user_shopping_cart")
+        .select("id_user_cart", { count: "exact" })  // we get an exact count
+        .eq("user_id", user.id);
+      // console.log("cartitems", data);
+
+      if (error) {
+        console.warn("Cart count error:", error.message);
+        return;
+      }
+
+      // Use the count from Supabase
+      setCartCount(data ? data.length : 0);
+
+      // console.log("cartcount", data?.length ?? 0);
+    } catch (e: any) {
+      console.warn("Cart count fetch exception:", e?.message ?? e);
+    }
+  };
 
   const handleAddToOrder = async () => {
     if (!item) return;
@@ -139,10 +169,7 @@ export default function StoreItem() {
       console.log("Item added to shopping cart successfully");
 
       setSnackbarVisible(true);
-      setTimeout(() => {
-        setSnackbarVisible(false);
-      }, 8000);
-      // router.push("/Store");
+      loadCartCount();
 
     } catch (err: any) {
       console.error("Unexpected order creation error:", err.message ?? err);
@@ -214,6 +241,8 @@ export default function StoreItem() {
     };
 
     load();
+    loadCartCount();
+
     return () => { mounted = false; };
   }, [id, categoryNumber, cartCount]);
 
@@ -362,10 +391,29 @@ export default function StoreItem() {
           style={{
             backgroundColor: BASE_COLORS.WHITE,
             marginBottom: 80,
+            shadowColor: BASE_COLORS.STONE700,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.07,
           }}
-        > 
-          <ThemedText>Added to cart</ThemedText>
-          <Button>Back to Store</Button>
+        >
+          <View className="flex-row justify-between">
+            <Text 
+                style={{ 
+                  fontSize: Math.min(18 * scale, 26),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.STONE600,
+                }}
+              >Item added to cart</Text>
+            <Button>
+              <Text 
+                style={{ 
+                  fontSize: Math.min(16 * scale, 22),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >Back to Home</Text>
+            </Button>
+          </View>
         </Snackbar>
       </SafeAreaView>
     );
