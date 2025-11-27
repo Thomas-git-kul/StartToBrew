@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { View, ScrollView } from "react-native";
-import { Button } from "react-native-paper";
+import { Button, ActivityIndicator } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { useRouter } from "expo-router";
@@ -47,6 +47,7 @@ export default function ShoppingCart() {
   const router = useRouter();
 
   const [orders, setOrders] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Format Euro prices
   const formatter = useMemo(
@@ -61,75 +62,78 @@ export default function ShoppingCart() {
   );
 
   const loadCart = async () => {
-  try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) return console.error("Error fetching user:", userError?.message);
-    const userId = user.id;
+    setLoading(true);
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) return console.error("Error fetching user:", userError?.message);
+      const userId = user.id;
 
-    // Get or create cart
-    let { data: existingCart } = await supabase
-      .from("shopping_carts")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-
-    let cartId = existingCart?.id_cart;
-    if (!cartId) {
-      const { data: newCart } = await supabase
+      // Get or create cart
+      let { data: existingCart } = await supabase
         .from("shopping_carts")
-        .insert({ user_id: userId })
-        .select()
+        .select("*")
+        .eq("user_id", userId)
         .single();
-      cartId = newCart.id_cart;
-    }
 
-    // Fetch all cart items
-    const { data: cartItems } = await supabase
-      .from("shopping_cart_items")
-      .select("*")
-      .eq("cart_id", cartId);
-
-    if (!cartItems || cartItems.length === 0) {
-      setOrders([]);
-      return;
-    }
-
-    // Fetch store items and starter kits
-    const { data: storeItems } = await supabase.from("store_items").select("*");
-    const { data: starterKits } = await supabase.from("starter_kits").select("*");
-    const mappedOrders: CartItem[] = (cartItems as any[]).map((item) => {
-      if (item.starter_kit) {
-        // Starter kit
-        const kit = (starterKits as StarterKit[]).find(k => k.id_starter_kit === item.store_item_id);
-        return {
-          store_item_id: item.store_item_id,
-          title: kit?.name || "Starter Kit",
-          quantity: item.quantity,
-          price: `€${kit?.price?.toFixed(2) ?? "0.00"}`,
-          starterkit: true,
-          image: exampleImages[4], // example image for starter kits
-        };
-      } else {
-        // Regular store item
-        const storeItem = (storeItems as StoreItem[]).find(s => s.id_store_item === item.store_item_id);
-        return {
-          store_item_id: item.store_item_id,
-          title: storeItem?.name || "Item",
-          quantity: item.quantity,
-          price: `€${storeItem?.price?.toFixed(2) ?? "0.00"}`,
-          starterkit: false,
-          image: exampleImages[storeItem?.category_id ?? 1],
-        };
+      let cartId = existingCart?.id_cart;
+      if (!cartId) {
+        const { data: newCart } = await supabase
+          .from("shopping_carts")
+          .insert({ user_id: userId })
+          .select()
+          .single();
+        cartId = newCart.id_cart;
       }
-    });
 
-    mappedOrders.sort((a, b) => a.title.localeCompare(b.title));
-    setOrders(mappedOrders);
+      // Fetch all cart items
+      const { data: cartItems } = await supabase
+        .from("shopping_cart_items")
+        .select("*")
+        .eq("cart_id", cartId);
 
-  } catch (err: any) {
-    console.error("Error loading cart:", err.message ?? err);
-  }
-};
+      if (!cartItems || cartItems.length === 0) {
+        setOrders([]);
+        return;
+      }
+
+      // Fetch store items and starter kits
+      const { data: storeItems } = await supabase.from("store_items").select("*");
+      const { data: starterKits } = await supabase.from("starter_kits").select("*");
+      const mappedOrders: CartItem[] = (cartItems as any[]).map((item) => {
+        if (item.starter_kit) {
+          // Starter kit
+          const kit = (starterKits as StarterKit[]).find(k => k.id_starter_kit === item.store_item_id);
+          return {
+            store_item_id: item.store_item_id,
+            title: kit?.name || "Starter Kit",
+            quantity: item.quantity,
+            price: `€${kit?.price?.toFixed(2) ?? "0.00"}`,
+            starterkit: true,
+            image: exampleImages[4], // example image for starter kits
+          };
+        } else {
+          // Regular store item
+          const storeItem = (storeItems as StoreItem[]).find(s => s.id_store_item === item.store_item_id);
+          return {
+            store_item_id: item.store_item_id,
+            title: storeItem?.name || "Item",
+            quantity: item.quantity,
+            price: `€${storeItem?.price?.toFixed(2) ?? "0.00"}`,
+            starterkit: false,
+            image: exampleImages[storeItem?.category_id ?? 1],
+          };
+        }
+      });
+
+      mappedOrders.sort((a, b) => a.title.localeCompare(b.title));
+      setOrders(mappedOrders);
+
+    } catch (err: any) {
+      console.error("Error loading cart:", err.message ?? err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateCartQuantity = async (store_item_id: number, newQty: number, starter_kit: boolean) => {
     try {
@@ -215,71 +219,82 @@ export default function ShoppingCart() {
         onIconPress={() => router.push("/Store" as any)}
         actionTestID="store-button"
       />
-
-      <ScrollView 
-        className="mx-3"
-        showsHorizontalScrollIndicator={false}
-      >
-        <ThemedText type="title">Order Summary</ThemedText>
-
-      {/* Order cards */}
-      <View className="mx-1">
-        {orders.map((order, index) => (
-          <OrderCard
-            key={index}
-            {...order}
-            starterkit={order.starterkit}
-            onPress={() =>
-              router.push({
-                pathname: "/StoreItem",
-                params: { id: order.store_item_id, categoryNumber: order.starterkit ? 4 : 0 },
-              } as any)
-            }
-            onQuantityChange={(newQty, starterkit) => updateCartQuantity(order.store_item_id, newQty, starterkit)}
+      {loading ? (
+        <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+          <ActivityIndicator 
+            animating size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY} 
           />
-        ))}
-      </View>
+          <ThemedText type="defaultText" className="mt-3">
+            Loading progress...
+          </ThemedText>
+        </SafeAreaView>
+      ) : (
+        <ScrollView 
+          className="mx-3"
+          showsHorizontalScrollIndicator={false}
+        >
+          <ThemedText type="title">Order Summary</ThemedText>
 
-        {/* Subtotal */}
-        <View className='mt-3 mr-2 items-end'>
-          <ThemedText type="accentDark">Subtotal: {formatter.format(total)}</ThemedText>
+        {/* Order cards */}
+        <View className="mx-1">
+          {orders.map((order, index) => (
+            <OrderCard
+              key={index}
+              {...order}
+              starterkit={order.starterkit}
+              onPress={() =>
+                router.push({
+                  pathname: "/StoreItem",
+                  params: { id: order.store_item_id, categoryNumber: order.starterkit ? 4 : 0 },
+                } as any)
+              }
+              onQuantityChange={(newQty, starterkit) => updateCartQuantity(order.store_item_id, newQty, starterkit)}
+            />
+          ))}
         </View>
 
-        {/* Shipping Info */}
-        <View className="mt-7">
-          <ThemedText type="title">Shipping Information</ThemedText>
-          <TextInput 
-            placeholder="Full Name"
-          />
-          <TextInput 
-            placeholder="Street name and number"/>
-          <View className="flex-row">
-              <TextInput placeholder="City" />
-            <View className="flex-1 ml-3">
-              <TextInput placeholder="Zip code"/>
+          {/* Subtotal */}
+          <View className='mt-3 mr-2 items-end'>
+            <ThemedText type="accentDark">Subtotal: {formatter.format(total)}</ThemedText>
+          </View>
+
+          {/* Shipping Info */}
+          <View className="mt-7">
+            <ThemedText type="title">Shipping Information</ThemedText>
+            <TextInput 
+              placeholder="Full Name"
+            />
+            <TextInput 
+              placeholder="Street name and number"/>
+            <View className="flex-row">
+                <TextInput placeholder="City" />
+              <View className="flex-1 ml-3">
+                <TextInput placeholder="Zip code"/>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Proceed */}
-        <View className="mt-5">
-          <Button
-            mode="contained"
-            onPress={() => router.push("../Payment")}
-            style={{
-              backgroundColor: BASE_COLORS.TEXT_DARK,
-              alignSelf: "flex-start",
-              marginBottom: 10
-            }}
-            contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
-            labelStyle={{ 
-              fontSize: 15,
-              color: BASE_COLORS.WHITE,
-              fontFamily: FontFamilies.BODY
-            }}
-          >Proceed to payment</Button>
-        </View>
-      </ScrollView>
+          {/* Proceed */}
+          <View className="mt-5">
+            <Button
+              mode="contained"
+              onPress={() => router.push("../Payment")}
+              style={{
+                backgroundColor: BASE_COLORS.TEXT_DARK,
+                alignSelf: "flex-start",
+                marginBottom: 10
+              }}
+              contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
+              labelStyle={{ 
+                fontSize: 15,
+                color: BASE_COLORS.WHITE,
+                fontFamily: FontFamilies.BODY
+              }}
+            >Proceed to payment</Button>
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }
