@@ -35,6 +35,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
           }
         >
           <TextInput
+            enterKeyHint="done"
             keyboardType="default"
             multiline={false}
             onBlur={[Function]}
@@ -65,6 +66,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
           }
         >
           <TextInput
+            enterKeyHint="done"
             keyboardType="default"
             multiline={false}
             onBlur={[Function]}
@@ -98,6 +100,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
             }
           >
             <TextInput
+              enterKeyHint="done"
               keyboardType="default"
               multiline={false}
               onBlur={[Function]}
@@ -131,6 +134,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
               }
             >
               <TextInput
+                enterKeyHint="done"
                 keyboardType="default"
                 multiline={false}
                 onBlur={[Function]}

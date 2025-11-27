@@ -11,10 +11,19 @@ exports[`<Progress /> snapshot 1`] = `
       "top": "additive",
     }
   }
+  style={
+    {
+      "backgroundColor": "#FAFAF9",
+    }
+  }
 >
   <ActivityIndicator
+    animating={true}
+    color="#B45309"
     size="large"
-    testID="loading-indicator"
   />
+  <Text>
+    Loading progress...
+  </Text>
 </RNCSafeAreaView>
 `;
