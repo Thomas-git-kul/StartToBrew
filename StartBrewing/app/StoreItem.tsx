@@ -65,29 +65,35 @@ export default function StoreItem() {
 
   const loadCartCount = async () => {
     try {
-      // Get the logged-in user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setCartCount(0);
         return;
       }
 
-      // Fetch only rows for that user
-      const { data, error } = await supabase
-        .from("user_shopping_cart")
-        .select("id_user_cart", { count: "exact" })  // we get an exact count
-        .eq("user_id", user.id);
-      // console.log("cartitems", data);
+      // Get the user's cart
+      const { data: cart, error: cartError } = await supabase
+        .from("shopping_carts")
+        .select("id_cart")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (error) {
-        console.warn("Cart count error:", error.message);
+      if (cartError || !cart) {
+        setCartCount(0);
         return;
       }
 
-      // Use the count from Supabase
-      setCartCount(data ? data.length : 0);
+      const { data: items, error: countError } = await supabase
+        .from("shopping_cart_items")
+        .select("id_cart_item", { count: "exact" })
+        .eq("cart_id", cart.id_cart);
 
-      // console.log("cartcount", data?.length ?? 0);
+      if (countError) {
+        console.warn("Cart count error:", countError.message);
+        return;
+      }
+
+      setCartCount(items?.length ?? 0);
     } catch (e: any) {
       console.warn("Cart count fetch exception:", e?.message ?? e);
     }
@@ -105,70 +111,88 @@ export default function StoreItem() {
         console.error("Error fetching user:", userError?.message);
         return;
       }
-      const userId = user.id;
-      console.log("userId:", userId);
 
-      // Check if the item (store_item or starter_kit) already exists in the cart
-      const { data: existingCart, error: existingError } = await supabase
-        .from("shopping_cart")
-        .select(`
-          id_cart,
-          quantity,
-          user_shopping_cart!inner (
-            user_id
-          )
-        `)
-        .eq("store_item_id", item.id)
-        .eq("starter_kit", isStarterKit)
-        .eq("user_shopping_cart.user_id", userId)
+      const userId = user.id;
+      let { data: cart, error: cartError } = await supabase
+        .from("shopping_carts")
+        .select("id_cart")
+        .eq("user_id", userId)
         .maybeSingle();
 
-      if (existingError && existingError.code !== "PGRST116") {
-        console.error("Error checking existing cart:", existingError.message);
+      if (cartError) {
+        console.error("Error fetching shopping cart:", cartError.message);
         return;
       }
 
-      if (existingCart) {
-        // Update quantity if already in cart
-        const newQuantity = existingCart.quantity + quantity;
+      if (!cart) {
+        const { data: newCart, error: createError } = await supabase
+          .from("shopping_carts")
+          .insert({ user_id: userId })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error("Error creating shopping cart:", createError.message);
+          return;
+        }
+
+        cart = newCart;
+      }
+
+      const cartId = cart.id_cart;
+      const { data: existingItem, error: existingError } = await supabase
+        .from("shopping_cart_items")
+        .select("id_cart_item, quantity")
+        .eq("cart_id", cartId)
+        .eq("store_item_id", item.id)
+        .eq("starter_kit", isStarterKit)
+        .maybeSingle();
+
+      if (existingError && existingError.code !== "PGRST116") {
+        console.error("Error checking existing cart item:", existingError.message);
+        return;
+      }
+
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + parseInt(quantity);
+
+        console.log("DEBUG update values:", {
+          existingItem,
+          existingItemId: existingItem?.id,
+          existingQuantity: existingItem?.quantity,
+          incomingQuantity: quantity,
+          parsedIncoming: Number(quantity),
+          newQuantity:
+            Number(existingItem?.quantity) + Number(quantity || 0),
+        });
+
         const { error: updateError } = await supabase
-          .from("shopping_cart")
+          .from("shopping_cart_items")
           .update({ quantity: newQuantity })
-          .eq("id_cart", existingCart.id_cart);
+          .eq("id_cart_item", existingItem.id_cart_item);
+
         if (updateError) {
           console.error("Error updating cart quantity:", updateError.message);
           return;
         }
-      } else {
-        // Insert new cart row
-        const { data: cartData, error: insertCartError } = await supabase
-          .from("shopping_cart")
-          .insert([{
+      }
+      else {
+        const { error: insertError } = await supabase
+          .from("shopping_cart_items")
+          .insert({
+            cart_id: cartId,
             store_item_id: item.id,
-            quantity,
+            quantity: parseInt(quantity),
             starter_kit: isStarterKit
-          }])
-          .select()
-          .single();
+          });
 
-        if (insertCartError) {
-          console.error("Error inserting into shopping_cart:", insertCartError.message);
-          return;
-        }
-
-        // Map cart row to user
-        const { error: mapError } = await supabase
-          .from("user_shopping_cart")
-          .insert([{ user_id: user.id, cart_id: cartData.id_cart }]);
-
-        if (mapError) {
-          console.error("Error mapping cart to user:", mapError.message);
+        if (insertError) {
+          console.error("Error inserting cart item:", insertError.message);
           return;
         }
       }
 
-      console.log("Item added to shopping cart successfully");
-
+      // UI updates
       setQuantity("1");
       setSnackbarVisible(true);
       loadCartCount();
@@ -246,7 +270,7 @@ export default function StoreItem() {
     loadCartCount();
 
     return () => { mounted = false; };
-  }, [id, categoryNumber, cartCount]);
+  }, [id, categoryNumber]);
 
   if (loading) {
     return (
@@ -370,7 +394,7 @@ export default function StoreItem() {
             <TextInput
               value={quantity.toString()}
               inputMode="numeric"
-              autoFocus={true}
+              // autoFocus={true}
               enterKeyHint="done"
               maxLength={2}
               onChangeText={(text) => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { View, TextInput, Pressable, Dimensions } from "react-native";
 import { Eye, EyeOff } from "lucide-react-native";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -10,7 +10,7 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 interface textInputProps {
   placeholder: string;
-  onChangeText: (text: string) => void;
+  onChangeText?: (text: string) => void;
   value?: string;
   secureTextEntry?: boolean;
   multiline?: boolean;
@@ -53,7 +53,6 @@ export default function CustomTextInput({
         numberOfLines={numberOfLines}
         keyboardType={keyboardType}
         maxLength={maxLength}
-        enterKeyHint="done"
 
         placeholderTextColor={BASE_COLORS.STONE400}
         selectionColor={BASE_COLORS.ACCENT_PRIMARY}
@@ -74,7 +73,7 @@ export default function CustomTextInput({
       {secureTextEntry && (
         <Pressable
           onPress={() => setShowPassword((prev) => !prev)}
-
+          className="absolute right-4 top-1/2 -translate-y-1/2"
         >
           {showPassword ? (
             <EyeOff size={Math.min(20 * scale, 30)} color={BASE_COLORS.STONE300} />
