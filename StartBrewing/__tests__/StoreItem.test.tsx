@@ -38,7 +38,7 @@ jest.mock('../supabase', () => {
 
 import React from "react";
 import { render, fireEvent, waitFor, screen } from "@testing-library/react-native";
-import StoreItem from "../app/StoreItem";
+import StoreItem from "../app/(tabs)/StoreItem";
 
 // --- MOCKS --- //
 const mockPush = jest.fn();

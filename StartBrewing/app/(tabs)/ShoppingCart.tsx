@@ -10,7 +10,7 @@ import Header from '@/components/header';
 import TextInput from '@/components/textInput';
 import { ThemedText } from "@/components/themed-text";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { supabase } from "../supabase";
+import { supabase } from "@/supabase";
 
 interface CartItem {
   store_item_id: number;
@@ -215,9 +215,6 @@ export default function ShoppingCart() {
 
       <Header
         title='Shopping Cart'
-        iconName="ArrowRight"
-        onIconPress={() => router.push("/Store" as any)}
-        actionTestID="store-button"
       />
       {loading ? (
         <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
