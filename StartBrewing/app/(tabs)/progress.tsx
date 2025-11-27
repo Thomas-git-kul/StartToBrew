@@ -24,6 +24,7 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "@/supabase";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useUserProgressContext } from "@/context/UserProgressContext";
+import DialogCustom from "@/components/dialog";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -526,54 +527,16 @@ export default function Progress() {
           },
         }}
       />
-
-      <Portal>
-        <Dialog 
-          visible={dialogVisible} 
-          onDismiss={hideDialog}
-          style={{
-            backgroundColor: BASE_COLORS.WHITE,
-          }}
-        >
-          <Dialog.Title
-            style={{
-              fontSize: Math.min(16 * scale, 24), 
-              fontFamily: FontFamilies.BODY_BOLD,
-              color: BASE_COLORS.ACCENT_PRIMARY,
-            }}
-          >Confirm Brew Deletion</Dialog.Title>
-          <Dialog.Content>
-            <ThemedText type="defaultText">
-              Are you sure you want to delete "{stepData?.beer}" brew?
-            </ThemedText>
-          </Dialog.Content>
-          <Dialog.Actions
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
-            <Button onPress={hideDialog}>
-              <Text 
-                style={{ 
-                  fontSize: Math.min(12 * scale, 22),
-                  fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.STONE600,
-                }}
-              >Cancel</Text>
-            </Button>
-            <Button onPress={confirmDeleteBrew} textColor={BASE_COLORS.RED600}>
-              <Text 
-                style={{ 
-                  fontSize: Math.min(14 * scale, 22),
-                  fontFamily: FontFamilies.BODY_BOLD,
-                  color: BASE_COLORS.RED600,
-                }}
-              >Delete</Text>
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      <DialogCustom
+        title="Confirm Brew Deletion"
+        text={`Are you sure you want to delete \"${stepData?.beer}\" brew?`}
+        visible={dialogVisible}
+        onDismiss={hideDialog}
+        cancelBtn="Cancel"
+        yesBtn="Delete"
+        onPressCancel={hideDialog}
+        onPressYes={confirmDeleteBrew}
+      />
     </SafeAreaView>
   );
 }
