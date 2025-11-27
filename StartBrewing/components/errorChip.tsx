@@ -10,9 +10,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
-const RED = "#bc1f2fff"
-const LIGHT_RED="#f1c1c4ff"
-
 interface ErrorProps {
   text: string;
 }
@@ -23,17 +20,17 @@ export default function HeaderBar({ text }: ErrorProps) {
       mode="flat"
       icon={() => (
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <CircleAlert size={Math.min(18 * scale, 25)} color={RED} />
+            <CircleAlert size={Math.min(18 * scale, 25)} color={BASE_COLORS.RED600} />
         </View>
       )}
       textStyle={{
-          color: RED,
+          color: BASE_COLORS.RED600,
           fontFamily: FontFamilies.BODY,
           fontSize: Math.min(13 * scale, 20),
           marginTop: 8,
       }}
       style={{
-        backgroundColor: LIGHT_RED,
+        backgroundColor: BASE_COLORS.RED200,
         marginBottom: 6,
         alignItems: "center",
         alignSelf: "flex-start",
