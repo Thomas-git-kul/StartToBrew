@@ -221,6 +221,29 @@ export default function Progress() {
     }
   }, [brewId, stepData, loadStep, router]);
 
+  // To delete brews
+  const deleteBrew = useCallback(async () => {
+    if (!brewId) return;
+
+    try {
+      // Delete brew_steps first (FK constraint)
+      await supabase
+        .from("brew_steps")
+        .delete()
+        .eq("id_brew", brewId);
+
+      // Delete the brew
+      await supabase
+        .from("brews")
+        .delete()
+        .eq("id_brew", brewId);
+
+      router.push("/HomePage");
+    } catch (error) {
+      console.error("deleteBrew error:", error);
+    }
+  }, [brewId, router]);
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
@@ -404,6 +427,19 @@ export default function Progress() {
             <ThemedText type="tips">{tips}</ThemedText>
           </View>
         )}
+
+        <Button
+          mode="outlined"
+          onPress={deleteBrew}
+          style={{
+            marginTop: 16,
+            borderColor: BASE_COLORS.AMBER600,
+          }}
+          textColor={BASE_COLORS.AMBER600}
+        >
+          Delete Brew
+        </Button>
+
       </ScrollView>
       <FAB
         testID="fab-button"
