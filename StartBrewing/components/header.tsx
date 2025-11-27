@@ -41,7 +41,7 @@ export default function HeaderBar({
       />
 
       {IconComponent && onIconPress && (
-        <View style={{ marginRight: 12 }}>
+        <View>
           <Appbar.Action
             icon={() => (
               <View>
@@ -51,21 +51,18 @@ export default function HeaderBar({
                   strokeWidth={2}
                   fill={filled ? BASE_COLORS.ACCENT_PRIMARY : "transparent"}
                 />
-
                 {cartCount > 0 && (
                   <Badge
                     visible
                     size={18}
                     style={{
                       position: "absolute",
-                      top: -4,
-                      right: -4,
-                      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
+                      top: -5,
+                      right: -5,
+                      backgroundColor: "#bc1f2fff",
                       color: "white",
                     }}
-                  >
-                    {cartCount}
-                  </Badge>
+                  >{cartCount}</Badge>
                 )}
               </View>
             )}
