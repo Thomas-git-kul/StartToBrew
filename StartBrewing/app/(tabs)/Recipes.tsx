@@ -619,7 +619,10 @@ export default function Recipes() {
               placeholder="Search"
               value={searchQuery}
               onChangeText={setSearchQuery}
-              inputStyle={{ color: BASE_COLORS.STONE700 }}
+              inputStyle={{
+                color: BASE_COLORS.STONE700,
+                fontFamily: FontFamilies.BODY,
+              }}
               icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
               clearIcon={searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined}
               onClearIconPress={() => setSearchQuery("")}
