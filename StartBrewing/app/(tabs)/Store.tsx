@@ -135,29 +135,36 @@ export default function StorePage() {
     // cartcount
     const loadCartCount = async () => {
       try {
-        // Get the logged-in user
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           setCartCount(0);
           return;
         }
 
-        // Fetch only rows for that user
-        const { data, error } = await supabase
-          .from("user_shopping_cart")
-          .select("id_user_cart", { count: "exact" })  // we get an exact count
-          .eq("user_id", user.id);
-        // console.log("cartitems", data);
+        // Get the user's cart
+        const { data: cart, error: cartError } = await supabase
+          .from("shopping_carts")
+          .select("id_cart")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-        if (error) {
-          console.warn("Cart count error:", error.message);
+        if (cartError || !cart) {
+          setCartCount(0);
           return;
         }
 
-        // Use the count from Supabase
-        setCartCount(data ? data.length : 0);
+        // Count items in the cart
+        const { data: items, error: countError } = await supabase
+          .from("shopping_cart_items")
+          .select("id_cart_item", { count: "exact" })
+          .eq("cart_id", cart.id_cart);
 
-        // console.log("cartcount", data?.length ?? 0);
+        if (countError) {
+          console.warn("Cart count error:", countError.message);
+          return;
+        }
+
+        setCartCount(items?.length ?? 0);
       } catch (e: any) {
         console.warn("Cart count fetch exception:", e?.message ?? e);
       }
