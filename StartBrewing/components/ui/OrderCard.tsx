@@ -93,7 +93,8 @@ export default function OrderCard({
               <CircleMinus size={20} color={BASE_COLORS.STONE500} />
             </Pressable>
             <TextInput
-              value={quantity.toString()}
+              value={localQuantity.toString()}
+              readOnly={true}
               inputMode="numeric"
               // autoFocus={true}
               enterKeyHint="done"
