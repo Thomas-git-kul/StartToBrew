@@ -43,7 +43,7 @@ export function ThemedText({
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: Math.min(18 * scale, 22),
+    fontSize: Math.min(18 * scale, 26),
     fontFamily: FontFamilies.BODY_BOLD,
     color: BASE_COLORS.ACCENT_PRIMARY,
   },
@@ -73,12 +73,12 @@ const styles = StyleSheet.create({
     color: BASE_COLORS.STONE600
   },
   defaultText: {
-    fontSize: Math.min(17 * scale, 20),
+    fontSize: Math.min(17 * scale, 26),
     fontFamily: FontFamilies.HEADING,
     color: BASE_COLORS.STONE700,
   },
   tips: {
-    fontSize: Math.min(14 * scale, 18),
+    fontSize: Math.min(14 * scale, 24),
     fontFamily: FontFamilies.BODY_LIGHT,
     color: BASE_COLORS.ACCENT_LIGHT
   },

@@ -48,9 +48,10 @@ const BeerCard: React.FC<BeerCardProps> = ({
         style={{
           borderRadius: 12,
           backgroundColor: BASE_COLORS.WHITE,
+          marginBlock: 1,
           shadowColor: BASE_COLORS.STONE700,
           shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.15,
+          shadowOpacity: 0.03,
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
