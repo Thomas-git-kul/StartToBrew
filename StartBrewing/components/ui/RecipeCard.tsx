@@ -19,13 +19,13 @@ interface BeerCardProps {
   reviews: number;
   image: any;
   description: string | null;
+  style: string | null;
   batch_size_l?: number | null;
   abv_target?: number | null;
   ibu_target?: number | null;
   srm_target?: number | null;
   difficulty?: number | null;
   haze_level?: number | null;
-  style: string | null;
   onPress: () => void;
   onToggleFavorite?: () => void;
   isFavorite?: boolean;
@@ -48,11 +48,10 @@ const BeerCard: React.FC<BeerCardProps> = ({
         style={{
           borderRadius: 12,
           backgroundColor: BASE_COLORS.WHITE,
-          marginBlock: 3,
-          marginInline: 2,
+          marginBlock: 1,
           shadowColor: BASE_COLORS.STONE700,
           shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.07,
+          shadowOpacity: 0.03,
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
@@ -77,16 +76,14 @@ const BeerCard: React.FC<BeerCardProps> = ({
               <Text
                 numberOfLines={1}
                 style={{
-                  fontSize: Math.min(13 * scale, 18),
+                  fontSize: Math.min(14 * scale, 20),
                   fontFamily: FontFamilies.BODY,
                   color: BASE_COLORS.STONE950,
                   marginRight: 10,
                 }}
-              >
-                {name}
-              </Text>
+              >{name}</Text>
 
-              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+              <View className="flex-row items-center mb-4">
                 <Star
                   color={BASE_COLORS.ACCENT_LIGHT}
                   fill={BASE_COLORS.ACCENT_LIGHT}
@@ -114,18 +111,15 @@ const BeerCard: React.FC<BeerCardProps> = ({
                       backgroundColor: BASE_COLORS.STONE100,
                       borderWidth: 0,
                       marginRight: 8,
-                      marginTop: 8,
                       alignSelf: "flex-start",
                       justifyContent: "center",
                     }}
                     textStyle={{
                       fontFamily: FontFamilies.BODY,
-                      fontSize: Math.min(10 * scale, 18),
+                      fontSize: Math.min(11 * scale, 18),
                       color: BASE_COLORS.TEXT_DARK,
                     }}
-                  >
-                    {label.trim()}
-                  </Chip>
+                  >{label.trim()}</Chip>
                 </View>
               ))}
             </View>

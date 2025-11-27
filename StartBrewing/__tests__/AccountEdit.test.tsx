@@ -1,10 +1,18 @@
-// __tests__/EditAccount.test.tsx
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 
 // AsyncStorage mock
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock")
 );
+
+// Mock router
+jest.mock("expo-router", () => ({
+  __esModule: true,
+  useRouter: () => ({
+    push: mockPush,
+    replace: mockReplace,
+  }),
+}));
 
 // useFonts mock
 jest.mock("@/hooks/use-fonts", () => ({
@@ -159,45 +167,40 @@ jest.mock("@/supabase", () => {
   };
 });
 
-// ⬇️ IMPORT COMPONENT ONDERAAN
 import EditAccount from "@/app/AccountEdit";
 
-// ==============================
 // TESTS
-// ==============================
-
 describe("<EditAccount />", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it("laadt profielgegevens in de velden", async () => {
+  it("loads profile data into the fields", async () => {
     const { getByPlaceholderText } = render(<EditAccount />);
 
-    const username = await waitFor(() =>
-      getByPlaceholderText("jouw_naam")
+    const usernameInput = await waitFor(() =>
+      getByPlaceholderText("Username")
     );
+    const firstNameInput = getByPlaceholderText("First Name");
+    const lastNameInput = getByPlaceholderText("Last Name");
+    const bioInput = getByPlaceholderText("Biography");
 
-    const firstname = getByPlaceholderText("Voornaam");
-    const lastname = getByPlaceholderText("Achternaam");
-    const bio = getByPlaceholderText("Vertel iets over jezelf");
-
-    expect(username.props.value).toBe("testuser");
-    expect(firstname.props.value).toBe("Test");
-    expect(lastname.props.value).toBe("User");
-    expect(bio.props.value).toBe("Test bio");
+    expect(usernameInput.props.value).toBe("testuser");
+    expect(firstNameInput.props.value).toBe("Test");
+    expect(lastNameInput.props.value).toBe("User");
+    expect(bioInput.props.value).toBe("Test bio");
   });
 
   it("navigates to Account on save", async () => {
     const { getByText, getByPlaceholderText } = render(<EditAccount />);
 
-    const username = await waitFor(() =>
-      getByPlaceholderText("jouw_naam")
+    const usernameInput = await waitFor(() =>
+      getByPlaceholderText("Username")
     );
 
-    fireEvent.changeText(username, "updatedUser");
+    fireEvent.changeText(usernameInput, "updatedUser");
 
-    fireEvent.press(getByText("Opslaan"));
+    fireEvent.press(getByText("Save"));
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("../Account");

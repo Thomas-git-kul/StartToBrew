@@ -22,9 +22,8 @@ export default function StoreCard({ image, title, price, onPress }: StoreCardPro
     <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
       <Card 
         style={{ 
-          width: Math.min(CARD_WIDTH, 200),
+          width: "100%",
           height: Math.min(CARD_HEIGHT, 290),
-          marginBottom: 18,
           backgroundColor: BASE_COLORS.WHITE,
           borderRadius: 12,
           overflow: "hidden",
