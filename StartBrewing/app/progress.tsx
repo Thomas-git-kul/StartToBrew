@@ -16,46 +16,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
-/*
-const TIMER_COLORS = [
-  BASE_COLORS.AMBER500,
-  BASE_COLORS.AMBER600,
-  BASE_COLORS.AMBER700,
-  BASE_COLORS.AMBER800,
-  BASE_COLORS.AMBER900,
-];
-
-function computePhases(duration_total: number, duration_offset: number) {
-  // only 1 step
-  if (
-    !duration_offset ||
-    duration_offset <= 0 ||
-    duration_offset >= duration_total
-  ) {
-    return {
-      mode: "single",
-      step1_time: duration_total,
-      step2_time: 0,
-    };
-  }
-
-  // 2 steps
-  return {
-    mode: "two",
-    step1_time: duration_offset,
-    step2_time: duration_total,
-  };
-}
-
-
-function makeColorStops(durationSeconds: number, count: number) {
-  // returns descending remaining-time stops, length === count
-  if (count <= 1) return [durationSeconds];
-  const step = durationSeconds / count;
-  return Array.from({ length: count }, (_, i) => Math.max(0, Math.ceil(durationSeconds - step * i)));
-}
-*/
-
 export default function Progress() {
   useFonts();
   const router = useRouter();
@@ -137,7 +97,7 @@ export default function Progress() {
         temp: nextStep.temp_c_target ?? null,
         current_step_id: currentStep.step_id,
         next_step_id: nextStep.step_id,
-        after_next_step_id: afterNextStep?.step_id ?? null,   // ← ADD THIS LINE
+        after_next_step_id: afterNextStep?.step_id ?? null,
         step1: {
           title: currentStep.title,
           desc: currentStep.description_md,
@@ -188,34 +148,6 @@ export default function Progress() {
   useEffect(() => {
     loadStep();
   }, [loadStep]);
-
-  /*
-  const { mode, step1_time, step2_time } = useMemo(() => {
-    if (!stepData) return { mode: 'single' as const, step1_time: 0, step2_time: 0 };
-    return computePhases(stepData.duration_total, stepData.duration_offset);
-  }, [stepData]);
-
-  const hasTimer = (stepData?.duration_total ?? 0) > 0;
-  const hasTemp = stepData?.temp !== null && stepData?.temp !== undefined;
-
-  // durations in seconds for CountdownCircleTimer
-  const step1Sec = Math.max(0, Math.round((step1_time ?? 0)  * 60));
-  const step2Sec = Math.max(0, Math.round((step2_time ?? 0)  * 60 ));
-  const durationSec = phase === 1 ? step1Sec : step2Sec;
-
-  const colorsTime = useMemo(() => makeColorStops(durationSec || 1, TIMER_COLORS.length), [durationSec]);
-
-  // color stops (must match TIMER_COLORS length)
-
-  // Timer logic
-  useEffect(() => {
-    if (!stepData) return;
-
-    const hasTimer = stepData.duration_total && stepData.duration_total > 0;
-
-    if (!hasTimer) return;
-  }, [timerActive, remainingTime, phase, stepData]);
-  */
   
   const durationSec = phase === 1
     ? stepData?.step1?.duration_sec ?? 0
@@ -255,18 +187,6 @@ export default function Progress() {
           .eq("id_brew", brewId)
           .eq("step_id", u.step_id);
       }
-      
-      /*
-      const isLastStep = !stepData.next_step_id;
-
-      await supabase
-        .from("brews")
-        .update({
-          last_step_id: stepData.next_step_id,
-          ...(isLastStep ? { status_id: 3 } : {})
-        })
-        .eq("id_brew", brewId);
-      */
 
       let newLastStepId;
 
@@ -415,23 +335,21 @@ export default function Progress() {
             rotation="counterclockwise"
             duration={Math.max(1, durationSec)}      
             colors={[
-              BASE_COLORS.AMBER900,
-              BASE_COLORS.AMBER500,
+              BASE_COLORS.STONE300,
+              BASE_COLORS.STONE200,
             ]}
             colorsTime={[
+              0,
               Math.max(1, durationSec),
-              0
             ]}
-            trailColor={!phaseDone ? BASE_COLORS.STONE300 : BASE_COLORS.TEXT_DARK}
+            trailColor={!phaseDone ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200}
             strokeWidth={10}
             onComplete={() => {
                 if (stepData.mode === "two" && phase === 1) {
-                  // Move to phase 2
                   setTimerActive(false);
                   setPhase(2);
                   return { shouldRepeat: false };
                 }
-                // Final phase done
                 setPhaseDone(true);
                 setTimerActive(false);
                 return { shouldRepeat: false };
