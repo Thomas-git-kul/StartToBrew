@@ -164,6 +164,23 @@ export default function Progress() {
 
     try {
       const updates = [];
+      //start brewing
+      // If brew is planned: change status → in_progress + set start date
+      const { data: brewStatus } = await supabase
+        .from("brews")
+        .select("status_id")
+        .eq("id_brew", brewId)
+        .single();
+
+      if (brewStatus?.status_id === 1) { // assuming 1 = planned
+        await supabase
+          .from("brews")
+          .update({
+            status_id: 2, // in_progress
+            start_date: new Date().toISOString()
+          })
+          .eq("id_brew", brewId);
+      }
 
       // Always complete the current step
       updates.push({
