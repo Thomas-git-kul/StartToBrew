@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { View, ScrollView, Image, Pressable, FlatList, Dimensions } from "react-native";
-import { FAB } from "react-native-paper";
+import { Button } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -11,9 +11,12 @@ import { ThemedText } from "@/components/themed-text";
 import { CirclePlus, CircleMinus } from "lucide-react-native";
 import { supabase } from "../supabase";
 
-const { width } = Dimensions.get("window");
-const IMAGE_WIDTH = width - 20;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const IMAGE_WIDTH = SCREEN_WIDTH - 20;
 const IMAGE_HEIGHT = IMAGE_WIDTH * 0.75;
+
+const BASE_SCREEN_WIDTH = 375; 
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 const exampleImages: Record<number, any> = {
   1: require("@/assets/images/malt.png"),
@@ -30,7 +33,8 @@ export default function StoreItem() {
   const router = useRouter();
   const { id } = useLocalSearchParams() as { id?: number };
   const { categoryNumber } = useLocalSearchParams() as { categoryNumber?: number };
-  // console.log("CategoryNumber:", categoryNumber);
+  const { cartCount } = useLocalSearchParams() as { cartCount?: number };
+  // console.log("cartCount:", cartCount);
 
   const [loading, setLoading] = useState(true);
   const [item, setItem] = useState<{
@@ -205,16 +209,17 @@ export default function StoreItem() {
 
     load();
     return () => { mounted = false; };
-  }, [id, categoryNumber]);
+  }, [id, categoryNumber, cartCount]);
 
   return (
       <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
         {/* Header */}
         <Header
-          title={item?.name ?? (loading ? "Loading…" : "Item")}
-          iconName="ArrowRight"
-          onIconPress={() => router.push("/Store")}
+          title="Store"
+          iconName="ShoppingCart"
+          onIconPress={() => router.push("/ShoppingCart")}
           actionTestID="back-button"
+          cartCount={cartCount}
         />
 
         {/* Scrollable Content */}
@@ -222,74 +227,42 @@ export default function StoreItem() {
           className="flex-1 mx-3" 
           showsVerticalScrollIndicator={false}
         >
+          <ThemedText type="titleBlack">{item?.name ?? (loading ? "Loading…" : "Item")}</ThemedText>
           {/* Image Carousel */}
-          <View>
-            <FlatList
-              data={item?.images ?? []} // Ensure fallback is an empty array
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(image, index) => `${image.id ?? index}`} // Use index as fallback
-              renderItem={({ item: image }) => {
-                return (
-                  <View
-                    style={{
-                      width: IMAGE_WIDTH,
-                      height: IMAGE_HEIGHT,
-                      borderRadius: 20,
-                      overflow: "hidden",
-                    }}
-                  >
-                    <Image
-                      source={image.source}
-                      style={{
-                        width: "100%",
-                        height:"100%"
-                      }}
-                      resizeMode="cover"
-                    />
-                  </View>
-                );
-              }}
-              onMomentumScrollEnd={(ev) => {
-                const index = Math.round(
-                  ev.nativeEvent.contentOffset.x / ev.nativeEvent.layoutMeasurement.width
-                );
-                setCurrentIndex(index);
-              }}
-            />
-
-            {/* Pagination Dots */}
-            <View
-              style={{
-                position: "absolute",
-                bottom: 8,
-                left: 0,
-                right: 0,
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 6,
-              }}
-            >
-              {item?.images?.map((_, i: number) => (
+          <FlatList
+            data={item?.images ?? []} // Ensure fallback is an empty array
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(image, index) => `${image.id ?? index}`} // Use index as fallback
+            renderItem={({ item: image }) => {
+              return (
                 <View
-                  key={i}
                   style={{
-                    width: currentIndex === i ? 10 : 8,
-                    height: currentIndex === i ? 10 : 8,
-                    borderRadius: currentIndex === i ? 5 : 4,
-                    backgroundColor:
-                      currentIndex === i
-                        ? BASE_COLORS.ACCENT_PRIMARY
-                        : "rgba(255,255,255,0.65)",
-                    borderWidth: 1,
-                    borderColor: "rgba(0,0,0,0.12)",
-                    marginHorizontal: 2,
+                    width: IMAGE_WIDTH,
+                    height: IMAGE_HEIGHT,
+                    borderRadius: 20,
+                    overflow: "hidden",
                   }}
-                />
-              ))}
-            </View>
-          </View>
+                >
+                  <Image
+                    source={image.source}
+                    style={{
+                      width: "100%",
+                      height:"100%"
+                    }}
+                    resizeMode="cover"
+                  />
+                </View>
+              );
+            }}
+            onMomentumScrollEnd={(ev) => {
+              const index = Math.round(
+                ev.nativeEvent.contentOffset.x / ev.nativeEvent.layoutMeasurement.width
+              );
+              setCurrentIndex(index);
+            }}
+          />
           
           {/* Product information */}
           <View
@@ -351,17 +324,20 @@ export default function StoreItem() {
             </Pressable>
           </View>
 
-          <FAB
-            label="Add to order"
-            mode="elevated"
+          <Button
+            mode="contained"
             testID="fab-add-to-order"
             onPress={handleAddToOrder}
-            style={{
-              backgroundColor: BASE_COLORS.TEXT_DARK,
-              borderRadius: 20,
-
+            labelStyle={{ 
+              fontSize: Math.min(18 * scale, 24),
+              color: BASE_COLORS.WHITE,
+              fontFamily: FontFamilies.BODY,            
             }}
-            color={BASE_COLORS.WHITE}
+            style={{
+              borderRadius: 30,
+              backgroundColor: BASE_COLORS.TEXT_DARK,
+              padding: 4,
+            }}
             theme={{
               fonts: {
                 labelLarge: {
@@ -370,7 +346,7 @@ export default function StoreItem() {
                 },
               },
             }}
-          />
+          >Add to order</Button>
         </View>
       </SafeAreaView>
     );

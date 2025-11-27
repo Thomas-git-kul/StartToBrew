@@ -292,7 +292,7 @@ export default function StorePage() {
               onPress={() =>
                 router.push({
                   pathname: "/StoreItem",
-                  params: { id: item.id, categoryNumber: item.categoryId },
+                  params: { id: item.id, categoryNumber: item.categoryId, cartCount: cartCount },
                 } as any)
               }
             />
