@@ -10,6 +10,7 @@ exports[`<HomePage /> snapshot 1`] = `
     </Text>
   </View>
   <RCTScrollView
+    showsVerticalScrollIndicator={false}
     style={
       {
         "backgroundColor": "#eee",
@@ -21,117 +22,9 @@ exports[`<HomePage /> snapshot 1`] = `
         In progress
       </Text>
       <View>
-        <View
-          accessibilityState={
-            {
-              "busy": undefined,
-              "checked": undefined,
-              "disabled": undefined,
-              "expanded": undefined,
-              "selected": undefined,
-            }
-          }
-          accessibilityValue={
-            {
-              "max": undefined,
-              "min": undefined,
-              "now": undefined,
-              "text": undefined,
-            }
-          }
-          accessible={true}
-          collapsable={false}
-          focusable={true}
-          onBlur={[Function]}
-          onClick={[Function]}
-          onFocus={[Function]}
-          onResponderGrant={[Function]}
-          onResponderMove={[Function]}
-          onResponderRelease={[Function]}
-          onResponderTerminate={[Function]}
-          onResponderTerminationRequest={[Function]}
-          onStartShouldSetResponder={[Function]}
-        >
-          <View>
-            <Text>
-              Hazy IPA
-            </Text>
-          </View>
-        </View>
-        <View
-          accessibilityState={
-            {
-              "busy": undefined,
-              "checked": undefined,
-              "disabled": undefined,
-              "expanded": undefined,
-              "selected": undefined,
-            }
-          }
-          accessibilityValue={
-            {
-              "max": undefined,
-              "min": undefined,
-              "now": undefined,
-              "text": undefined,
-            }
-          }
-          accessible={true}
-          collapsable={false}
-          focusable={true}
-          onBlur={[Function]}
-          onClick={[Function]}
-          onFocus={[Function]}
-          onResponderGrant={[Function]}
-          onResponderMove={[Function]}
-          onResponderRelease={[Function]}
-          onResponderTerminate={[Function]}
-          onResponderTerminationRequest={[Function]}
-          onStartShouldSetResponder={[Function]}
-        >
-          <View>
-            <Text>
-              Belgian Tripel
-            </Text>
-          </View>
-        </View>
-        <View
-          accessibilityState={
-            {
-              "busy": undefined,
-              "checked": undefined,
-              "disabled": undefined,
-              "expanded": undefined,
-              "selected": undefined,
-            }
-          }
-          accessibilityValue={
-            {
-              "max": undefined,
-              "min": undefined,
-              "now": undefined,
-              "text": undefined,
-            }
-          }
-          accessible={true}
-          collapsable={false}
-          focusable={true}
-          onBlur={[Function]}
-          onClick={[Function]}
-          onFocus={[Function]}
-          onResponderGrant={[Function]}
-          onResponderMove={[Function]}
-          onResponderRelease={[Function]}
-          onResponderTerminate={[Function]}
-          onResponderTerminationRequest={[Function]}
-          onStartShouldSetResponder={[Function]}
-        >
-          <View>
-            <Text>
-              American Pale Ale
-            </Text>
-          </View>
-        </View>
+        <Text>
+          No brews in progress. Start a new recipe!
+        </Text>
       </View>
       <Text>
         Popular recipes
@@ -236,7 +129,7 @@ exports[`<HomePage /> snapshot 1`] = `
                         collapsable={false}
                         style={
                           {
-                            "borderColor": "rgba(103, 80, 164, 1)",
+                            "borderColor": "#f00",
                             "borderRadius": 12,
                             "borderWidth": 2.4,
                             "height": 24,
@@ -319,7 +212,7 @@ exports[`<HomePage /> snapshot 1`] = `
                         collapsable={false}
                         style={
                           {
-                            "borderColor": "rgba(103, 80, 164, 1)",
+                            "borderColor": "#f00",
                             "borderRadius": 12,
                             "borderWidth": 2.4,
                             "height": 24,

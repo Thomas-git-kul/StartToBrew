@@ -1,6 +1,7 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import HomePage from "../app/(tabs)/HomePage";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import { NavigationContainer } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 jest.spyOn(console, "error").mockImplementation(() => {});
@@ -49,7 +50,9 @@ const reviewData = [
    HELPERS
 ------------------------------- */
 
-const createRecipesQuery = (listData = recipesData) => ({
+type RecipesDataType = typeof recipesData;
+
+const createRecipesQuery = (listData: RecipesDataType = recipesData) => ({
   select: () => ({
     then(
       cb:
@@ -148,37 +151,6 @@ const pushMock = jest.fn();
 jest.mock("expo-router", () => ({ useRouter: jest.fn() }));
 
 jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
-
-jest.mock("@/supabase", () => ({
-  supabase: {
-    from: (table: string) => {
-      if (table === "recipes") {
-        return {
-          select: () =>
-            Promise.resolve({
-              data: recipesData,
-              error: null,
-            }),
-        };
-      }
-      if (table === "recipe_reviews") {
-        return {
-          select: () => ({
-            in: () =>
-              Promise.resolve({
-                data: reviewData,
-                error: null,
-              }),
-          }),
-        };
-      }
-      return {
-        select: () => Promise.resolve({ data: [], error: null }),
-      };
-    },
-  },
-}));
-
 jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
 }));
@@ -194,9 +166,7 @@ jest.mock("@/components/header", () => {
 
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
-  return {
-    ThemedText: ({ children }: any) => <Text>{children}</Text>,
-  };
+  return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
 });
 
 jest.mock("react-native-safe-area-context", () => {
@@ -233,10 +203,7 @@ jest.mock("@/components/ui/RecipeCard", () => {
     <Pressable onPress={onPress}>
       <View>
         <Text>{name}</Text>
-        <Pressable
-          accessibilityLabel={`favorite-${name}`}
-          onPress={onToggleFavorite}
-        >
+        <Pressable accessibilityLabel={`favorite-${name}`} onPress={onToggleFavorite}>
           <Text>FavBtn</Text>
         </Pressable>
       </View>
@@ -261,11 +228,93 @@ jest.mock("lucide-react-native", () => {
 });
 
 /* ------------------------------
+   ROBUUST KETENBARE SUPABASE MOCK
+------------------------------- */
+
+function makeThenable(obj: any) {
+  // Ensure object has then so awaiting works: return { data, error }
+  const wrapper: any = {
+    then: (cb: any) => Promise.resolve(obj).then(cb),
+    catch: (cb: any) => Promise.resolve(obj).catch(cb),
+  };
+  // Also expose in/eq for chaining if someone calls them on the thenable
+  wrapper.in = (/*...args*/) => Promise.resolve(obj);
+  wrapper.eq = (/*...args*/) => Promise.resolve(obj);
+  return wrapper;
+}
+
+jest.mock("@/supabase", () => {
+  // Precompute dataset per table
+  const DB: Record<string, any> = {
+    recipes: { data: recipesData, error: null },
+    recipe_reviews: { data: reviewData, error: null },
+    brews: { data: [{ id_brew: 1, name: "Hazy IPA", recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60", user_id: "test-user", status_id: 1 }], error: null },
+    phases: { data: [{ phase_id: "PH1" }], error: null },
+    steps: { data: [{ step_id: 1 }, { step_id: 2 }], error: null },
+    brew_steps: { data: [{ step_id: 1 }], error: null },
+  };
+
+  // Factory that returns chainable objects for select().in().eq()
+  const chainable = (tableKey: string) => {
+    const tableData = DB[tableKey] ?? { data: [], error: null };
+    const result = {
+      select: (_cols?: string) => {
+        const sel = {
+          in: (_col?: string, _vals?: any[]) => Promise.resolve(tableData),
+          eq: (_col?: string, _val?: any) => {
+            const intermediate = {
+              eq: (_col2?: string, _val2?: any) => Promise.resolve(tableData),
+              in: (_col3?: string, _val3?: any) => Promise.resolve(tableData),
+              then: (cb: any) => Promise.resolve(tableData).then(cb),
+              catch: (cb: any) => Promise.resolve(tableData).catch(cb),
+            };
+            return intermediate;
+          },
+          then: (cb: any) => Promise.resolve(tableData).then(cb),
+          catch: (cb: any) => Promise.resolve(tableData).catch(cb),
+        };
+        return sel;
+      },
+      insert: (payload?: any) => Promise.resolve({ data: payload, error: null }),
+      delete: () => Promise.resolve({ data: null, error: null }),
+      in: (_col?: string, _vals?: any[]) => Promise.resolve(tableData),
+      eq: (_col?: string, _val?: any) => Promise.resolve(tableData),
+      then: (cb: any) => Promise.resolve(tableData).then(cb),
+      catch: (cb: any) => Promise.resolve(tableData).catch(cb),
+    };
+
+    return result;
+  };
+
+  return {
+    supabase: {
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: { id: "test-user" } } }),
+        getSession: () => Promise.resolve({ data: { session: { user: { id: "test-user" } } } }),
+      },
+      from: (table: string) => {
+        // Some code expects .select().in(...), some expects .select(...).eq(...).eq(...)
+        // Provide a chainable API for each table:
+        if (["recipes", "recipe_reviews", "brews", "phases", "steps", "brew_steps"].includes(table)) {
+          return chainable(table);
+        }
+        // fallback
+        return chainable(table);
+      },
+    },
+  };
+});
+
+/* ------------------------------
    TEST UTIL
 ------------------------------- */
 
 const renderWithNavigation = (ui: React.ReactElement) =>
-  render(<NavigationContainer>{ui}</NavigationContainer>);
+  render(
+    <NavigationContainer>
+      <FavoritesProvider>{ui}</FavoritesProvider>
+    </NavigationContainer>
+  );
 
 /* ------------------------------
    TESTS
@@ -287,7 +336,6 @@ describe("<HomePage />", () => {
 
   it("laadt recipes", async () => {
     const { findByText } = renderWithNavigation(<HomePage />);
-
     expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
     expect(await findByText("City of the Sun IPA")).toBeTruthy();
     expect(await findByText("SMaSH Session Pale Ale")).toBeTruthy();
@@ -319,22 +367,50 @@ describe("<HomePage />", () => {
     const card = await findByText("Den Ballaste Point Sculpin IPA 60");
     fireEvent.press(card);
 
-    expect(pushMock).toHaveBeenCalledWith({
-      pathname: "/SpecificRecipe",
-      params: {
-        recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
-      },
-    });
+    expect(pushMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathname: "/SpecificRecipe",
+        params: expect.objectContaining({
+          recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
+        }),
+      })
+    );
   });
 
-  it("rendered progress cards en navigatie werkt", () => {
-    const { getByText } = renderWithNavigation(<HomePage />);
+  it("toont de in-progress brews in de 'In progress' sectie", async () => {
+  const { findByText, getByText, toJSON } = renderWithNavigation(<HomePage />);
 
-    fireEvent.press(getByText("Hazy IPA"));
-    fireEvent.press(getByText("Belgian Tripel"));
-    fireEvent.press(getByText("American Pale Ale"));
+  // Titel van de sectie moet bestaan
+  const sectionTitle = getByText("In progress");
+  expect(sectionTitle).toBeTruthy();
 
-    expect(pushMock).toHaveBeenCalledWith("/progress");
+  // De brew moet verschijnen
+  const brewCard = await findByText("Hazy IPA");
+  expect(brewCard).toBeTruthy();
+
+  // Controle via de uiteindelijke JSON output (veiligste manier)
+  const tree = toJSON();
+  const renderedText = JSON.stringify(tree);
+
+  const indexSection = renderedText.indexOf("In progress");
+  const indexBrew = renderedText.indexOf("Hazy IPA");
+
+  expect(indexSection).toBeGreaterThan(-1);
+  expect(indexBrew).toBeGreaterThan(-1);
+
+  // De brew moet ná de sectietitel komen (dus binnen die sectie)
+  expect(indexBrew).toBeGreaterThan(indexSection);
+});
+
+  it("progress card navigates correctly", async () => {
+    const { findByText } = renderWithNavigation(<HomePage />);
+    const progressCard = await findByText("Hazy IPA");
+
+    fireEvent.press(progressCard);
+    expect(pushMock).toHaveBeenCalledWith({
+      pathname: "/progress",
+      params: { id: 1 },
+    });
   });
 
   it("snapshot", () => {

@@ -3,7 +3,7 @@
 exports[`<SpecificRecipe /> snapshot 1`] = `
 <View>
   <Text>
-    Loading…
+    Recipe
   </Text>
   <View
     className="flex-1 items-center justify-center"
@@ -58,7 +58,7 @@ exports[`<SpecificRecipe /> snapshot 1`] = `
       style={
         {
           "backgroundColor": "#000000",
-          "borderRadius": 20,
+          "borderRadius": 30,
           "opacity": 1,
         }
       }

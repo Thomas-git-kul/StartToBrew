@@ -1,97 +1,234 @@
 import { useCallback, useState, useEffect } from "react";
-import { View, ScrollView, Dimensions } from "react-native";
+import { View, ScrollView, Dimensions, Text } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "@/hooks/use-fonts";
 import { Calendar } from "react-native-calendars";
-import { List } from "react-native-paper";
+import { Card, Chip, Button, ActivityIndicator } from "react-native-paper";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { ThemedText } from "@/components/themed-text";
-import { ChevronDown, ChevronUp, ArrowBigRight } from 'lucide-react-native';
+import { Clock, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { supabase } from "@/supabase";
 
 const BASE_SCREEN_WIDTH = 375;
-const scale = Dimensions.get('window').width / BASE_SCREEN_WIDTH;
+const scale = Dimensions.get("window").width / BASE_SCREEN_WIDTH;
+const isJest = typeof jest !== "undefined";
+
+function formatDuration(minutes: number) {
+  if (minutes >= 10080) return `${Math.floor(minutes / 10080)} week(s)`;
+  if (minutes >= 1440) return `${Math.floor(minutes / 1440)} day(s)`;
+  if (minutes >= 60) return `${Math.floor(minutes / 60)} h`;
+  return `${minutes} min`;
+}
+
+interface Brew {
+  id_brew: number;
+  user_id: string;
+  name: string;
+  recipe_slug: string | null;
+  start_date: string;
+  status: number;
+  last_step_id: String | null;
+}
+
+interface Phase {
+  phase_id: number;
+  recipe_slug: string;
+  name: string;
+  position: number;
+}
+
+interface Step {
+  step_id: string;
+  phase_id: number;
+  title: string;
+  start_offset_min: number | null;
+  duration_min: number | null;
+}
+
+interface BrewStep {
+  step_id: string;
+  id_brew: number;
+  status: string;
+}
+
+interface PhaseEntry {
+  title: string;
+  steps: { text: string; time?: number | null }[];
+}
+
+interface BrewEntry {
+  beer: string;
+  id_brew: number,
+  phases: PhaseEntry[];
+  showProgressButton?: boolean;
+  progressDate?: string;
+}
 
 export default function Agenda() {
   useFonts();
   const router = useRouter();
 
-  const [phasesByDate, setPhasesByDate] = useState<{ [date: string]: typeof todo }>({});
-  const [currentDate, setCurrentDate] = useState(new Date().toISOString().split("T")[0]);
+  const [phasesByDate, setPhasesByDate] = useState<Record<string, any[]>>({});
+  const [currentDate, setCurrentDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [calendarVisible, setCalendarVisible] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const todo = [
-    { date: "2025-11-10", 
-      beer: "IJ IPA", 
-      title: "Phase 1: Mash", 
-      steps: [
-        { text: "Heat strike water", time: "60", next: true },
-        { text: "Mash in" },
-        { text: "Saccharification rest", time:"40" },
-        { text: "Mash out" },
-    ]},
-    { date: "2025-11-10", 
-      beer: "black IPA", 
-      title: "Phase 2: Boil", 
-      steps: [
-        { text: "Bring to boil" },
-        { text: "30-min cascade" },
-        { text: "10-min cascade" },
-    ]},
-    { date: "2025-11-12", beer: "IJ IPA", title: "Phase 3: Whirlpool", steps: [
-      { text: "Cool to 80°C" },
-      { text: "Whirlpool cascade + cascade", time: "60" },
-    ]},
-    { date: "2025-11-14", 
-      beer: "black IPA", 
-      title: "Phase 4: Chill", 
-      steps: [
-        { text: "Chill to 19°C" },
-        { text: "Transfer to fermenter" },
-        { text: "Pitch yeast", time: "60" },
-    ]},
-    { date: "2025-11-14", 
-      beer: "IJ IPA", 
-      title: "Phase 5: Ferment", 
-      steps: [
-        { text: "Primary ferment" },
-        { text: "Dry hop (3days)" },
-    ]},
-    { date: "2025-11-14", 
-      beer: "sunny IPA", 
-      title: "Phase 6: Package", 
-      steps: [
-        { text: "Package (bottle/keg)" },
-    ]},
-  ];
+  async function fetchAgendaData() {
+    setLoading(true);
+    try{
+      const user = supabase.auth.getUser();
 
+      const { data: brewsData, error: brewErr } = await supabase
+        .from("brews")
+        .select(`id_brew, name, start_date, recipe_slug, last_step_id`)
+        .eq("user_id", (await user).data.user?.id)
+        .in("status_id", [1, 2]);
+
+      if (brewErr) {
+        console.error(brewErr);
+        return;
+      }
+      const brews: Brew[] = brewsData as Brew[];
+
+      // console.log("brews fetched: ", brews)
+
+      const { data: phasesData, error: phaseErr } = await supabase
+        .from("phases")
+        .select("*");
+
+      const phases: Phase[] = phasesData as Phase[];
+
+      const { data: stepsData, error: stepErr } = await supabase
+        .from("steps")
+        .select('step_id, phase_id, title,start_offset_min, duration_min')
+        .order('phase_id', { ascending: true });
+
+      if (phaseErr || stepErr) {
+        console.error(phaseErr || stepErr);
+        return;
+      }
+      const steps: Step[] = stepsData as Step[];
+      const agenda: Record<string, any[]> = {};
+
+      const { data: brewStepsData, error: brewStepsErr } = await supabase
+        .from("brew_steps")
+        .select('step_id, id_brew, status');
+
+      if (brewStepsErr) {
+        console.error(brewStepsErr);
+        return;
+      }
+
+      const brewStepStatusMap: Record<string, string> = {};
+      const brewStepsTyped = (brewStepsData ?? []) as BrewStep[];
+      brewStepsTyped.forEach((bs: BrewStep) => {
+        brewStepStatusMap[`${bs.id_brew}_${bs.step_id}`] = bs.status;
+      });
+
+      brews.forEach((brew) => {
+      const brewPhases = phases.filter((p) => p.recipe_slug === brew.recipe_slug);
+
+      // Startdatum in lokale tijd
+      let currentStepTime = new Date(brew.start_date);
+      currentStepTime.setHours(0, 0, 0, 0);
+
+      // Bereken alle stappen van deze brew
+      brewPhases.forEach((phase) => {
+        const phaseSteps = steps
+          .filter((s) => s.phase_id === phase.phase_id)
+          .sort((a, b) => a.step_id.localeCompare(b.step_id, undefined, { numeric: true }));
+
+        phaseSteps.forEach((step) => {
+          const stepExecuted = brewStepStatusMap[`${brew.id_brew}_${step.step_id}`] === 'completed';
+
+          let stepDurationDays = 0;
+          if (step.duration_min && step.duration_min > 0) {
+            const durationHours = step.duration_min / 60;
+            if (durationHours >= 24) {
+              stepDurationDays = Math.floor(durationHours / 24);
+            }
+          }
+
+          let stepDate = new Date(currentStepTime);
+          if (stepDurationDays > 0) {
+            stepDate.setDate(stepDate.getDate() + stepDurationDays);
+          }
+
+          // Bereken dag string
+          const dayStr = `${stepDate.getFullYear()}-${(stepDate.getMonth()+1).toString().padStart(2,'0')}-${stepDate.getDate().toString().padStart(2,'0')}`;
+
+        
+            if (!agenda[dayStr]) agenda[dayStr] = [];
+
+            // Vind of er al een entry voor deze brew bestaat op deze dag
+            let brewEntry = agenda[dayStr].find((b) => b.beer === brew.name);
+            if (!brewEntry) {
+              brewEntry = { beer: brew.name, id_brew: brew.id_brew, phases: [] };
+              agenda[dayStr].push(brewEntry);
+            }
+
+            // Voeg fase + stap toe
+            let phaseEntry = brewEntry.phases.find((p: PhaseEntry) => p.title === phase.name);
+            if (!phaseEntry) {
+              phaseEntry = { title: phase.name, steps: [] };
+              brewEntry.phases.push(phaseEntry);
+            }
+
+            // Voeg stap toe
+            phaseEntry.steps.push({
+              text: step.title,
+              time: step.duration_min,
+            });
+
+            if (brew.last_step_id && String(step.step_id) === String(brew.last_step_id)) {
+              brewEntry.showProgressButton = true;
+              brewEntry.progressDate = dayStr;
+            }
+
+            if (stepDurationDays > 0) {
+              currentStepTime.setDate(currentStepTime.getDate() + stepDurationDays);
+            } 
+        });
+      });
+    });
+
+      setPhasesByDate(agenda);
+      await AsyncStorage.setItem("phasesByDate", JSON.stringify(agenda));
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+  }
+
+  // refresh when screen focuses
   useFocusEffect(
     useCallback(() => {
-      const loadPhases = async () => {
-        const saved = await AsyncStorage.getItem("phasesByDate");
-        if (saved) {
-          setPhasesByDate(JSON.parse(saved));
-        } else {
-          setPhasesByDate({});
-        }
-      };
-      loadPhases();
+      if (!isJest && fetchAgendaData) {
+        fetchAgendaData();
+      }
     }, [])
   );
 
   useEffect(() => {
-    setCalendarVisible(false);
-    requestAnimationFrame(() => setCalendarVisible(true));
+    if (!isJest) {
+      setCalendarVisible(false);
+      requestAnimationFrame(() => setCalendarVisible(true));
+    }
   }, [currentDate]);
 
-  const phasesForSelectedDate = todo.filter(p => p.date === currentDate);
+  const phasesForSelectedDate = phasesByDate[currentDate] || [];
+
   const markedDates: any = {};
 
-  todo.forEach((item) => {
-    markedDates[item.date] = {
+  Object.keys(phasesByDate).forEach((date) => {
+    markedDates[date] = {
       marked: true,
       dotColor: BASE_COLORS.ACCENT_PRIMARY,
     };
@@ -114,24 +251,6 @@ export default function Agenda() {
     },
   };
 
-  const SECTIONS = phasesForSelectedDate.map(phase => ({
-    title: phase.beer,
-    content: {
-      phaseTitle: phase.title,
-      steps: phase.steps
-    }
-  }));
-
-  const [expandedStates, setExpandedStates] = useState(phasesForSelectedDate.map(() => false));
-
-  const toggleAccordion = (index: number) => {
-    setExpandedStates((prev) => {
-      const newStates = [...prev];
-      newStates[index] = !newStates[index];
-      return newStates;
-    });
-  };
-
   return (
     <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
@@ -141,21 +260,18 @@ export default function Agenda() {
           const today = new Date().toISOString().split("T")[0];
           setCurrentDate(today);
         }}
-        actionTestID="header-calendar1"
       />
 
       {calendarVisible && (
         <View
-          testID="calendar-container"
-          className="mx-1 my-1 rounded-2xl overflow-hidden shadow"
           style={{
             backgroundColor: BASE_COLORS.LIGHT_BG,
             borderRadius: 20,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
+            overflow: "hidden",
+            shadowColor: BASE_COLORS.STONE700,
+            shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
+            marginBottom: 20
           }}
         >
           <Calendar
@@ -166,72 +282,112 @@ export default function Agenda() {
             onDayPress={(day) => setCurrentDate(day.dateString)}
             theme={{
               todayTextColor: BASE_COLORS.ACCENT_PRIMARY,
-              arrowColor: BASE_COLORS.ACCENT_PRIMARY,
-              calendarBackground: BASE_COLORS.WHITE,
+              textMonthFontFamily: FontFamilies.BODY,
+              textDayHeaderFontFamily: FontFamilies.BODY,
+            }}
+            renderArrow={(direction) => {
+              if (direction === "left") {
+                return <ChevronLeft color={BASE_COLORS.ACCENT_PRIMARY} size={24} />;
+              } else {
+                return <ChevronRight color={BASE_COLORS.ACCENT_PRIMARY} size={24} />;
+              }
             }}
           />
         </View>
       )}
 
-      <ScrollView
-        className="px-1 mt-3"
-        showsVerticalScrollIndicator={false}
-        style={{
-          backgroundColor: BASE_COLORS.LIGHT_BG,
-        }}
-      >
-        {phasesForSelectedDate.length === 0 ? (
-          <ThemedText type="defaultText">No tasks for this day.</ThemedText>
-        ) : (
-          phasesForSelectedDate.map((phase, index) => (
-            <View
-              key={index}
-              className="p-1 mb-1"
-              style={{
-                backgroundColor: BASE_COLORS.WHITE,
-                borderRadius: 15,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <List.Accordion
-                testID={`accordion-${index}`}
-                title={phase.beer}
-                titleStyle={{ fontFamily: FontFamilies.BODY_BOLD, fontSize: Math.min(18 * scale, 22), color: BASE_COLORS.ACCENT_PRIMARY }}
-                style={{ backgroundColor: BASE_COLORS.WHITE }}
-                left={undefined}
-                expanded={expandedStates[index]}
-                onPress={() => toggleAccordion(index)}
-                right={(props) => expandedStates[index] ? <ChevronUp {...props} color={BASE_COLORS.ACCENT_PRIMARY} /> : <ChevronDown {...props} color={BASE_COLORS.ACCENT_PRIMARY} />}
+      {loading ? (
+        <View className="items-center justify-center my-4">
+          <ActivityIndicator 
+            animating size="small" 
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
+          <ThemedText type="defaultText" className="mt-2">Loading progress...</ThemedText>
+        </View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {phasesForSelectedDate.length === 0 ? (
+            <ThemedText>No tasks for this day.</ThemedText>
+          ) : (
+            phasesForSelectedDate.map((brew: BrewEntry, brewIndex: number) => (
+              <Card
+                key={brewIndex}
+                style={{
+                  marginBottom: 5,
+                  backgroundColor: BASE_COLORS.WHITE,
+                  borderRadius: 15,
+                  padding: 10,
+                  outlineColor: BASE_COLORS.STONE500,
+                  outlineWidth: 1,
+                  shadowColor: BASE_COLORS.STONE700,
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.07,
+                }}
               >
-                <ThemedText
-                  testID={`phase-title-${index}`} 
-                  type="subTitle" 
-                  className="ml-4 mb-1"
-                >{phase.title}</ThemedText>
-                {phase.steps.map((step, stepIndex) => (
-                  <View key={stepIndex} className="flex-row items-center ml-6">
-                    <ThemedText testID={`phase-${index}-step-${stepIndex}`} type="defaultText">
-                      • {step.text}{step.time ? ` (${step.time} min)` : ""}
-                    </ThemedText>
-                    {step.next && (
-                      <ArrowBigRight
-                        testID={`step-arrow-${index}-${stepIndex}`}
-                        onPress={() => router.push("../progress")}
-                        color={BASE_COLORS.ACCENT_PRIMARY}
-                        style={{ marginLeft: 8 }}
-                      />
-                    )}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text style={{
+                    fontSize: Math.min(18 * scale, 22),
+                    fontFamily: FontFamilies.BODY_BOLD,
+                    color: BASE_COLORS.TEXT_DARK,
+                  }}
+                  >{brew.beer}</Text>
+                  {brew.showProgressButton && brew.progressDate === currentDate && (
+                  <Button onPress={() => {
+                    router.push({ pathname: "/progress", params: { id: brew.id_brew } });
+                    // console.log(`Brew ID: ${brew.id_brew}`);
+                  }}>
+                    <Text 
+                      style={{ 
+                        fontSize: Math.min(16 * scale, 22),
+                        fontFamily: FontFamilies.BODY,
+                        color: BASE_COLORS.TEXT_DARK,
+                      }}
+                    >Progress</Text>
+                  </Button>)}
+                </View>
+
+                {brew.phases.map((phase: PhaseEntry, phaseIndex: number) => (
+                  <View key={phaseIndex} className="mb-4">
+                    <ThemedText type="subTitle">{phase.title}</ThemedText>
+                    {phase.steps.map((step, stepIndex) => (
+                      <View key={stepIndex} className="flex-row items-center ml-4 mt-1">
+                        <ThemedText>
+                          • {step.text}
+                        </ThemedText>
+                        {step.time != null && (
+                          <Chip
+                            style={{
+                              marginLeft: 10,
+                              height: Math.min( 21 * scale, 40),
+                              alignItems: "center",
+                              backgroundColor: BASE_COLORS.STONE100,
+                            }}
+                            textStyle={{
+                              fontSize: Math.min( 12 * scale, 20),
+                              color: BASE_COLORS.TEXT_DARK,
+                              fontFamily: FontFamilies.BODY,
+                            }}
+                            icon={() => <Clock size={Math.min( 12 * scale, 20)} color={BASE_COLORS.TEXT_DARK} />}
+                          >
+                            {formatDuration(step.time)}
+                          </Chip>
+                        )}
+                      </View>
+                    ))}
                   </View>
                 ))}
-              </List.Accordion>
-            </View>
-          ))
-        )}
-      </ScrollView>
+              </Card>
+            ))
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
