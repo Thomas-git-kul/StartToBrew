@@ -36,6 +36,7 @@ export default function StorePage() {
   const [selectedCategories, setSelectedCategories] = React.useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Item[]>([]);
+  const [cartCount, setCartCount] = useState(0);
 
   const exampleImages: Record<number, any> = {
     1: require("@/assets/images/malt.png"),
@@ -129,6 +130,41 @@ export default function StorePage() {
     };
 
     load();
+
+    // cartcount
+    const loadCartCount = async () => {
+      try {
+        // Get the logged-in user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setCartCount(0);
+          return;
+        }
+
+        // Fetch only rows for that user
+        const { data, error } = await supabase
+          .from("user_shopping_cart")
+          .select("id_user_cart", { count: "exact" })  // we get an exact count
+          .eq("user_id", user.id);
+        console.log("cartitems", data);
+
+        if (error) {
+          console.warn("Cart count error:", error.message);
+          return;
+        }
+
+        // Use the count from Supabase
+        setCartCount(data ? data.length : 0);
+
+        console.log("cartcount", data?.length ?? 0);
+      } catch (e: any) {
+        console.warn("Cart count fetch exception:", e?.message ?? e);
+      }
+    };
+
+
+    loadCartCount();
+
     return () => {
       mounted = false;
     };
@@ -144,6 +180,7 @@ export default function StorePage() {
         iconName="ShoppingCart"
         onIconPress={() => router.push("/ShoppingCart" as any)}
         actionTestID="cart-button"
+        cartCount={cartCount}
       />
 
       {/* Horizontal scrollable category chips */}
