@@ -53,6 +53,7 @@ interface BrewStep {
   step_id: string;
   id_brew: number;
   status: string;
+  completed_at: string | null;
 }
 
 interface PhaseEntry {
@@ -72,7 +73,7 @@ export default function Agenda() {
   useFonts();
   const router = useRouter();
 
-  const [phasesByDate, setPhasesByDate] = useState<Record<string, any[]>>({});
+  const [phasesByDate, setPhasesByDate] = useState<Record<string, BrewEntry[]>>({});
   const [currentDate, setCurrentDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -114,11 +115,11 @@ export default function Agenda() {
         return;
       }
       const steps: Step[] = stepsData as Step[];
-      const agenda: Record<string, any[]> = {};
+      const agenda: Record<string, BrewEntry[]> = {};
 
       const { data: brewStepsData, error: brewStepsErr } = await supabase
         .from("brew_steps")
-        .select('step_id, id_brew, status');
+        .select('step_id, id_brew, status, completed_at');
 
       if (brewStepsErr) {
         console.error(brewStepsErr);
@@ -132,71 +133,105 @@ export default function Agenda() {
       });
 
       brews.forEach((brew) => {
-      const brewPhases = phases.filter((p) => p.recipe_slug === brew.recipe_slug);
+        const brewPhases = phases.filter((p) => p.recipe_slug === brew.recipe_slug);
 
-      // Startdatum in lokale tijd
-      let currentStepTime = new Date(brew.start_date);
-      currentStepTime.setHours(0, 0, 0, 0);
+        // Alle stappen van dit recept
+        let allSteps: Step[] = [];
+        brewPhases.forEach((phase) => {
+          const phaseSteps = steps
+            .filter((s) => s.phase_id === phase.phase_id)
+            .sort((a, b) =>
+              a.step_id.localeCompare(b.step_id, undefined, { numeric: true })
+            );
+          allSteps.push(...phaseSteps);
+        });
 
-      // Bereken alle stappen van deze brew
-      brewPhases.forEach((phase) => {
-        const phaseSteps = steps
-          .filter((s) => s.phase_id === phase.phase_id)
-          .sort((a, b) => a.step_id.localeCompare(b.step_id, undefined, { numeric: true }));
+        // Vind laatste voltooid stap
+        let lastCompletedStepDate: Date | null = null;
 
-        phaseSteps.forEach((step) => {
-          const stepExecuted = brewStepStatusMap[`${brew.id_brew}_${step.step_id}`] === 'completed';
+        allSteps.forEach((step) => {
+          const status = brewStepStatusMap[`${brew.id_brew}_${step.step_id}`];
+          const brewStepInfo = brewStepsTyped.find(
+            (b) => b.id_brew === brew.id_brew && b.step_id === step.step_id
+          );
 
-          let stepDurationDays = 0;
-          if (step.duration_min && step.duration_min > 0) {
-            const durationHours = step.duration_min / 60;
-            if (durationHours >= 24) {
-              stepDurationDays = Math.floor(durationHours / 24);
+          if (status === "completed" && brewStepInfo?.completed_at) {
+            const date = new Date(brewStepInfo.completed_at);
+            if (!lastCompletedStepDate || date > lastCompletedStepDate) {
+              lastCompletedStepDate = date;
             }
           }
+        });
 
+        const today = new Date();
+
+        // Startpunt: laatste completed stap OF startdatum brew
+        let currentStepTime = lastCompletedStepDate
+          ? new Date(lastCompletedStepDate)
+          : new Date();
+
+        currentStepTime.setHours(0, 0, 0, 0);
+
+        // Nu elke stap datum geven
+        allSteps.forEach((step) => {
           let stepDate = new Date(currentStepTime);
-          if (stepDurationDays > 0) {
-            stepDate.setDate(stepDate.getDate() + stepDurationDays);
+
+          // Als completed → Overschrijf datum
+          const brewStepInfo = brewStepsTyped.find(
+            (b) => b.id_brew === brew.id_brew && b.step_id === step.step_id
+          );
+
+          if (brewStepInfo?.status === "completed" && brewStepInfo.completed_at) {
+            stepDate = new Date(brewStepInfo.completed_at);
+            currentStepTime = new Date(stepDate);
+          } else {
+            // Geen completed, dus duration toepassen op currentStepTime
+            if (step.duration_min) {
+              stepDate = new Date(currentStepTime);
+              stepDate.setMinutes(stepDate.getMinutes() + step.duration_min);
+              currentStepTime = new Date(stepDate);
+            }
           }
 
-          // Bereken dag string
-          const dayStr = `${stepDate.getFullYear()}-${(stepDate.getMonth()+1).toString().padStart(2,'0')}-${stepDate.getDate().toString().padStart(2,'0')}`;
+          // Datum naar string
+          const dayStr = `${stepDate.getFullYear()}-${(stepDate.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}-${stepDate
+            .getDate()
+            .toString()
+            .padStart(2, "0")}`;
 
-        
-            if (!agenda[dayStr]) agenda[dayStr] = [];
+          // Bouw agenda entry op dezelfde manier als je al deed
+          if (!agenda[dayStr]) agenda[dayStr] = [];
 
-            // Vind of er al een entry voor deze brew bestaat op deze dag
-            let brewEntry = agenda[dayStr].find((b) => b.beer === brew.name);
-            if (!brewEntry) {
-              brewEntry = { beer: brew.name, id_brew: brew.id_brew, phases: [] };
-              agenda[dayStr].push(brewEntry);
-            }
+          let brewEntry = agenda[dayStr].find((b) => b.beer === brew.name);
+          if (!brewEntry) {
+            brewEntry = { beer: brew.name, id_brew: brew.id_brew, phases: [] };
+            agenda[dayStr].push(brewEntry);
+          }
 
-            // Voeg fase + stap toe
-            let phaseEntry = brewEntry.phases.find((p: PhaseEntry) => p.title === phase.name);
-            if (!phaseEntry) {
-              phaseEntry = { title: phase.name, steps: [] };
-              brewEntry.phases.push(phaseEntry);
-            }
+          const phase = brewPhases.find((p) => p.phase_id === step.phase_id);
+          if (!phase) return;
 
-            // Voeg stap toe
-            phaseEntry.steps.push({
-              text: step.title,
-              time: step.duration_min,
-            });
+          let phaseEntry = brewEntry.phases.find((p) => p.title === phase.name);
 
-            if (brew.last_step_id && String(step.step_id) === String(brew.last_step_id)) {
-              brewEntry.showProgressButton = true;
-              brewEntry.progressDate = dayStr;
-            }
+          if (!phaseEntry) {
+            phaseEntry = { title: phase.name, steps: [] };
+            brewEntry.phases.push(phaseEntry);
+          }
 
-            if (stepDurationDays > 0) {
-              currentStepTime.setDate(currentStepTime.getDate() + stepDurationDays);
-            } 
+          phaseEntry.steps.push({
+            text: step.title,
+            time: step.duration_min,
+          });
+
+          // Show progress button
+          if (brew.last_step_id && String(step.step_id) === String(brew.last_step_id)) {
+            brewEntry.showProgressButton = true;
+            brewEntry.progressDate = dayStr;
+          }
         });
       });
-    });
 
       setPhasesByDate(agenda);
       await AsyncStorage.setItem("phasesByDate", JSON.stringify(agenda));
