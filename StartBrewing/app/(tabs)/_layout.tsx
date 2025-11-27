@@ -94,6 +94,12 @@ function TabLayout() {
               ),
             }}
           />
+          <Tabs.Screen
+            name="progress"
+            options={{
+              href: null,
+            }}
+          />
         </Tabs>
       </View>
     </SafeAreaView>

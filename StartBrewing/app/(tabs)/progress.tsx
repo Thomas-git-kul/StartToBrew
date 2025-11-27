@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Text,
 } from "react-native";
-import { Card, FAB, Chip, Button } from "react-native-paper";
+import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
 import {
   Pause,
   Thermometer,
@@ -42,6 +42,7 @@ export default function Progress() {
   const [timerActive, setTimerActive] = useState(false);
   const [phaseDone, setPhaseDone] = useState(false);
   const { refreshProgress } = useUserProgressContext();
+  const [dialogVisible, setDialogVisible] = useState(false);
 
   const loadStep = useCallback(async () => {
     setLoading(true);
@@ -271,6 +272,14 @@ export default function Progress() {
     }
   }, [brewId, router]);
 
+  const showDialog = () => setDialogVisible(true);
+  const hideDialog = () => setDialogVisible(false);
+
+  const confirmDeleteBrew = () => {
+    hideDialog();
+    deleteBrew();
+  };
+
   if (loading) {
     return (
       <SafeAreaView
@@ -311,20 +320,6 @@ export default function Progress() {
       : (stepData.step2?.desc ?? stepData.step1.desc);
   const tips = phase === 1 ? stepData.step1.tips : stepData.step2?.tips;
 
-  /*
-  const phase1Duration = stepData.duration_total - stepData.duration_offset;
-  const phase2Duration = (stepData.duration_total ?? 0) - phase1Duration;
-  const hasPhase2 = Boolean(stepData.title2 && stepData.description2 && phase2Duration > 0);
-
-  const currentStep = stepData;
-  // const hasTimer = currentStep.duration_total && currentStep.duration_total > 0;
-  // const hasTemp = currentStep.temp !== null;
-
-  // Timer color gradient
-  const duration = phase === 1 ? phase1Duration : phase2Duration;
-  const step = duration / 9;
-  */
-
   return (
     <SafeAreaView
       className="flex-1"
@@ -332,11 +327,11 @@ export default function Progress() {
     >
       <Header
         title={"Progress"}
-        iconName="ArrowRight"
-        onIconPress={() => router.push("/HomePage" as any)}
+        iconName="Trash"
+        onIconPress={showDialog}
       />
       <ScrollView
-        className="px-5"
+        className="px-3"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 85 }}
       >
@@ -496,18 +491,6 @@ export default function Progress() {
             <ThemedText type="tips">{tips}</ThemedText>
           </View>
         )}
-
-        <Button
-          mode="outlined"
-          onPress={deleteBrew}
-          style={{
-            marginTop: 16,
-            borderColor: BASE_COLORS.AMBER600,
-          }}
-          textColor={BASE_COLORS.AMBER600}
-        >
-          Delete Brew
-        </Button>
       </ScrollView>
       <FAB
         testID="fab-button"
@@ -543,6 +526,54 @@ export default function Progress() {
           },
         }}
       />
+
+      <Portal>
+        <Dialog 
+          visible={dialogVisible} 
+          onDismiss={hideDialog}
+          style={{
+            backgroundColor: BASE_COLORS.WHITE,
+          }}
+        >
+          <Dialog.Title
+            style={{
+              fontSize: Math.min(16 * scale, 24), 
+              fontFamily: FontFamilies.BODY_BOLD,
+              color: BASE_COLORS.ACCENT_PRIMARY,
+            }}
+          >Confirm Brew Deletion</Dialog.Title>
+          <Dialog.Content>
+            <ThemedText type="defaultText">
+              Are you sure you want to delete "{stepData?.beer}" brew?
+            </ThemedText>
+          </Dialog.Content>
+          <Dialog.Actions
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <Button onPress={hideDialog}>
+              <Text 
+                style={{ 
+                  fontSize: Math.min(12 * scale, 22),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.STONE600,
+                }}
+              >Cancel</Text>
+            </Button>
+            <Button onPress={confirmDeleteBrew} textColor={BASE_COLORS.RED600}>
+              <Text 
+                style={{ 
+                  fontSize: Math.min(14 * scale, 22),
+                  fontFamily: FontFamilies.BODY_BOLD,
+                  color: BASE_COLORS.RED600,
+                }}
+              >Delete</Text>
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeAreaView>
   );
 }
