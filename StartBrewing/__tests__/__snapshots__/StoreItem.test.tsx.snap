@@ -295,7 +295,6 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
         </RNSVGSvgView>
       </View>
       <TextInput
-        autoFocus={true}
         enterKeyHint="done"
         inputMode="numeric"
         maxLength={2}

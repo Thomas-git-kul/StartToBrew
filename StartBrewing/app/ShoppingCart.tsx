@@ -123,6 +123,7 @@ export default function ShoppingCart() {
       }
     });
 
+    mappedOrders.sort((a, b) => a.title.localeCompare(b.title));
     setOrders(mappedOrders);
 
   } catch (err: any) {
@@ -227,7 +228,14 @@ export default function ShoppingCart() {
           <OrderCard
             key={index}
             {...order}
-            onQuantityChange={(newQty) => updateCartQuantity(order.store_item_id, newQty, order.starterkit)}
+            starterkit={order.starterkit}
+            onPress={() =>
+              router.push({
+                pathname: "/StoreItem",
+                params: { id: order.store_item_id, categoryNumber: order.starterkit ? 4 : 0 },
+              } as any)
+            }
+            onQuantityChange={(newQty, starterkit) => updateCartQuantity(order.store_item_id, newQty, starterkit)}
           />
         ))}
       </View>
@@ -241,13 +249,14 @@ export default function ShoppingCart() {
         <View className="mt-7">
           <ThemedText type="title">Shipping Information</ThemedText>
           <TextInput 
-            label="Full Name"/>
+            placeholder="Full Name"
+          />
           <TextInput 
-            label="Street name and number"/>
+            placeholder="Street name and number"/>
           <View className="flex-row">
-              <TextInput label="City" />
+              <TextInput placeholder="City" />
             <View className="flex-1 ml-3">
-              <TextInput label="Zip code"/>
+              <TextInput placeholder="Zip code"/>
             </View>
           </View>
         </View>
