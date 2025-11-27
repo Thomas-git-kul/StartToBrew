@@ -11,7 +11,6 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "../../supabase";
 import { ThemedText } from "../../components/themed-text";
 
-
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;

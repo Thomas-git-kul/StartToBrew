@@ -765,6 +765,7 @@ export default function SpecificRecipe() {
                     key={kit.id}
                     style={{
                       width: "49%",
+                      marginBottom: 12,
                     }}
                   >
                     <StoreCard
