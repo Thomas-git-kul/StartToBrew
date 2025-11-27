@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { View, ScrollView, Image, Pressable, FlatList, Dimensions } from "react-native";
-import { Button } from "react-native-paper";
+import { Button, Snackbar } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -48,6 +48,7 @@ export default function StoreItem() {
 
   const [quantity, setQuantity] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
 
   // Format price in Euro
   const formatter = useMemo(
@@ -136,7 +137,12 @@ export default function StoreItem() {
       }
 
       console.log("Item added to shopping cart successfully");
-      router.push("/Store");
+
+      setSnackbarVisible(true);
+      setTimeout(() => {
+        setSnackbarVisible(false);
+      }, 8000);
+      // router.push("/Store");
 
     } catch (err: any) {
       console.error("Unexpected order creation error:", err.message ?? err);
@@ -348,6 +354,19 @@ export default function StoreItem() {
             }}
           >Add to order</Button>
         </View>
+
+        <Snackbar
+          visible={snackbarVisible}
+          onDismiss={() => setSnackbarVisible(false)}
+          duration={2000}
+          style={{
+            backgroundColor: BASE_COLORS.WHITE,
+            marginBottom: 80,
+          }}
+        > 
+          <ThemedText>Added to cart</ThemedText>
+          <Button>Back to Store</Button>
+        </Snackbar>
       </SafeAreaView>
     );
 }
