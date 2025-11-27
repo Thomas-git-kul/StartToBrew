@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { View, ScrollView, Image, Pressable, FlatList, Dimensions, Text } from "react-native";
-import { Button, Snackbar } from "react-native-paper";
+import { Button, Snackbar, ActivityIndicator } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -246,6 +246,23 @@ export default function StoreItem() {
     return () => { mounted = false; };
   }, [id, categoryNumber, cartCount]);
 
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator 
+            animating
+            size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
+          <ThemedText type="defaultText" className="mt-3">
+            Loading item...
+          </ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
       <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
         {/* Header */}
@@ -404,14 +421,18 @@ export default function StoreItem() {
                   color: BASE_COLORS.STONE600,
                 }}
               >Item added to cart</Text>
-            <Button>
+            <Button
+              onPress={() => {
+                router.push({ pathname: "/Store"});
+              }}
+            >
               <Text 
                 style={{ 
                   fontSize: Math.min(16 * scale, 22),
                   fontFamily: FontFamilies.BODY,
                   color: BASE_COLORS.TEXT_DARK,
                 }}
-              >Back to Home</Text>
+              >Back to Store</Text>
             </Button>
           </View>
         </Snackbar>
