@@ -33,4 +33,16 @@ export const BASE_COLORS = {
   STONE800: '#292524',
   STONE900: '#1c1917',
   STONE950: '#0c0a09',
+
+  AMBER50:  '#fffbeb',
+  AMBER100: '#fef3c7',
+  AMBER200: '#fde68a',
+  AMBER300: '#fcd34d',
+  AMBER400: '#fbbf24',
+  AMBER500: '#f59e0b',
+  AMBER600: '#d97706',
+  AMBER700: '#b45309',
+  AMBER800: '#92400e',
+  AMBER900: '#78350f',
+  AMBER950: '#451a03',
 };
