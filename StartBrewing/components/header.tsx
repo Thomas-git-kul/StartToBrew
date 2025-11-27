@@ -59,7 +59,7 @@ export default function HeaderBar({
                       position: "absolute",
                       top: -5,
                       right: -5,
-                      backgroundColor: "#ca2d3dff",
+                      backgroundColor: BASE_COLORS.RED600,
                       color: "white",
                     }}
                   >{cartCount}</Badge>

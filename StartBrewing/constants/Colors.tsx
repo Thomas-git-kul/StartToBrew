@@ -37,4 +37,16 @@ export const BASE_COLORS = {
   AMBER800: '#92400e' as HexColor,
   AMBER900: '#78350f' as HexColor,
   AMBER950: '#451a03' as HexColor,
+
+  RED50:  '#fef2f2' as HexColor,
+  RED100: '#fee2e2' as HexColor,
+  RED200: '#fecaca' as HexColor,
+  RED300: '#fca5a5' as HexColor,
+  RED400: '#f87171' as HexColor,
+  RED500: '#ef4444' as HexColor,
+  RED600: '#dc2626' as HexColor,
+  RED700: '#b91c1c' as HexColor,
+  RED800: '#991b1b' as HexColor,
+  RED900: '#7f1d1d' as HexColor,
+  RED950: '#450a0a' as HexColor,
 };
