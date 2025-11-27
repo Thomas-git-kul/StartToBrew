@@ -49,11 +49,13 @@ jest.mock("@/components/header", () => {
   );
 });
 
+// expo-image vervangen door simpele placeholder
 jest.mock("expo-image", () => {
   const { Text } = require("react-native");
   return { Image: () => <Text>image-placeholder</Text> };
 });
 
+// router mocks
 export const mockPush = jest.fn();
 export const mockReplace = jest.fn();
 
@@ -69,6 +71,7 @@ jest.mock("expo-router", () => ({
   },
 }));
 
+// supabase mock
 jest.mock("@/supabase", () => {
   const mockGetUser = jest.fn().mockResolvedValue({
     data: { user: { id: "user-1" } },
@@ -95,7 +98,7 @@ jest.mock("@/supabase", () => {
           {
             id_badge: 1,
             code: "FIRST_BREW",
-            name: "First Badge",
+            name: "First Brew",
             description: "Your first brew",
             icon_url: null,
             category: "progression",
@@ -124,7 +127,7 @@ jest.mock("@/supabase", () => {
     }),
   };
 
-  // RECIPES FOR BREWS IMAGES
+  // RECIPES (voor completed brews)
   const recipesSelect = {
     select: jest.fn().mockReturnValue({
       in: jest.fn().mockResolvedValue({
@@ -186,21 +189,29 @@ jest.mock("@/supabase", () => {
   };
 });
 
-// IMPORT COMPONENT AFTER MOCKS
+// component NA de mocks importeren
 import Account from "@/app/(tabs)/Account";
 
 describe("<Account />", () => {
-  test("renders profile data + badges", async () => {
-    const { getByText, queryByText } = render(<Account />);
+  test("renders profile data + badges section + completed brews", async () => {
+    const { getByText } = render(<Account />);
 
+    // profiel
     await waitFor(() => {
       expect(getByText("Test User")).toBeTruthy();
       expect(getByText("@testuser")).toBeTruthy();
     });
 
-    // ENSURE BADGES LOADED
+    // badges sectie
     await waitFor(() => {
-      expect(queryByText("First Badge")).toBeTruthy();
+      expect(getByText("Badges")).toBeTruthy();
+      expect(getByText("Your badges")).toBeTruthy();
+    });
+
+    // completed brews (op basis van RPC-mock)
+    await waitFor(() => {
+      expect(getByText("Completed brews")).toBeTruthy();
+      expect(getByText("My Finished Brew")).toBeTruthy();
     });
   });
 

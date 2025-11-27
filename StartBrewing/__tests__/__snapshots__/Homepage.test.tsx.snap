@@ -238,18 +238,18 @@ exports[`<HomePage /> snapshot 1`] = `
     style={
       {
         "backgroundColor": "#000",
-        "borderRadius": 20,
+        "borderRadius": 30,
         "bottom": 25,
         "opacity": 1,
         "position": "absolute",
         "right": 10,
         "shadowColor": "#000",
         "shadowOffset": {
-          "height": 4,
+          "height": 0,
           "width": 0,
         },
-        "shadowOpacity": 0.15,
-        "shadowRadius": 8,
+        "shadowOpacity": 0,
+        "shadowRadius": 0,
         "transform": [
           {
             "scale": 1,
@@ -265,15 +265,15 @@ exports[`<HomePage /> snapshot 1`] = `
       style={
         {
           "backgroundColor": "#000",
-          "borderRadius": 20,
+          "borderRadius": 30,
           "flex": undefined,
           "shadowColor": "#000",
           "shadowOffset": {
-            "height": 1,
+            "height": 0,
             "width": 0,
           },
-          "shadowOpacity": 0.3,
-          "shadowRadius": 3,
+          "shadowOpacity": 0,
+          "shadowRadius": 0,
         }
       }
       testID="fab-container"
@@ -315,7 +315,7 @@ exports[`<HomePage /> snapshot 1`] = `
               "overflow": "hidden",
             },
             {
-              "borderRadius": 20,
+              "borderRadius": 30,
             },
           ]
         }

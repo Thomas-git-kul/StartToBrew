@@ -10,7 +10,7 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 interface textInputProps {
   placeholder: string;
-  onChangeText: (text: string) => void;
+  onChangeText?: (text: string) => void;
   value?: string;
   secureTextEntry?: boolean;
   multiline?: boolean;

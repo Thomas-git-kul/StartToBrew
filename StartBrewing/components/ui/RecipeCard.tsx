@@ -44,7 +44,6 @@ const BeerCard: React.FC<BeerCardProps> = ({
   return (
     <View className="mb-3 rounded-xl overflow-hidden">
       <Card
-        mode="elevated"
         style={{
           borderRadius: 12,
           backgroundColor: BASE_COLORS.WHITE,

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
@@ -25,6 +26,7 @@ type Profile = {
   avatar_url: string | null;
   bio: string | null;
   updated_at: string | null;
+  level: string | null;
 };
 
 type BadgeWithEarned = {
@@ -33,7 +35,7 @@ type BadgeWithEarned = {
   name: string;
   description: string | null;
   category: string;
-  icon_url: string | null;
+  icon_url: string | null; // resolved public URL
   earned_at: string;
 };
 
@@ -58,6 +60,7 @@ export default function Account() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
+  const [level, setLevel] = useState("");
   const [bio, setBio] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -68,6 +71,12 @@ export default function Account() {
     CompletedBrewWithImage[]
   >([]);
   const [brewsLoading, setBrewsLoading] = useState(false);
+
+  // voor badge-modal
+  const [selectedBadge, setSelectedBadge] = useState<BadgeWithEarned | null>(
+    null
+  );
+  const [badgeModalVisible, setBadgeModalVisible] = useState(false);
 
   const initials = useMemo(() => {
     const src = fullName || username || "";
@@ -92,7 +101,7 @@ export default function Account() {
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id,username,full_name,avatar_url,bio,updated_at")
+      .select("id,username,full_name,avatar_url,bio,updated_at,level")
       .eq("id", user.id)
       .single();
 
@@ -107,6 +116,7 @@ export default function Account() {
     setUsername(p?.username ?? "");
     setFullName(p?.full_name ?? "");
     setBio(p?.bio ?? "");
+    setLevel(p?.level ?? "");
 
     if (p?.avatar_url) {
       let url: string;
@@ -175,15 +185,36 @@ export default function Account() {
       earnedById.set(row.badge_id, row.earned_at);
     }
 
-    const merged: BadgeWithEarned[] = badgesData.map((b: any) => ({
-      id_badge: b.id_badge,
-      code: b.code,
-      name: b.name,
-      description: b.description,
-      category: b.category,
-      icon_url: b.icon_url,
-      earned_at: earnedById.get(b.id_badge) ?? "",
-    }));
+    const merged: BadgeWithEarned[] = badgesData.map((b: any) => {
+      let resolvedIconUrl: string | null = null;
+
+      if (b.icon_url && typeof b.icon_url === "string") {
+        if (b.icon_url.startsWith("http")) {
+          resolvedIconUrl = b.icon_url;
+        } else {
+          const { data: pub } = supabase.storage
+            .from("badges")
+            .getPublicUrl(b.icon_url);
+          resolvedIconUrl = pub.publicUrl;
+        }
+      } else if (b.code) {
+        const fileName = `${b.code}.webp`;
+        const { data: pub } = supabase.storage
+          .from("badges")
+          .getPublicUrl(fileName);
+        resolvedIconUrl = pub.publicUrl;
+      }
+
+      return {
+        id_badge: b.id_badge,
+        code: b.code,
+        name: b.name,
+        description: b.description,
+        category: b.category,
+        icon_url: resolvedIconUrl,
+        earned_at: earnedById.get(b.id_badge) ?? "",
+      };
+    });
 
     merged.sort((a, b) => {
       if (!a.earned_at || !b.earned_at) return 0;
@@ -302,189 +333,254 @@ export default function Account() {
     const badgeCount = badges.length;
     const completedBrewsCount = completedBrews.length;
 
-    return (
-      <ScrollView
-        className="flex-1"
-        style={{
-          backgroundColor: BASE_COLORS.LIGHT_BG,
-          paddingHorizontal: 16,
-          paddingTop: 8,
-        }}
-      >
-        <Header
-          title="Account"
-          iconName="ArrowRight"
-          onIconPress={() => router.push("/HomePage")}
-          actionTestID="account-button"
-        />
+    const closeBadgeModal = () => {
+      setBadgeModalVisible(false);
+      setSelectedBadge(null);
+    };
 
-        {/* Profiel header */}
-        <View style={styles.section}>
-          <View style={styles.avatarRow}>
-            <View style={styles.avatarTouch}>
-              {avatarUrl ? (
-                <Image
-                  source={{ uri: avatarUrl }}
-                  style={styles.avatar}
-                  onError={() => setAvatarUrl(null)}
-                />
-              ) : (
-                <View style={[styles.avatar, styles.avatarFallback]}>
-                  <Text style={styles.initials}>{initials || "?"}</Text>
-                </View>
-              )}
+    return (
+      <>
+        <ScrollView
+          className="flex-1"
+          style={{
+            backgroundColor: BASE_COLORS.LIGHT_BG,
+            paddingHorizontal: 16,
+            paddingTop: 8,
+          }}
+        >
+          <Header
+            title="Account"
+            iconName="ArrowRight"
+            onIconPress={() => router.push("/HomePage")}
+            actionTestID="account-button"
+          />
+
+          {/* Profiel header */}
+          <View style={styles.section}>
+            <View style={styles.avatarRow}>
+              <View style={styles.avatarTouch}>
+                {avatarUrl ? (
+                  <Image
+                    source={{ uri: avatarUrl }}
+                    style={styles.avatar}
+                    onError={() => setAvatarUrl(null)}
+                  />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarFallback]}>
+                    <Text style={styles.initials}>{initials || "?"}</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.profileTextBlock}>
+                <ThemedText style={styles.nameText}>
+                  {fullName || "Name not set"}
+                </ThemedText>
+                {!!username && (
+                  <ThemedText style={styles.usernameText}>
+                    @{username}
+                  </ThemedText>
+                )}
+                {!!bio && (
+                  <ThemedText style={styles.bioText} numberOfLines={3}>
+                    {bio}
+                  </ThemedText>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Statistieken */}
+          <View style={[styles.section, styles.cardsRow]}>
+            <View style={styles.infoCard}>
+              <ThemedText style={styles.cardLabel}>Badges</ThemedText>
+              <ThemedText style={styles.cardValue}>{badgeCount}</ThemedText>
+              <ThemedText style={styles.cardHint}>
+                {badgeCount === 1 ? "badge earned" : "badges earned"}
+              </ThemedText>
             </View>
 
-            <View style={styles.profileTextBlock}>
-              <ThemedText style={styles.nameText}>
-                {fullName || "Name not set"}
+            <View style={styles.infoCard}>
+              <ThemedText style={styles.cardLabel}>Brews</ThemedText>
+              <ThemedText style={styles.cardValue}>
+                {completedBrewsCount}
               </ThemedText>
-              {!!username && (
-                <ThemedText style={styles.usernameText}>@{username}</ThemedText>
+              <ThemedText style={styles.cardHint}>
+                {completedBrewsCount === 1
+                  ? "brew completed"
+                  : "brews completed"}
+              </ThemedText>
+            </View>
+
+            <View style={styles.infoCard}>
+              <ThemedText style={styles.cardLabel}>Level</ThemedText>
+              <ThemedText style={styles.cardValue}>{level || "-"}</ThemedText>
+              <ThemedText style={styles.cardHint}>
+                Your brewing level
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* Badges-overzicht (enkel foto) */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Your badges</ThemedText>
+
+            {badgesLoading ? (
+              <ActivityIndicator style={{ marginTop: 8 }} />
+            ) : badgeCount === 0 ? (
+              <ThemedText style={styles.emptyText}>
+                You have not earned any badges yet. Brew some beers to earn
+                badges!
+              </ThemedText>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.badgeScrollContent}
+              >
+                {badges.map((badge) => (
+                  <TouchableOpacity
+                    key={badge.id_badge}
+                    style={styles.badgeCard}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      setSelectedBadge(badge);
+                      setBadgeModalVisible(true);
+                    }}
+                  >
+                    <View style={styles.badgeIconContainer}>
+                      {badge.icon_url ? (
+                        <Image
+                          source={{ uri: badge.icon_url }}
+                          style={styles.badgeIconImage}
+                          contentFit="cover"
+                        />
+                      ) : (
+                        <View
+                          style={[
+                            styles.badgeIconImage,
+                            styles.badgeIconFallback,
+                          ]}
+                        >
+                          <Text style={styles.badgeIconText}>★</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+
+          {/* Completed brews */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Completed brews</ThemedText>
+
+            {brewsLoading ? (
+              <ActivityIndicator style={{ marginTop: 8 }} />
+            ) : completedBrewsCount === 0 ? (
+              <ThemedText style={styles.emptyText}>
+                You have not completed any brews yet.
+              </ThemedText>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginTop: 8 }}
+              >
+                {completedBrews.map((brew) => (
+                  <TouchableOpacity
+                    key={brew.id_brew}
+                    style={styles.brewCard}
+                    activeOpacity={0.8}
+                    disabled={!brew.recipe_slug}
+                    onPress={() =>
+                      brew.recipe_slug &&
+                      router.push({
+                        pathname: "/SpecificRecipe",
+                        params: { recipe_slug: brew.recipe_slug },
+                      })
+                    }
+                  >
+                    {brew.image && (
+                      <Image
+                        source={brew.image}
+                        style={styles.brewImage}
+                        contentFit="cover"
+                      />
+                    )}
+                    <ThemedText style={styles.brewName} numberOfLines={1}>
+                      {brew.name.trim()}
+                    </ThemedText>
+                    {brew.start_date && (
+                      <ThemedText style={styles.brewMeta}>
+                        {new Date(brew.start_date).toLocaleDateString()}
+                      </ThemedText>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+
+          {/* Acties */}
+          <View style={styles.actionsColumn}>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonPrimary]}
+              onPress={onEditProfile}
+            >
+              <Text style={styles.buttonText}>Change profile</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.buttonSecondary]}
+              onPress={onSignOut}
+            >
+              <Text style={styles.buttonSecondaryText}>Sign off</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        {/* Badge detail modal */}
+        <Modal
+          visible={badgeModalVisible && !!selectedBadge}
+          animationType="fade"
+          transparent
+          onRequestClose={closeBadgeModal}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.modalContent}>
+              {selectedBadge?.icon_url && (
+                <Image
+                  source={{ uri: selectedBadge.icon_url }}
+                  style={styles.modalBadgeImage}
+                  contentFit="contain"
+                />
               )}
-              {!!bio && (
-                <ThemedText style={styles.bioText} numberOfLines={3}>
-                  {bio}
+
+              {!!selectedBadge?.description && (
+                <ThemedText style={styles.modalBadgeDescription}>
+                  {selectedBadge.description}
                 </ThemedText>
               )}
+
+              {!!selectedBadge?.earned_at && (
+                <ThemedText style={styles.modalBadgeEarned}>
+                  Earned on{" "}
+                  {new Date(selectedBadge.earned_at).toLocaleDateString()}
+                </ThemedText>
+              )}
+
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={closeBadgeModal}
+              >
+                <Text style={styles.modalCloseButtonText}>Close</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </View>
-
-        {/* Statistieken */}
-        <View style={[styles.section, styles.cardsRow]}>
-          <View style={styles.infoCard}>
-            <ThemedText style={styles.cardLabel}>Badges</ThemedText>
-            <ThemedText style={styles.cardValue}>{badgeCount}</ThemedText>
-            <ThemedText style={styles.cardHint}>
-              {badgeCount === 1 ? "badge earned" : "badges earned"}
-            </ThemedText>
-          </View>
-
-          <View style={styles.infoCard}>
-            <ThemedText style={styles.cardLabel}>Brews</ThemedText>
-            <ThemedText style={styles.cardValue}>
-              {completedBrewsCount}
-            </ThemedText>
-            <ThemedText style={styles.cardHint}>
-              {completedBrewsCount === 1 ? "brew completed" : "brews completed"}
-            </ThemedText>
-          </View>
-        </View>
-
-        {/* Badges-overzicht */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Your badges</ThemedText>
-
-          {badgesLoading ? (
-            <ActivityIndicator style={{ marginTop: 8 }} />
-          ) : badgeCount === 0 ? (
-            <ThemedText style={styles.emptyText}>
-              You have not earned any badges yet. Brew some beers to earn
-              badges!
-            </ThemedText>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.badgeScrollContent}
-            >
-              {badges.map((badge) => (
-                <View key={badge.id_badge} style={styles.badgeCard}>
-                  <View style={styles.badgeIconPlaceholder}>
-                    <Text style={styles.badgeIconText}>★</Text>
-                  </View>
-
-                  <ThemedText style={styles.badgeName} numberOfLines={1}>
-                    {badge.name}
-                  </ThemedText>
-                  {!!badge.description && (
-                    <ThemedText
-                      style={styles.badgeDescription}
-                      numberOfLines={2}
-                    >
-                      {badge.description}
-                    </ThemedText>
-                  )}
-                  {!!badge.earned_at && (
-                    <ThemedText style={styles.badgeEarnedText}>
-                      Earned on {new Date(badge.earned_at).toLocaleDateString()}
-                    </ThemedText>
-                  )}
-                </View>
-              ))}
-            </ScrollView>
-          )}
-        </View>
-
-        {/* Completed brews */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Completed brews</ThemedText>
-
-          {brewsLoading ? (
-            <ActivityIndicator style={{ marginTop: 8 }} />
-          ) : completedBrewsCount === 0 ? (
-            <ThemedText style={styles.emptyText}>
-              You have not completed any brews yet.
-            </ThemedText>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginTop: 8 }}
-            >
-              {completedBrews.map((brew) => (
-                <TouchableOpacity
-                  key={brew.id_brew}
-                  style={styles.brewCard}
-                  activeOpacity={0.8}
-                  disabled={!brew.recipe_slug}
-                  onPress={() =>
-                    brew.recipe_slug &&
-                    router.push({
-                      pathname: "/SpecificRecipe",
-                      params: { recipe_slug: brew.recipe_slug },
-                    })
-                  }
-                >
-                  {brew.image && (
-                    <Image
-                      source={brew.image}
-                      style={styles.brewImage}
-                      contentFit="cover"
-                    />
-                  )}
-                  <ThemedText style={styles.brewName} numberOfLines={1}>
-                    {brew.name.trim()}
-                  </ThemedText>
-                  {brew.start_date && (
-                    <ThemedText style={styles.brewMeta}>
-                      {new Date(brew.start_date).toLocaleDateString()}
-                    </ThemedText>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-        </View>
-
-        {/* Acties */}
-        <View style={styles.actionsColumn}>
-          <TouchableOpacity
-            style={[styles.button, styles.buttonPrimary]}
-            onPress={onEditProfile}
-          >
-            <Text style={styles.buttonText}>Change profile</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.buttonSecondary]}
-            onPress={onSignOut}
-          >
-            <Text style={styles.buttonSecondaryText}>Sign off</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        </Modal>
+      </>
     );
   };
 
@@ -580,45 +676,36 @@ export default function Account() {
       paddingRight: 4,
     },
     badgeCard: {
-      width: 140,
+      width: 90,
+      height: 90,
       marginRight: 12,
       backgroundColor: BASE_COLORS.WHITE,
-      borderRadius: 10,
-      padding: 10,
+      borderRadius: 45,
+      alignItems: "center",
+      justifyContent: "center",
       borderWidth: 1,
       borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
     },
-    badgeIconPlaceholder: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      alignSelf: "flex-start",
+    badgeIconContainer: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      overflow: "hidden",
+      backgroundColor: BASE_COLORS.WHITE,
+    },
+    badgeIconImage: {
+      width: "100%",
+      height: "100%",
+    },
+    badgeIconFallback: {
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-      marginBottom: 8,
     },
     badgeIconText: {
-      fontSize: 24,
+      fontSize: 28,
       color: BASE_COLORS.WHITE,
       fontWeight: "bold",
-    },
-    badgeName: {
-      fontSize: 14,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 4,
-    },
-    badgeDescription: {
-      fontSize: 12,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.8,
-      marginBottom: 4,
-    },
-    badgeEarnedText: {
-      fontSize: 11,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.7,
     },
     actionsColumn: {
       marginTop: 32,
@@ -666,6 +753,57 @@ export default function Account() {
       fontSize: 12,
       color: BASE_COLORS.TEXT_DARK,
       opacity: 0.8,
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 24,
+    },
+    modalContent: {
+      width: "100%",
+      borderRadius: 16,
+      padding: 16,
+      backgroundColor: BASE_COLORS.WHITE,
+      alignItems: "center",
+    },
+    modalBadgeImage: {
+      width: 180,
+      height: 180,
+      marginBottom: 16,
+    },
+    modalBadgeName: {
+      fontSize: 18,
+      fontFamily: FontFamilies.HEADING,
+      color: BASE_COLORS.TEXT_DARK,
+      marginBottom: 8,
+      textAlign: "center",
+    },
+    modalBadgeDescription: {
+      fontSize: 14,
+      color: BASE_COLORS.TEXT_DARK,
+      opacity: 0.9,
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    modalBadgeEarned: {
+      fontSize: 12,
+      color: BASE_COLORS.TEXT_DARK,
+      opacity: 0.8,
+      marginBottom: 16,
+    },
+    modalCloseButton: {
+      marginTop: 4,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 8,
+      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
+    },
+    modalCloseButtonText: {
+      color: BASE_COLORS.WHITE,
+      fontWeight: "bold",
+      fontSize: 14,
     },
   });
 

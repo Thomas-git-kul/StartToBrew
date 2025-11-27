@@ -1119,7 +1119,7 @@ exports[`<Registration /> matches snapshot 1`] = `
               {
                 "color": undefined,
                 "fontFamily": "System",
-                "fontSize": 20,
+                "fontSize": 26,
               },
               undefined,
               undefined,
