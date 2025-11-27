@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { View, ScrollView, Image, Pressable, FlatList, Dimensions, Text } from "react-native";
+import { View, ScrollView, Image, Pressable, FlatList, Dimensions, Text, TextInput } from "react-native";
 import { Button, Snackbar, ActivityIndicator } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -45,10 +45,11 @@ export default function StoreItem() {
     images: { id: string; source: any }[];
   } | null>(null);
 
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState("1");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  
 
   // Format price in Euro
   const formatter = useMemo(
@@ -58,7 +59,7 @@ export default function StoreItem() {
 
   // Calculate total price dynamically
   const totalPrice = useMemo(
-    () => (item?.price ?? 0) * quantity,
+    () => (item?.price ?? 0) * parseInt(quantity),
     [item?.price, quantity]
   );
 
@@ -168,6 +169,7 @@ export default function StoreItem() {
 
       console.log("Item added to shopping cart successfully");
 
+      setQuantity("1");
       setSnackbarVisible(true);
       loadCartCount();
 
@@ -352,25 +354,49 @@ export default function StoreItem() {
           }}
         >
           {/* Quantity Selector */}
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View className="flex-row gap-2">
             <Pressable
               testID="quantity-minus"
-              onPress={() => setQuantity(Math.max(1, quantity - 1))}
+              onPress={() => {
+                const newQuantity = Math.max(1, parseInt(quantity) - 1);
+                setQuantity(newQuantity.toString());
+              }}
               hitSlop={8}
-              style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
+              style={{ justifyContent: "center", alignItems: "center"}}
             >
               <CircleMinus size={30} color={BASE_COLORS.STONE500} />
             </Pressable>
-
-            <ThemedText type="numbers" style={{ marginHorizontal: 12 }}>
-              {quantity}
-            </ThemedText>
+            
+            <TextInput
+              value={quantity.toString()}
+              inputMode="numeric"
+              autoFocus={true}
+              enterKeyHint="done"
+              maxLength={2}
+              onChangeText={(text) => {
+                const sanitized = text.replace(/[^0-9]/g, "");
+                setQuantity(sanitized === "" ? "1" : sanitized);
+              }}
+              selectionColor={BASE_COLORS.ACCENT_PRIMARY}
+              style={{
+                width: 60,
+                height: 40,
+                textAlign: "center",
+                fontFamily: FontFamilies.BODY,
+                fontSize: Math.min(20 * scale, 26),
+                color: BASE_COLORS.STONE700,
+                paddingVertical: 0,
+              }}
+            />
 
             <Pressable
               testID="quantity-plus"
-              onPress={() => setQuantity(quantity + 1)}
+              onPress={() => {
+                const newQuantity = parseInt(quantity) + 1;
+                setQuantity(newQuantity.toString());
+              }}
               hitSlop={8}
-              style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
+              style={{ justifyContent: "center", alignItems: "center" }}
             >
               <CirclePlus size={30} color={BASE_COLORS.STONE500} />
             </Pressable>
