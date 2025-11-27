@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { View, ScrollView, Image, Pressable, FlatList, Dimensions } from "react-native";
-import { FAB } from "react-native-paper";
+import { useState, useMemo, useEffect } from "react";
+import { View, ScrollView, Image, Pressable, FlatList, Dimensions, Text, TextInput } from "react-native";
+import { Button, Snackbar, ActivityIndicator } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -11,9 +11,12 @@ import { ThemedText } from "@/components/themed-text";
 import { CirclePlus, CircleMinus } from "lucide-react-native";
 import { supabase } from "../supabase";
 
-const { width } = Dimensions.get("window");
-const IMAGE_WIDTH = width - 20;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const IMAGE_WIDTH = SCREEN_WIDTH - 20;
 const IMAGE_HEIGHT = IMAGE_WIDTH * 0.75;
+
+const BASE_SCREEN_WIDTH = 375; 
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 const exampleImages: Record<number, any> = {
   1: require("@/assets/images/malt.png"),
@@ -30,7 +33,7 @@ export default function StoreItem() {
   const router = useRouter();
   const { id } = useLocalSearchParams() as { id?: number };
   const { categoryNumber } = useLocalSearchParams() as { categoryNumber?: number };
-  // console.log("CategoryNumber:", categoryNumber);
+  // console.log("cartCount:", cartCount);
 
   const [loading, setLoading] = useState(true);
   const [item, setItem] = useState<{
@@ -42,8 +45,11 @@ export default function StoreItem() {
     images: { id: string; source: any }[];
   } | null>(null);
 
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState("1");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  
 
   // Format price in Euro
   const formatter = useMemo(
@@ -53,9 +59,39 @@ export default function StoreItem() {
 
   // Calculate total price dynamically
   const totalPrice = useMemo(
-    () => (item?.price ?? 0) * quantity,
+    () => (item?.price ?? 0) * parseInt(quantity),
     [item?.price, quantity]
   );
+
+  const loadCartCount = async () => {
+    try {
+      // Get the logged-in user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCartCount(0);
+        return;
+      }
+
+      // Fetch only rows for that user
+      const { data, error } = await supabase
+        .from("user_shopping_cart")
+        .select("id_user_cart", { count: "exact" })  // we get an exact count
+        .eq("user_id", user.id);
+      // console.log("cartitems", data);
+
+      if (error) {
+        console.warn("Cart count error:", error.message);
+        return;
+      }
+
+      // Use the count from Supabase
+      setCartCount(data ? data.length : 0);
+
+      // console.log("cartcount", data?.length ?? 0);
+    } catch (e: any) {
+      console.warn("Cart count fetch exception:", e?.message ?? e);
+    }
+  };
 
   const handleAddToOrder = async () => {
     if (!item) return;
@@ -132,7 +168,10 @@ export default function StoreItem() {
       }
 
       console.log("Item added to shopping cart successfully");
-      router.push("/Store");
+
+      setQuantity("1");
+      setSnackbarVisible(true);
+      loadCartCount();
 
     } catch (err: any) {
       console.error("Unexpected order creation error:", err.message ?? err);
@@ -204,17 +243,37 @@ export default function StoreItem() {
     };
 
     load();
+    loadCartCount();
+
     return () => { mounted = false; };
-  }, [id, categoryNumber]);
+  }, [id, categoryNumber, cartCount]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator 
+            animating
+            size="large"
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
+          <ThemedText type="defaultText" className="mt-3">
+            Loading item...
+          </ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
       <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
         {/* Header */}
         <Header
-          title={item?.name ?? (loading ? "Loading…" : "Item")}
-          iconName="ArrowRight"
-          onIconPress={() => router.push("/Store")}
+          title="Store"
+          iconName="ShoppingCart"
+          onIconPress={() => router.push("/ShoppingCart")}
           actionTestID="back-button"
+          cartCount={cartCount}
         />
 
         {/* Scrollable Content */}
@@ -222,74 +281,42 @@ export default function StoreItem() {
           className="flex-1 mx-3" 
           showsVerticalScrollIndicator={false}
         >
+          <ThemedText type="titleBlack">{item?.name ?? (loading ? "Loading…" : "Item")}</ThemedText>
           {/* Image Carousel */}
-          <View>
-            <FlatList
-              data={item?.images ?? []} // Ensure fallback is an empty array
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(image, index) => `${image.id ?? index}`} // Use index as fallback
-              renderItem={({ item: image }) => {
-                return (
-                  <View
-                    style={{
-                      width: IMAGE_WIDTH,
-                      height: IMAGE_HEIGHT,
-                      borderRadius: 20,
-                      overflow: "hidden",
-                    }}
-                  >
-                    <Image
-                      source={image.source}
-                      style={{
-                        width: "100%",
-                        height:"100%"
-                      }}
-                      resizeMode="cover"
-                    />
-                  </View>
-                );
-              }}
-              onMomentumScrollEnd={(ev) => {
-                const index = Math.round(
-                  ev.nativeEvent.contentOffset.x / ev.nativeEvent.layoutMeasurement.width
-                );
-                setCurrentIndex(index);
-              }}
-            />
-
-            {/* Pagination Dots */}
-            <View
-              style={{
-                position: "absolute",
-                bottom: 8,
-                left: 0,
-                right: 0,
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 6,
-              }}
-            >
-              {item?.images?.map((_, i: number) => (
+          <FlatList
+            data={item?.images ?? []} // Ensure fallback is an empty array
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(image, index) => `${image.id ?? index}`} // Use index as fallback
+            renderItem={({ item: image }) => {
+              return (
                 <View
-                  key={i}
                   style={{
-                    width: currentIndex === i ? 10 : 8,
-                    height: currentIndex === i ? 10 : 8,
-                    borderRadius: currentIndex === i ? 5 : 4,
-                    backgroundColor:
-                      currentIndex === i
-                        ? BASE_COLORS.ACCENT_PRIMARY
-                        : "rgba(255,255,255,0.65)",
-                    borderWidth: 1,
-                    borderColor: "rgba(0,0,0,0.12)",
-                    marginHorizontal: 2,
+                    width: IMAGE_WIDTH,
+                    height: IMAGE_HEIGHT,
+                    borderRadius: 20,
+                    overflow: "hidden",
                   }}
-                />
-              ))}
-            </View>
-          </View>
+                >
+                  <Image
+                    source={image.source}
+                    style={{
+                      width: "100%",
+                      height:"100%"
+                    }}
+                    resizeMode="cover"
+                  />
+                </View>
+              );
+            }}
+            onMomentumScrollEnd={(ev) => {
+              const index = Math.round(
+                ev.nativeEvent.contentOffset.x / ev.nativeEvent.layoutMeasurement.width
+              );
+              setCurrentIndex(index);
+            }}
+          />
           
           {/* Product information */}
           <View
@@ -327,41 +354,68 @@ export default function StoreItem() {
           }}
         >
           {/* Quantity Selector */}
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View className="flex-row gap-2">
             <Pressable
               testID="quantity-minus"
-              onPress={() => setQuantity(Math.max(1, quantity - 1))}
+              onPress={() => {
+                const newQuantity = Math.max(1, parseInt(quantity) - 1);
+                setQuantity(newQuantity.toString());
+              }}
               hitSlop={8}
-              style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
+              style={{ justifyContent: "center", alignItems: "center"}}
             >
               <CircleMinus size={30} color={BASE_COLORS.STONE500} />
             </Pressable>
-
-            <ThemedText type="numbers" style={{ marginHorizontal: 12 }}>
-              {quantity}
-            </ThemedText>
+            
+            <TextInput
+              value={quantity.toString()}
+              inputMode="numeric"
+              autoFocus={true}
+              enterKeyHint="done"
+              maxLength={2}
+              onChangeText={(text) => {
+                const sanitized = text.replace(/[^0-9]/g, "");
+                setQuantity(sanitized === "" ? "1" : sanitized);
+              }}
+              selectionColor={BASE_COLORS.ACCENT_PRIMARY}
+              style={{
+                width: 60,
+                height: 40,
+                textAlign: "center",
+                fontFamily: FontFamilies.BODY,
+                fontSize: Math.min(20 * scale, 26),
+                color: BASE_COLORS.STONE700,
+                paddingVertical: 0,
+              }}
+            />
 
             <Pressable
               testID="quantity-plus"
-              onPress={() => setQuantity(quantity + 1)}
+              onPress={() => {
+                const newQuantity = parseInt(quantity) + 1;
+                setQuantity(newQuantity.toString());
+              }}
               hitSlop={8}
-              style={{ justifyContent: "center", alignItems: "center", width: 40, height: 40 }}
+              style={{ justifyContent: "center", alignItems: "center" }}
             >
               <CirclePlus size={30} color={BASE_COLORS.STONE500} />
             </Pressable>
           </View>
 
-          <FAB
-            label="Add to order"
-            mode="elevated"
+          <Button
+            mode="contained"
             testID="fab-add-to-order"
             onPress={handleAddToOrder}
-            style={{
-              backgroundColor: BASE_COLORS.TEXT_DARK,
-              borderRadius: 20,
-
+            labelStyle={{ 
+              fontSize: Math.min(18 * scale, 24),
+              color: BASE_COLORS.WHITE,
+              fontFamily: FontFamilies.BODY,            
             }}
-            color={BASE_COLORS.WHITE}
+            style={{
+              borderRadius: 30,
+              backgroundColor: BASE_COLORS.TEXT_DARK,
+              padding: 4,
+            }}
             theme={{
               fonts: {
                 labelLarge: {
@@ -370,8 +424,44 @@ export default function StoreItem() {
                 },
               },
             }}
-          />
+          >Add to order</Button>
         </View>
+
+        <Snackbar
+          visible={snackbarVisible}
+          onDismiss={() => setSnackbarVisible(false)}
+          duration={2000}
+          style={{
+            backgroundColor: BASE_COLORS.WHITE,
+            marginBottom: 80,
+            shadowColor: BASE_COLORS.STONE700,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.07,
+          }}
+        >
+          <View className="flex-row justify-between">
+            <Text 
+                style={{ 
+                  fontSize: Math.min(18 * scale, 26),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.STONE600,
+                }}
+              >Item added to cart</Text>
+            <Button
+              onPress={() => {
+                router.push({ pathname: "/Store"});
+              }}
+            >
+              <Text 
+                style={{ 
+                  fontSize: Math.min(16 * scale, 22),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >Back to Store</Text>
+            </Button>
+          </View>
+        </Snackbar>
       </SafeAreaView>
     );
 }

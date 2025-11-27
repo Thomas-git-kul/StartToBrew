@@ -443,6 +443,7 @@ exports[`<Registration /> matches snapshot 1`] = `
               }
             >
               <TextInput
+                enterKeyHint="done"
                 keyboardType="default"
                 multiline={false}
                 onBlur={[Function]}
@@ -480,6 +481,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
           >
             <TextInput
+              enterKeyHint="done"
               keyboardType="default"
               multiline={false}
               onBlur={[Function]}
@@ -545,6 +547,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
           >
             <TextInput
+              enterKeyHint="done"
               keyboardType="numeric"
               multiline={false}
               onBlur={[Function]}
@@ -585,6 +588,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
           >
             <TextInput
+              enterKeyHint="done"
               keyboardType="numeric"
               multiline={false}
               onBlur={[Function]}
@@ -625,6 +629,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
           >
             <TextInput
+              enterKeyHint="done"
               keyboardType="numeric"
               multiline={false}
               onBlur={[Function]}
@@ -687,6 +692,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         }
       >
         <TextInput
+          enterKeyHint="done"
           keyboardType="email-address"
           multiline={false}
           onBlur={[Function]}
@@ -744,6 +750,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         }
       >
         <TextInput
+          enterKeyHint="done"
           keyboardType="default"
           multiline={false}
           onBlur={[Function]}
@@ -776,6 +783,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         }
       >
         <TextInput
+          enterKeyHint="done"
           keyboardType="default"
           multiline={false}
           onBlur={[Function]}
@@ -818,7 +826,6 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
           }
           accessible={true}
-          className="absolute right-4 top-1/2 -translate-y-1/2"
           collapsable={false}
           focusable={true}
           onBlur={[Function]}
@@ -939,6 +946,7 @@ exports[`<Registration /> matches snapshot 1`] = `
         }
       >
         <TextInput
+          enterKeyHint="done"
           keyboardType="default"
           multiline={false}
           onBlur={[Function]}
@@ -981,7 +989,6 @@ exports[`<Registration /> matches snapshot 1`] = `
             }
           }
           accessible={true}
-          className="absolute right-4 top-1/2 -translate-y-1/2"
           collapsable={false}
           focusable={true}
           onBlur={[Function]}
@@ -1119,7 +1126,7 @@ exports[`<Registration /> matches snapshot 1`] = `
               {
                 "color": undefined,
                 "fontFamily": "System",
-                "fontSize": 20,
+                "fontSize": 26,
               },
               undefined,
               undefined,
