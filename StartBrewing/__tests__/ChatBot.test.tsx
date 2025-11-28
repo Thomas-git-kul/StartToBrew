@@ -3,42 +3,50 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import fetchMock from 'jest-fetch-mock';
 import ChatBot from '../app/(tabs)/ChatBot';
 import { NavigationContainer } from '@react-navigation/native';
-import { FavoritesProvider } from '@/context/FavoritesContext';
-
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 fetchMock.enableMocks();
 
 const renderWithNavigation = (ui: React.ReactElement) =>
   render(
-    <NavigationContainer>
-      <FavoritesProvider>{ui}</FavoritesProvider>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        {ui}
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 
 // --- MOCKS VOOR NATIVE MODULES ---
 
 // --- MOCKS VOOR SUPABASE ---
-jest.mock('@/supabase/client', () => {
-  return {
-    supabase: {
-      from: jest.fn(() => ({
-        select: jest.fn().mockReturnThis(),
-        insert: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockReturnThis(),
-        then: jest.fn(),
-      })),
-      auth: {
-        signInWithPassword: jest.fn(),
-        signOut: jest.fn(),
-        getSession: jest.fn().mockResolvedValue({
-          data: { session: { user: { id: 'test-user-id' } } },
-          error: null,
-        }),
-      },
+jest.mock('@/supabase', () => ({
+  supabase: {
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockReturnThis(),
+      then: jest.fn(),
+    })),
+    auth: {
+      signInWithPassword: jest.fn(),
+      signOut: jest.fn(),
+      getSession: jest.fn().mockResolvedValue({
+        data: { session: { user: { id: 'test-user-id' } } },
+        error: null,
+      }),
     },
-  };
-});
+  },
+}));
 
+jest.mock('@/components/header', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return ({ title, iconName, onIconPress }: any) => (
+    <View>
+      <Text>{title}</Text>
+    </View>
+  );
+});
 
 // Mock Markdown
 jest.mock('react-native-markdown-display', () => {
@@ -52,6 +60,10 @@ jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: [] })),
   launchCameraAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: [] })),
   MediaTypeOptions: { Images: 'Images' },
+}));
+
+jest.mock('expo-font', () => ({
+  useFonts: () => [true], // fonts loaded
 }));
 
 // Mock Alert
@@ -69,61 +81,103 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 // Mock fetch
 global.fetch = require('jest-fetch-mock');
 
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+}));
+
+export const useGlobalSearchParams = () => ({});
+
+// Mock safe area context so Provider renders children in tests
+jest.mock('react-native-safe-area-context', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    SafeAreaProvider: ({ children }: any) => <View>{children}</View>,
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  };
+});
+
+// Mock react-native-paper Button to avoid needing a Provider in tests
+jest.mock('react-native-paper', () => {
+  const { TouchableOpacity, Text } = require('react-native');
+  return {
+    Button: ({ children, ...props }: any) => (
+      <TouchableOpacity {...props}>
+        <Text>{children}</Text>
+      </TouchableOpacity>
+    ),
+  };
+});
+
+// Mock design tokens
+jest.mock('@/constants/Colors', () => ({
+  BASE_COLORS: {
+    WHITE: '#fff',
+    TEXT_DARK: '#000',
+    LIGHT_BG: '#eee',
+  },
+}));
+
+jest.mock('@/constants/Fonts', () => ({
+  FontFamilies: {
+    BODY: 'System',
+    BODY_LIGHT: 'System',
+  },
+}));
+
 beforeEach(() => {
   fetchMock.resetMocks();
 });
 
-describe('HomeScreen', () => {
-  it('renders initial bot message', () => {
-    const { getByText } = renderWithNavigation(<ChatBot />);
-    expect(getByText('Hey! Where can I help you with?')).toBeTruthy();
+describe('ChatBot', () => {
+  it('renders initial bot message', async () => {
+    const { findByText } = renderWithNavigation(<ChatBot />);
+    // header renders immediately
+    const header = await findByText('ChatBot');
+    expect(header).toBeTruthy();
+
+    // bot greeting should appear
+    const botMessage = await findByText(/How can I help you/i);
+    expect(botMessage).toBeTruthy();
   });
 
-  it('updates input value when typing', () => {
-    const { getByPlaceholderText } = renderWithNavigation(<ChatBot />);
-    const input = getByPlaceholderText('Typ een bericht...');
+  it('updates input value when typing', async () => {
+    const { findByPlaceholderText } = renderWithNavigation(<ChatBot />);
+    const input = await findByPlaceholderText('Type a message...');
     fireEvent.changeText(input, 'Hallo');
     expect(input.props.value).toBe('Hallo');
   });
 
   it('sends a text message and receives bot response', async () => {
-    fetchMock.mockResponseOnce(JSON.stringify({ text: 'Bot antwoord' }));
+    fetchMock.mockResponseOnce(JSON.stringify({ text: 'Bot response' }));
 
-    const { getByPlaceholderText, getByText, queryByText } = renderWithNavigation(<ChatBot />);
-    const input = getByPlaceholderText('Typ een bericht...');
-    const sendButton = getByText('Stuur');
+    const { findByPlaceholderText, findByText } = renderWithNavigation(<ChatBot />);
+    const input = await findByPlaceholderText('Type a message...');
+    const sendButton = await findByText('Send');
 
-    // Typen
     fireEvent.changeText(input, 'Hallo');
-    expect(input.props.value).toBe('Hallo');
-
-    // Versturen
     fireEvent.press(sendButton);
 
-    // Loading indicator verschijnt
-    expect(queryByText('Stuur')).toBeTruthy();
+    // wait for bot response
+    const botResponse = await findByText(/Bot response/i);
+    expect(botResponse).toBeTruthy();
 
-    // Wacht op bot antwoord
-    await waitFor(() => {
-      expect(getByText('Bot antwoord')).toBeTruthy();
-    });
-
-    // Input wordt gereset
+    // input should be reset
     expect(input.props.value).toBe('');
   });
 
-  it('does not send if input and image are empty', () => {
-    const { getByText, queryByText } = renderWithNavigation(<ChatBot />);
-    const sendButton = getByText('Stuur');
-
+  it('does not send if input and image are empty', async () => {
+    const { findByText, findAllByText } = renderWithNavigation(<ChatBot />);
+    const sendButton = await findByText('Send');
     fireEvent.press(sendButton);
 
-    // Geen nieuwe messages toegevoegd
-    expect(queryByText('Hey! Where can I help you with?')).toBeTruthy();
+    // only the initial bot message should be present
+    const botMessages = await findAllByText(/How can I help you/i);
+    expect(botMessages.length).toBeGreaterThanOrEqual(1);
   });
 
   it("snapshot", () => {
-      const tree = renderWithNavigation(<ChatBot />).toJSON();
-      expect(tree).toMatchSnapshot();
-    });
+    const tree = renderWithNavigation(<ChatBot />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 });

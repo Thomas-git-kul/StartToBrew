@@ -1,193 +1,221 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`HomeScreen snapshot 1`] = `
-<View
-  style={
-    {
-      "backgroundColor": "#f2f2f2",
-      "flex": 1,
-    }
-  }
->
-  <RCTScrollView
-    contentContainerStyle={
-      {
-        "paddingBottom": 10,
-      }
-    }
+exports[`ChatBot snapshot 1`] = `
+<View>
+  <View
     style={
       {
+        "backgroundColor": "#eee",
         "flex": 1,
-        "paddingHorizontal": 12,
-        "paddingTop": 10,
       }
     }
   >
     <View>
-      <View
-        style={
-          {
-            "alignSelf": "flex-start",
-            "backgroundColor": "#FFF",
-            "borderRadius": 16,
-            "marginVertical": 4,
-            "maxWidth": "80%",
-            "padding": 10,
-          }
-        }
-      >
-        <Text>
-          Hey! Where can I help you with?
-        </Text>
-      </View>
-    </View>
-  </RCTScrollView>
-  <View
-    style={
-      {
-        "alignItems": "center",
-        "backgroundColor": "#fff",
-        "borderColor": "#ddd",
-        "borderTopWidth": 1,
-        "flexDirection": "row",
-        "paddingHorizontal": 12,
-        "paddingVertical": 8,
-      }
-    }
-  >
-    <View
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onClick={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-      style={
-        {
-          "alignItems": "center",
-          "backgroundColor": "#007AFF",
-          "borderRadius": 20,
-          "height": 40,
-          "justifyContent": "center",
-          "marginRight": 8,
-          "opacity": 1,
-          "width": 40,
-        }
-      }
-    >
-      <Text
-        style={
-          {
-            "color": "#fff",
-            "fontSize": 24,
-            "fontWeight": "bold",
-            "lineHeight": 24,
-          }
-        }
-      >
-        +
+      <Text>
+        ChatBot
       </Text>
     </View>
-    <TextInput
-      onChangeText={[Function]}
-      placeholder="Typ een bericht..."
-      style={
-        {
-          "backgroundColor": "#fff",
-          "borderColor": "#ccc",
-          "borderRadius": 20,
-          "borderWidth": 1,
-          "flex": 1,
-          "paddingHorizontal": 16,
-          "paddingVertical": 10,
-        }
-      }
-      value=""
-    />
     <View
+      onLayout={[Function]}
       style={
-        {
-          "marginLeft": 8,
-        }
+        [
+          {
+            "flex": 1,
+          },
+          {
+            "paddingBottom": 0,
+          },
+        ]
       }
     >
       <View
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
           {
-            "opacity": 1,
+            "flex": 1,
           }
         }
       >
-        <View
+        <RCTScrollView
+          contentContainerStyle={
+            {
+              "paddingBottom": 10,
+            }
+          }
           style={
-            [
-              {},
-            ]
+            {
+              "flex": 1,
+              "paddingHorizontal": 12,
+              "paddingTop": 10,
+            }
           }
         >
-          <Text
-            style={
-              [
+          <View>
+            <View
+              style={
                 {
-                  "color": "#007AFF",
-                  "fontSize": 18,
-                  "margin": 8,
-                  "textAlign": "center",
-                },
-              ]
+                  "alignSelf": "flex-start",
+                  "backgroundColor": "#fff",
+                  "borderRadius": 16,
+                  "marginVertical": 4,
+                  "maxWidth": "80%",
+                  "padding": 10,
+                }
+              }
+              testID="bot-msg-0"
+            >
+              <Text>
+                Hey! How can I help you today?
+              </Text>
+            </View>
+          </View>
+        </RCTScrollView>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "paddingVertical": 8,
+            }
+          }
+        >
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "alignItems": "center",
+                "backgroundColor": "#000",
+                "borderRadius": 20,
+                "height": 40,
+                "justifyContent": "center",
+                "marginRight": 8,
+                "opacity": 1,
+                "paddingHorizontal": 16,
+                "paddingVertical": 8,
+                "width": 40,
+              }
             }
           >
-            Stuur
-          </Text>
+            <Text
+              style={
+                {
+                  "color": "#fff",
+                  "fontFamily": "System",
+                  "fontSize": 16,
+                }
+              }
+            >
+              +
+            </Text>
+          </View>
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="Type a message..."
+            style={
+              {
+                "backgroundColor": "#fff",
+                "borderColor": "#ccc",
+                "borderRadius": 20,
+                "borderWidth": 1,
+                "flex": 1,
+                "fontFamily": "System",
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              }
+            }
+            testID="chat-input"
+            value=""
+          />
+          <View
+            style={
+              {
+                "marginLeft": 8,
+              }
+            }
+          >
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "alignItems": "center",
+                  "backgroundColor": "#000",
+                  "borderRadius": 20,
+                  "justifyContent": "center",
+                  "minHeight": 40,
+                  "minWidth": 60,
+                  "opacity": 1,
+                  "paddingHorizontal": 16,
+                  "paddingVertical": 8,
+                }
+              }
+              testID="send-button"
+            >
+              <Text>
+                <Text
+                  style={
+                    {
+                      "color": "#fff",
+                      "fontFamily": "System",
+                      "fontSize": 16,
+                    }
+                  }
+                >
+                  Send
+                </Text>
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
     </View>

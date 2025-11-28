@@ -7,9 +7,7 @@ import { FontFamilies } from '@/constants/Fonts';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import Header from '@/components/header';
-
-const ipadress = 'http://192.168.1.36:3001/api/chat';
-const localhost = 'http://localhost:3001/api/chat';
+import { Button } from 'react-native-paper';
 
 type ChatMessage = {
   from: 'bot' | 'user';
@@ -18,9 +16,9 @@ type ChatMessage = {
   data?: string;
 };
 
-export default function HomeScreen() {
+export default function ChatBot() {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { from: 'bot', text: 'Hey! How can I  help you today?' },
+    { from: 'bot', text: 'Hey! How can I help you today?' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -93,6 +91,9 @@ export default function HomeScreen() {
   };
 
   const pickImageWeb = () => {
+    // Guard for non-browser (jest/node) environments
+    if (typeof document === 'undefined') return;
+
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -103,7 +104,7 @@ export default function HomeScreen() {
         reader.onload = () => {
           let uri = reader.result as string;
           let base64 = undefined;
-          if (uri.startsWith('data:')) {
+          if (typeof uri === 'string' && uri.startsWith('data:')) {
             base64 = uri.split(',')[1]; // strip "data:image/...;base64,"
           }
           setImage({ uri, base64 } as any);
@@ -132,13 +133,10 @@ export default function HomeScreen() {
 
   return (
   <View 
-    className="flex-1"
-    style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+    style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}
   >
     <Header
       title="ChatBot"
-      iconName="ArrowRight"
-      onIconPress={() => router.push("/progress" as any)}
     />
 
     <KeyboardAvoidingView
@@ -154,10 +152,13 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingBottom: 10 }} // extra ruimte voor input
         >
           {messages.map((msg, i) => (
-            <View key={i} style={msg.from === 'user' ? styles.userMsg : styles.botMsg}>
+            <View 
+              key={i}
+              testID={msg.from === 'bot' ? `bot-msg-${i}` : `user-msg-${i}`}
+              style={msg.from === 'user' ? styles.userMsg : styles.botMsg}>
               {msg.data && (
                 <Image
-                  source={{ uri: `data:image/jpeg;base64,${msg.data}` }}
+                  source={{ uri: typeof msg.data === 'string' && msg.data.startsWith('data:') ? msg.data : `data:image/jpeg;base64,${msg.data}` }}
                   style={{ width: 150, height: 150, marginBottom: 4, borderRadius: 8 }}
                 />
               )}
@@ -191,6 +192,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TextInput
+              testID="chat-input"
               style={styles.input}
               value={input}
               onChangeText={setInput}
@@ -198,12 +200,13 @@ export default function HomeScreen() {
             />
 
             <View style={styles.buttonGroup}>
-              <TouchableOpacity
+              <Button
+                testID="send-button"
                 onPress={send}
                 style={[styles.sendButton, { backgroundColor: BASE_COLORS.TEXT_DARK }]}
               >
                 <Text style={styles.sendButtonText}>Send</Text>
-              </TouchableOpacity>
+              </Button>
             </View>
           </View>
         </View>
