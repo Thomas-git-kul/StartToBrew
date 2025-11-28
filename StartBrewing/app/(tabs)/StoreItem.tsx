@@ -9,7 +9,7 @@ import { useFonts } from "@/hooks/use-fonts";
 import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { CirclePlus, CircleMinus } from "lucide-react-native";
-import { supabase } from "../supabase";
+import { supabase } from "@/supabase";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const IMAGE_WIDTH = SCREEN_WIDTH - 20;

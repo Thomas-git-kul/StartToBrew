@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, Dimensions } from "react-native";
-import { Avatar, Button } from "react-native-paper";
+import { View, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Dimensions } from "react-native";
+import { Avatar, Button, Paragraph } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -14,6 +14,7 @@ import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
 import TextInput from "@/components/textInput";
 import ErrorChip from "@/components/errorChip";
+import Dialog from "@/components/dialog"
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -51,6 +52,7 @@ export default function EditAccount() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [currentPasswordError, setCurrentPasswordError] = useState("");
+  const [isDialogVisible, setDialogVisible] = useState(false);
 
   const initials = useMemo(() => {
     const src = fullName || username || "";
@@ -263,9 +265,6 @@ export default function EditAccount() {
     <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
           title="Edit profile"
-          iconName="ArrowRight"
-          onIconPress={() => router.push("/Account")}
-          actionTestID="edit-account-back-button"
         />
 
       <ScrollView
@@ -390,12 +389,22 @@ export default function EditAccount() {
           ) : null}
         </View>
 
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-end",
-          }}
-        >
+        <View className="flex-row justify-between">
+          <Button
+            mode="contained"
+            onPress={() => setDialogVisible(true)}
+            disabled={saving}
+            labelStyle={{ 
+              fontSize: Math.min(14 * scale, 24),
+              color: BASE_COLORS.WHITE,
+              fontFamily: FontFamilies.BODY,            
+            }}
+            style={{
+              borderRadius: 20,
+              marginBottom: 15,
+              backgroundColor: BASE_COLORS.STONE300,
+            }}
+          >Cancel</Button>
           <Button
             mode="contained"
             onPress={onSave}
@@ -414,6 +423,20 @@ export default function EditAccount() {
           >Save</Button>
         </View>
       </ScrollView>
+
+      <Dialog
+        title="Unsaved Changes"
+        text="Changes will not be saved. Are you sure you want to cancel editing?"
+        cancelBtn="Keep Editing"
+        yesBtn="Delete Changes"
+        visible={isDialogVisible}
+        onDismiss={() => setDialogVisible(false)}
+        onPressCancel={() => setDialogVisible(false)}
+        onPressYes={() => {
+          setDialogVisible(false);
+          router.push("/Account");
+        }}
+      />
     </SafeAreaView>
   );
 }

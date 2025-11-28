@@ -1,6 +1,6 @@
 import React from "react";
 import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
-import Progress from "../app/progress";
+import Progress from "../app/(tabs)/progress";
 import { NavigationContainer } from "@react-navigation/native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from "@/supabase";
@@ -138,7 +138,7 @@ describe("<Progress />", () => {
     expect(await findByText("60-min Citra")).toBeTruthy();
   });
 
-  it("toont tips wanneer lightbulb gedrukt wordt", async () => {
+  it("toont tips", async () => {
     const { findByText } = renderWithNavigation(<Progress />);
     expect(await findByText("Failed to load progress...")).toBeTruthy();
   });

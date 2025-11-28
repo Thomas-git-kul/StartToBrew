@@ -1,7 +1,7 @@
 import React from "react";
 import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import SpecificRecipe from "../app/SpecificRecipe";
+import SpecificRecipe from "../app/(tabs)/SpecificRecipe";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
 // --------------------------

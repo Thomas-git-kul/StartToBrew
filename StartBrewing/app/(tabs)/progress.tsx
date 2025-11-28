@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Text,
 } from "react-native";
-import { Card, FAB, Chip, Button } from "react-native-paper";
+import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
 import {
   Pause,
   Thermometer,
@@ -25,6 +25,7 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from "@/supabase";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useUserProgressContext } from "@/context/UserProgressContext";
+import DialogCustom from "@/components/dialog";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -44,6 +45,7 @@ export default function Progress() {
   const [tipsVisible, setTipsVisible] = useState(false);
   const [phaseDone, setPhaseDone] = useState(false);
   const { refreshProgress } = useUserProgressContext();
+  const [dialogVisible, setDialogVisible] = useState(false);
 
   const loadStep = async () => {
     setLoading(true);
@@ -274,6 +276,14 @@ export default function Progress() {
     }
   }, [brewId, router]);
 
+  const showDialog = () => setDialogVisible(true);
+  const hideDialog = () => setDialogVisible(false);
+
+  const confirmDeleteBrew = () => {
+    hideDialog();
+    deleteBrew();
+  };
+
   if (loading) {
     return (
       <SafeAreaView
@@ -330,12 +340,12 @@ export default function Progress() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
       <Header
-        title={`${currentStep.beer} Progress`}
-        iconName="House"
-        onIconPress={() => router.push("/HomePage" as any)}
+        title={"Progress"}
+        iconName="Trash"
+        onIconPress={showDialog}
       />
       <ScrollView
-        className="px-5"
+        className="px-3"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 85 }}
       >
@@ -497,18 +507,6 @@ export default function Progress() {
             <ThemedText type="tips">{tips}</ThemedText>
           </View>
         )}
-
-        <Button
-          mode="outlined"
-          onPress={deleteBrew}
-          style={{
-            marginTop: 16,
-            borderColor: BASE_COLORS.AMBER600,
-          }}
-          textColor={BASE_COLORS.AMBER600}
-        >
-          Delete Brew
-        </Button>
       </ScrollView>
 
       {showConfetti && (
@@ -555,6 +553,16 @@ export default function Progress() {
             },
           },
         }}
+      />
+      <DialogCustom
+        title="Confirm Brew Deletion"
+        text={`Are you sure you want to delete \"${stepData?.beer}\" brew?`}
+        visible={dialogVisible}
+        onDismiss={hideDialog}
+        cancelBtn="Cancel"
+        yesBtn="Delete"
+        onPressCancel={hideDialog}
+        onPressYes={confirmDeleteBrew}
       />
     </SafeAreaView>
   );
