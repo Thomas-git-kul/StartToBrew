@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { View, ScrollView } from "react-native";
 import { Button, ActivityIndicator } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -11,6 +11,7 @@ import TextInput from '@/components/textInput';
 import { ThemedText } from "@/components/themed-text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/supabase";
+import { useFocusEffect } from "@react-navigation/native";
 
 interface CartItem {
   store_item_id: number;
@@ -203,9 +204,9 @@ export default function ShoppingCart() {
     }
   };
 
-  useEffect(() => {
+  useFocusEffect( React.useCallback(() => {
     loadCart();
-  }, []);
+  }, []));
 
   return (
     <SafeAreaView 
