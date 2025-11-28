@@ -30,6 +30,7 @@ import { getBeerImageSource } from "@/hooks/beer-image";
 import StoreCard from "@/components/ui/StoreCard";
 import ReviewCard from "@/components/ui/ReviewCard";
 import { useUserProgressContext } from "@/context/UserProgressContext";
+import { useAppRefresh } from "@/context/AppRefreshContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -82,6 +83,7 @@ export default function SpecificRecipe() {
   const [reviewText, setReviewText] = useState("");
   const [kitsVisible, setKitsVisible] = useState(false);
   const { refreshProgress } = useUserProgressContext();
+  const { triggerRefresh } = useAppRefresh();
 
   const [ingredients, setIngredients] = useState<IngredientRow[]>([]);
   const [reviews, setReviews] = useState<
@@ -254,6 +256,12 @@ export default function SpecificRecipe() {
       await fetchRecipeBundle(recipe_slug);
       // Refresh the reviews list so the newly submitted review appears immediately
       await fetchReviews(recipe_slug);
+      // Notify other screens (e.g. Recipes list) to refresh their data
+      try {
+        triggerRefresh();
+      } catch (e) {
+        // ignore if provider not mounted for some reason
+      }
       // Markeer dat user nu gereviewd heeft en dubbelcheck
       setHasUserReviewed(true);
       // clear review text after successful submit
@@ -611,7 +619,11 @@ export default function SpecificRecipe() {
             ) : (
               <Button
                 testID="review-button"
-                onPress={() => setReviewVisible(true)}
+                onPress={() => {
+                  setRating(0);
+                  setReviewText("");
+                  setReviewVisible(true);
+                }}
                 style={{
                   position: "absolute",
                   right: 0,
@@ -748,7 +760,11 @@ export default function SpecificRecipe() {
       <Portal>
         <Modal
           visible={reviewVisible}
-          onDismiss={() => setReviewVisible(false)}
+          onDismiss={() => {
+            setReviewVisible(false);
+            setRating(0);
+            setReviewText("");
+          }}
           contentContainerStyle={{
             backgroundColor: BASE_COLORS.LIGHT_BG,
             padding: 20,

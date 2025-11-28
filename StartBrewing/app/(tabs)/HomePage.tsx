@@ -214,10 +214,12 @@ useFocusEffect( React.useCallback(() => {
                 />
               ))
             )}
+
         </View>
         )}
 
         <ThemedText type="title">Popular recipes</ThemedText>
+
         {loading ? (
           <View className="items-center justify-center my-4">
             <ActivityIndicator 
@@ -259,18 +261,19 @@ useFocusEffect( React.useCallback(() => {
 
       {/* Floating Action Button */}
       <FAB
+        icon={(props) => <Plus size={props.size} color={props.color} />}
         testID="fab"
-        mode="flat"
-        icon={(props) => <Plus size={props.size} color={props.color} strokeWidth={3}/>}
         style={{
           position: "absolute",
           right: 10,
           bottom: 25,
           backgroundColor: BASE_COLORS.TEXT_DARK,
-          borderRadius: 30,
+          borderRadius: 20,
         }}
         color={BASE_COLORS.WHITE}
         onPress={() => router.push("/Recipes")}
+        mode="elevated"
+        size="medium"
       />
     </View>
   );
