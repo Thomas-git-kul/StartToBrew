@@ -71,11 +71,15 @@ export default function HomeScreen() {
         body.image = image.base64;
       }
 
-      const res = await fetch(localhost, {
+      const res = await fetch("https://neeqemudecnuayqlvohk.supabase.co/functions/v1/ChatBot", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
+         },
         body: JSON.stringify(body),
-      });
+      }
+      );
 
       const data = await res.json();
       setMessages(prev => [...prev, { from: 'bot', text: data.text }]);
