@@ -277,7 +277,10 @@ export default function ShoppingCart() {
           <View className="mt-5">
             <Button
               mode="contained"
-              onPress={() => router.push("../Payment")}
+              onPress={() => router.push({
+                pathname: "/Payment" as any,
+                params: { amount: Math.round(total * 100) } // convert to cents
+              } as any)}
               style={{
                 backgroundColor: BASE_COLORS.TEXT_DARK,
                 alignSelf: "flex-start",
