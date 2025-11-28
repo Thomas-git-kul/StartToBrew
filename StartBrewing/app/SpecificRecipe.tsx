@@ -259,6 +259,8 @@ export default function SpecificRecipe() {
       // clear review text after successful submit
       setReviewText("");
       checkUserReviewed(recipe_slug);
+
+      await refreshProgress();
     } catch (e: any) {
       Alert.alert(
         "Review mislukt",

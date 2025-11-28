@@ -1,5 +1,5 @@
 // hooks/useUserProgress.ts
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/supabase";
 
 type Progress = {
@@ -17,15 +17,20 @@ export function useUserProgress() {
   const [levelUp, setLevelUp] = useState<LevelUp | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchProgress = useCallback(async () => {
+  // vorige level, onafhankelijk van React-state
+  const lastLevelRef = useRef<number | null>(null);
+
+  const loadProgress = useCallback(async () => {
     setLoading(true);
     try {
       const {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
+
       if (userError || !user) {
         setProgress(null);
+        lastLevelRef.current = null;
         return;
       }
 
@@ -35,14 +40,19 @@ export function useUserProgress() {
         .eq("account_id", user.id)
         .single();
 
-      if (error || !data) return;
+      if (error || !data) {
+        return;
+      }
 
-      const prevLevel = progress?.level ?? null;
       const newLevel = data.level as number;
+      const prevLevel = lastLevelRef.current;
 
+      // level-up detectie: alleen als we al een level kenden
       if (prevLevel !== null && newLevel > prevLevel) {
         setLevelUp({ from: prevLevel, to: newLevel });
       }
+
+      lastLevelRef.current = newLevel;
 
       setProgress({
         level: newLevel,
@@ -51,11 +61,12 @@ export function useUserProgress() {
     } finally {
       setLoading(false);
     }
-  }, [progress]);
+  }, []); // ⬅︎ LET OP: GEEN progress/levelUp in deps
 
+  // éénmalig initial load
   useEffect(() => {
-    fetchProgress();
-  }, [fetchProgress]);
+    loadProgress();
+  }, [loadProgress]);
 
   const acknowledgeLevelUp = () => setLevelUp(null);
 
@@ -64,7 +75,6 @@ export function useUserProgress() {
     loading,
     levelUp,
     acknowledgeLevelUp,
-    refreshProgress: fetchProgress,
+    refreshProgress: loadProgress, // stabiele functie, door useCallback
   };
 }
-
