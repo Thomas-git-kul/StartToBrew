@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
+import Dialog from "@/components/dialog";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import { useFocusEffect } from "@react-navigation/native";
@@ -45,6 +46,8 @@ function HomePageContent() {
 
   const [inProgress, setInProgress] = useState<InProgressBrew[]>([]);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; name?: string } | null>(null);
 
 useFocusEffect( React.useCallback(() => {
     let mounted = true;
@@ -175,6 +178,28 @@ useFocusEffect( React.useCallback(() => {
     };
   }, []));
 
+  // Open confirmation modal for deletion (modal handles actual deletion)
+  const handleDeleteBrew = (id: string | number | undefined, name?: string) => {
+    if (!id) return;
+    setDeleteTarget({ id, name });
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDeleteBrew = async () => {
+    const id = deleteTarget?.id;
+    const name = deleteTarget?.name;
+    setDeleteDialogVisible(false);
+    setDeleteTarget(null);
+    if (!id) return;
+    try {
+      await supabase.from("brew_steps").delete().eq("id_brew", id);
+      await supabase.from("brews").delete().eq("id_brew", id);
+      setInProgress((prev) => prev.filter((b) => b.id !== id));
+    } catch (e) {
+      console.warn("Failed to delete brew:", e);
+    }
+  };
+
   return (
     <View className="flex-1">
       <Header title="StartToBrew" />
@@ -210,7 +235,8 @@ useFocusEffect( React.useCallback(() => {
                   key={brew.id}
                   title={brew.name}
                   progress={brew.progress}
-                  onPress={() => router.push({ pathname: "/progress", params: { id: brew.id } })}
+                    onPress={() => router.push({ pathname: "/progress", params: { id: brew.id } })}
+                    onDelete={() => handleDeleteBrew(brew.id)}
                 />
               ))
             )}
@@ -258,6 +284,17 @@ useFocusEffect( React.useCallback(() => {
           </View>
         )}
       </ScrollView>
+
+      <Dialog
+        title="Confirm Brew Deletion"
+        text={`Are you sure you want to delete "${deleteTarget?.name ?? "this"}" brew?`}
+        visible={deleteDialogVisible}
+        onDismiss={() => setDeleteDialogVisible(false)}
+        cancelBtn="Cancel"
+        yesBtn="Delete"
+        onPressCancel={() => setDeleteDialogVisible(false)}
+        onPressYes={confirmDeleteBrew}
+      />
 
       {/* Floating Action Button */}
       <FAB

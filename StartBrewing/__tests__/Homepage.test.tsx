@@ -1,10 +1,9 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
-import HomePage from "../app/(tabs)/HomePage";
 import { FavoritesProvider } from "@/context/FavoritesContext";
-import { NavigationContainer } from "@react-navigation/native";
-import { useRouter } from "expo-router";
-jest.spyOn(console, "error").mockImplementation(() => {});
+// `NavigationContainer` will be required after mocks so it uses the mocked implementation
+// allow console.error so we can see underlying render errors while debugging
+// jest.spyOn(console, "error").mockImplementation(() => {});
 
 /* ------------------------------
    MOCK DATA
@@ -170,10 +169,17 @@ jest.mock("@/components/themed-text", () => {
 });
 
 jest.mock("react-native-safe-area-context", () => {
+  const React = require("react");
   const { View } = require("react-native");
+  const SafeAreaContext = React.createContext({ top: 0, bottom: 0, left: 0, right: 0 });
+  const SafeAreaInsetsContext = SafeAreaContext; // react-native-paper expects this named export
   return {
     SafeAreaView: ({ children }: any) => <View>{children}</View>,
     useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+    SafeAreaProvider: ({ children }: any) => children,
+    SafeAreaContext,
+    SafeAreaInsetsContext,
+    initialWindowMetrics: null,
   };
 });
 
@@ -225,6 +231,15 @@ jest.mock("@/components/ui/ProgressCard", () => {
 jest.mock("lucide-react-native", () => {
   const { Text } = require("react-native");
   return { Plus: () => <Text>Plus</Text> };
+});
+
+// Ensure focus effects run inside React's effect lifecycle during tests
+jest.mock("@react-navigation/native", () => {
+  const React = require("react");
+  return {
+    useFocusEffect: (cb: any) => React.useEffect(cb, []),
+    NavigationContainer: ({ children }: any) => children,
+  };
 });
 
 /* ------------------------------
@@ -305,16 +320,42 @@ jest.mock("@/supabase", () => {
   };
 });
 
+// Require router/component/navigation after mocks so they use the mocked modules
+const { useRouter } = require("expo-router");
+const HomePage = require("../app/(tabs)/HomePage").default;
+const NavigationContainer = require("@react-navigation/native").NavigationContainer;
+
 /* ------------------------------
    TEST UTIL
 ------------------------------- */
 
-const renderWithNavigation = (ui: React.ReactElement) =>
-  render(
-    <NavigationContainer>
-      <FavoritesProvider>{ui}</FavoritesProvider>
-    </NavigationContainer>
-  );
+const renderWithNavigation = async (ui: React.ReactElement) => {
+  // `render` from testing-library handles `act()` for us — avoid wrapping
+  try {
+    // Use the real Paper `Provider` so react-native-paper internals (Portal) are available in tests
+    const { Provider: PaperProvider } = require("react-native-paper");
+    const renderResult = render(
+      <NavigationContainer>
+        <PaperProvider>
+          <FavoritesProvider>{ui}</FavoritesProvider>
+        </PaperProvider>
+      </NavigationContainer>
+    );
+    // allow immediate microtasks and a macrotask to run so effects settle
+    // (one microtask pass isn't always enough for nested async effects)
+    await Promise.resolve();
+    await new Promise((res) => setTimeout(res, 0));
+    return renderResult;
+  } catch (err: any) {
+    // Log inner errors of AggregateError where possible for debugging
+    try {
+      console.error("renderWithNavigation caught:", err, err.errors || err.innerErr || null);
+    } catch (e) {
+      console.error("renderWithNavigation caught (unknown shape):", err);
+    }
+    throw err;
+  }
+};
 
 /* ------------------------------
    TESTS
@@ -326,8 +367,8 @@ describe("<HomePage />", () => {
     pushMock.mockClear();
   });
 
-  it("rendered hoofdsecties", () => {
-    const { getByText } = renderWithNavigation(<HomePage />);
+  it("rendered hoofdsecties", async () => {
+    const { getByText } = await renderWithNavigation(<HomePage />);
 
     expect(getByText("StartToBrew")).toBeTruthy();
     expect(getByText("In progress")).toBeTruthy();
@@ -335,14 +376,14 @@ describe("<HomePage />", () => {
   });
 
   it("laadt recipes", async () => {
-    const { findByText } = renderWithNavigation(<HomePage />);
+    const { findByText } = await renderWithNavigation(<HomePage />);
     expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
     expect(await findByText("City of the Sun IPA")).toBeTruthy();
     expect(await findByText("SMaSH Session Pale Ale")).toBeTruthy();
   });
 
   it("kan favorite togglen zonder crash", async () => {
-    const { findByLabelText } = renderWithNavigation(<HomePage />);
+    const { findByLabelText } = await renderWithNavigation(<HomePage />);
 
     const favBtn = await findByLabelText(
       "favorite-Den Ballaste Point Sculpin IPA 60"
@@ -354,7 +395,7 @@ describe("<HomePage />", () => {
   });
 
   it("navigates naar /Recipes via FAB", async () => {
-    const { findByTestId } = renderWithNavigation(<HomePage />);
+    const { findByTestId } = await renderWithNavigation(<HomePage />);
     const fab = await findByTestId("fab");
 
     fireEvent.press(fab);
@@ -362,7 +403,7 @@ describe("<HomePage />", () => {
   });
 
   it("navigates naar SpecificRecipe via beer card", async () => {
-    const { findByText } = renderWithNavigation(<HomePage />);
+    const { findByText } = await renderWithNavigation(<HomePage />);
 
     const card = await findByText("Den Ballaste Point Sculpin IPA 60");
     fireEvent.press(card);
@@ -378,7 +419,7 @@ describe("<HomePage />", () => {
   });
 
   it("toont de in-progress brews in de 'In progress' sectie", async () => {
-  const { findByText, getByText, toJSON } = renderWithNavigation(<HomePage />);
+  const { findByText, getByText, toJSON } = await renderWithNavigation(<HomePage />);
 
   // Titel van de sectie moet bestaan
   const sectionTitle = getByText("In progress");
@@ -403,7 +444,7 @@ describe("<HomePage />", () => {
 });
 
   it("progress card navigates correctly", async () => {
-    const { findByText } = renderWithNavigation(<HomePage />);
+    const { findByText } = await renderWithNavigation(<HomePage />);
     const progressCard = await findByText("Hazy IPA");
 
     fireEvent.press(progressCard);
@@ -413,8 +454,8 @@ describe("<HomePage />", () => {
     });
   });
 
-  it("snapshot", () => {
-    const tree = renderWithNavigation(<HomePage />).toJSON();
+  it("snapshot", async () => {
+    const tree = (await renderWithNavigation(<HomePage />)).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });

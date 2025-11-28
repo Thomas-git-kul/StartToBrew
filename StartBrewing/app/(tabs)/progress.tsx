@@ -1,20 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  View,
-  ScrollView,
-  Dimensions,
-  ActivityIndicator,
-  Text,
-} from "react-native";
-import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
-import {
-  Pause,
-  Thermometer,
-  Play,
-  CheckCheck,
-  Lightbulb,
-} from "lucide-react-native";
+import { View, ScrollView, Dimensions, ActivityIndicator, Text } from "react-native";
+import { Card, FAB, Chip, Button } from "react-native-paper";
+import { Pause, Thermometer, Play, CheckCheck, Lightbulb } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";

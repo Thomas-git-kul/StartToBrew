@@ -70,7 +70,7 @@ const BeerCard: React.FC<BeerCardProps> = ({
             </View>
 
             {/* Text container */}
-            <View style={{ flex: 1, marginHorizontal: 12, marginVertical: 8 }}>
+            <View style={{ flex: 1, marginLeft: 12, marginVertical: 8 }}>
               <Text
                 numberOfLines={1}
                 style={{

@@ -1,9 +1,8 @@
-import React from "react";
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity } from "react-native";
+import { Dimensions, Text, Pressable, View } from "react-native";
 import { ProgressBar, TouchableRipple, Card } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { useNavigation } from '@react-navigation/native';
+import { Trash, Trash2 } from "lucide-react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -13,13 +12,13 @@ const IMAGE_WIDTH = Math.min(120, SCREEN_WIDTH * 0.20);
 const IMAGE_HEIGHT = IMAGE_WIDTH * 1.5;
 
 interface ProgressCardProps {
-    title: string;
-    progress: number;
-    onPress?: () => void;
+  title: string;
+  progress: number;
+  onPress?: () => void;
+  onDelete?: () => void;
 }
 
-export default function ProgressCard({ title, progress, onPress }: ProgressCardProps) {
-const navigation = useNavigation();
+export default function ProgressCard({ title, progress, onPress, onDelete }: ProgressCardProps) {
 const percentage = Math.round(progress * 100);
 
 
@@ -33,40 +32,44 @@ return (
       mode="elevated"
       style={{ 
         borderRadius: 12,
-        padding: 16,
         backgroundColor: BASE_COLORS.WHITE,
-        marginBlock: 3,
-        marginInline: 2,
-        shadowColor: "#000",
+        shadowColor: BASE_COLORS.STONE700,
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
+        shadowOpacity: 0.15,
       }}
     >
-      <Text 
+      <View className="flex-row items-center justify-between pl-4 pr-2">
+        <Text 
+          numberOfLines={1}
           style={{
-              fontSize: Math.min(16 * scale, 24),
-              fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.STONE700,
-              marginBottom: 6,
+            fontSize: Math.min(16 * scale, 24),
+            fontFamily: FontFamilies.BODY,
+            color: BASE_COLORS.STONE700,
+            marginVertical: 8,
+            marginRight: 16,
           }}
-      >{title}</Text>
-      <Text 
+        >{title}</Text>
+        <Pressable onPress={onDelete} accessibilityLabel="delete-brew">
+          <Trash2 color={BASE_COLORS.STONE300} size={20} />
+        </Pressable>
+      </View>
+      <View className="px-4 pb-5">
+        <Text 
           style={{
-              fontSize: Math.min(14 * scale, 18),
-              fontFamily: FontFamilies.BODY_BOLD,
-              color: BASE_COLORS.ACCENT_PRIMARY,
+            fontSize: Math.min(14 * scale, 18),
+            fontFamily: FontFamilies.BODY_BOLD,
+            color: BASE_COLORS.ACCENT_PRIMARY,
           }}
-      >{percentage}%</Text>
-      <ProgressBar
-          progress={progress}
-          color={BASE_COLORS.ACCENT_PRIMARY}
-          style={{
-              height: Math.min(10 * scale, 12),
-              borderRadius: 6,
-          }}
-      />
+        >{percentage}%</Text>
+        <ProgressBar
+            progress={progress}
+            color={BASE_COLORS.ACCENT_PRIMARY}
+            style={{
+                height: Math.min(10 * scale, 12),
+                borderRadius: 6,
+            }}
+        />
+      </View>
     </Card>
     </TouchableRipple>
   );
