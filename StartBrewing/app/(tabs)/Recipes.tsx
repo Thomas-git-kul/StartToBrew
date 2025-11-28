@@ -302,18 +302,47 @@ export default function Recipes() {
     );
   }
 
-  // Splitsen: recommended vs others op basis van recommendedSlugs
-  const recommendedRecipes = filteredRecipes
-    .filter((b) => recommendedSlugs.includes(b.recipe_slug))
-    .sort(
-      (a, b) =>
-        recommendedSlugs.indexOf(a.recipe_slug) -
-        recommendedSlugs.indexOf(b.recipe_slug)
-    );
-
-  const otherRecipes = filteredRecipes.filter(
-    (b) => !recommendedSlugs.includes(b.recipe_slug)
+  // Splitsen: when any filter is active we want recommended recipes
+  // to be shown together with the rest. When no filters are active,
+  // keep the "Recommended for you" section separate.
+  const filtersActive = Boolean(
+    searchQuery !== "" ||
+      showOnlyFavorites ||
+      selectedStyles.length > 0 ||
+      abvMin !== "" ||
+      abvMax !== "" ||
+      ibuMin !== "" ||
+      ibuMax !== "" ||
+      srmMin !== "" ||
+      srmMax !== "" ||
+      ratingMin !== "" ||
+      ratingMax !== "" ||
+      selectedDifficulties.length > 0 ||
+      selectedHazeLevels.length > 0
   );
+
+  let recommendedRecipes: Beer[] = [];
+  let otherRecipes: Beer[] = [];
+
+  if (filtersActive) {
+    // If any filter is active, put all filtered results into the main list
+    // and hide the recommended section so users see a single combined list.
+    recommendedRecipes = [];
+    otherRecipes = filteredRecipes;
+  } else {
+    // Default behaviour: show recommended separately and the rest under "All recipes"
+    recommendedRecipes = filteredRecipes
+      .filter((b) => recommendedSlugs.includes(b.recipe_slug))
+      .sort(
+        (a, b) =>
+          recommendedSlugs.indexOf(a.recipe_slug) -
+          recommendedSlugs.indexOf(b.recipe_slug)
+      );
+
+    otherRecipes = filteredRecipes.filter(
+      (b) => !recommendedSlugs.includes(b.recipe_slug)
+    );
+  }
 
   /* chips config */
   const filterCategories = [
