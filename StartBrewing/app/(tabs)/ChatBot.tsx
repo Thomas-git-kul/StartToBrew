@@ -73,7 +73,6 @@ export default function ChatBot() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
          },
         body: JSON.stringify(body),
       }
