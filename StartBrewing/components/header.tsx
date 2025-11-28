@@ -12,6 +12,7 @@ const iconMap: Record<string, LucideIcon> = {
   House: Icons.House,
   HeartPlus: Icons.HeartPlus,
   Heart: Icons.Heart,
+  Trash: Icons.Trash,
 };
 
 interface HeaderBarProps {

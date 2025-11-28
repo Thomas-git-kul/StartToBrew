@@ -94,6 +94,30 @@ function TabLayout() {
               ),
             }}
           />
+          <Tabs.Screen
+            name="progress"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="StoreItem"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="ShoppingCart"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="SpecificRecipe"
+            options={{
+              href: null,
+            }}
+          />
         </Tabs>
       </View>
     </SafeAreaView>

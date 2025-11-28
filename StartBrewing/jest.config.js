@@ -24,6 +24,7 @@ module.exports = {
         'react-native-calendars',
         'react-native-swipe-gestures',
         'react-native-confetti-cannon',
+        'expo-image-picker',
       ].join('|') +
       ')/)',
   ],
