@@ -11,7 +11,16 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
-
+ 
+// Diagnostic: confirm the expected Firebase env keys are available (logs presence only)
+const _gotFirebaseApiKey = !!process.env.EXPO_PUBLIC_FIREBASE_API_KEY;
+const _gotFirebaseAuthDomain = !!process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN;
+const _gotFirebaseProjectId = !!process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
+console.log('Firebase env keys present:', {
+  apiKey: _gotFirebaseApiKey,
+  authDomain: _gotFirebaseAuthDomain,
+  projectId: _gotFirebaseProjectId,
+});
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
