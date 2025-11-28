@@ -1,24 +1,37 @@
-import { Appbar } from "react-native-paper";
+import { Appbar, Badge } from "react-native-paper";
 import * as Icons from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
+import { View } from "react-native";
 
 const iconMap: Record<string, LucideIcon> = {
   ShoppingCart: Icons.ShoppingCart,
   Calendar1: Icons.Calendar1,
   ArrowRight: Icons.ArrowRight,
   House: Icons.House,
+  HeartPlus: Icons.HeartPlus,
+  Heart: Icons.Heart,
+  Trash: Icons.Trash,
 };
 
 interface HeaderBarProps {
   title: string;
-  iconName?: keyof typeof iconMap; // restrict to keys of iconMap
+  iconName?: keyof typeof iconMap;
+  filled?: boolean;
   onIconPress?: () => void;
   actionTestID?: string;
+  cartCount?: number;
 }
 
-export default function HeaderBar({ title, iconName, onIconPress, actionTestID }: HeaderBarProps) {
+export default function HeaderBar({
+  title,
+  iconName,
+  onIconPress,
+  actionTestID,
+  filled=false,
+  cartCount = 0,
+}: HeaderBarProps) {
   const IconComponent = iconName ? iconMap[iconName] : undefined;
 
   return (
@@ -29,11 +42,35 @@ export default function HeaderBar({ title, iconName, onIconPress, actionTestID }
       />
 
       {IconComponent && onIconPress && (
-        <Appbar.Action
-          icon={() => <IconComponent size={28} color={BASE_COLORS.TEXT_DARK} strokeWidth={2} />}
-          onPress={onIconPress}
-          testID={actionTestID}
-        />
+        <View>
+          <Appbar.Action
+            icon={() => (
+              <View>
+                <IconComponent
+                  size={28}
+                  stroke={filled ? BASE_COLORS.ACCENT_PRIMARY : BASE_COLORS.TEXT_DARK}
+                  strokeWidth={2}
+                  fill={filled ? BASE_COLORS.ACCENT_PRIMARY : "transparent"}
+                />
+                {cartCount > 0 && (
+                  <Badge
+                    visible
+                    size={18}
+                    style={{
+                      position: "absolute",
+                      top: -5,
+                      right: -5,
+                      backgroundColor: BASE_COLORS.RED600,
+                      color: "white",
+                    }}
+                  >{cartCount}</Badge>
+                )}
+              </View>
+            )}
+            onPress={onIconPress}
+            testID={actionTestID}
+          />
+        </View>
       )}
     </Appbar.Header>
   );

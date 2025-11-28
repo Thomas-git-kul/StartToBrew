@@ -22,7 +22,9 @@ module.exports = {
         '@expo/vector-icons',
         '@react-navigation',
         'react-native-calendars',
+        'react-native-swipe-gestures',
         'react-native-confetti-cannon',
+        'expo-image-picker',
       ].join('|') +
       ')/)',
   ],

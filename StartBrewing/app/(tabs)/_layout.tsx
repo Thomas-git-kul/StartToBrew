@@ -9,13 +9,7 @@ import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // 👉 Lucide icons
-import {
-  Home,
-  Calendar,
-  Handbag,
-  Beer,
-  User,
-} from "lucide-react-native";
+import { Home, Calendar, Handbag, Beer, User } from "lucide-react-native";
 
 function TabLayout() {
   // Custom tabBarButton to log analytics event
@@ -60,7 +54,10 @@ function TabLayout() {
             name="HomePage"
             options={{
               tabBarIcon: ({ color }) => <Home color={color} size={28} />,
-              tabBarButton: createTabBarButton("homepage_tab_pressed", HapticTab),
+              tabBarButton: createTabBarButton(
+                "homepage_tab_pressed",
+                HapticTab
+              ),
             }}
           />
           <Tabs.Screen
@@ -81,14 +78,44 @@ function TabLayout() {
             name="Recipes"
             options={{
               tabBarIcon: ({ color }) => <Beer color={color} size={28} />,
-              tabBarButton: createTabBarButton("recipes_tab_pressed", HapticTab),
+              tabBarButton: createTabBarButton(
+                "recipes_tab_pressed",
+                HapticTab
+              ),
             }}
           />
           <Tabs.Screen
             name="Account"
             options={{
               tabBarIcon: ({ color }) => <User color={color} size={28} />,
-              tabBarButton: createTabBarButton("account_tab_pressed", HapticTab),
+              tabBarButton: createTabBarButton(
+                "account_tab_pressed",
+                HapticTab
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="progress"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="StoreItem"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="ShoppingCart"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="SpecificRecipe"
+            options={{
+              href: null,
             }}
           />
         </Tabs>
@@ -100,5 +127,3 @@ function TabLayout() {
 TabLayout.displayName = "TabLayout";
 
 export default TabLayout;
-
-

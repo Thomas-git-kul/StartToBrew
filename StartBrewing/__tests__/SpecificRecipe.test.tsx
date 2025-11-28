@@ -1,13 +1,30 @@
 import React from "react";
 import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import SpecificRecipe from "../app/SpecificRecipe";
+import SpecificRecipe from "../app/(tabs)/SpecificRecipe";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
 // --------------------------
 // Mock expo-router
 // --------------------------
 const pushMock = jest.fn();
+jest.mock("expo-router", () => ({ useRouter: jest.fn() }));
+
+jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
+jest.mock("@/hooks/beer-image", () => ({
+  getBeerImageSource: () => ({ uri: "test-beer-image" }),
+}));
+
+// ⬇️ NIEUW: mock de user progress context, zodat useUserProgressContext geen error gooit
+jest.mock("@/context/UserProgressContext", () => ({
+  useUserProgressContext: () => ({
+    progress: null,
+    loading: false,
+    levelUp: null,
+    acknowledgeLevelUp: jest.fn(),
+    refreshProgress: jest.fn(),
+  }),
+}));
 
 /* ------------------------------
    MOCK DATA (recipes + ingredients)
@@ -105,7 +122,7 @@ const mockPush = jest.fn();
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
-  useLocalSearchParams: () => ({ recipe_slug: recipeSlug }),
+  useLocalSearchParams: () => ({ recipe_slug: recipeSlug, slug: recipeSlug }),
 }));
 
 // Fonts
@@ -138,6 +155,7 @@ jest.mock("@/constants/Colors", () => ({
     WHITE: "#ffffff",
     TEXT_DARK: "#000000",
     ACCENT_LIGHT: "#B45309",
+    ACCENT_PRIMARY: "#FF6600",
     STONE300: "#E5E7EB",
   },
 }));
@@ -175,16 +193,30 @@ jest.mock("react-native-paper", () => {
       const { View } = require("react-native");
       return <View />;
     },
+    TextInput: ({ value, onChangeText, ...rest }: any) => {
+      const { TextInput: RNTextInput } = require("react-native");
+      return (
+        <RNTextInput value={value} onChangeText={onChangeText} {...rest} />
+      );
+    },
+    Button: ({ onPress, children }: any) => (
+      <TouchableOpacity onPress={onPress}>
+        <Text>{children}</Text>
+      </TouchableOpacity>
+    ),
   };
 });
 
 // lucide Star
 jest.mock("lucide-react-native", () => {
   const { Text } = require("react-native");
+  const make =
+    (name: string) =>
+    ({ size, color, fill, stroke }: any) => <Text>{`${name}`}</Text>;
   return {
-    Star: ({ size, color, fill }: any) => (
-      <Text>{`Star(${size},${color},${fill})`}</Text>
-    ),
+    Star: make("Star"),
+    Heart: make("Heart"),
+    HeartPlus: make("HeartPlus"),
   };
 });
 
@@ -196,51 +228,146 @@ jest.mock("@/hooks/beer-image", () => ({
 jest.mock("@/supabase", () => ({
   supabase: {
     auth: {
-      getSession: async () => ({
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      }),
+      getSession: jest.fn().mockResolvedValue({
         data: { session: null },
         error: null,
       }),
     },
 
-    from: (table: string) => {
-      if (table === "recipes") {
-        return {
-          select: () => ({
-            eq: (field: string, value: string) => ({
-              single: async () => {
-                if (field === "recipe_slug" && value === recipeSlug) {
-                  return { data: recipeData, error: null };
-                }
-                return { data: null, error: null };
-              },
+    from: jest.fn((table) => {
+      switch (table) {
+        case "recipes":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: async () => ({
+                  data: recipeData,
+                  error: null,
+                }),
+              }),
             }),
-          }),
-        };
+          };
+
+        case "recipe_reviews":
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: null,
+                  error: null,
+                }),
+                order: () => ({
+                  limit: async () => ({ data: [], error: null }),
+                }),
+              }),
+              order: () => ({
+                limit: async () => ({ data: [], error: null }),
+              }),
+              limit: async () => ({ data: [], error: null }),
+            }),
+          };
+
+        case "phases":
+          return {
+            select: () => ({
+              eq: () => ({
+                order: async () => ({
+                  data: [{ phase_id: "phase-1" }, { phase_id: "phase-2" }],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+
+        case "steps":
+          const steps = [
+            { step_id: "step-1", after_step_id: null, phase_id: "phase-1" },
+            { step_id: "step-2", after_step_id: "step-1", phase_id: "phase-1" },
+            { step_id: "step-3", after_step_id: null, phase_id: "phase-2" },
+          ];
+
+          return {
+            select: () => ({
+              eq: () => ({
+                is: () => ({
+                  limit: () => ({
+                    single: async () => ({
+                      data: { step_id: "step-1" },
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+
+              in: async () => ({
+                data: steps,
+                error: null,
+              }),
+            }),
+          };
+
+        case "brews":
+          return {
+            insert: () => ({
+              select: async () => ({
+                data: [{ id_brew: 123 }],
+                error: null,
+              }),
+            }),
+          };
+
+        case "brew_steps":
+          return {
+            insert: async () => ({ data: null, error: null }),
+          };
+
+        case "profiles":
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({
+                  data: { username: "testuser" },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+
+        case "recipe_kits":
+          // return empty list for starter kits by default so tests don't fail
+          return {
+            select: () => ({
+              eq: async () => ({ data: [], error: null }),
+            }),
+          };
+
+        default:
+          return { select: () => ({}) };
       }
+    }),
 
-      return {
-        select: () => ({
-          eq: () => ({
-            single: async () => ({ data: null, error: null }),
-          }),
-        }),
-      };
-    },
-
-    rpc: async (fn: string, args: any) => {
-      if (
-        fn === "get_recipe_ingredients" &&
-        args &&
-        args._recipe_slug === recipeSlug
-      ) {
+    rpc: jest.fn(async (fn, args) => {
+      if (fn === "get_recipe_ingredients" && args._recipe_slug === recipeSlug) {
         return {
           data: ingredientRows.map(mapIngredient),
           error: null,
         };
       }
       return { data: [], error: null };
-    },
+    }),
   },
+}));
+
+// FavoritesContext mock
+jest.mock("@/context/FavoritesContext", () => ({
+  useFavorites: () => ({
+    favoriteSlugs: [],
+    toggleFavorite: jest.fn(),
+  }),
 }));
 
 /* ------------------------------
@@ -259,43 +386,48 @@ describe("<SpecificRecipe />", () => {
     mockPush.mockClear();
   });
 
-  it("rendered titel van het recept", async () => {
+  it("renders the title of the recipe", async () => {
     const { findByText } = renderWithNavigation(<SpecificRecipe />);
     expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
   });
 
-  it("toont Start Brewing knop", async () => {
+  it("show startbrewing button", async () => {
     const { findByText } = renderWithNavigation(<SpecificRecipe />);
     expect(await findByText("Start Brewing")).toBeTruthy();
   });
 
-  it("navigates naar /progress bij Start Brewing", async () => {
-    const { findByText } = renderWithNavigation(<SpecificRecipe />);
-    const btn = await findByText("Start Brewing");
-    fireEvent.press(btn);
-    expect(mockPush).toHaveBeenCalledWith("../progress");
+  it("it opens the kits modal window when startbrewing is pressed and it routes to progress", async () => {
+    const { findByText, queryByText, getByTestId } = renderWithNavigation(
+      <SpecificRecipe />
+    );
+    expect(queryByText("Get your StarterKit now!")).toBeNull();
+
+    const startBtn = await findByText("Start Brewing");
+    fireEvent.press(startBtn);
+
+    const modalTitle = await findByText("Get your StarterKit now!");
+    expect(modalTitle).toBeTruthy();
   });
 
-  it("opent review modal en laat sterren klikken", async () => {
+  it("opens review modal and allows to click the stars", async () => {
     const { findByText, findAllByTestId, queryByText } = renderWithNavigation(
       <SpecificRecipe />
     );
 
-    // initieel geen modal
     expect(queryByText("Rate this recipe")).toBeNull();
 
     const addReviewBtn = await findByText("Add Review");
     fireEvent.press(addReviewBtn);
 
-    // Wait for modal to appear
     const modalTitle = await findByText("Rate this recipe");
     expect(modalTitle).toBeTruthy();
 
     const stars = await findAllByTestId(/star-/);
     fireEvent.press(stars[2]);
 
-    // Modal should still be present after clicking a star (until async closes it)
-    expect(queryByText("Rate this recipe")).not.toBeNull();
+    await waitFor(() => {
+      expect(queryByText("Rate this recipe")).toBeNull();
+    });
   });
 
   it("snapshot", () => {

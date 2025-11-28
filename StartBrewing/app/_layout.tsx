@@ -2,7 +2,6 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
-import { View } from "react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 
 // React Navigation
@@ -11,6 +10,9 @@ import {
   DefaultTheme as NavLightTheme,
   ThemeProvider as NavigationThemeProvider,
 } from "@react-navigation/native";
+
+import { FavoritesProvider } from "@/context/FavoritesContext";
+import { AppRefreshProvider } from "@/context/AppRefreshContext";
 
 // React Native Paper (MD3)
 import {
@@ -26,6 +28,13 @@ import merge from "deepmerge";
 // (optional but recommended)
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+// NIEUW: user progress context + level up modal
+import {
+  UserProgressProvider,
+  useUserProgressContext,
+} from "@/context/UserProgressContext";
+import { LevelUpModal } from "@/components/LevelUpModal";
+
 // --- Bridge the two theme systems so colors match ---
 const { LightTheme: NavAdaptedLight, DarkTheme: NavAdaptedDark } =
   adaptNavigationTheme({
@@ -36,6 +45,32 @@ const { LightTheme: NavAdaptedLight, DarkTheme: NavAdaptedDark } =
 const CombinedLightTheme = merge(PaperLightTheme, NavAdaptedLight);
 const CombinedDarkTheme = merge(PaperDarkTheme, NavAdaptedDark);
 
+// Inner component zodat we de context kunnen gebruiken
+function RootInner() {
+  const { levelUp, acknowledgeLevelUp } = useUserProgressContext();
+
+  return (
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="modal"
+          options={{ presentation: "modal", title: "Modal" }}
+        />
+      </Stack>
+
+      {levelUp && (
+        <LevelUpModal
+          visible
+          from={levelUp.from}
+          to={levelUp.to}
+          onClose={acknowledgeLevelUp}
+        />
+      )}
+    </>
+  );
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? CombinedDarkTheme : CombinedLightTheme;
@@ -44,13 +79,13 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
         <NavigationThemeProvider value={theme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="modal"
-                options={{ presentation: "modal", title: "Modal" }}
-              />
-            </Stack>
+          <UserProgressProvider>
+            <AppRefreshProvider>
+              <FavoritesProvider>
+                <RootInner />
+              </FavoritesProvider>
+            </AppRefreshProvider>
+          </UserProgressProvider>
           <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
         </NavigationThemeProvider>
       </PaperProvider>

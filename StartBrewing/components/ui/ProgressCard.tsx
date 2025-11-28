@@ -71,34 +71,3 @@ return (
     </TouchableRipple>
   );
 }
-
-
-const styles = StyleSheet.create({
-container: {
-backgroundColor: BASE_COLORS.WHITE,
-padding: 16,
-borderRadius: 12,
-elevation: 3,
-shadowColor: "#000",
-shadowOpacity: 0.05,
-shadowRadius: 3,
-shadowOffset: { width: 0, height: 2 },
-marginVertical: 10,
-},
-title: {
-fontSize: 20,
-fontFamily: FontFamilies.HEADING,
-color: BASE_COLORS.TEXT_DARK,
-marginBottom: 6,
-},
-percentage: {
-fontSize: 14,
-fontFamily: FontFamilies.BODY,
-color: BASE_COLORS.TEXT_DARK,
-marginBottom: 8,
-},
-progressBar: {
-height: 10,
-borderRadius: 6,
-},
-});
