@@ -24,6 +24,7 @@ import Header from "../../components/header";
 import { useFonts } from "@/hooks/use-fonts";
 import { ThemedText } from "../../components/themed-text";
 import { supabase } from "@/supabase";
+import { useAppRefresh } from "@/context/AppRefreshContext";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import { FontFamilies } from "@/constants/Fonts";
 import TextInput from "@/components/textInput";
@@ -97,6 +98,8 @@ export default function Recipes() {
     const lower = q.toLowerCase();
     return item.name.toLowerCase().includes(lower);
   };
+
+  const { refreshKey } = useAppRefresh();
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -207,7 +210,7 @@ export default function Recipes() {
       }
     };
     fetchAll();
-  }, []);
+  }, [refreshKey]);
 
   {
     /* Filter functions */
@@ -587,29 +590,6 @@ export default function Recipes() {
 
   const renderListHeader = () => (
     <View>
-      <Searchbar
-        placeholder="Search"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        inputStyle={{
-          color: BASE_COLORS.STONE700,
-          fontFamily: FontFamilies.BODY,
-        }}
-        icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
-        clearIcon={
-          searchQuery
-            ? () => <X size={18} color={BASE_COLORS.STONE500} />
-            : undefined
-        }
-        onClearIconPress={() => setSearchQuery("")}
-        style={{
-          backgroundColor: BASE_COLORS.WHITE,
-          borderColor: BASE_COLORS.STONE300,
-          borderWidth: 1,
-          marginBottom: 15,
-        }}
-      />
-
       {recommendedLoading && (
         <View className="flex-row items-center mb-2">
           <ActivityIndicator
@@ -672,6 +652,29 @@ export default function Recipes() {
       }}
     >
       <Header title="Recipes" />
+
+      <View style={{ paddingHorizontal: 16 }}>
+        <Searchbar
+          placeholder="Search"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          inputStyle={{
+            color: BASE_COLORS.STONE700,
+            fontFamily: FontFamilies.BODY,
+          }}
+          icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+          clearIcon={
+            searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined
+          }
+          onClearIconPress={() => setSearchQuery("")}
+          style={{
+            backgroundColor: BASE_COLORS.WHITE,
+            borderColor: BASE_COLORS.STONE300,
+            borderWidth: 1,
+            marginBottom: 15,
+          }}
+        />
+      </View>
 
       {/* Horizontal scrollable category chips */}
       <View style={{ paddingVertical: 8 }}>

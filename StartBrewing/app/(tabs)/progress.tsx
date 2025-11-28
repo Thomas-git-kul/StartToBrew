@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
@@ -21,7 +21,6 @@ import { BASE_COLORS } from "@/constants/Colors";
 import { ThemedText } from "@/components/themed-text";
 import { useFonts } from "@/hooks/use-fonts";
 import { FontFamilies } from "@/constants/Fonts";
-import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from "@/supabase";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useUserProgressContext } from "@/context/UserProgressContext";
@@ -34,36 +33,33 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 export default function Progress() {
   useFonts();
   const router = useRouter();
+
   const { id } = useLocalSearchParams() as { id?: string };
   const brewId = id ? Number(id) : undefined;
 
   const [stepData, setStepData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [phase, setPhase] = useState(1);
-  const [remainingTime, setRemainingTime] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
-  const [tipsVisible, setTipsVisible] = useState(false);
   const [phaseDone, setPhaseDone] = useState(false);
   const { refreshProgress } = useUserProgressContext();
   const [dialogVisible, setDialogVisible] = useState(false);
 
-  const loadStep = async () => {
+  const loadStep = useCallback(async () => {
     setLoading(true);
     try {
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData?.user;
-        if (!user) {
-          setStepData(testStep);
-          setLoading(false);
-          return;
-        }
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) {
+        setLoading(false);
+        return;
+      }
 
-        const { data: brew } = await supabase
-          .from("brews")
-          .select("id_brew, recipe_slug, name, last_step_id, status_id")
-          .eq("id_brew", brewId)
-          .single();
-        console.log('brew:',brew);
+      const { data: brew } = await supabase
+        .from("brews")
+        .select("id_brew, recipe_slug, name, last_step_id, status_id")
+        .eq("id_brew", brewId)
+        .single();
+      // console.log('brew:',brew);
 
       if (!brew) {
         setStepData(null);
@@ -146,6 +142,7 @@ export default function Progress() {
           },
           step2: null,
         };
+      }
 
       setStepData(mapped);
 
@@ -253,7 +250,7 @@ export default function Progress() {
         return;
       }
 
-      await loadStep(); // ✅ gewoon de loadStep opnieuw aanroepen
+      await loadStep();
     } catch (error) {
       console.error("goToNextStep error:", error);
     }
@@ -323,16 +320,6 @@ export default function Progress() {
       ? stepData.step1.desc
       : (stepData.step2?.desc ?? stepData.step1.desc);
   const tips = phase === 1 ? stepData.step1.tips : stepData.step2?.tips;
-
-  /*
-  const phase1Duration = stepData.duration_total - stepData.duration_offset;
-  const phase2Duration = (stepData.duration_total ?? 0) - phase1Duration;
-  const hasPhase2 = Boolean(stepData.title2 && stepData.description2 && phase2Duration > 0);
-
-  const currentStep = stepData;
-  const hasTimer = currentStep.duration_total && currentStep.duration_total > 0;
-  const hasPhase2 = currentStep.title2 && currentStep.description2;
-  const hasTemp = currentStep.temp !== undefined;
 
   return (
     <SafeAreaView
@@ -483,21 +470,19 @@ export default function Progress() {
           </Card>
         )}
 
-        <View className="mt-4">
-          {(phase === 1 ? currentStep.description1 : currentStep.description2 ?? currentStep.description1)
-            ?.split(".")
-            .map((sentence: string, index: number) => {
-              const clean = sentence.trim();
-              if (!clean) return null;
-              return (
-                <ThemedText key={index} type="defaultText" className="mb-2">
-                  {clean}.
-                </ThemedText>
-              );
-            })}
+        <View className="mt-2">
+          {desc?.split(".").map((s: string, i: number) => {
+            const clean = s.trim();
+            if (!clean) return null;
+            return (
+              <ThemedText key={i} type="defaultText" className="mb-2">
+                {clean}.
+              </ThemedText>
+            );
+          })}
         </View>
 
-        {((phase === 1 && currentStep.tips1) || (phase === 2 && currentStep.tips2)) && (
+        {tips && (
           <View className="mt-2 flex-row items-start">
             <Lightbulb
               size={Math.min(30 * scale, 50)}
@@ -508,29 +493,16 @@ export default function Progress() {
           </View>
         )}
       </ScrollView>
-
-      {showConfetti && (
-        <ConfettiCannon
-          testID="confetti-cannon"
-          count={200} 
-          origin={{ x: -10, y: 0 }}
-          fadeOut={true}
-          autoStart={true}
-        />
-      )}
-
       <FAB
         testID="fab-button"
-        mode="elevated"
+        mode="flat"
+        label="Next Step"
         icon={(props) => {
-          if (phaseDone) return <CheckCheck {...props} />;
-          if (hasTimer) return <Play {...props} />;
+          return <CheckCheck {...props} size={Math.min(24 * scale, 34)} />;
         }}
-        label={phaseDone ? "Next Step" : hasTimer ? "Start Timer" : "Next Step"}
-        color={BASE_COLORS.WHITE}
         onPress={() => {
-          if (!phaseDone && hasTimer && !timerActive) setTimerActive(true);
-          else goToNextStep();
+          if (!phaseDone) return;
+          goToNextStep();
         }}
         disabled={!phaseDone}
         color={BASE_COLORS.WHITE}
@@ -542,13 +514,14 @@ export default function Progress() {
           position: "absolute",
           bottom: 20,
           right: 20,
-          backgroundColor: timerActive && !phaseDone ? BASE_COLORS.STONE400 : BASE_COLORS.TEXT_DARK,
-          borderRadius: 20,
         }}
         theme={{
+          colors: {
+            onSurfaceDisabled: BASE_COLORS.STONE400,
+          },
           fonts: {
             labelLarge: {
-              fontSize: 16,
+              fontSize: Math.min(16 * scale, 24),
               fontFamily: FontFamilies.BODY,
             },
           },

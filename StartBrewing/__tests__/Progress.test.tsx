@@ -26,6 +26,70 @@ jest.mock("@/components/themed-text", () => {
   return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
 });
 
+// Mock react-native-paper to avoid needing Provider in tests
+jest.mock("react-native-paper", () => {
+  const React = require("react");
+  const { View, Text, TouchableOpacity, TextInput: RNTextInput } = require("react-native");
+
+  // Dialog needs subcomponents Title, Content, Actions in our codebase
+  const Dialog = (props: any) => React.createElement(View, props, props.children);
+  Dialog.Title = (props: any) => React.createElement(Text, props, props.children);
+  Dialog.Content = (props: any) => React.createElement(View, props, props.children);
+  Dialog.Actions = (props: any) => React.createElement(View, props, props.children);
+
+  const Card = (props: any) => React.createElement(View, props, props.children);
+
+  return {
+    FAB: ({ label, onPress, children, ...rest }: any) => (
+      <TouchableOpacity onPress={onPress} {...rest}>
+        <Text>{label ?? children}</Text>
+      </TouchableOpacity>
+    ),
+    Portal: ({ children }: any) => <>{children}</>,
+    Modal: ({ visible, children }: any) => (visible ? <View>{children}</View> : null),
+    Chip: ({ children }: any) => (
+      <View>
+        <Text>{children}</Text>
+      </View>
+    ),
+    ActivityIndicator: () => <View />,
+    TextInput: ({ value, onChangeText, ...rest }: any) => (
+      <RNTextInput value={value} onChangeText={onChangeText} {...rest} />
+    ),
+    Button: ({ onPress, children }: any) => (
+      <TouchableOpacity onPress={onPress}>
+        <Text>{children}</Text>
+      </TouchableOpacity>
+    ),
+    Dialog,
+    Card,
+  };
+});
+
+// Mock lucide icons used in Progress
+jest.mock("lucide-react-native", () => {
+  const { Text } = require("react-native");
+  const make = (name: string) => (props: any) => <Text>{name}</Text>;
+  return {
+    Pause: make("Pause"),
+    Thermometer: make("Thermometer"),
+    Play: make("Play"),
+    CheckCheck: make("CheckCheck"),
+    Lightbulb: make("Lightbulb"),
+  };
+});
+
+// Mock countdown timer to avoid timing-related behavior in unit tests
+jest.mock("react-native-countdown-circle-timer", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+  return {
+    CountdownCircleTimer: ({ children }: any) => {
+      return React.createElement(View, null, typeof children === "function" ? children({ remainingTime: 60 }) : children);
+    },
+  };
+});
+
 // ⬇️ NIEUW: mock de user progress context
 jest.mock("@/context/UserProgressContext", () => ({
   useUserProgressContext: () => ({
@@ -39,86 +103,96 @@ jest.mock("@/context/UserProgressContext", () => ({
 
 // --- Supabase mock chain setup ---
 
-const mockBrewStepsEq = jest.fn().mockResolvedValue({ data: [] });
-const mockBrewStepsSelect = jest.fn(() => ({ eq: mockBrewStepsEq }));
-const mockBrewStepsUpdate = jest.fn(() => ({ eq: mockBrewStepsEq }));
-
 jest.mock("@/supabase", () => {
-  const mockBrewStepsEq = jest.fn().mockResolvedValue({
-    data: [
-      {
-        brew_step_id: 10,
-        brew_id: "1",
-        step_id: "1",
-        position: 1,
-        done_at: null,
-      },
-    ],
+  const getUser = jest.fn().mockResolvedValue({ data: { user: { id: "test-user" } } });
+
+  const from = jest.fn((table: string) => {
+    switch (table) {
+      case "brews":
+        return {
+          select: () => ({
+            eq: () => ({
+              single: async () => ({
+                data: {
+                  id_brew: 1,
+                  recipe_slug: "black-ipa",
+                  name: "black IPA Progress",
+                  last_step_id: "1",
+                  status_id: 2,
+                },
+                error: null,
+              }),
+            }),
+          }),
+          update: () => ({
+            eq: async () => ({ data: {}, error: null }),
+          }),
+          delete: () => ({ eq: async () => ({ data: {}, error: null }) }),
+        };
+
+      case "phases":
+        return {
+          select: () => ({
+            eq: () => ({
+              order: async () => ({ data: [{ phase_id: "phase-1", position: 1 }], error: null }),
+            }),
+          }),
+        };
+
+      case "steps":
+        return {
+          select: () => ({
+            eq: () => ({
+              order: async () => ({
+                data: [
+                  {
+                    step_id: "1",
+                    title: "60-min Citra",
+                    title_2: "15-min Mosaic",
+                    description_md: "At T-60: briefly kill the flame to prevent foam, add hops, then resume boil.",
+                    description_md_2: "At T-15: briefly kill the flame to prevent foam, add hops, then resume boil.",
+                    start_offset_min: 0,
+                    duration_min: 0.02,
+                    next_step_id: null,
+                    temp_c_target: 100,
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          }),
+        };
+
+      case "step_tips":
+        return {
+          select: () => ({
+            eq: () => ({
+              single: async () => ({ data: { step_id: "1", tip_md: "Use a spoon" }, error: null }),
+            }),
+          }),
+        };
+
+      case "brew_steps":
+        return {
+          select: () => ({
+            eq: async () => ({ data: [{ brew_step_id: 10, brew_id: "1", step_id: "1", position: 1, done_at: null }], error: null }),
+          }),
+          update: () => ({
+            eq: () => ({ eq: async () => ({ data: [], error: null }) }),
+          }),
+          delete: () => ({ eq: async () => ({ data: [], error: null }) }),
+        };
+
+      default:
+        return {
+          select: () => ({ eq: async () => ({ data: [], error: null }) }),
+          update: () => ({ eq: async () => ({ data: [], error: null }) }),
+          delete: () => ({ eq: async () => ({ data: [], error: null }) }),
+        };
+    }
   });
 
-  const mockBrewStepsSelect = jest.fn(() => ({
-    eq: mockBrewStepsEq,
-  }));
-
-  const mockBrewStepsUpdate = jest.fn(() => ({
-    eq: mockBrewStepsEq,
-  }));
-
-  const mockBrewsUpdateEq = jest.fn().mockResolvedValue({ data: {} });
-  const mockBrewsUpdate = jest.fn(() => ({ eq: mockBrewsUpdateEq }));
-
-  return {
-    supabase: {
-      auth: {
-        getUser: jest
-          .fn()
-          .mockResolvedValue({ data: { user: { id: "test-user" } } }),
-      },
-
-      from: jest.fn((table) => {
-        if (table === "brew_steps")
-          return {
-            select: mockBrewStepsSelect,
-            update: mockBrewStepsUpdate,
-          };
-
-        if (table === "brews")
-          return {
-            update: mockBrewsUpdate,
-          };
-
-        if (table === "phases")
-          return {
-            select: jest.fn().mockResolvedValue({
-              data: [{ phase_id: 1, position: 1 }],
-            }),
-          };
-
-        if (table === "steps")
-          return {
-            select: jest.fn().mockResolvedValue({
-              data: [
-                {
-                  step_id: "1",
-                  title: "60-min Citra",
-                  title_2: "15-min Mosaic",
-                  description_md:
-                    "At T-60: briefly kill the flame to prevent foam, add hops, then resume boil.",
-                  description_md_2:
-                    "At T-15: briefly kill the flame to prevent foam, add hops, then resume boil.",
-                  start_offset_min: 0,
-                  duration_min: 0.02,
-                  next_step_id: null,
-                  temp_c_target: 100,
-                },
-              ],
-            }),
-          };
-
-        return {};
-      }),
-    },
-  };
+  return { supabase: { auth: { getUser }, from } };
 });
 
 const pushMock = jest.fn();
@@ -140,7 +214,8 @@ describe("<Progress />", () => {
 
   it("toont tips", async () => {
     const { findByText } = renderWithNavigation(<Progress />);
-    expect(await findByText("Failed to load progress...")).toBeTruthy();
+    // our mock returns a tip for step 1 (see supabase mock), assert it shows
+    expect(await findByText("Use a spoon")).toBeTruthy();
   });
 
   it("snapshot", () => {
