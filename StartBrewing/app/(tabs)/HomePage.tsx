@@ -70,28 +70,32 @@ function HomePageContent() {
     React.useCallback(() => {
       let mounted = true;
 
-      const fetchPopularRecipes = async () => {
+      const fetchPopularRecipes = async (
+        ratingWeight = 0.8, //pas deze waardes aan om de weging van popular recipes te veranderen
+        reviewWeight = 0.2,
+        reviewScale = 20
+      ) => {
         try {
           setLoading(true);
           setError(null);
-          // 1) load recipes (we need at least the basic fields)
+
           const { data: recipesData, error: recipesError } = await supabase
             .from("recipes")
             .select(
               "recipe_slug, name, description, haze_level, srm_target, style"
             );
+
           if (recipesError) throw recipesError;
 
           const slugs = (recipesData || []).map((r: any) => r.recipe_slug);
 
-          // 2) load all reviews for these recipes and aggregate in client
           const { data: reviewsData, error: reviewsError } = await supabase
             .from("recipe_reviews")
             .select("recipe_slug, rating")
             .in("recipe_slug", slugs.length ? slugs : [""]);
+
           if (reviewsError) throw reviewsError;
 
-          // aggregate by recipe_slug
           const agg: Record<string, { count: number; avg: number }> = {};
           (reviewsData || []).forEach((r: any) => {
             const slug = r.recipe_slug;
@@ -103,11 +107,10 @@ function HomePageContent() {
             agg[k].avg = agg[k].count ? agg[k].avg / agg[k].count : 0;
           });
 
-          // map recipes and attach aggregated ratings/counts
           const mappedAll: Beer[] = (recipesData || []).map((r: any) => {
             const a = agg[r.recipe_slug];
             const avgRating = a ? a.avg : (r.rating ?? 0);
-            const rating = parseFloat(avgRating.toFixed(2)); // altijd 0–5 met 2 decimalen
+            const rating = parseFloat(avgRating.toFixed(2));
 
             return {
               recipe_slug: r.recipe_slug,
@@ -120,13 +123,29 @@ function HomePageContent() {
             };
           });
 
-          // sort by rating desc, then reviews desc and take top 5
-          const mapped = mappedAll
-            .sort((a, b) => {
-              if (b.rating !== a.rating) return b.rating - a.rating;
-              return b.reviews - a.reviews;
-            })
+          // 4) bereken gewogen score per recipe
+          const totalWeight =
+            ratingWeight + reviewWeight > 0 ? ratingWeight + reviewWeight : 1;
+
+          const withScore = mappedAll.map((beer) => {
+            const normalizedRating = beer.rating > 0 ? beer.rating / 5 : 0;
+            const normalizedReviews =
+              beer.reviews > 0 ? Math.min(beer.reviews / reviewScale, 1) : 0;
+
+            const score =
+              (ratingWeight * normalizedRating +
+                reviewWeight * normalizedReviews) /
+              totalWeight;
+
+            return { ...beer, score };
+          });
+
+          // 5) sorteer op gewogen score (desc) en neem top 5
+          const topWithScore = withScore
+            .sort((a, b) => b.score - a.score)
             .slice(0, 5);
+
+          const mapped = topWithScore.map(({ score, ...rest }) => rest);
 
           if (mounted) {
             setBeers(mapped);
