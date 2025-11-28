@@ -55,7 +55,9 @@ jest.mock("react-native-safe-area-context", () => ({
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return {
-    ThemedText: ({ children, ...props }: any) => <Text {...props}>{children}</Text>,
+    ThemedText: ({ children, ...props }: any) => (
+      <Text {...props}>{children}</Text>
+    ),
   };
 });
 
@@ -111,7 +113,6 @@ describe("<Auth />", () => {
     expect(getByPlaceholderText("Password")).toBeTruthy();
     expect(getByText("Log In")).toBeTruthy();
     expect(getByText("Sign Up")).toBeTruthy();
-    expect(getByText("Sign In as Test User")).toBeTruthy();
   });
 
   it("logs in with email and password", async () => {
@@ -143,7 +144,10 @@ describe("<Auth />", () => {
 
     supabase.from().single.mockResolvedValueOnce({ data: null, error: true });
 
-    fireEvent.changeText(getByPlaceholderText("Email or Username"), "wronguser");
+    fireEvent.changeText(
+      getByPlaceholderText("Email or Username"),
+      "wronguser"
+    );
     fireEvent.changeText(getByPlaceholderText("Password"), "password123");
     fireEvent.press(getByText("Log In"));
 

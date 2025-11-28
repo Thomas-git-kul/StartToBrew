@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, { useState, useEffect } from "react";
 import { View, ScrollView, Dimensions, FlatList, ActivityIndicator } from "react-native";
 import { Searchbar, Chip, Button } from "react-native-paper";
 import { Search, X, Check } from "lucide-react-native";
@@ -10,6 +10,7 @@ import Header from "@/components/header"
 import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "../../supabase";
 import { ThemedText } from "../../components/themed-text";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -73,109 +74,114 @@ export default function StorePage() {
     ...categories.filter((c) => !selectedCategories.includes(c.id)),
   ]
 
+  const isFocused = useIsFocused();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let mounted = true;
+      const load = async () => {
+        try {
+          const { data: categoryData, error: categoryError } = await supabase
+            .from("category")
+            .select("id_category,name")
+            .limit(10);
+          if (categoryError) {
+            console.warn("Supabase categories(fetch) error:", categoryError.message);
+            if (mounted) setCategories([]);
+          } else {
+            const mappedCategories: Category[] = (categoryData ?? []).map((row: any) => ({
+              id: row.id_category ?? undefined,
+              name: row.name ?? "Untitled Category",
+            }));
+            if (mounted) setCategories(mappedCategories);
+          }
+
+          const { data: storeItemsData, error: storeItemsError } = await supabase
+            .from("store_items")
+            .select("id_store_item, name, category_id, price")
+            .limit(50);
+          const { data: starterkitItemsData, error: starterkitItemsError } = await supabase
+            .from("starter_kits")
+            .select("id_starter_kit, name, price")
+            .limit(50);
+          if (storeItemsError || starterkitItemsError) {
+            console.warn("Supabase fetch error:", storeItemsError?.message || starterkitItemsError?.message);
+            if (mounted) setItems([]);
+          } else {
+            const mappedStoreItems: Item[] = (storeItemsData ?? []).map((row: any) => ({
+              id: row.id_store_item ?? undefined,
+              title: row.name ?? "Untitled Item",
+              categoryId: row.category_id ?? undefined,
+              price: row.price ? `€${row.price}` : "N/A",
+              image: exampleImages[row.category_id] || require("@/assets/images/Premiumkit.png"),
+            }));
+            const mappedStarterKits: Item[] = (starterkitItemsData ?? []).map((row: any) => ({
+              id: row.id_starter_kit ?? undefined,
+              title: row.name ?? "Untitled Starter Kit",
+              categoryId: 4,
+              price: row.price ? `€${row.price}` : "N/A",
+              image: require("@/assets/images/starterkit2.png"),
+            }));
+            const combinedItems = [...mappedStoreItems, ...mappedStarterKits];
+            combinedItems.sort((a, b) => a.title.localeCompare(b.title));
+            if (mounted) setItems(combinedItems);
+          }
+
+        } catch (e: any) {
+          console.warn("Supabase fetch exception:", e?.message ?? e);
+        } finally {
+          if (mounted) setLoading(false);
+        }
+      };
+
+      load();
+
+      return () => {
+        mounted = false;
+      };
+    }, [])
+  );
+
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      try {
-        const { data: categoryData, error: categoryError } = await supabase
-          .from("category")
-          .select("id_category,name")
-          .limit(10);
-        if (categoryError) {
-          console.warn("Supabase categories(fetch) error:", categoryError.message);
-          if (mounted) setCategories([]);
-        } else {
-          const mappedCategories: Category[] = (categoryData ?? []).map((row: any) => ({
-            id: row.id_category ?? undefined,
-            name: row.name ?? "Untitled Category",
-          }));
-          if (mounted) setCategories(mappedCategories);
+    if (isFocused) {
+      const loadCartCount = async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            setCartCount(0);
+            return;
+          }
+
+          const { data: cart, error: cartError } = await supabase
+            .from("shopping_carts")
+            .select("id_cart")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (cartError || !cart) {
+            setCartCount(0);
+            return;
+          }
+
+          const { data: items, error: countError } = await supabase
+            .from("shopping_cart_items")
+            .select("id_cart_item", { count: "exact" })
+            .eq("cart_id", cart.id_cart);
+
+          if (countError) {
+            console.warn("Cart count error:", countError.message);
+            return;
+          }
+
+          setCartCount(items?.length ?? 0);
+        } catch (e: any) {
+          console.warn("Cart count fetch exception:", e?.message ?? e);
         }
+      };
 
-        const { data: storeItemsData, error: storeItemsError } = await supabase
-          .from("store_items")
-          .select("id_store_item, name, category_id, price")
-          .limit(50);
-        const { data: starterkitItemsData, error: starterkitItemsError } = await supabase
-          .from("starter_kits")
-          .select("id_starter_kit, name, price")
-          .limit(50);
-        if (storeItemsError || starterkitItemsError) {
-          console.warn("Supabase fetch error:", storeItemsError?.message || starterkitItemsError?.message);
-          if (mounted) setItems([]);
-        } else {
-          const mappedStoreItems: Item[] = (storeItemsData ?? []).map((row: any) => ({
-            id: row.id_store_item ?? undefined,
-            title: row.name ?? "Untitled Item",
-            categoryId: row.category_id ?? undefined,
-            price: row.price ? `€${row.price}` : "N/A",
-            image: exampleImages[row.category_id] || require("@/assets/images/Premiumkit.png"),
-          }));
-          const mappedStarterKits: Item[] = (starterkitItemsData ?? []).map((row: any) => ({
-            id: row.id_starter_kit ?? undefined,
-            title: row.name ?? "Untitled Starter Kit",
-            categoryId: 4,
-            price: row.price ? `€${row.price}` : "N/A",
-            image: require("@/assets/images/starterkit2.png"),
-          }));
-          const combinedItems = [...mappedStoreItems, ...mappedStarterKits];
-          combinedItems.sort((a, b) => a.title.localeCompare(b.title));
-          if (mounted) setItems(combinedItems);
-        }
-
-      } catch (e: any) {
-        console.warn("Supabase fetch exception:", e?.message ?? e);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    load();
-
-    // cartcount
-    const loadCartCount = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setCartCount(0);
-          return;
-        }
-
-        // Get the user's cart
-        const { data: cart, error: cartError } = await supabase
-          .from("shopping_carts")
-          .select("id_cart")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (cartError || !cart) {
-          setCartCount(0);
-          return;
-        }
-
-        // Count items in the cart
-        const { data: items, error: countError } = await supabase
-          .from("shopping_cart_items")
-          .select("id_cart_item", { count: "exact" })
-          .eq("cart_id", cart.id_cart);
-
-        if (countError) {
-          console.warn("Cart count error:", countError.message);
-          return;
-        }
-
-        setCartCount(items?.length ?? 0);
-      } catch (e: any) {
-        console.warn("Cart count fetch exception:", e?.message ?? e);
-      }
-    };
-
-    loadCartCount();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+      loadCartCount();
+    }
+  }, [isFocused]);
 
   if (loading) {
     return (
