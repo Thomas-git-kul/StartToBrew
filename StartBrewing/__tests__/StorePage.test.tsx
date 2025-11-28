@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import StorePage from "../app/(tabs)/Store";
 import { supabase } from "../supabase";
+import { useIsFocused, NavigationContainer } from "@react-navigation/native";
 
 // --- 🧩 MOCKS --- //
 const mockPush = jest.fn();
@@ -75,6 +76,16 @@ jest.mock("../supabase", () => {
   };
 });
 
+jest.mock("@react-navigation/native", () => {
+  const actual = jest.requireActual("@react-navigation/native");
+  return {
+    ...actual,
+    useIsFocused: jest.fn(),
+  };
+});
+
+const mockUseIsFocused = useIsFocused as jest.Mock;
+
 (supabase.from as jest.Mock).mockImplementation((table: string) => {
   if (table === "category") {
     return {
@@ -121,24 +132,29 @@ jest.mock("../supabase", () => {
 describe("<StorePage />", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseIsFocused.mockReturnValue(true); // Simulate the page being focused
   });
 
+  const renderWithNavigation = (ui: React.ReactElement) => {
+    return render(<NavigationContainer>{ui}</NavigationContainer>);
+  };
+
   it("renders main title", async () => {
-    const { getByText } = render(<StorePage />);
+    const { getByText } = renderWithNavigation(<StorePage />);
     await waitFor(() => {
       expect(getByText("Store")).toBeTruthy();
     });
   });
 
   it("renders correct number of StoreCard components", async () => {
-    render(<StorePage />);
+    renderWithNavigation(<StorePage />);
     await waitFor(() => {
       expect(MockStoreCard).toHaveBeenCalledTimes(3); // 2 store_items + 1 starter kit
     });
   });
 
   it("passes correct props to the first StoreCard", async () => {
-    render(<StorePage />);
+    renderWithNavigation(<StorePage />);
     await waitFor(() => {
       const firstCall = MockStoreCard.mock.calls[0][0] as StoreCardProps;
       expect(firstCall.title).toBe("Item 1");
@@ -148,10 +164,19 @@ describe("<StorePage />", () => {
   });
 
   it("navigates to cart when cart button pressed", async () => {
-    const { getByTestId } = render(<StorePage />);
+    const { getByTestId } = renderWithNavigation(<StorePage />);
     await waitFor(() => {
       fireEvent.press(getByTestId("cart-button")); // use testID, not text
       expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
+    });
+  });
+
+  it("does not fetch cart count when not focused", async () => {
+    mockUseIsFocused.mockReturnValue(false); // Simulate the page not being focused
+    renderWithNavigation(<StorePage />);
+
+    await waitFor(() => {
+      expect(supabase.from).not.toHaveBeenCalledWith("shopping_cart_items");
     });
   });
 });
