@@ -12,6 +12,7 @@ import { Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
+import { useFocusEffect } from "@react-navigation/native";
 
 interface Beer {
   recipe_slug: string;
@@ -45,7 +46,7 @@ function HomePageContent() {
   const [inProgress, setInProgress] = useState<InProgressBrew[]>([]);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
 
-  useEffect(() => {
+useFocusEffect( React.useCallback(() => {
     let mounted = true;
     const fetchPopularRecipes = async () => {
       try {
@@ -110,6 +111,7 @@ function HomePageContent() {
         setLoading(false);
       }
     };
+
     const loadProgress = async () => {
       setLoading(true);
       try {
@@ -158,6 +160,7 @@ function HomePageContent() {
           const sortedResult = inProgressResult.sort((a, b) => a.progress - b.progress);
           setInProgress(sortedResult);
         }
+
       } catch (e: any) {
         console.warn("Failed to load homepage data:", e?.message ?? e);
       } finally {
@@ -170,8 +173,7 @@ function HomePageContent() {
     return () => {
       mounted = false;
     };
-  }, []);
-  // ...existing code...
+  }, []));
 
   return (
     <View className="flex-1">
@@ -182,6 +184,23 @@ function HomePageContent() {
       >
         {/* In progress section */}
         <ThemedText type="title">In progress</ThemedText>
+        {loading ? (
+          <View className="items-center justify-center my-4">
+            <ActivityIndicator 
+              animating size="small" 
+              color={BASE_COLORS.ACCENT_PRIMARY}
+            />
+            <ThemedText type="defaultText" className="mt-2">
+              Loading progress...
+            </ThemedText>
+          </View>
+        ) : error ? (
+          <View className="items-center justify-center my-4 px-6">
+            <ThemedText type="defaultText" className="text-center">
+              {error}
+            </ThemedText>
+          </View>
+        ) : (
         <View>
           {inProgress.length === 0 ? (
               <ThemedText>No brews in progress. Start a new recipe!</ThemedText>
@@ -195,11 +214,10 @@ function HomePageContent() {
                 />
               ))
             )}
-
         </View>
+        )}
 
         <ThemedText type="title">Popular recipes</ThemedText>
-
         {loading ? (
           <View className="items-center justify-center my-4">
             <ActivityIndicator 
@@ -241,19 +259,18 @@ function HomePageContent() {
 
       {/* Floating Action Button */}
       <FAB
-        icon={(props) => <Plus size={props.size} color={props.color} />}
         testID="fab"
+        mode="flat"
+        icon={(props) => <Plus size={props.size} color={props.color} strokeWidth={3}/>}
         style={{
           position: "absolute",
           right: 10,
           bottom: 25,
           backgroundColor: BASE_COLORS.TEXT_DARK,
-          borderRadius: 20,
+          borderRadius: 30,
         }}
         color={BASE_COLORS.WHITE}
         onPress={() => router.push("/Recipes")}
-        mode="elevated"
-        size="medium"
       />
     </View>
   );

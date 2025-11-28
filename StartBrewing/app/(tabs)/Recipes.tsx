@@ -1,7 +1,21 @@
 import { useState, useEffect } from "react";
-import { View, ScrollView, Dimensions, StyleSheet, Text, FlatList } from "react-native";
-import { Searchbar, ActivityIndicator, Chip, Button, Modal, Portal } from "react-native-paper";
-import { Search, X, Check} from "lucide-react-native";
+import {
+  View,
+  ScrollView,
+  Dimensions,
+  StyleSheet,
+  Text,
+  FlatList,
+} from "react-native";
+import {
+  Searchbar,
+  ActivityIndicator,
+  Chip,
+  Button,
+  Modal,
+  Portal,
+} from "react-native-paper";
+import { Search, X, Check } from "lucide-react-native";
 import BeerCard from "../../components/ui/RecipeCard";
 import { useFavorites } from "@/context/FavoritesContext";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -45,9 +59,17 @@ export default function Recipes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  {/* Filtering */}
+  // Recommended
+  const [recommendedSlugs, setRecommendedSlugs] = useState<string[]>([]);
+  const [recommendedLoading, setRecommendedLoading] = useState(false);
+
+  {
+    /* Filtering */
+  }
   // UI
-  const [openMenu, setOpenMenu] = useState<null | "style" | "abv" | "ibu" | "srm" | "rating" | "difficulty" | "haze">(null);
+  const [openMenu, setOpenMenu] = useState<
+    null | "style" | "abv" | "ibu" | "srm" | "rating" | "difficulty" | "haze"
+  >(null);
 
   // Filter state
   const { favoriteSlugs, toggleFavorite } = useFavorites();
@@ -60,7 +82,9 @@ export default function Recipes() {
   const [srmMax, setSrmMax] = useState<string>("");
   const [ratingMin, setRatingMin] = useState<string>("");
   const [ratingMax, setRatingMax] = useState<string>("");
-  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
+  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(
+    []
+  );
   const [selectedHazeLevels, setSelectedHazeLevels] = useState<number[]>([]);
 
   // Options from data
@@ -80,6 +104,7 @@ export default function Recipes() {
         setLoading(true);
         setError(null);
 
+        // 1. Recipes + ratings
         const { data: recipesData, error: recipesError } = await supabase
           .from("recipes")
           .select(
@@ -95,13 +120,12 @@ export default function Recipes() {
           .in("recipe_slug", slugs.length ? slugs : [""]);
         if (reviewsError) throw reviewsError;
 
-        // aggregate
         const agg: Record<string, { count: number; avg: number }> = {};
         (reviewsData || []).forEach((r: any) => {
           const slug = r.recipe_slug;
           if (!agg[slug]) agg[slug] = { count: 0, avg: 0 };
           agg[slug].count += 1;
-          agg[slug].avg += (r.rating ?? 0);
+          agg[slug].avg += r.rating ?? 0;
         });
         Object.keys(agg).forEach((k) => {
           agg[k].avg = agg[k].count ? agg[k].avg / agg[k].count : 0;
@@ -109,8 +133,7 @@ export default function Recipes() {
 
         const mapped: Beer[] = (recipesData || []).map((r: any) => {
           const a = agg[r.recipe_slug];
-          const avgRating = a ? a.avg : r.rating ?? 0;
-          // twee decimalen precisie
+          const avgRating = a ? a.avg : (r.rating ?? 0);
           const rating = parseFloat(avgRating.toFixed(2));
           return {
             recipe_slug: r.recipe_slug,
@@ -139,17 +162,46 @@ export default function Recipes() {
         setAvailableStyles(Array.from(stylesSet).sort());
         setAvailableHazeLevels(Array.from(hazeSet).sort((a, b) => a - b));
 
+        // Shuffle for baseline “Other recipes”
         const shuffled = [...mapped];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
         setRecipes(shuffled);
+
+        // 2. Recommended slugs via RPC (als user ingelogd is)
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (!userError && user) {
+          setRecommendedLoading(true);
+          const { data: recData, error: recError } = await supabase.rpc(
+            "recommend_recipes",
+            {
+              p_account_id: user.id,
+              p_limit: 10,
+            }
+          );
+
+          if (!recError && Array.isArray(recData)) {
+            const recSlugs = recData
+              .map((r: any) => r.recipe_slug)
+              .filter((s: any): s is string => typeof s === "string");
+            setRecommendedSlugs(recSlugs);
+          } else {
+            console.warn("recommend_recipes RPC error", recError);
+          }
+          setRecommendedLoading(false);
+        } else {
+          // geen user → geen personal recommendations
+          setRecommendedSlugs([]);
+        }
       } catch (e: any) {
         console.error("Error loading recipes", e);
-        setError(
-          e.message ?? "Unable to load recipes."
-        );
+        setError(e.message ?? "Unable to load recipes.");
       } finally {
         setLoading(false);
       }
@@ -157,12 +209,15 @@ export default function Recipes() {
     fetchAll();
   }, []);
 
-  {/* Filter functions */}
+  {
+    /* Filter functions */
+  }
   const toggleArrayValue = <T,>(arr: T[], val: T, setFn: (v: T[]) => void) => {
     if (arr.includes(val)) setFn(arr.filter((x) => x !== val));
     else setFn([...arr, val]);
   };
 
+  // Basisfilter op alle recipes
   let filteredRecipes = recipes.filter((b) => filterMatches(b, searchQuery));
 
   // Favorites
@@ -180,8 +235,12 @@ export default function Recipes() {
   }
 
   // numeric ranges helper
-  const inRange = (value: number | undefined | null, minStr: string, maxStr: string) => {
-    if (typeof value !== "number") return false; // if recipe doesn't contain numeric field, exclude
+  const inRange = (
+    value: number | undefined | null,
+    minStr: string,
+    maxStr: string
+  ) => {
+    if (typeof value !== "number") return false;
     const min = minStr === "" ? Number.NEGATIVE_INFINITY : Number(minStr);
     const max = maxStr === "" ? Number.POSITIVE_INFINITY : Number(maxStr);
     if (Number.isNaN(min) || Number.isNaN(max)) return false;
@@ -233,10 +292,25 @@ export default function Recipes() {
 
   // Haze (multi-select)
   if (selectedHazeLevels.length > 0) {
-    filteredRecipes = filteredRecipes.filter((b) =>
-      typeof b.haze_level === "number" && selectedHazeLevels.includes(b.haze_level)
+    filteredRecipes = filteredRecipes.filter(
+      (b) =>
+        typeof b.haze_level === "number" &&
+        selectedHazeLevels.includes(b.haze_level)
     );
   }
+
+  // Splitsen: recommended vs others op basis van recommendedSlugs
+  const recommendedRecipes = filteredRecipes
+    .filter((b) => recommendedSlugs.includes(b.recipe_slug))
+    .sort(
+      (a, b) =>
+        recommendedSlugs.indexOf(a.recipe_slug) -
+        recommendedSlugs.indexOf(b.recipe_slug)
+    );
+
+  const otherRecipes = filteredRecipes.filter(
+    (b) => !recommendedSlugs.includes(b.recipe_slug)
+  );
 
   /* chips config */
   const filterCategories = [
@@ -259,19 +333,23 @@ export default function Recipes() {
         setOpenMenu(null);
         break;
       case "abv":
-        setAbvMin(""); setAbvMax("");
+        setAbvMin("");
+        setAbvMax("");
         setOpenMenu(null);
         break;
       case "ibu":
-        setIbuMin(""); setIbuMax("");
+        setIbuMin("");
+        setIbuMax("");
         setOpenMenu(null);
         break;
       case "srm":
-        setSrmMin(""); setSrmMax("");
+        setSrmMin("");
+        setSrmMax("");
         setOpenMenu(null);
         break;
       case "rating":
-        setRatingMin(""); setRatingMax("");
+        setRatingMin("");
+        setRatingMax("");
         setOpenMenu(null);
         break;
       case "difficulty":
@@ -314,10 +392,21 @@ export default function Recipes() {
             {availableStyles.map((s) => (
               <Button
                 key={s}
-                onPress={() => toggleArrayValue(selectedStyles, s, setSelectedStyles)}
-                style={[styles.optionButton, selectedStyles.includes(s) && styles.optionButtonSelected]}
+                onPress={() =>
+                  toggleArrayValue(selectedStyles, s, setSelectedStyles)
+                }
+                style={[
+                  styles.optionButton,
+                  selectedStyles.includes(s) && styles.optionButtonSelected,
+                ]}
               >
-                <Text style={[styles.optionButtonText, selectedStyles.includes(s) && styles.optionButtonTextSelected]}>
+                <Text
+                  style={[
+                    styles.optionButtonText,
+                    selectedStyles.includes(s) &&
+                      styles.optionButtonTextSelected,
+                  ]}
+                >
                   {s}
                 </Text>
               </Button>
@@ -332,10 +421,14 @@ export default function Recipes() {
         const values = recipes
           .map((r) => {
             switch (openMenu) {
-              case "abv": return r.abv_target;
-              case "ibu": return r.ibu_target;
-              case "srm": return r.srm_target;
-              case "rating": return r.rating;
+              case "abv":
+                return r.abv_target;
+              case "ibu":
+                return r.ibu_target;
+              case "srm":
+                return r.srm_target;
+              case "rating":
+                return r.rating;
             }
           })
           .filter((v): v is number => typeof v === "number");
@@ -345,19 +438,27 @@ export default function Recipes() {
 
         const [min, setMin] = (() => {
           switch (openMenu) {
-            case "abv": return [abvMin, setAbvMin];
-            case "ibu": return [ibuMin, setIbuMin];
-            case "srm": return [srmMin, setSrmMin];
-            case "rating": return [ratingMin, setRatingMin];
+            case "abv":
+              return [abvMin, setAbvMin];
+            case "ibu":
+              return [ibuMin, setIbuMin];
+            case "srm":
+              return [srmMin, setSrmMin];
+            case "rating":
+              return [ratingMin, setRatingMin];
           }
         })();
 
         const [max, setMax] = (() => {
           switch (openMenu) {
-            case "abv": return [abvMax, setAbvMax];
-            case "ibu": return [ibuMax, setIbuMax];
-            case "srm": return [srmMax, setSrmMax];
-            case "rating": return [ratingMax, setRatingMax];
+            case "abv":
+              return [abvMax, setAbvMax];
+            case "ibu":
+              return [ibuMax, setIbuMax];
+            case "srm":
+              return [srmMax, setSrmMax];
+            case "rating":
+              return [ratingMax, setRatingMax];
           }
         })();
 
@@ -366,7 +467,9 @@ export default function Recipes() {
         return (
           <View>
             <View className="flex-row items-center gap-2">
-              <ThemedText type="inputSug" className="mb-3">min</ThemedText>
+              <ThemedText type="inputSug" className="mb-3">
+                min
+              </ThemedText>
               <View style={{ width: "20%" }}>
                 <TextInput
                   placeholder={dbMin.toString()}
@@ -375,10 +478,14 @@ export default function Recipes() {
                   onChangeText={setMin}
                 />
               </View>
-              <ThemedText type="inputSug" className="mb-1">{unit}</ThemedText>
+              <ThemedText type="inputSug" className="mb-1">
+                {unit}
+              </ThemedText>
             </View>
             <View className="flex-row items-center gap-2">
-              <ThemedText type="inputSug" className="mb-3">max</ThemedText>
+              <ThemedText type="inputSug" className="mb-3">
+                max
+              </ThemedText>
               <View style={{ width: "20%" }}>
                 <TextInput
                   placeholder={dbMax.toString()}
@@ -387,7 +494,9 @@ export default function Recipes() {
                   onChangeText={setMax}
                 />
               </View>
-              <ThemedText type="inputSug" className="mb-1">{unit}</ThemedText>
+              <ThemedText type="inputSug" className="mb-1">
+                {unit}
+              </ThemedText>
             </View>
           </View>
         );
@@ -404,10 +513,26 @@ export default function Recipes() {
             {Object.values(difficultyMap).map((level) => (
               <Button
                 key={level}
-                onPress={() => toggleArrayValue(selectedDifficulties, level, setSelectedDifficulties)}
-                style={[styles.optionButton, selectedDifficulties.includes(level) && styles.optionButtonSelected]}
+                onPress={() =>
+                  toggleArrayValue(
+                    selectedDifficulties,
+                    level,
+                    setSelectedDifficulties
+                  )
+                }
+                style={[
+                  styles.optionButton,
+                  selectedDifficulties.includes(level) &&
+                    styles.optionButtonSelected,
+                ]}
               >
-                <Text style={[styles.optionButtonText, selectedDifficulties.includes(level) && styles.optionButtonTextSelected]}>
+                <Text
+                  style={[
+                    styles.optionButtonText,
+                    selectedDifficulties.includes(level) &&
+                      styles.optionButtonTextSelected,
+                  ]}
+                >
                   {level}
                 </Text>
               </Button>
@@ -427,10 +552,26 @@ export default function Recipes() {
             {availableHazeLevels.map((level) => (
               <Button
                 key={level}
-                onPress={() => toggleArrayValue(selectedHazeLevels, level, setSelectedHazeLevels)}
-                style={[styles.optionButton, selectedHazeLevels.includes(level) && styles.optionButtonSelected]}
+                onPress={() =>
+                  toggleArrayValue(
+                    selectedHazeLevels,
+                    level,
+                    setSelectedHazeLevels
+                  )
+                }
+                style={[
+                  styles.optionButton,
+                  selectedHazeLevels.includes(level) &&
+                    styles.optionButtonSelected,
+                ]}
               >
-                <Text style={[styles.optionButtonText, selectedHazeLevels.includes(level) && styles.optionButtonTextSelected]}>
+                <Text
+                  style={[
+                    styles.optionButtonText,
+                    selectedHazeLevels.includes(level) &&
+                      styles.optionButtonTextSelected,
+                  ]}
+                >
                   {hazeMap[level] ?? level}
                 </Text>
               </Button>
@@ -444,6 +585,84 @@ export default function Recipes() {
     }
   };
 
+  const renderListHeader = () => (
+    <View>
+      <Searchbar
+        placeholder="Search"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        inputStyle={{
+          color: BASE_COLORS.STONE700,
+          fontFamily: FontFamilies.BODY,
+        }}
+        icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+        clearIcon={
+          searchQuery
+            ? () => <X size={18} color={BASE_COLORS.STONE500} />
+            : undefined
+        }
+        onClearIconPress={() => setSearchQuery("")}
+        style={{
+          backgroundColor: BASE_COLORS.WHITE,
+          borderColor: BASE_COLORS.STONE300,
+          borderWidth: 1,
+          marginBottom: 15,
+        }}
+      />
+
+      {recommendedLoading && (
+        <View className="flex-row items-center mb-2">
+          <ActivityIndicator
+            animating
+            size="small"
+            color={BASE_COLORS.ACCENT_PRIMARY}
+          />
+          <ThemedText type="defaultText" className="ml-2">
+            Loading recommendations...
+          </ThemedText>
+        </View>
+      )}
+
+      {recommendedRecipes.length > 0 && (
+        <View className="mb-4">
+          <ThemedText type="subTitle" className="mb-2">
+            Recommended for you
+          </ThemedText>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {recommendedRecipes.map((item) => (
+              <View
+                key={item.recipe_slug}
+                style={{ marginRight: 12, width: Math.min(260 * scale, 280) }}
+              >
+                <BeerCard
+                  {...item}
+                  isFavorite={favoriteSlugs.includes(item.recipe_slug)}
+                  onToggleFavorite={() => toggleFavorite(item.recipe_slug)}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/SpecificRecipe",
+                      params: {
+                        recipe_slug: item.recipe_slug,
+                        isFavorite: favoriteSlugs.includes(item.recipe_slug)
+                          ? "true"
+                          : "false",
+                      },
+                    })
+                  }
+                />
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {otherRecipes.length > 0 && (
+        <ThemedText type="subTitle" className="mb-1">
+          All recipes
+        </ThemedText>
+      )}
+    </View>
+  );
 
   return (
     <SafeAreaView
@@ -457,127 +676,178 @@ export default function Recipes() {
       {/* Horizontal scrollable category chips */}
       <View style={{ paddingVertical: 8 }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {([...filterCategories].sort((a, b) => {
-            const isSelected = (cat: typeof filterCategories[0]) => {
-              switch (cat.id) {
-                case "favorites": return showOnlyFavorites;
-                case "style": return selectedStyles.length > 0;
-                case "abv": return abvMin !== "" || abvMax !== "";
-                case "ibu": return ibuMin !== "" || ibuMax !== "";
-                case "srm": return srmMin !== "" || srmMax !== "";
-                case "rating": return ratingMin !== "" || ratingMax !== "";
-                case "difficulty": return selectedDifficulties.length > 0;
-                case "haze": return selectedHazeLevels.length > 0;
-                default: return false;
-              }
-            };
+          {[...filterCategories]
+            .sort((a, b) => {
+              const isSelected = (cat: (typeof filterCategories)[0]) => {
+                switch (cat.id) {
+                  case "favorites":
+                    return showOnlyFavorites;
+                  case "style":
+                    return selectedStyles.length > 0;
+                  case "abv":
+                    return abvMin !== "" || abvMax !== "";
+                  case "ibu":
+                    return ibuMin !== "" || ibuMax !== "";
+                  case "srm":
+                    return srmMin !== "" || srmMax !== "";
+                  case "rating":
+                    return ratingMin !== "" || ratingMax !== "";
+                  case "difficulty":
+                    return selectedDifficulties.length > 0;
+                  case "haze":
+                    return selectedHazeLevels.length > 0;
+                  default:
+                    return false;
+                }
+              };
 
-            return isSelected(b) && !isSelected(a) ? 1 : isSelected(a) && !isSelected(b) ? -1 : 0;
-          })).map((cat) => {  
-            const isActive = (() => {
-              switch (cat.id) {
-                case "favorites":
-                  return showOnlyFavorites;
-                case "style":
-                  return openMenu === "style" || selectedStyles.length > 0;
-                case "abv":
-                  return openMenu === "abv" || abvMin !== "" || abvMax !== "";
-                case "ibu":
-                  return openMenu === "ibu" || ibuMin !== "" || ibuMax !== "";
-                case "srm":
-                  return openMenu === "srm" || srmMin !== "" || srmMax !== "";
-                case "rating":
-                  return openMenu === "rating" || ratingMin !== "" || ratingMax !== "";
-                case "difficulty":
-                  return openMenu === "difficulty" || selectedDifficulties.length > 0;
-                case "haze":
-                  return openMenu === "haze" || selectedHazeLevels.length > 0;
-                default:
-                  return false;
-              }
-            })();
+              return isSelected(b) && !isSelected(a)
+                ? 1
+                : isSelected(a) && !isSelected(b)
+                  ? -1
+                  : 0;
+            })
+            .map((cat) => {
+              const isActive = (() => {
+                switch (cat.id) {
+                  case "favorites":
+                    return showOnlyFavorites;
+                  case "style":
+                    return openMenu === "style" || selectedStyles.length > 0;
+                  case "abv":
+                    return openMenu === "abv" || abvMin !== "" || abvMax !== "";
+                  case "ibu":
+                    return openMenu === "ibu" || ibuMin !== "" || ibuMax !== "";
+                  case "srm":
+                    return openMenu === "srm" || srmMin !== "" || srmMax !== "";
+                  case "rating":
+                    return (
+                      openMenu === "rating" ||
+                      ratingMin !== "" ||
+                      ratingMax !== ""
+                    );
+                  case "difficulty":
+                    return (
+                      openMenu === "difficulty" ||
+                      selectedDifficulties.length > 0
+                    );
+                  case "haze":
+                    return openMenu === "haze" || selectedHazeLevels.length > 0;
+                  default:
+                    return false;
+                }
+              })();
 
-            return (
-              <View key={cat.id} style={{ marginRight: 8 }}>
-                <Chip
-                  mode="flat"
-                  selected={isActive}
-                  onPress={() => {
-                    if (cat.id === "favorites") { setShowOnlyFavorites(prev => !prev); setOpenMenu(null); return; }
-                    setOpenMenu(prev => prev === cat.id ? null : cat.id as any);
-                  }}
-                  icon={isActive ? () => <Check size={Math.min(14 * scale, 20)} color={BASE_COLORS.WHITE} /> : undefined}
-                  textStyle={{ 
-                    color: isActive ? BASE_COLORS.WHITE : BASE_COLORS.STONE500, 
-                    fontFamily: FontFamilies.BODY,
-                    fontSize: Math.min(14 * scale, 16),
-                  }}
-                  style={{ 
-                    backgroundColor: isActive ? BASE_COLORS.ACCENT_PRIMARY : BASE_COLORS.WHITE,
-                    borderColor: isActive ? BASE_COLORS.WHITE : BASE_COLORS.STONE300,
-                    borderWidth: 1,
-                    height: Math.min(40 * scale, 50),
-                    paddingVertical: 0,
-                    marginVertical: 5,
-                    alignItems: "center",
-                  }}
-                >{cat.name}</Chip>
-              </View>
-            );
-          })}
+              return (
+                <View key={cat.id} style={{ marginRight: 8 }}>
+                  <Chip
+                    mode="flat"
+                    selected={isActive}
+                    onPress={() => {
+                      if (cat.id === "favorites") {
+                        setShowOnlyFavorites((prev) => !prev);
+                        setOpenMenu(null);
+                        return;
+                      }
+                      setOpenMenu((prev) =>
+                        prev === cat.id ? null : (cat.id as any)
+                      );
+                    }}
+                    icon={
+                      isActive
+                        ? () => (
+                            <Check
+                              size={Math.min(14 * scale, 20)}
+                              color={BASE_COLORS.WHITE}
+                            />
+                          )
+                        : undefined
+                    }
+                    textStyle={{
+                      color: isActive
+                        ? BASE_COLORS.WHITE
+                        : BASE_COLORS.STONE500,
+                      fontFamily: FontFamilies.BODY,
+                      fontSize: Math.min(14 * scale, 16),
+                    }}
+                    style={{
+                      backgroundColor: isActive
+                        ? BASE_COLORS.ACCENT_PRIMARY
+                        : BASE_COLORS.WHITE,
+                      borderColor: isActive
+                        ? BASE_COLORS.WHITE
+                        : BASE_COLORS.STONE300,
+                      borderWidth: 1,
+                      height: Math.min(40 * scale, 50),
+                      paddingVertical: 0,
+                      marginVertical: 5,
+                      alignItems: "center",
+                    }}
+                  >
+                    {cat.name}
+                  </Chip>
+                </View>
+              );
+            })}
         </ScrollView>
       </View>
 
       <Portal>
-          <Modal 
-            dismissable={false}
-            visible={!!openMenu} 
-            onDismiss={() => setOpenMenu(null)} 
-            contentContainerStyle={{
-              backgroundColor: BASE_COLORS.LIGHT_BG,
-              position: "absolute",
-              top: 125,
-              left: 20,
-              right: 20,
-              padding: 16,
-              borderRadius: 12,
-              maxHeight: 400,
-
-            }}
-          >
-            <ThemedText type="subTitle" className="mb-2">{getFilterTitle()}</ThemedText>
-            {renderMenuContent()}
-            <View className="flex-row justify-between">
-              <Button 
-                mode="text"
-                onPress={handleClear}
-                labelStyle={{
-                  fontSize: Math.min(14 * scale, 20), 
-                  fontFamily: FontFamilies.BODY_LIGHT,
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-              >Clear</Button>
-              <Button 
-                mode="contained" 
-                onPress={handleApply}
-                labelStyle={{ 
-                  fontSize: Math.min(14 * scale, 24),
-                  color: BASE_COLORS.WHITE,
-                  fontFamily: FontFamilies.BODY,            
-                }}
-                style={{
-                  borderRadius: 20,
-                  backgroundColor: BASE_COLORS.TEXT_DARK,
-                }}
-              >Apply</Button>
-            </View>
-          </Modal>
-        </Portal>
+        <Modal
+          dismissable={false}
+          visible={!!openMenu}
+          onDismiss={() => setOpenMenu(null)}
+          contentContainerStyle={{
+            backgroundColor: BASE_COLORS.LIGHT_BG,
+            position: "absolute",
+            top: 125,
+            left: 20,
+            right: 20,
+            padding: 16,
+            borderRadius: 12,
+            maxHeight: 400,
+          }}
+        >
+          <ThemedText type="subTitle" className="mb-2">
+            {getFilterTitle()}
+          </ThemedText>
+          {renderMenuContent()}
+          <View className="flex-row justify-between">
+            <Button
+              mode="text"
+              onPress={handleClear}
+              labelStyle={{
+                fontSize: Math.min(14 * scale, 20),
+                fontFamily: FontFamilies.BODY_LIGHT,
+                color: BASE_COLORS.TEXT_DARK,
+              }}
+            >
+              Clear
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleApply}
+              labelStyle={{
+                fontSize: Math.min(14 * scale, 24),
+                color: BASE_COLORS.WHITE,
+                fontFamily: FontFamilies.BODY,
+              }}
+              style={{
+                borderRadius: 20,
+                backgroundColor: BASE_COLORS.TEXT_DARK,
+              }}
+            >
+              Apply
+            </Button>
+          </View>
+        </Modal>
+      </Portal>
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator 
-            animating size="large"
+          <ActivityIndicator
+            animating
+            size="large"
             color={BASE_COLORS.ACCENT_PRIMARY}
           />
           <ThemedText type="defaultText" className="mt-3">
@@ -596,7 +866,7 @@ export default function Recipes() {
       ) : (
         <FlatList
           showsVerticalScrollIndicator={false}
-          data={filteredRecipes}
+          data={otherRecipes}
           keyExtractor={(item) => item.recipe_slug}
           renderItem={({ item }) => (
             <BeerCard
@@ -608,29 +878,15 @@ export default function Recipes() {
                   pathname: "/SpecificRecipe",
                   params: {
                     recipe_slug: item.recipe_slug,
-                    isFavorite: favoriteSlugs.includes(item.recipe_slug) ? "true" : "false",
+                    isFavorite: favoriteSlugs.includes(item.recipe_slug)
+                      ? "true"
+                      : "false",
                   },
                 })
               }
             />
           )}
-          ListHeaderComponent={
-            <Searchbar
-              placeholder="Search"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              inputStyle={{ color: BASE_COLORS.STONE700 }}
-              icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
-              clearIcon={searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined}
-              onClearIconPress={() => setSearchQuery("")}
-              style={{
-                backgroundColor: BASE_COLORS.WHITE,
-                borderColor: BASE_COLORS.STONE300,
-                borderWidth: 1,
-                marginBottom: 15,
-              }}
-            />
-          }
+          ListHeaderComponent={renderListHeader}
           ListEmptyComponent={
             <View className="items-center mt-6 px-6">
               <ThemedText type="defaultText" className="text-center mb-2">
@@ -654,16 +910,18 @@ export default function Recipes() {
                   setShowOnlyFavorites(false);
                   setSearchQuery("");
                 }}
-                labelStyle={{ 
+                labelStyle={{
                   fontSize: Math.min(14 * scale, 24),
                   color: BASE_COLORS.WHITE,
-                  fontFamily: FontFamilies.BODY,            
+                  fontFamily: FontFamilies.BODY,
                 }}
                 style={{
                   borderRadius: 20,
                   backgroundColor: BASE_COLORS.TEXT_DARK,
                 }}
-              >Clear Filters</Button>
+              >
+                Clear Filters
+              </Button>
             </View>
           }
           contentContainerStyle={{ paddingBottom: 20 }}
@@ -686,12 +944,12 @@ const styles = StyleSheet.create({
   },
   optionButtonText: {
     color: BASE_COLORS.STONE600,
-    fontSize: Math.min(12 * scale, 18), 
+    fontSize: Math.min(12 * scale, 18),
     fontFamily: FontFamilies.BODY,
   },
   optionButtonTextSelected: {
     color: BASE_COLORS.WHITE,
-    fontSize: Math.min(12 * scale, 18), 
+    fontSize: Math.min(12 * scale, 18),
     fontFamily: FontFamilies.BODY,
   },
 });

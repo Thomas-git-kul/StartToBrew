@@ -2,111 +2,121 @@
 
 exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
 <View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    testID="mock-header-button"
+  >
+    <Text>
+      Header Button
+    </Text>
+  </View>
   <RCTScrollView
     className="flex-1 mx-3"
     showsVerticalScrollIndicator={false}
   >
     <View>
-      <View>
-        <RCTScrollView
-          data={
-            [
-              {
-                "id": "0",
-                "source": {
-                  "testUri": "../../../assets/images/starterkit2.png",
-                },
+      <Text>
+        Starter Brew Kit IPA
+      </Text>
+      <RCTScrollView
+        data={
+          [
+            {
+              "id": "0",
+              "source": {
+                "testUri": "../../../assets/images/starterkit2.png",
               },
-            ]
-          }
-          getItem={[Function]}
-          getItemCount={[Function]}
-          horizontal={true}
-          keyExtractor={[Function]}
-          onContentSizeChange={[Function]}
-          onLayout={[Function]}
-          onMomentumScrollBegin={[Function]}
-          onMomentumScrollEnd={[Function]}
-          onScroll={[Function]}
-          onScrollBeginDrag={[Function]}
-          onScrollEndDrag={[Function]}
-          pagingEnabled={true}
-          removeClippedSubviews={false}
-          renderItem={[Function]}
-          scrollEventThrottle={0.0001}
-          showsHorizontalScrollIndicator={false}
-          stickyHeaderIndices={[]}
-          viewabilityConfigCallbackPairs={[]}
-        >
-          <View>
+            },
+          ]
+        }
+        getItem={[Function]}
+        getItemCount={[Function]}
+        horizontal={true}
+        keyExtractor={[Function]}
+        onContentSizeChange={[Function]}
+        onLayout={[Function]}
+        onMomentumScrollBegin={[Function]}
+        onMomentumScrollEnd={[Function]}
+        onScroll={[Function]}
+        onScrollBeginDrag={[Function]}
+        onScrollEndDrag={[Function]}
+        pagingEnabled={true}
+        removeClippedSubviews={false}
+        renderItem={[Function]}
+        scrollEventThrottle={0.0001}
+        showsHorizontalScrollIndicator={false}
+        stickyHeaderIndices={[]}
+        viewabilityConfigCallbackPairs={[]}
+      >
+        <View>
+          <View
+            onFocusCapture={[Function]}
+            onLayout={[Function]}
+            style={
+              [
+                {
+                  "flexDirection": "row",
+                },
+                null,
+              ]
+            }
+          >
             <View
-              onFocusCapture={[Function]}
-              onLayout={[Function]}
               style={
-                [
-                  {
-                    "flexDirection": "row",
-                  },
-                  null,
-                ]
+                {
+                  "borderRadius": 20,
+                  "height": 547.5,
+                  "overflow": "hidden",
+                  "width": 730,
+                }
               }
             >
-              <View
-                style={
+              <Image
+                resizeMode="cover"
+                source={
                   {
-                    "borderRadius": 20,
-                    "height": 547.5,
-                    "overflow": "hidden",
-                    "width": 730,
+                    "testUri": "../../../assets/images/starterkit2.png",
                   }
                 }
-              >
-                <Image
-                  resizeMode="cover"
-                  source={
-                    {
-                      "testUri": "../../../assets/images/starterkit2.png",
-                    }
+                style={
+                  {
+                    "height": "100%",
+                    "width": "100%",
                   }
-                  style={
-                    {
-                      "height": "100%",
-                      "width": "100%",
-                    }
-                  }
-                />
-              </View>
+                }
+              />
             </View>
           </View>
-        </RCTScrollView>
-        <View
-          style={
-            {
-              "bottom": 8,
-              "flexDirection": "row",
-              "gap": 6,
-              "justifyContent": "center",
-              "left": 0,
-              "position": "absolute",
-              "right": 0,
-            }
-          }
-        >
-          <View
-            style={
-              {
-                "backgroundColor": "#B45309",
-                "borderColor": "rgba(0,0,0,0.12)",
-                "borderRadius": 5,
-                "borderWidth": 1,
-                "height": 10,
-                "marginHorizontal": 2,
-                "width": 10,
-              }
-            }
-          />
         </View>
-      </View>
+      </RCTScrollView>
       <View
         style={
           {
@@ -141,12 +151,7 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
     }
   >
     <View
-      style={
-        {
-          "alignItems": "center",
-          "flexDirection": "row",
-        }
-      }
+      className="flex-row gap-2"
     >
       <View
         accessibilityState={
@@ -182,9 +187,7 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
         style={
           {
             "alignItems": "center",
-            "height": 40,
             "justifyContent": "center",
-            "width": 40,
           }
         }
         testID="quantity-minus"
@@ -291,9 +294,25 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
           </RNSVGGroup>
         </RNSVGSvgView>
       </View>
-      <Text>
-        1
-      </Text>
+      <TextInput
+        enterKeyHint="done"
+        inputMode="numeric"
+        maxLength={2}
+        onChangeText={[Function]}
+        selectionColor="#B45309"
+        style={
+          {
+            "color": "#44403c",
+            "fontFamily": "Battambang",
+            "fontSize": 26,
+            "height": 40,
+            "paddingVertical": 0,
+            "textAlign": "center",
+            "width": 60,
+          }
+        }
+        value="1"
+      />
       <View
         accessibilityState={
           {
@@ -328,9 +347,7 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
         style={
           {
             "alignItems": "center",
-            "height": 40,
             "justifyContent": "center",
-            "width": 40,
           }
         }
         testID="quantity-plus"
@@ -465,45 +482,42 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
       style={
         {
           "backgroundColor": "#78350F",
-          "borderRadius": 20,
-          "opacity": 1,
+          "borderRadius": 30,
           "shadowColor": "#000",
           "shadowOffset": {
-            "height": 4,
+            "height": 0,
             "width": 0,
           },
-          "shadowOpacity": 0.15,
-          "shadowRadius": 8,
-          "transform": [
-            {
-              "scale": 1,
-            },
-          ],
+          "shadowOpacity": 0,
+          "shadowRadius": 0,
         }
       }
       testID="fab-add-to-order-container-outer-layer"
     >
       <View
         collapsable={false}
-        pointerEvents="auto"
         style={
           {
             "backgroundColor": "#78350F",
-            "borderRadius": 20,
+            "borderColor": "transparent",
+            "borderRadius": 30,
+            "borderStyle": "solid",
+            "borderWidth": 0,
             "flex": undefined,
+            "minWidth": 64,
+            "padding": 4,
             "shadowColor": "#000",
             "shadowOffset": {
-              "height": 1,
+              "height": 0,
               "width": 0,
             },
-            "shadowOpacity": 0.3,
-            "shadowRadius": 3,
+            "shadowOpacity": 0,
+            "shadowRadius": 0,
           }
         }
         testID="fab-add-to-order-container"
       >
         <View
-          accessibilityLabel="Add to order"
           accessibilityRole="button"
           accessibilityState={
             {
@@ -540,14 +554,13 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
                 "overflow": "hidden",
               },
               {
-                "borderRadius": 20,
+                "borderRadius": 30,
               },
             ]
           }
           testID="fab-add-to-order"
         >
           <View
-            pointerEvents="none"
             style={
               [
                 {
@@ -555,16 +568,12 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
                   "flexDirection": "row",
                   "justifyContent": "center",
                 },
-                {
-                  "borderRadius": 16,
-                  "height": 56,
-                  "paddingHorizontal": 16,
-                },
+                undefined,
               ]
             }
-            testID="fab-add-to-order-content"
           >
             <Text
+              numberOfLines={1}
               selectable={false}
               style={
                 [
@@ -585,16 +594,29 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
                     },
                     [
                       {
-                        "marginHorizontal": 8,
+                        "marginHorizontal": 16,
+                        "marginVertical": 9,
+                        "textAlign": "center",
                       },
                       false,
                       {
-                        "color": "#FFFFFF",
+                        "marginHorizontal": 24,
+                        "marginVertical": 10,
+                      },
+                      undefined,
+                      false,
+                      {
+                        "color": "rgba(255, 255, 255, 1)",
                         "fontFamily": "Battambang",
                         "fontSize": 16,
                         "fontWeight": "500",
                         "letterSpacing": 0.1,
                         "lineHeight": 20,
+                      },
+                      {
+                        "color": "#FFFFFF",
+                        "fontFamily": "Battambang",
+                        "fontSize": 24,
                       },
                     ],
                   ],

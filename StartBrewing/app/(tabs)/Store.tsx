@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
-import { View, ScrollView, Dimensions } from "react-native";
-import { Searchbar, Chip } from "react-native-paper";
+import { View, ScrollView, Dimensions, FlatList, ActivityIndicator } from "react-native";
+import { Searchbar, Chip, Button } from "react-native-paper";
 import { Search, X, Check } from "lucide-react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { useRouter } from "expo-router";
@@ -9,6 +9,7 @@ import StoreCard from "@/components/ui/StoreCard";
 import Header from "@/components/header"
 import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "../../supabase";
+import { ThemedText } from "../../components/themed-text";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -36,6 +37,7 @@ export default function StorePage() {
   const [selectedCategories, setSelectedCategories] = React.useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Item[]>([]);
+  const [cartCount, setCartCount] = useState(0);
 
   const exampleImages: Record<number, any> = {
     1: require("@/assets/images/malt.png"),
@@ -129,10 +131,66 @@ export default function StorePage() {
     };
 
     load();
+
+    // cartcount
+    const loadCartCount = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setCartCount(0);
+          return;
+        }
+
+        // Get the user's cart
+        const { data: cart, error: cartError } = await supabase
+          .from("shopping_carts")
+          .select("id_cart")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (cartError || !cart) {
+          setCartCount(0);
+          return;
+        }
+
+        // Count items in the cart
+        const { data: items, error: countError } = await supabase
+          .from("shopping_cart_items")
+          .select("id_cart_item", { count: "exact" })
+          .eq("cart_id", cart.id_cart);
+
+        if (countError) {
+          console.warn("Cart count error:", countError.message);
+          return;
+        }
+
+        setCartCount(items?.length ?? 0);
+      } catch (e: any) {
+        console.warn("Cart count fetch exception:", e?.message ?? e);
+      }
+    };
+
+    loadCartCount();
+
     return () => {
       mounted = false;
     };
   }, []);
+
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+        <ActivityIndicator 
+          animating
+          size="large"
+          color={BASE_COLORS.ACCENT_PRIMARY}
+        />
+        <ThemedText type="defaultText" className="mt-3">
+          Loading store items...
+        </ThemedText>
+      </View>
+    );
+  }
 
   return (
     <View
@@ -144,6 +202,7 @@ export default function StorePage() {
         iconName="ShoppingCart"
         onIconPress={() => router.push("/ShoppingCart" as any)}
         actionTestID="cart-button"
+        cartCount={cartCount}
       />
 
       {/* Horizontal scrollable category chips */}
@@ -197,49 +256,77 @@ export default function StorePage() {
       </View>
 
       {/* Items List */}
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Search Bar */}
-        <Searchbar
-          placeholder="Search"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          inputStyle={{ 
-            color: BASE_COLORS.STONE700, 
-            fontFamily: FontFamilies.BODY
-          }}
-          icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
-          clearIcon={
-            searchQuery
-              ? () => <X size={18} color={BASE_COLORS.STONE500} />
-              : undefined
-          }
-          onClearIconPress={() => setSearchQuery("")}
-          style={{
-            backgroundColor: BASE_COLORS.WHITE,
-            borderColor: BASE_COLORS.STONE300,
-            borderWidth: 1,
-            marginBottom: 16,
-          }}
-        />
-        <View className="flex-row flex-wrap justify-between">
-          {items.filter(filterMatches).map((item, index) => (
-            <View
-              key={index}
-              style={{
-                width: "48%",
+      <FlatList
+        data={items.filter(filterMatches)}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        columnWrapperStyle={{
+          justifyContent: "space-between",
+          marginBottom: 16,
+        }}
+        contentContainerStyle={{
+          paddingBottom: 40,
+        }}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <Searchbar
+            placeholder="Search"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            inputStyle={{
+              color: BASE_COLORS.STONE700,
+              fontFamily: FontFamilies.BODY,
+            }}
+            icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+            clearIcon={
+              searchQuery
+                ? () => <X size={18} color={BASE_COLORS.STONE500} />
+                : undefined
+            }
+            onClearIconPress={() => setSearchQuery("")}
+            style={{
+              backgroundColor: BASE_COLORS.WHITE,
+              borderColor: BASE_COLORS.STONE300,
+              borderWidth: 1,
+              marginBottom: 16,
+            }}
+          />
+        }
+        renderItem={({ item }) => (
+          <View style={{ width: "48%" }}>
+            <StoreCard
+              {...item}
+              onPress={() =>
+                router.push({
+                  pathname: "/StoreItem",
+                  params: { id: item.id, categoryNumber: item.categoryId, cartCount: cartCount },
+                } as any)
+              }
+            />
+          </View>
+        )}
+        ListEmptyComponent={
+          <View className="items-center mt-6 px-6">
+            <ThemedText type="defaultText" className="text-center mb-2">No recipes match this filter.</ThemedText>
+            <Button
+              mode="contained"
+              onPress={() => {
+                setSearchQuery("");
+                setSelectedCategories([]);
               }}
-            >
-              <StoreCard
-                key={index}
-                {...item}
-                onPress={() => router.push(({ 
-                  pathname: "/StoreItem", 
-                  params: { id: item.id, categoryNumber: item.categoryId } } as any))}
-              />
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+              labelStyle={{ 
+                fontSize: Math.min(14 * scale, 24),
+                color: BASE_COLORS.WHITE,
+                fontFamily: FontFamilies.BODY,            
+              }}
+              style={{
+                borderRadius: 20,
+                backgroundColor: BASE_COLORS.TEXT_DARK,
+              }}
+            >Clear Filters</Button>
+          </View>
+        }
+      />
     </View>
   );
 }

@@ -24,7 +24,6 @@ export default function StoreCard({ image, title, price, onPress }: StoreCardPro
         style={{ 
           width: "100%",
           height: Math.min(CARD_HEIGHT, 290),
-          marginBottom: 18,
           backgroundColor: BASE_COLORS.WHITE,
           borderRadius: 12,
           overflow: "hidden",

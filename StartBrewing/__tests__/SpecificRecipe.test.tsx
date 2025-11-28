@@ -1,7 +1,7 @@
 import React from "react";
 import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import SpecificRecipe from "../app/SpecificRecipe";
+import SpecificRecipe from "../app/(tabs)/SpecificRecipe";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
 // --------------------------
@@ -13,6 +13,17 @@ jest.mock("expo-router", () => ({ useRouter: jest.fn() }));
 jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
 jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
+}));
+
+// ⬇️ NIEUW: mock de user progress context, zodat useUserProgressContext geen error gooit
+jest.mock("@/context/UserProgressContext", () => ({
+  useUserProgressContext: () => ({
+    progress: null,
+    loading: false,
+    levelUp: null,
+    acknowledgeLevelUp: jest.fn(),
+    refreshProgress: jest.fn(),
+  }),
 }));
 
 /* ------------------------------
@@ -171,7 +182,8 @@ jest.mock("react-native-paper", () => {
       </TouchableOpacity>
     ),
     Portal: ({ children }: any) => <>{children}</>,
-    Modal: ({ visible, children }: any) => (visible ? <View>{children}</View> : null),
+    Modal: ({ visible, children }: any) =>
+      visible ? <View>{children}</View> : null,
     Chip: ({ children }: any) => (
       <View>
         <Text>{children}</Text>
@@ -183,7 +195,9 @@ jest.mock("react-native-paper", () => {
     },
     TextInput: ({ value, onChangeText, ...rest }: any) => {
       const { TextInput: RNTextInput } = require("react-native");
-      return <RNTextInput value={value} onChangeText={onChangeText} {...rest} />;
+      return (
+        <RNTextInput value={value} onChangeText={onChangeText} {...rest} />
+      );
     },
     Button: ({ onPress, children }: any) => (
       <TouchableOpacity onPress={onPress}>
@@ -196,9 +210,9 @@ jest.mock("react-native-paper", () => {
 // lucide Star
 jest.mock("lucide-react-native", () => {
   const { Text } = require("react-native");
-  const make = (name: string) => ({ size, color, fill, stroke }: any) => (
-    <Text>{`${name}`}</Text>
-  );
+  const make =
+    (name: string) =>
+    ({ size, color, fill, stroke }: any) => <Text>{`${name}`}</Text>;
   return {
     Star: make("Star"),
     Heart: make("Heart"),
@@ -226,7 +240,6 @@ jest.mock("@/supabase", () => ({
 
     from: jest.fn((table) => {
       switch (table) {
-
         case "recipes":
           return {
             select: () => ({
@@ -242,22 +255,18 @@ jest.mock("@/supabase", () => ({
         case "recipe_reviews":
           return {
             select: () => ({
-              // support chains like .select(...).eq(...).maybeSingle()
               eq: () => ({
                 maybeSingle: async () => ({
                   data: null,
                   error: null,
                 }),
-                // support .eq(...).order(...).limit(...)
                 order: () => ({
                   limit: async () => ({ data: [], error: null }),
                 }),
               }),
-              // support .select(...).order(...).limit(...)
               order: () => ({
                 limit: async () => ({ data: [], error: null }),
               }),
-              // support .select(...).limit(...)
               limit: async () => ({ data: [], error: null }),
             }),
           };
@@ -267,10 +276,7 @@ jest.mock("@/supabase", () => ({
             select: () => ({
               eq: () => ({
                 order: async () => ({
-                  data: [
-                    { phase_id: "phase-1" },
-                    { phase_id: "phase-2" },
-                  ],
+                  data: [{ phase_id: "phase-1" }, { phase_id: "phase-2" }],
                   error: null,
                 }),
               }),
@@ -323,7 +329,10 @@ jest.mock("@/supabase", () => ({
           return {
             select: () => ({
               eq: () => ({
-                maybeSingle: async () => ({ data: { username: "testuser" }, error: null }),
+                maybeSingle: async () => ({
+                  data: { username: "testuser" },
+                  error: null,
+                }),
               }),
             }),
           };
@@ -331,10 +340,6 @@ jest.mock("@/supabase", () => ({
         default:
           return { select: () => ({}) };
       }
-    }),
-    // Add profiles table mock used by fetchReviews
-    fromProfiles: jest.fn((table) => {
-      return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) };
     }),
 
     rpc: jest.fn(async (fn, args) => {
@@ -349,14 +354,13 @@ jest.mock("@/supabase", () => ({
   },
 }));
 
-// FavoritesContext mock (component uses useFavorites)
+// FavoritesContext mock
 jest.mock("@/context/FavoritesContext", () => ({
   useFavorites: () => ({
     favoriteSlugs: [],
     toggleFavorite: jest.fn(),
   }),
 }));
-
 
 /* ------------------------------
    HELPER
@@ -385,7 +389,9 @@ describe("<SpecificRecipe />", () => {
   });
 
   it("it opens the kits modal window when startbrewing is pressed and it routes to progress", async () => {
-    const { findByText, queryByText, getByTestId } = renderWithNavigation(<SpecificRecipe />);
+    const { findByText, queryByText, getByTestId } = renderWithNavigation(
+      <SpecificRecipe />
+    );
     expect(queryByText("Get your StarterKit now!")).toBeNull();
 
     const startBtn = await findByText("Start Brewing");
@@ -393,16 +399,6 @@ describe("<SpecificRecipe />", () => {
 
     const modalTitle = await findByText("Get your StarterKit now!");
     expect(modalTitle).toBeTruthy();
-
-    /*
-    await waitFor(() => {
-      fireEvent.press(getByTestId("startFAB"));
-      expect(mockPush).toHaveBeenCalledWith({
-        pathname: "/progress",
-        params: { id: brew.id_brew },
-      });
-    });
-    */
   });
 
   it("opens review modal and allows to click the stars", async () => {
@@ -410,23 +406,20 @@ describe("<SpecificRecipe />", () => {
       <SpecificRecipe />
     );
 
-    // initieel geen modal
     expect(queryByText("Rate this recipe")).toBeNull();
 
     const addReviewBtn = await findByText("Add Review");
     fireEvent.press(addReviewBtn);
 
-    // Wait for modal to appear
     const modalTitle = await findByText("Rate this recipe");
     expect(modalTitle).toBeTruthy();
 
     const stars = await findAllByTestId(/star-/);
     fireEvent.press(stars[2]);
 
-    // Modal should still be present after clicking a star (until async closes it)
     await waitFor(() => {
       expect(queryByText("Rate this recipe")).toBeNull();
-  });
+    });
   });
 
   it("snapshot", () => {

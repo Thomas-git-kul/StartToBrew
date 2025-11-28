@@ -39,6 +39,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
             multiline={false}
             onBlur={[Function]}
             onFocus={[Function]}
+            placeholder="Full Name"
             placeholderTextColor="#a8a29e"
             secureTextEntry={false}
             selectionColor="#B45309"
@@ -69,6 +70,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
             multiline={false}
             onBlur={[Function]}
             onFocus={[Function]}
+            placeholder="Street name and number"
             placeholderTextColor="#a8a29e"
             secureTextEntry={false}
             selectionColor="#B45309"
@@ -102,6 +104,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
               multiline={false}
               onBlur={[Function]}
               onFocus={[Function]}
+              placeholder="City"
               placeholderTextColor="#a8a29e"
               secureTextEntry={false}
               selectionColor="#B45309"
@@ -135,6 +138,7 @@ exports[`<ShoppingCart /> minimal test matches snapshot after loading orders 1`]
                 multiline={false}
                 onBlur={[Function]}
                 onFocus={[Function]}
+                placeholder="Zip code"
                 placeholderTextColor="#a8a29e"
                 secureTextEntry={false}
                 selectionColor="#B45309"

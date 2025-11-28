@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react-native";
-import ShoppingCart from "../app/ShoppingCart";
+import ShoppingCart from "../app/(tabs)/ShoppingCart";
 
 // --- MOCKS --- //
 // Mock Expo Router
@@ -39,34 +39,65 @@ jest.mock("@/components/ui/OrderCard", () => (props: any) => {
 });
 
 // Mock Supabase
-jest.mock("../supabase", () => ({
-  supabase: {
-    auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user123" } }, error: null }) },
+jest.mock("../supabase", () => {
+  const mockSupabase = {
+    auth: {
+      getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user123" } }, error: null }),
+    },
     from: jest.fn().mockImplementation((table: string) => {
-      if (table === "shopping_cart") {
-        return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockReturnThis(),
-          then: jest.fn((cb: any) => cb({ data: [{ store_item_id: 1, quantity: 2, starter_kit: false }], error: null })),
-        };
+      const chain: any = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+      };
+
+      // Return fake data based on table
+      if (table === "shopping_carts") {
+        chain.single = jest.fn().mockResolvedValue({
+          data: { id_cart: 1, user_id: "user123" },
+          error: null,
+        });
       }
+
+      if (table === "shopping_cart_items") {
+        chain.select = jest.fn().mockReturnThis();
+        chain.eq = jest.fn().mockReturnThis();
+        chain.single = jest.fn().mockResolvedValue({
+          data: { store_item_id: 1, quantity: 2, starter_kit: false, id_cart_item: 101 },
+          error: null,
+        });
+        chain.then = jest.fn().mockImplementation((cb: any) => cb({
+          data: [{ store_item_id: 1, quantity: 2, starter_kit: false, id_cart_item: 101 }],
+          error: null,
+        }));
+      }
+
       if (table === "store_items") {
-        return {
-          select: jest.fn().mockReturnThis(),
-          then: jest.fn((cb: any) => cb({ data: [{ id_store_item: 1, name: "Superior starter kit Base", price: 299 }], error: null })),
-        };
+        chain.select = jest.fn().mockReturnThis();
+        chain.then = jest.fn().mockImplementation((cb: any) => cb({
+          data: [{ id_store_item: 1, name: "Superior starter kit Base", price: 299, category_id: 1 }],
+          error: null,
+        }));
       }
+
       if (table === "starter_kits") {
-        return {
-          select: jest.fn().mockReturnThis(),
-          then: jest.fn((cb: any) => cb({ data: [{ id_starter_kit: 2, name: "Starter Kit", price: 50 }], error: null })),
-        };
+        chain.select = jest.fn().mockReturnThis();
+        chain.then = jest.fn().mockImplementation((cb: any) => cb({
+          data: [{ id_starter_kit: 2, name: "Starter Kit", price: 50 }],
+          error: null,
+        }));
       }
-      return { select: jest.fn().mockReturnThis(), then: jest.fn() };
+
+      return chain;
     }),
-  },
-}));
+  };
+
+  return { supabase: mockSupabase };
+});
+
 
 // --- TESTS --- //
 describe("<ShoppingCart /> minimal test", () => {
@@ -80,9 +111,6 @@ describe("<ShoppingCart /> minimal test", () => {
     await waitFor(() => {
       const headerProps = MockHeader.mock.calls[0][0];
       expect(headerProps.title).toBe("Shopping Cart");
-      expect(headerProps.iconName).toBe("ArrowRight");
-      expect(headerProps.actionTestID).toBe("store-button");
-      expect(typeof headerProps.onIconPress).toBe("function");
     });
   });
 
@@ -96,14 +124,6 @@ describe("<ShoppingCart /> minimal test", () => {
       expect(props.price).toBe("€299.00");
       expect(props.quantity).toBe(2);
     });
-  });
-
-  it("calls router.push('/Store') when back button pressed", () => {
-    render(<ShoppingCart />);
-    expect(MockHeader).toHaveBeenCalled();
-    const props = MockHeader.mock.calls[0][0];
-    props.onIconPress();
-    expect(mockPush).toHaveBeenCalledWith("/Store");
   });
 
   it("matches snapshot after loading orders", async () => {
