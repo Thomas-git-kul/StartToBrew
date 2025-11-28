@@ -337,6 +337,14 @@ jest.mock("@/supabase", () => ({
             }),
           };
 
+        case "recipe_kits":
+          // return empty list for starter kits by default so tests don't fail
+          return {
+            select: () => ({
+              eq: async () => ({ data: [], error: null }),
+            }),
+          };
+
         default:
           return { select: () => ({}) };
       }

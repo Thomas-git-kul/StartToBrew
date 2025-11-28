@@ -35,10 +35,13 @@ return (
         borderRadius: 12,
         padding: 16,
         backgroundColor: BASE_COLORS.WHITE,
-        marginBlock: 1,
-        shadowColor: BASE_COLORS.STONE700,
+        marginBlock: 3,
+        marginInline: 2,
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.03,
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
       }}
     >
       <Text 

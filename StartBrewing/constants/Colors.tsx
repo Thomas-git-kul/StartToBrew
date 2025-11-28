@@ -14,7 +14,7 @@ export const BASE_COLORS = {
   ACCENT_PRIMARY: '#B45309' as HexColor,
   ACCENT_LIGHT: '#d97706' as HexColor,
 
-  STONE50:  '#fafaf9' as HexColor,
+  STONE50:  '#fafaf9',
   STONE100: '#f5f5f4' as HexColor,
   STONE200: '#e7e5e4' as HexColor,
   STONE300: '#d6d3d1' as HexColor,
