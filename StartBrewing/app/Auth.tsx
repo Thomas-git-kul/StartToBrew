@@ -12,8 +12,8 @@ import { ThemedText } from "@/components/themed-text";
 import TextInput from "@/components/textInput";
 import ErrorChip from "@/components/errorChip";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BASE_SCREEN_WIDTH = 375; 
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const BASE_SCREEN_WIDTH = 375;
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 export default function Auth() {
@@ -109,60 +109,53 @@ export default function Auth() {
       </ThemedText>
 
       <View className="gap-1 mx-5 mb-6">
-        <TextInput placeholder="Email or Username" value={identifier} onChangeText={setIdentifier} />
+        <TextInput
+          placeholder="Email or Username"
+          value={identifier}
+          onChangeText={setIdentifier}
+        />
         <TextInput
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
-        {loginError.length > 0 && (
-          <ErrorChip text={loginError}/>
-        )}
+        {loginError.length > 0 && <ErrorChip text={loginError} />}
       </View>
 
       <View className="items-center gap-2">
         <Button
           mode="contained"
           onPress={signInWithEmail}
-          labelStyle={{ 
+          labelStyle={{
             fontSize: Math.min(16 * scale, 24),
             color: BASE_COLORS.WHITE,
-            fontFamily: FontFamilies.BODY,            
+            fontFamily: FontFamilies.BODY,
           }}
           style={{
             borderRadius: 20,
             backgroundColor: BASE_COLORS.TEXT_DARK,
-            width: "30%"
+            width: "30%",
           }}
-        >Log In</Button>
+        >
+          Log In
+        </Button>
         <Button
           mode="contained"
           onPress={() => router.push("../Registration")}
-          labelStyle={{ 
+          labelStyle={{
             fontSize: Math.min(16 * scale, 24),
             color: BASE_COLORS.WHITE,
-            fontFamily: FontFamilies.BODY,            
+            fontFamily: FontFamilies.BODY,
           }}
           style={{
             borderRadius: 20,
             backgroundColor: BASE_COLORS.TEXT_DARK,
-            width: "30%"
+            width: "30%",
           }}
-        >Sign Up</Button>
-        <Button
-          mode="contained"
-          onPress={signInAsTestUser}
-          labelStyle={{ 
-            fontSize: Math.min(16 * scale, 24),
-            color: BASE_COLORS.WHITE,
-            fontFamily: FontFamilies.BODY,            
-          }}
-          style={{
-            borderRadius: 20,
-            backgroundColor: BASE_COLORS.STONE600,
-          }}
-        >Sign In as Test User</Button>
+        >
+          Sign Up
+        </Button>
       </View>
     </SafeAreaView>
   );
