@@ -156,6 +156,21 @@ export default function Auth() {
         >
           Sign Up
         </Button>
+        <Button
+          mode="contained"
+          onPress={signInAsTestUser}
+          labelStyle={{
+            fontSize: Math.min(16 * scale, 24),
+            color: BASE_COLORS.WHITE,
+            fontFamily: FontFamilies.BODY,
+          }}
+          style={{
+            borderRadius: 20,
+            backgroundColor: BASE_COLORS.STONE600,
+          }}
+        >
+          Sign In as Test User
+        </Button>
       </View>
     </SafeAreaView>
   );
