@@ -112,6 +112,12 @@ function TabLayout() {
               href: null,
             }}
           />
+          <Tabs.Screen
+            name="SpecificRecipe"
+            options={{
+              href: null,
+            }}
+          />
         </Tabs>
       </View>
     </SafeAreaView>
