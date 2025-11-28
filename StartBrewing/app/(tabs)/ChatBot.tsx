@@ -147,7 +147,7 @@ export default function HomeScreen() {
         <ScrollView 
           ref={scrollViewRef} 
           style={styles.chat} 
-          contentContainerStyle={{ paddingBottom: 120 }} // extra ruimte voor input
+          contentContainerStyle={{ paddingBottom: 10 }} // extra ruimte voor input
         >
           {messages.map((msg, i) => (
             <View key={i} style={msg.from === 'user' ? styles.userMsg : styles.botMsg}>
