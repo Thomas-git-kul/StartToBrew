@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
 import { FAB, ActivityIndicator } from "react-native-paper";
 import { useRouter } from "expo-router";
