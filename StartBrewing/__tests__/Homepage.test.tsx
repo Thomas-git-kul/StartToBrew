@@ -1,5 +1,5 @@
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, waitFor } from "@testing-library/react-native"; // ← waitFor toegevoegd
 import HomePage from "../app/(tabs)/HomePage";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { NavigationContainer } from "@react-navigation/native";
@@ -203,7 +203,10 @@ jest.mock("@/components/ui/RecipeCard", () => {
     <Pressable onPress={onPress}>
       <View>
         <Text>{name}</Text>
-        <Pressable accessibilityLabel={`favorite-${name}`} onPress={onToggleFavorite}>
+        <Pressable
+          accessibilityLabel={`favorite-${name}`}
+          onPress={onToggleFavorite}
+        >
           <Text>FavBtn</Text>
         </Pressable>
       </View>
@@ -232,39 +235,46 @@ jest.mock("lucide-react-native", () => {
 ------------------------------- */
 
 function makeThenable(obj: any) {
-  // Ensure object has then so awaiting works: return { data, error }
   const wrapper: any = {
     then: (cb: any) => Promise.resolve(obj).then(cb),
     catch: (cb: any) => Promise.resolve(obj).catch(cb),
   };
-  // Also expose in/eq for chaining if someone calls them on the thenable
-  wrapper.in = (/*...args*/) => Promise.resolve(obj);
-  wrapper.eq = (/*...args*/) => Promise.resolve(obj);
+  wrapper.in = () => Promise.resolve(obj);
+  wrapper.eq = () => Promise.resolve(obj);
   return wrapper;
 }
 
 jest.mock("@/supabase", () => {
-  // Precompute dataset per table
   const DB: Record<string, any> = {
     recipes: { data: recipesData, error: null },
     recipe_reviews: { data: reviewData, error: null },
-    brews: { data: [{ id_brew: 1, name: "Hazy IPA", recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60", user_id: "test-user", status_id: 1 }], error: null },
+    brews: {
+      data: [
+        {
+          id_brew: 1,
+          name: "Hazy IPA",
+          recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
+          user_id: "test-user",
+          status_id: 1,
+        },
+      ],
+      error: null,
+    },
     phases: { data: [{ phase_id: "PH1" }], error: null },
     steps: { data: [{ step_id: 1 }, { step_id: 2 }], error: null },
     brew_steps: { data: [{ step_id: 1 }], error: null },
   };
 
-  // Factory that returns chainable objects for select().in().eq()
   const chainable = (tableKey: string) => {
     const tableData = DB[tableKey] ?? { data: [], error: null };
     const result = {
-      select: (_cols?: string) => {
+      select: () => {
         const sel = {
-          in: (_col?: string, _vals?: any[]) => Promise.resolve(tableData),
-          eq: (_col?: string, _val?: any) => {
+          in: () => Promise.resolve(tableData),
+          eq: () => {
             const intermediate = {
-              eq: (_col2?: string, _val2?: any) => Promise.resolve(tableData),
-              in: (_col3?: string, _val3?: any) => Promise.resolve(tableData),
+              eq: () => Promise.resolve(tableData),
+              in: () => Promise.resolve(tableData),
               then: (cb: any) => Promise.resolve(tableData).then(cb),
               catch: (cb: any) => Promise.resolve(tableData).catch(cb),
             };
@@ -275,10 +285,11 @@ jest.mock("@/supabase", () => {
         };
         return sel;
       },
-      insert: (payload?: any) => Promise.resolve({ data: payload, error: null }),
+      insert: (payload?: any) =>
+        Promise.resolve({ data: payload, error: null }),
       delete: () => Promise.resolve({ data: null, error: null }),
-      in: (_col?: string, _vals?: any[]) => Promise.resolve(tableData),
-      eq: (_col?: string, _val?: any) => Promise.resolve(tableData),
+      in: () => Promise.resolve(tableData),
+      eq: () => Promise.resolve(tableData),
       then: (cb: any) => Promise.resolve(tableData).then(cb),
       catch: (cb: any) => Promise.resolve(tableData).catch(cb),
     };
@@ -290,15 +301,24 @@ jest.mock("@/supabase", () => {
     supabase: {
       auth: {
         getUser: () => Promise.resolve({ data: { user: { id: "test-user" } } }),
-        getSession: () => Promise.resolve({ data: { session: { user: { id: "test-user" } } } }),
+        getSession: () =>
+          Promise.resolve({
+            data: { session: { user: { id: "test-user" } } },
+          }),
       },
       from: (table: string) => {
-        // Some code expects .select().in(...), some expects .select(...).eq(...).eq(...)
-        // Provide a chainable API for each table:
-        if (["recipes", "recipe_reviews", "brews", "phases", "steps", "brew_steps"].includes(table)) {
+        if (
+          [
+            "recipes",
+            "recipe_reviews",
+            "brews",
+            "phases",
+            "steps",
+            "brew_steps",
+          ].includes(table)
+        ) {
           return chainable(table);
         }
-        // fallback
         return chainable(table);
       },
     },
@@ -358,7 +378,11 @@ describe("<HomePage />", () => {
     const fab = await findByTestId("fab");
 
     fireEvent.press(fab);
-    expect(pushMock).toHaveBeenCalledWith("/Recipes");
+
+    // ← wachten tot async withAuthGuard klaar is
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/Recipes");
+    });
   });
 
   it("navigates naar SpecificRecipe via beer card", async () => {
@@ -367,49 +391,51 @@ describe("<HomePage />", () => {
     const card = await findByText("Den Ballaste Point Sculpin IPA 60");
     fireEvent.press(card);
 
-    expect(pushMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pathname: "/SpecificRecipe",
-        params: expect.objectContaining({
-          recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
-        }),
-      })
-    );
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pathname: "/SpecificRecipe",
+          params: expect.objectContaining({
+            recipe_slug: "americanipa-den-ballaste-point-sculpin-ipa-60",
+          }),
+        })
+      );
+    });
   });
 
   it("toont de in-progress brews in de 'In progress' sectie", async () => {
-  const { findByText, getByText, toJSON } = renderWithNavigation(<HomePage />);
+    const { findByText, getByText, toJSON } = renderWithNavigation(
+      <HomePage />
+    );
 
-  // Titel van de sectie moet bestaan
-  const sectionTitle = getByText("In progress");
-  expect(sectionTitle).toBeTruthy();
+    const sectionTitle = getByText("In progress");
+    expect(sectionTitle).toBeTruthy();
 
-  // De brew moet verschijnen
-  const brewCard = await findByText("Hazy IPA");
-  expect(brewCard).toBeTruthy();
+    const brewCard = await findByText("Hazy IPA");
+    expect(brewCard).toBeTruthy();
 
-  // Controle via de uiteindelijke JSON output (veiligste manier)
-  const tree = toJSON();
-  const renderedText = JSON.stringify(tree);
+    const tree = toJSON();
+    const renderedText = JSON.stringify(tree);
 
-  const indexSection = renderedText.indexOf("In progress");
-  const indexBrew = renderedText.indexOf("Hazy IPA");
+    const indexSection = renderedText.indexOf("In progress");
+    const indexBrew = renderedText.indexOf("Hazy IPA");
 
-  expect(indexSection).toBeGreaterThan(-1);
-  expect(indexBrew).toBeGreaterThan(-1);
-
-  // De brew moet ná de sectietitel komen (dus binnen die sectie)
-  expect(indexBrew).toBeGreaterThan(indexSection);
-});
+    expect(indexSection).toBeGreaterThan(-1);
+    expect(indexBrew).toBeGreaterThan(-1);
+    expect(indexBrew).toBeGreaterThan(indexSection);
+  });
 
   it("progress card navigates correctly", async () => {
     const { findByText } = renderWithNavigation(<HomePage />);
     const progressCard = await findByText("Hazy IPA");
 
     fireEvent.press(progressCard);
-    expect(pushMock).toHaveBeenCalledWith({
-      pathname: "/progress",
-      params: { id: 1 },
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith({
+        pathname: "/progress",
+        params: { id: 1 },
+      });
     });
   });
 
