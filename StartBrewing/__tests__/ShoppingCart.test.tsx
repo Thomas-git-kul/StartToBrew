@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react-native";
-import ShoppingCart from "../app/ShoppingCart";
+import ShoppingCart from "../app/(tabs)/ShoppingCart";
 
 // --- MOCKS --- //
 // Mock Expo Router
@@ -111,9 +111,6 @@ describe("<ShoppingCart /> minimal test", () => {
     await waitFor(() => {
       const headerProps = MockHeader.mock.calls[0][0];
       expect(headerProps.title).toBe("Shopping Cart");
-      expect(headerProps.iconName).toBe("ArrowRight");
-      expect(headerProps.actionTestID).toBe("store-button");
-      expect(typeof headerProps.onIconPress).toBe("function");
     });
   });
 
@@ -127,14 +124,6 @@ describe("<ShoppingCart /> minimal test", () => {
       expect(props.price).toBe("€299.00");
       expect(props.quantity).toBe(2);
     });
-  });
-
-  it("calls router.push('/Store') when back button pressed", () => {
-    render(<ShoppingCart />);
-    expect(MockHeader).toHaveBeenCalled();
-    const props = MockHeader.mock.calls[0][0];
-    props.onIconPress();
-    expect(mockPush).toHaveBeenCalledWith("/Store");
   });
 
   it("matches snapshot after loading orders", async () => {

@@ -12,6 +12,7 @@ import {
 } from "@react-navigation/native";
 
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { AppRefreshProvider } from "@/context/AppRefreshContext";
 
 // React Native Paper (MD3)
 import {
@@ -79,9 +80,11 @@ export default function RootLayout() {
       <PaperProvider theme={theme}>
         <NavigationThemeProvider value={theme}>
           <UserProgressProvider>
-            <FavoritesProvider>
-              <RootInner />
-            </FavoritesProvider>
+            <AppRefreshProvider>
+              <FavoritesProvider>
+                <RootInner />
+              </FavoritesProvider>
+            </AppRefreshProvider>
           </UserProgressProvider>
           <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
         </NavigationThemeProvider>
