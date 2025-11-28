@@ -25,6 +25,7 @@ import { useFonts } from "@/hooks/use-fonts";
 import { Star, Wheat, Hop } from "lucide-react-native";
 import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
+import { analytics, logEvent } from "@/firebase/firebaseConfig";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import StoreCard from "@/components/ui/StoreCard";
@@ -82,6 +83,7 @@ export default function SpecificRecipe() {
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [kitsVisible, setKitsVisible] = useState(false);
+  const [northStarLogged, setNorthStarLogged] = useState(false);
   const { refreshProgress } = useUserProgressContext();
   const { triggerRefresh } = useAppRefresh();
 
@@ -334,6 +336,17 @@ export default function SpecificRecipe() {
 
       const firstStepId = firstStepData.step_id;
 
+      const { data: previousBrewsAll, error: prevAllError } = await supabase
+        .from("brews")
+        .select("id_brew")
+        .eq("user_id", user.id);
+
+      if (prevAllError) {
+        console.error("Error checking previous brews:", prevAllError?.message);
+      }
+
+      const isFirstEver = (previousBrewsAll?.length || 0) === 0;
+
       const { data: previousBrews, error: prevError } = await supabase
         .from("brews")
         .select("id_brew")
@@ -365,6 +378,35 @@ export default function SpecificRecipe() {
       }
 
       const brewId = brewData[0].id_brew;
+
+      // If this is the user's first-ever brew, log a north-star analytics event
+      // but skip if we already logged when the user first pressed Start Brewing
+      if (isFirstEver && !northStarLogged) {
+        try {
+          const accountCreatedAt = user.created_at ? new Date(user.created_at) : null;
+          const brewStartedAt = brewData[0].start_date ? new Date(brewData[0].start_date) : new Date();
+          const timeToFirstBrewSeconds = accountCreatedAt
+            ? Math.max(0, Math.round((brewStartedAt.getTime() - accountCreatedAt.getTime()) / 1000))
+            : null;
+
+          const params: any = {
+            user_id: user.id,
+            brew_id: brewId,
+            recipe_slug: recipe_slug,
+          };
+          if (timeToFirstBrewSeconds != null) params.time_to_first_brew_seconds = timeToFirstBrewSeconds;
+
+          if (analytics) {
+            logEvent(analytics, "north_star_first_brew", params);
+          } else {
+            // Fallback logging when Firebase Analytics not available (native or during tests)
+            console.log("north_star_first_brew", params);
+          }
+          setNorthStarLogged(true);
+        } catch (e: any) {
+          console.error("Failed to log north-star event:", e?.message ?? e);
+        }
+      }
 
       const { data: allSteps, error: stepsError } = await supabase
         .from("steps")
@@ -432,6 +474,60 @@ export default function SpecificRecipe() {
     } catch (e: any) {
       console.error("Error fetching kits:", e.message);
       return [];
+    }
+  };
+
+  // Called when the user first presses the bottom 'Start Brewing' FAB.
+  // We log the north-star event here (time-to-first-brew measured to this press)
+  // and then open the starter kit modal.
+  const handleInitialStartPress = async () => {
+    try {
+      // open kits modal immediately
+      setKitsVisible(true);
+
+      // get user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        return;
+      }
+
+      // If we've already logged locally, skip
+      if (northStarLogged) return;
+
+      // Check if the user has any brews already (first-ever check)
+      const { data: previousBrewsAll, error: prevAllError } = await supabase
+        .from("brews")
+        .select("id_brew")
+        .eq("user_id", user.id);
+      if (prevAllError) {
+        console.error("Error checking previous brews (initial press):", prevAllError?.message);
+      }
+      const isFirstEver = (previousBrewsAll?.length || 0) === 0;
+      if (!isFirstEver) return;
+
+      // compute time-to-first-brew using account created_at and now
+      const accountCreatedAt = user.created_at ? new Date(user.created_at) : null;
+      const now = new Date();
+      const timeToFirstBrewSeconds = accountCreatedAt
+        ? Math.max(0, Math.round((now.getTime() - accountCreatedAt.getTime()) / 1000))
+        : null;
+
+      const params: any = {
+        user_id: user.id,
+        // brew_id unknown yet because brew isn't created; set null
+        brew_id: null,
+        recipe_slug: recipe_slug,
+      };
+      if (timeToFirstBrewSeconds != null) params.time_to_first_brew_seconds = timeToFirstBrewSeconds;
+
+      if (analytics) {
+        logEvent(analytics, "north_star_first_brew", params);
+      } else {
+        console.log("north_star_first_brew", params);
+      }
+      setNorthStarLogged(true);
+    } catch (e: any) {
+      console.error("Error logging north-star on initial start press:", e?.message ?? e);
     }
   };
 
@@ -933,7 +1029,7 @@ export default function SpecificRecipe() {
             mode="flat"
             label="Start Brewing"
             color={BASE_COLORS.WHITE}
-            onPress={() => setKitsVisible(true)}
+            onPress={() => handleInitialStartPress()}
             /*onPress={brewRecipe}*/
             style={{
               backgroundColor: BASE_COLORS.TEXT_DARK,
