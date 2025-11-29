@@ -67,6 +67,7 @@ export default function Account() {
   const [level, setLevel] = useState("");
   const [bio, setBio] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [isDialogVisible, setDialogVisible] = useState(false);
 
   const [badges, setBadges] = useState<BadgeWithEarned[]>([]);
   const [badgesLoading, setBadgesLoading] = useState(false);
@@ -379,7 +380,7 @@ export default function Account() {
             title={username}
             actionTestID="log-out-icon"
             iconName="LogOut"
-            onIconPress={onSignOut}
+            onIconPress={() => setDialogVisible(true)}
             actionTestIDLeft="settings-icon"
             iconNameLeft="Settings"
             onIconPressLeft={onEditProfile}
@@ -640,6 +641,17 @@ export default function Account() {
             </View>
           </Modal>
         </Portal>
+
+        <Dialog
+          title="Sign Out"
+          text="Are you sure you want to sign out?"
+          cancelBtn="Sign Out"
+          yesBtn="No, I want to stay"
+          visible={isDialogVisible}
+          onDismiss={() => setDialogVisible(false)}
+          onPressCancel={onSignOut}
+          onPressYes={() => setDialogVisible(false)}
+        />
       </View>
     );
   };
