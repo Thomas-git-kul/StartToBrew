@@ -28,6 +28,7 @@ export default function Progress() {
   const [stepData, setStepData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [phase, setPhase] = useState(1);
+  const phaseRef = useRef(1);
   const [timerActive, setTimerActive] = useState(false);
   const [phaseDone, setPhaseDone] = useState(false);
   const { refreshProgress } = useUserProgressContext();
@@ -176,11 +177,29 @@ export default function Progress() {
   }, [brewId]);
 
   useFocusEffect(
-  useCallback(() => {
-    setIsHistoricalStep(false);
-    loadStep();
-  }, [loadStep])
-);
+    useCallback(() => {
+      setIsHistoricalStep(false);
+      loadStep();
+    }, [loadStep])
+  );
+
+  useEffect(() => {
+    if (!stepData) return;
+
+    if (stepData.mode === "two" && phase === 2) {
+      setHasPreviousStep(true);
+      console.log("phase 2 of two-step mode, has previous step set to true");
+    } else {
+      const currentIndex = allSteps.findIndex(
+        s => s.step_id === currentStep.current?.step_id
+      );
+      setHasPreviousStep(currentIndex > 0);
+    }
+  }, [stepData, phase, allSteps]);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   const durationSec =
     phase === 1
@@ -298,7 +317,21 @@ export default function Progress() {
   const goToPreviousStep = useCallback(() => {
     if (!stepData || allSteps.length === 0) return;
 
-    // Vind index van huidige stap
+    console.log("stepData:", stepData.moode);
+    console.log("phase:", phase);
+    console.log("phaseRef:", phaseRef.current);
+    console.log("phasedone:", phaseDone);
+
+    if (stepData.mode === "two" && phaseRef.current === 2) {
+      // Alleen terug naar fase 1
+      setPhase(1);
+      setPhaseDone(false);
+      setTimerActive(false);
+      console.log("phase: ", phase);
+      console.log("phasedone: ", phaseDone);
+      return;
+    }
+
     const currentIndex = allSteps.findIndex(
       (s) => s.step_id === currentStep.current?.step_id
     );

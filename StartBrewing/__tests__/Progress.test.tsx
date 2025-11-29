@@ -5,10 +5,14 @@ import { NavigationContainer } from "@react-navigation/native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from "@/supabase";
 
-jest.mock("expo-router", () => ({
-  useRouter: jest.fn(),
-  useLocalSearchParams: jest.fn(),
-}));
+jest.mock("expo-router", () => {
+  const React = require("react");
+  return {
+    useRouter: jest.fn(),
+    useLocalSearchParams: jest.fn(),
+    useFocusEffect: (callback: any) => React.useEffect(() => callback(), []),
+  };
+});
 
 jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
 
@@ -175,11 +179,28 @@ jest.mock("@/supabase", () => {
       case "brew_steps":
         return {
           select: () => ({
-            eq: async () => ({ data: [{ brew_step_id: 10, brew_id: "1", step_id: "1", position: 1, done_at: null }], error: null }),
+            eq: function(idField: string, idValue: any) {
+              // return another object that supports .eq(step_id, ...) and .single()
+              return {
+                eq: function(stepField: string, stepValue: any) {
+                  return {
+                    single: async () => ({
+                      data: {
+                        brew_step_id: 10,
+                        id_brew: 1,
+                        step_id: 1,
+                        status: "in_progress",  // <- belangrijk, want loadStep checkt dit
+                        position: 1,
+                        completed_at: null,
+                      },
+                      error: null,
+                    }),
+                  };
+                },
+              };
+            },
           }),
-          update: () => ({
-            eq: () => ({ eq: async () => ({ data: [], error: null }) }),
-          }),
+          update: () => ({ eq: () => ({ eq: async () => ({ data: [], error: null }) }) }),
           delete: () => ({ eq: async () => ({ data: [], error: null }) }),
         };
 
