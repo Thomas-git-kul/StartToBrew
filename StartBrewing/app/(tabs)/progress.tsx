@@ -54,7 +54,6 @@ export default function Progress() {
         .select("id_brew, recipe_slug, name, last_step_id, status_id")
         .eq("id_brew", brewId)
         .single();
-      // console.log('brew:',brew);
 
       if (!brew) {
         setStepData(null);
@@ -68,7 +67,6 @@ export default function Progress() {
         .select("*")
         .eq("recipe_slug", brew.recipe_slug)
         .order("position", { ascending: true });
-      // console.log('phases:',phases);
 
       let allSteps: any[] = [];
       for (const phase of phases) {
@@ -94,7 +92,6 @@ export default function Progress() {
 
       currentStep.current = allSteps[currentIndex];
       const nextStep = allSteps[currentIndex + 1];
-      console.log("currentStep:", currentStep.current);
       setHasPreviousStep(currentIndex > 0);
 
       const { data: brew_steps } = await supabase
@@ -104,12 +101,8 @@ export default function Progress() {
         .eq("step_id", currentStep.current.step_id)
         .single();
 
-        console.log("brew_steps:", brew_steps);
-
       // Check of we een historische stap bekijken
       const isHistorical = brew_steps.status === "completed" || currentStep.current.status === "in_progress";
-      console.log("brew_steps.status:", brew_steps.status);
-      console.log("isHistorical:", isHistorical);
       setIsHistoricalStep(isHistorical);
 
       const { data: tips } = await supabase
@@ -117,7 +110,6 @@ export default function Progress() {
         .select("step_id, tip_md")
         .eq("step_id", brew.last_step_id)
         .single();
-      // console.log('tips:',tips);
 
       // Determine if there is multiple steps
       const nextHasOffset =
@@ -188,7 +180,6 @@ export default function Progress() {
 
     if (stepData.mode === "two" && phase === 2) {
       setHasPreviousStep(true);
-      console.log("phase 2 of two-step mode, has previous step set to true");
     } else {
       const currentIndex = allSteps.findIndex(
         s => s.step_id === currentStep.current?.step_id
@@ -229,8 +220,6 @@ export default function Progress() {
       router.push("/homepage");
       return;
     }
-
-    console.log("isHistoricalStep:", isHistoricalStep);
 
     if (isHistoricalStep) {
       // Alleen terug naar volgende stap zonder DB updates
@@ -317,18 +306,11 @@ export default function Progress() {
   const goToPreviousStep = useCallback(() => {
     if (!stepData || allSteps.length === 0) return;
 
-    console.log("stepData:", stepData.moode);
-    console.log("phase:", phase);
-    console.log("phaseRef:", phaseRef.current);
-    console.log("phasedone:", phaseDone);
-
     if (stepData.mode === "two" && phaseRef.current === 2) {
       // Alleen terug naar fase 1
       setPhase(1);
       setPhaseDone(false);
       setTimerActive(false);
-      console.log("phase: ", phase);
-      console.log("phasedone: ", phaseDone);
       return;
     }
 
@@ -344,7 +326,6 @@ export default function Progress() {
     // Vind de vorige stap
     const prevStep = allSteps[currentIndex - 1];
 
-    console.log("Going back to previous step:", prevStep);
     setIsHistoricalStep(true);
 
     // Herlaad die stap via loadStep
