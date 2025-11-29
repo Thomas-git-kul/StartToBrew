@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { View, Dimensions, TouchableOpacity, Text, StyleSheet, Alert, ScrollView, Modal } from "react-native";
-import { ActivityIndicator, Avatar, Button } from "react-native-paper";
+import { View, Dimensions, TouchableOpacity, Text, StyleSheet, Alert, ScrollView } from "react-native";
+import { ActivityIndicator, Avatar, Button, Modal, Portal } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -373,36 +373,48 @@ export default function Account() {
           keyboardShouldPersistTaps="handled"
         >
           <Header
-            title="My Account"
+            title={username}
           />
 
-          <View className="flex flex-row items-center gap-4 mb-4">
-            {avatarUrl ? (
-              <Avatar.Image
-                source={{ uri: avatarUrl || "" }}
-                size={Math.min(90 * scale, 300)}
-                style={{ 
-                  backgroundColor: BASE_COLORS.LIGHT_BG, 
-                  overflow: "hidden",
-                  borderWidth: 1,
-                  borderColor: BASE_COLORS.STONE300 
-                }}
-                onError={() => setAvatarUrl(null)}
-              />
-            ) : (
-              <Avatar.Text
-                size={Math.min(90 * scale, 120)}
-                label={initials || "?"}
-                color={BASE_COLORS.TEXT_DARK}
-                style={{ backgroundColor: BASE_COLORS.STONE200 }}
-                labelStyle={{
-                  padding: 4, 
-                  fontFamily: FontFamilies.BODY, 
-                  fontSize: Math.min(30 * scale, 40) 
-                }}
-              />
-            )}
+          <View className="flex-row items-start justify-between">
             <View>
+              {avatarUrl ? (
+                <Avatar.Image
+                  source={{ uri: avatarUrl || "" }}
+                  size={Math.min(90 * scale, 300)}
+                  style={{ 
+                    backgroundColor: BASE_COLORS.LIGHT_BG, 
+                    overflow: "hidden",
+                    borderWidth: 1,
+                    borderColor: BASE_COLORS.STONE300 
+                  }}
+                  onError={() => setAvatarUrl(null)}
+                />
+              ) : (
+                <Avatar.Text
+                  size={Math.min(90 * scale, 120)}
+                  label={initials || "?"}
+                  color={BASE_COLORS.TEXT_DARK}
+                  style={{ backgroundColor: BASE_COLORS.STONE200 }}
+                  labelStyle={{
+                    padding: 4, 
+                    fontFamily: FontFamilies.BODY, 
+                    fontSize: Math.min(30 * scale, 40) 
+                  }}
+                />
+              )}
+              <Text
+                style={{
+                  fontSize: Math.min(16 * scale, 24),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.STONE900,
+                  marginBottom: 6,
+                }}
+              >{fullName || "Name not set"}</Text>
+            </View>
+            
+            <View>
+              {/*
               <Text
                 style={{
                   fontSize: Math.min(18 * scale, 24),
@@ -411,6 +423,8 @@ export default function Account() {
                   marginBottom: -6,
                 }}
               >{fullName || "Name not set"}</Text>
+              */}
+              {/*
               {!!username && (
                 <Text
                   style={{
@@ -420,16 +434,32 @@ export default function Account() {
                   }}
                 >@{username}</Text>
               )}
+              */}
+              <View className="grid grid-cols-3 gap-2"
+                style={{
+                  marginBottom: 24
+                }}
+              >
+                <StatisticsCard
+                  title="Badges"
+                  value={badgeCount}
+                />
+                <StatisticsCard
+                  title="Brews"
+                  value={completedBrewsCount}
+                />
+                <StatisticsCard
+                  title="Level"
+                  value={level || 0}
+                />
+              </View>
             </View>
           </View>
+          {!!bio && (
+            <ThemedText type="defaultText" style={{color: BASE_COLORS.STONE500}} numberOfLines={4} className="mb-8">{bio}</ThemedText>
+          )}
 
-          <View className="mb-12">
-            {!!bio && (
-              <ThemedText type="defaultText" numberOfLines={3}>{bio}</ThemedText>
-            )}
-          </View>
-
-          {/* Statistieken */}
+          {/* Statistieken 
           <View className="grid grid-cols-3 gap-2"
             style={{
               marginBottom: 24
@@ -448,6 +478,7 @@ export default function Account() {
               value={level || 0}
             />
           </View>
+          */}
 
           {/* Badges-overzicht (enkel foto) */}
           <View className="flex-row justify-between">
@@ -470,8 +501,8 @@ export default function Account() {
                 key={badge.id_badge}
                 id_badge={badge.id_badge}
                 icon_url={badge.icon_url}
-                onPress={(b) => {
-                  setSelectedBadge(b);
+                onPress={() => {
+                  setSelectedBadge(badge);
                   setBadgeModalVisible(true);
                 }}
               />
@@ -541,60 +572,66 @@ export default function Account() {
               }}
             >Log Out</Button>
             <Button
-              mode="contained"
+              mode="text"
               onPress={onEditProfile}
               labelStyle={{
                 fontSize: Math.min(16 * scale, 24),
-                color: BASE_COLORS.WHITE,
                 fontFamily: FontFamilies.BODY,
-              }}
-              style={{
-                borderRadius: 30,
-                backgroundColor: BASE_COLORS.TEXT_DARK,
+                color: BASE_COLORS.TEXT_DARK,
               }}
             >Edit profile</Button>
           </View>
         </ScrollView>
 
-        {/* Badge detail modal */}
-        <Modal
-          visible={badgeModalVisible && !!selectedBadge}
-          animationType="fade"
-          transparent
-          onRequestClose={closeBadgeModal}
-        >
-          <View style={styles.modalBackdrop}>
-            <View style={styles.modalContent}>
-              {selectedBadge?.icon_url && (
-                <Image
-                  source={{ uri: selectedBadge.icon_url }}
-                  style={styles.modalBadgeImage}
-                  contentFit="contain"
-                />
-              )}
-
-              {!!selectedBadge?.description && (
-                <ThemedText style={styles.modalBadgeDescription}>
-                  {selectedBadge.description}
-                </ThemedText>
-              )}
-
-              {!!selectedBadge?.earned_at && (
-                <ThemedText style={styles.modalBadgeEarned}>
-                  Earned on{" "}
-                  {new Date(selectedBadge.earned_at).toLocaleDateString()}
-                </ThemedText>
-              )}
-
-              <TouchableOpacity
-                style={styles.modalCloseButton}
+        {/* Badge detail modal (react-native-paper) */}
+        <Portal>
+          <Modal
+            visible={badgeModalVisible && !!selectedBadge}
+            onDismiss={closeBadgeModal}
+            contentContainerStyle={{
+              marginInline: 48,
+              paddingInline: 20,
+              paddingBottom: 24,
+              alignSelf: "center",
+              borderRadius: 16,
+              backgroundColor: BASE_COLORS.WHITE,
+            }}
+          >
+            {selectedBadge?.icon_url && (
+              <Image
+                source={{ uri: selectedBadge.icon_url }}
+                style={{
+                  width: 180,
+                  height: 180,
+                  alignSelf: "center",
+                }}
+              />
+            )}
+            {!!selectedBadge?.earned_at && (
+              <ThemedText 
+                type="subTitle"
+              >{new Date(selectedBadge.earned_at).toLocaleDateString()}</ThemedText>
+            )}
+            {!!selectedBadge?.description && (
+              <ThemedText type="defaultText" className="mb-8">{selectedBadge.description}</ThemedText>
+            )}
+            <View className="flex-row justify-center">
+              <Button
+                mode="contained"
                 onPress={closeBadgeModal}
-              >
-                <Text style={styles.modalCloseButtonText}>Close</Text>
-              </TouchableOpacity>
+                labelStyle={{
+                  fontSize: Math.min(16 * scale, 24),
+                  color: BASE_COLORS.WHITE,
+                  fontFamily: FontFamilies.BODY,
+                }}
+                style={{
+                  borderRadius: 30,
+                  backgroundColor: BASE_COLORS.TEXT_DARK,
+                }}
+              >Close</Button>
             </View>
-          </View>
-        </Modal>
+          </Modal>
+        </Portal>
       </View>
     );
   };
@@ -626,44 +663,14 @@ export default function Account() {
       color: BASE_COLORS.TEXT_DARK,
       opacity: 0.8,
     },
-    modalBackdrop: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 24,
-    },
     modalContent: {
-      width: "100%",
+      width: "90%",
+      maxWidth: 420,
+      alignSelf: "center",
       borderRadius: 16,
       padding: 16,
       backgroundColor: BASE_COLORS.WHITE,
       alignItems: "center",
-    },
-    modalBadgeImage: {
-      width: 180,
-      height: 180,
-      marginBottom: 16,
-    },
-    modalBadgeName: {
-      fontSize: 18,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 8,
-      textAlign: "center",
-    },
-    modalBadgeDescription: {
-      fontSize: 14,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.9,
-      textAlign: "center",
-      marginBottom: 8,
-    },
-    modalBadgeEarned: {
-      fontSize: 12,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.8,
-      marginBottom: 16,
     },
     modalCloseButton: {
       marginTop: 4,

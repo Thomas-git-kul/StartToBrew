@@ -19,16 +19,17 @@ export default function StatisticsCard({
     <Card
       mode="contained"
       style={{
-        backgroundColor: BASE_COLORS.WHITE,
+        backgroundColor: "transparent",
         borderRadius: 12,
         paddingBlock: 8,
+        paddingInline: 12,
         // shadowColor: BASE_COLORS.STONE700,
         // shadowOffset: { width: 0, height: 1 },
         // shadowOpacity: 0.07,
         flex: 1,
         justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: BASE_COLORS.STONE300,
+        // borderWidth: 1,
+        // borderColor: BASE_COLORS.STONE300,
       }}
     >
       <View className="flex-col items-center">
@@ -36,8 +37,8 @@ export default function StatisticsCard({
           numberOfLines={1}
           style={{
             fontFamily: FontFamilies.BODY,
-            fontSize: Math.min(16 * scale, 26),
-            color: BASE_COLORS.STONE600,
+            fontSize: Math.min(14 * scale, 26),
+            color: BASE_COLORS.STONE900,
             marginBottom: 4
           }}
         >{title}</Text>
@@ -45,8 +46,8 @@ export default function StatisticsCard({
           numberOfLines={1}
           style={{
             fontFamily: FontFamilies.BODY_BOLD,
-            fontSize: Math.min(26 * scale, 36),
-            color: BASE_COLORS.ACCENT_PRIMARY,
+            fontSize: Math.min(22 * scale, 36),
+            color: BASE_COLORS.STONE700,
           }}
         >{value}</Text>
       </View>

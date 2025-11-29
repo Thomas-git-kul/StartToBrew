@@ -8,7 +8,7 @@ import { FontFamilies } from "@/constants/Fonts";
 type BadgeProps = {
   id_badge: number;
   icon_url?: string | null;
-  onPress: (badge: any) => void;
+  onPress: () => void;
 };
 
 export default function Badge({ 
