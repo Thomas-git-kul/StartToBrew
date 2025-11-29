@@ -135,6 +135,12 @@ function TabLayout() {
               href: null,
             }}
           />
+          <Tabs.Screen
+            name="ChatBot"
+            options={{
+              href: null,
+            }}
+          />
         </Tabs>
       </View>
     </SafeAreaView>
