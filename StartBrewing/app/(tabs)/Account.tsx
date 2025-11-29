@@ -14,8 +14,6 @@ import { getBeerImageSource } from "@/hooks/beer-image";
 import { useFonts } from "@/hooks/use-fonts";
 import StatisticsCard from "@/components/ui/StatisticsCard"
 import Badge from "@/components/ui/Badge";
-import BadgeCollapsible from "@/components/ui/BadgeCollapsible";
-
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -70,6 +68,7 @@ export default function Account() {
 
   const [badges, setBadges] = useState<BadgeWithEarned[]>([]);
   const [badgesLoading, setBadgesLoading] = useState(false);
+  const [showAllBadges, setShowAllBadges] = useState(false);
 
   const [completedBrews, setCompletedBrews] = useState<
     CompletedBrewWithImage[]
@@ -377,12 +376,7 @@ export default function Account() {
             title="My Account"
           />
 
-          <View className="flex flex-row items-center"
-            style={{
-              gap: 24,
-              marginBottom: 24,
-            }}
-          >
+          <View className="flex flex-row items-center gap-4 mb-4">
             {avatarUrl ? (
               <Avatar.Image
                 source={{ uri: avatarUrl || "" }}
@@ -429,7 +423,7 @@ export default function Account() {
             </View>
           </View>
 
-          <View style={{ marginBottom: 24 }}>
+          <View className="mb-12">
             {!!bio && (
               <ThemedText type="defaultText" numberOfLines={3}>{bio}</ThemedText>
             )}
@@ -456,23 +450,33 @@ export default function Account() {
           </View>
 
           {/* Badges-overzicht (enkel foto) */}
-          <ThemedText type="title">Earned badges</ThemedText>
-          <ScrollView 
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="grid grid-cols-6 gap-2 mb-8"
-          >
-            {badges.map((badge) => (
+          <View className="flex-row justify-between">
+            <ThemedText type="title">Earned badges</ThemedText>
+            {badges.length > 3 && (
+              <Button
+                mode="text"
+                onPress={() => setShowAllBadges((s) => !s)}
+                labelStyle={{
+                  fontSize: Math.min(14 * scale, 18),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >{showAllBadges ? "See less" : "See more"}</Button>
+          )}
+          </View>
+          <View className="grid grid-cols-3 gap-2 mb-2">
+            {(showAllBadges ? badges : badges.slice(0, 3)).map((badge) => (
               <Badge
+                key={badge.id_badge}
                 id_badge={badge.id_badge}
                 icon_url={badge.icon_url}
-                onPress={(badge) => {
-                  setSelectedBadge(badge);
+                onPress={(b) => {
+                  setSelectedBadge(b);
                   setBadgeModalVisible(true);
                 }}
               />
             ))}
-          </ScrollView>
+          </View>
 
           {/* Completed brews */}
           <ThemedText type="title">Completed brews</ThemedText>

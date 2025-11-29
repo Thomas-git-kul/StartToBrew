@@ -35,28 +35,19 @@ export default function Badge({
       }}
       onPress={onPress}
     >
-      <View 
-        style={{
-          width: 60,
-          height: 60,
-          backgroundColor: BASE_COLORS.WHITE,
-        }}
-      >
-        {icon_url ? (
-          <Image
-            source={{ uri: icon_url }}
-            style={{
-              width: "100%",
-              height: "100%",
-            }}
-            contentFit="cover"
-          />
-        ) : (
-          <View>
-            <Text>★</Text>
-          </View>
-        )}
-      </View>
+      {icon_url ? (
+        <Image
+          source={{ uri: icon_url }}
+          style={{
+            width: 95,
+            height: 95,
+          }}
+        />
+      ) : (
+        <View>
+          <Text>★</Text>
+        </View>
+      )}
     </Card>
   );
 }
