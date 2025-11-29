@@ -14,7 +14,8 @@ import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
 import TextInput from "@/components/textInput";
 import ErrorChip from "@/components/errorChip";
-import Dialog from "@/components/dialog"
+import Dialog from "@/components/dialog";
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 

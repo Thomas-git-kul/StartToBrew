@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { View, Dimensions, TouchableOpacity, Text, StyleSheet, Alert, ScrollView } from "react-native";
+import { View, Dimensions, Text, Alert, ScrollView } from "react-native";
 import { ActivityIndicator, Avatar, Button, Modal, Portal } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
@@ -14,6 +14,8 @@ import { getBeerImageSource } from "@/hooks/beer-image";
 import { useFonts } from "@/hooks/use-fonts";
 import StatisticsCard from "@/components/ui/StatisticsCard"
 import Badge from "@/components/ui/Badge";
+import CompletedCard from '@/components/ui/CompletedCard';
+import Dialog from "@/components/dialog"
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -35,7 +37,7 @@ type BadgeWithEarned = {
   name: string;
   description: string | null;
   category: string;
-  icon_url: string | null; // resolved public URL
+  icon_url: string | null;
   earned_at: string;
 };
 
@@ -74,6 +76,7 @@ export default function Account() {
     CompletedBrewWithImage[]
   >([]);
   const [brewsLoading, setBrewsLoading] = useState(false);
+  const [showAllBrews, setShowAllBrews] = useState(false);
 
   // voor badge-modal
   const [selectedBadge, setSelectedBadge] = useState<BadgeWithEarned | null>(
@@ -374,9 +377,37 @@ export default function Account() {
         >
           <Header
             title={username}
+            actionTestID="log-out-icon"
+            iconName="LogOut"
+            onIconPress={onSignOut}
+            actionTestIDLeft="settings-icon"
+            iconNameLeft="Settings"
+            onIconPressLeft={onEditProfile}
           />
+            {/*
+            <View className="flex-row items-center justify-between">
+              <Button
+                mode="text"
+                onPress={onSignOut}
+                labelStyle={{
+                  fontSize: Math.min(16 * scale, 24),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >Log Out</Button>
+              <Button
+                mode="text"
+                onPress={onEditProfile}
+                labelStyle={{
+                  fontSize: Math.min(16 * scale, 24),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >Edit profile</Button>
+            </View>
+            */}
 
-          <View className="flex-row items-start justify-between">
+          <View className="flex-row items-start justify-between mt-2">
             <View>
               {avatarUrl ? (
                 <Avatar.Image
@@ -408,7 +439,7 @@ export default function Account() {
                   fontSize: Math.min(16 * scale, 24),
                   fontFamily: FontFamilies.BODY,
                   color: BASE_COLORS.STONE900,
-                  marginBottom: 6,
+                  marginBottom: 12,
                 }}
               >{fullName || "Name not set"}</Text>
             </View>
@@ -493,93 +524,72 @@ export default function Account() {
                   color: BASE_COLORS.TEXT_DARK,
                 }}
               >{showAllBadges ? "See less" : "See more"}</Button>
-          )}
-          </View>
-          <View className="grid grid-cols-3 gap-2 mb-2">
-            {(showAllBadges ? badges : badges.slice(0, 3)).map((badge) => (
-              <Badge
-                key={badge.id_badge}
-                id_badge={badge.id_badge}
-                icon_url={badge.icon_url}
-                onPress={() => {
-                  setSelectedBadge(badge);
-                  setBadgeModalVisible(true);
-                }}
-              />
-            ))}
-          </View>
-
-          {/* Completed brews */}
-          <ThemedText type="title">Completed brews</ThemedText>
-          <View
-            style={{
-              marginBottom: 36,
-            }}
-          >
-            {completedBrewsCount === 0 ? (
-              <ThemedText type="defaultText">
-                You have not completed any brews yet.
-              </ThemedText>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{ marginTop: 8 }}
-              >
-                {completedBrews.map((brew) => (
-                  <TouchableOpacity
-                    key={brew.id_brew}
-                    style={styles.brewCard}
-                    activeOpacity={0.8}
-                    disabled={!brew.recipe_slug}
-                    onPress={() =>
-                      brew.recipe_slug &&
-                      router.push({
-                        pathname: "/SpecificRecipe",
-                        params: { recipe_slug: brew.recipe_slug },
-                      })
-                    }
-                  >
-                    {brew.image && (
-                      <Image
-                        source={brew.image}
-                        style={styles.brewImage}
-                        contentFit="cover"
-                      />
-                    )}
-                    <ThemedText style={styles.brewName} numberOfLines={1}>
-                      {brew.name.trim()}
-                    </ThemedText>
-                    {brew.start_date && (
-                      <ThemedText style={styles.brewMeta}>
-                        {new Date(brew.start_date).toLocaleDateString()}
-                      </ThemedText>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
             )}
           </View>
+          {badgesLoading ? (
+             <View className="py-4 items-center">
+                <ActivityIndicator animating size="small" color={BASE_COLORS.ACCENT_PRIMARY} />
+              </View>
+          ) : badges.length === 0 ? (
+            <ThemedText type="defaultText" className="mb-8">Brew beers to earn badges.</ThemedText>
+          ) : (
+            <View className="grid grid-cols-3 gap-2 mb-8">
+              {(showAllBadges ? badges : badges.slice(0, 3)).map((badge) => (
+                <Badge
+                  key={badge.id_badge}
+                  id_badge={badge.id_badge}
+                  icon_url={badge.icon_url}
+                  onPress={() => {
+                    setSelectedBadge(badge);
+                    setBadgeModalVisible(true);
+                  }}
+                />
+              ))}
+            </View>
+          )}
 
-          <View className="flex-row items-center justify-between">
-            <Button
-              mode="text"
-              onPress={onSignOut}
-              labelStyle={{
-                fontSize: Math.min(16 * scale, 24),
-                fontFamily: FontFamilies.BODY,
-                color: BASE_COLORS.TEXT_DARK,
-              }}
-            >Log Out</Button>
-            <Button
-              mode="text"
-              onPress={onEditProfile}
-              labelStyle={{
-                fontSize: Math.min(16 * scale, 24),
-                fontFamily: FontFamilies.BODY,
-                color: BASE_COLORS.TEXT_DARK,
-              }}
-            >Edit profile</Button>
+          {/* Completed brews */}
+          <View className="flex-row justify-between">
+            <ThemedText type="title">Completed</ThemedText>
+            {completedBrewsCount > 3 && (
+              <Button
+                mode="text"
+                onPress={() => setShowAllBrews((s) => !s)}
+                labelStyle={{
+                  fontSize: Math.min(14 * scale, 18),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >{showAllBadges ? "See less" : "See more"}</Button>
+            )}
+          </View>
+          <View>
+            {brewsLoading ? (
+              <View className="py-4 items-center">
+                <ActivityIndicator animating size="small" color={BASE_COLORS.ACCENT_PRIMARY} />
+              </View>
+            ) : completedBrewsCount === 0 ? (
+              <ThemedText type="defaultText">You have not completed any brews yet.</ThemedText>
+            ) : (
+              <View className="grid grid-cols-3 gap-2 mb-8">
+                {(showAllBrews ? completedBrews : completedBrews.slice(0, 3)).map((brew) => (
+                  <CompletedCard
+                    key={brew.id_brew}
+                    title={brew.name.trim()}
+                    date={brew.start_date ? new Date(brew.start_date).toLocaleDateString() : undefined}
+                    image={brew.image}
+                    onPress={() => {
+                      if (brew.recipe_slug) {
+                        router.push({
+                          pathname: "/SpecificRecipe",
+                          params: { recipe_slug: brew.recipe_slug },
+                        });
+                      }
+                    }}
+                  />
+                ))}
+              </View>
+            )}
           </View>
         </ScrollView>
 
@@ -608,9 +618,7 @@ export default function Account() {
               />
             )}
             {!!selectedBadge?.earned_at && (
-              <ThemedText 
-                type="subTitle"
-              >{new Date(selectedBadge.earned_at).toLocaleDateString()}</ThemedText>
+              <ThemedText type="subTitle">{new Date(selectedBadge.earned_at).toLocaleDateString()}</ThemedText>
             )}
             {!!selectedBadge?.description && (
               <ThemedText type="defaultText" className="mb-8">{selectedBadge.description}</ThemedText>
@@ -635,56 +643,5 @@ export default function Account() {
       </View>
     );
   };
-
-  const styles = StyleSheet.create({
-    brewCard: {
-      width: 140,
-      marginRight: 12,
-      backgroundColor: BASE_COLORS.WHITE,
-      borderRadius: 10,
-      padding: 8,
-      borderWidth: 1,
-      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-    },
-    brewImage: {
-      width: "100%",
-      height: 110,
-      borderRadius: 8,
-      marginBottom: 6,
-    },
-    brewName: {
-      fontSize: 14,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 2,
-    },
-    brewMeta: {
-      fontSize: 12,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.8,
-    },
-    modalContent: {
-      width: "90%",
-      maxWidth: 420,
-      alignSelf: "center",
-      borderRadius: 16,
-      padding: 16,
-      backgroundColor: BASE_COLORS.WHITE,
-      alignItems: "center",
-    },
-    modalCloseButton: {
-      marginTop: 4,
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-      borderRadius: 8,
-      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    },
-    modalCloseButtonText: {
-      color: BASE_COLORS.WHITE,
-      fontWeight: "bold",
-      fontSize: 14,
-    },
-  });
-
   return <AccountInner />;
 }

@@ -13,15 +13,20 @@ const iconMap: Record<string, LucideIcon> = {
   HeartPlus: Icons.HeartPlus,
   Heart: Icons.Heart,
   Trash: Icons.Trash,
+  Settings: Icons.Settings,
+  LogOut: Icons.LogOut
 };
 
 interface HeaderBarProps {
   title: string;
   iconName?: keyof typeof iconMap;
-  filled?: boolean;
   onIconPress?: () => void;
   actionTestID?: string;
+  filled?: boolean;
   cartCount?: number;
+  iconNameLeft?: keyof typeof iconMap;
+  onIconPressLeft?: () => void;
+  actionTestIDLeft?: string;
 }
 
 export default function HeaderBar({
@@ -31,11 +36,30 @@ export default function HeaderBar({
   actionTestID,
   filled=false,
   cartCount = 0,
+  iconNameLeft,
+  onIconPressLeft,
+  actionTestIDLeft,
 }: HeaderBarProps) {
   const IconComponent = iconName ? iconMap[iconName] : undefined;
+  const IconComponentLeft = iconNameLeft ? iconMap[iconNameLeft] : undefined;
 
   return (
     <Appbar.Header style={{ backgroundColor: BASE_COLORS.LIGHT_BG }} mode="center-aligned">
+      {IconComponentLeft && onIconPressLeft && (
+          <Appbar.Action
+            icon={() => (
+              <View>
+                <IconComponentLeft
+                  size={28}
+                  strokeWidth={2}
+                  stroke={BASE_COLORS.TEXT_DARK}
+                />
+              </View>
+            )}
+            onPress={onIconPressLeft}
+            testID={actionTestIDLeft}
+          />
+      )}
       <Appbar.Content
         title={title}
         titleStyle={{ fontFamily: FontFamilies.BODY_BOLD, color: BASE_COLORS.TEXT_DARK }}
