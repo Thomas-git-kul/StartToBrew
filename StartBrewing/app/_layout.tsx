@@ -1,7 +1,5 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useEffect, useState } from "react";
-import type { ComponentType } from "react";
-import { Platform } from "react-native";
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
@@ -81,27 +79,12 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? CombinedDarkTheme : CombinedLightTheme;
 
-  const [AnalyticsComponent, setAnalyticsComponent] =
-    useState<ComponentType<any> | null>(null);
-
   useEffect(() => {
     try {
       // eslint-disable-next-line no-console
       console.log('Env diagnostics (runtime):', envDiagnostics);
     } catch (e) {
       // ignore
-    }
-
-    // Load Vercel Analytics only on web to avoid native bundling issues
-    if (Platform.OS === "web") {
-      import("@vercel/analytics/react")
-        .then((mod) => {
-          const C = mod.Analytics as ComponentType<any>;
-          setAnalyticsComponent(() => C);
-        })
-        .catch(() => {
-          // ignore load failures in non-web or during development
-        });
     }
   }, []);
 
@@ -117,7 +100,6 @@ export default function RootLayout() {
             </AppRefreshProvider>
           </UserProgressProvider>
           <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-          {AnalyticsComponent ? <AnalyticsComponent /> : null}
         </NavigationThemeProvider>
       </PaperProvider>
     </SafeAreaProvider>
