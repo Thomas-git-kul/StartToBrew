@@ -15,6 +15,7 @@
     "build:web": "expo export --platform web --output-dir dist"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@expo/vector-icons": "^15.0.2",
     "@google/genai": "^1.30.0",
     "@mlc-ai/web-llm": "^0.2.79",

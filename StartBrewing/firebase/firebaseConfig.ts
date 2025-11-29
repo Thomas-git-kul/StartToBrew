@@ -11,7 +11,7 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
-
+ 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
@@ -26,4 +26,3 @@ if (typeof window !== "undefined") {
 }
 
 export { app, analytics, logEvent };
-
