@@ -11,6 +11,7 @@ import { router, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import Header from "@/components/header";
 import { getBeerImageSource } from "@/hooks/beer-image";
+import { useFonts } from "@/hooks/use-fonts";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -53,6 +54,8 @@ type CompletedBrewWithImage = Brew & {
 };
 
 export default function Account() {
+  useFonts();
+
   const [loading, setLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState("");
@@ -370,39 +373,62 @@ export default function Account() {
             title="My Account"
           />
 
-          <View>
-            <View style={styles.avatarRow}>
-              <View style={styles.avatarTouch}>
-                {avatarUrl ? (
-                  <Avatar.Image
-                    source={{ uri: avatarUrl || "" }}
-                    size={Math.min(90 * scale, 300)}
-                    style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
-                    onError={() => setAvatarUrl(null)}
-                  />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarFallback]}>
-                    <Text style={styles.initials}>{initials || "?"}</Text>
-                  </View>
-                )}
-              </View>
+          <View className="flex flex-row items-center"
+            style={{
+              gap: 24,
+              marginBottom: 24,
+            }}
+          >
+            {avatarUrl ? (
+              <Avatar.Image
+                source={{ uri: avatarUrl || "" }}
+                size={Math.min(90 * scale, 300)}
+                style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+                onError={() => setAvatarUrl(null)}
+              />
+            ) : (
+              <Avatar.Text
+                size={Math.min(90 * scale, 120)}
+                label={initials || "?"}
+                color={BASE_COLORS.TEXT_DARK}
+                style={{ backgroundColor: BASE_COLORS.STONE200 }}
+                labelStyle={{
+                  padding: 4, 
+                  fontFamily: FontFamilies.BODY, 
+                  fontSize: Math.min(30 * scale, 40) 
+                }}
+              />
+            )}
 
-              <View style={styles.profileTextBlock}>
-                <ThemedText style={styles.nameText}>
-                  {fullName || "Name not set"}
-                </ThemedText>
-                {!!username && (
-                  <ThemedText style={styles.usernameText}>
-                    @{username}
-                  </ThemedText>
-                )}
-                {!!bio && (
-                  <ThemedText style={styles.bioText} numberOfLines={3}>
-                    {bio}
-                  </ThemedText>
-                )}
-              </View>
+            <View>
+              <Text
+                style={{
+                  fontSize: Math.min(18 * scale, 24),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.STONE700,
+                  marginBottom: -6,
+                }}
+              >{fullName || "Name not set"}</Text>
+              {!!username && (
+                <Text
+                  style={{
+                    fontSize: Math.min(16 * scale, 20),
+                    fontFamily: FontFamilies.BODY_THIN,
+                    color: BASE_COLORS.STONE700,
+                  }}
+                >@{username}</Text>
+              )}
             </View>
+          </View>
+
+          <View
+            style={{
+              marginBottom: 24,
+            }}
+          >
+            {!!bio && (
+              <ThemedText type="defaultText" numberOfLines={3}>{bio}</ThemedText>
+            )}
           </View>
 
           {/* Statistieken */}
