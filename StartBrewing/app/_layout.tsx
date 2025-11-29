@@ -1,4 +1,5 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
@@ -13,6 +14,9 @@ import {
 
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { AppRefreshProvider } from "@/context/AppRefreshContext";
+
+// Diagnostics
+import envDiagnostics from "@/utils/envDiagnostics";
 
 // React Native Paper (MD3)
 import {
@@ -74,6 +78,15 @@ function RootInner() {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? CombinedDarkTheme : CombinedLightTheme;
+
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line no-console
+      console.log('Env diagnostics (runtime):', envDiagnostics);
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   return (
     <SafeAreaProvider>
