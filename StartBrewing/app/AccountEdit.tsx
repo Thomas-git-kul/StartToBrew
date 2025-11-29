@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Dimensions } from "react-native";
+import { View, Pressable, ActivityIndicator, Alert, ScrollView, Dimensions } from "react-native";
 import { Avatar, Button, Paragraph } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { ThemedText } from "@/components/themed-text";
@@ -262,29 +262,27 @@ export default function EditAccount() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
+    <SafeAreaView 
+      className="flex-1"
+      style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
-          title="Edit profile"
-        />
-
+        title="Edit profile"
+      />
       <ScrollView
-      className="flex-1, mx-3"
-        style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}
+        className="flex-1, mx-3"
+        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
+        <Pressable
           onPress={onChangeAvatar}
-          activeOpacity={0.3}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           {avatarUrl ? (
             <Avatar.Image
               source={{ uri: avatarUrl || "" }}
               size={Math.min(90 * scale, 300)}
-              style={{
-                backgroundColor: BASE_COLORS.LIGHT_BG,
-              }}
+              style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
               onError={() => setAvatarUrl(null)}
             />
           ) : (
@@ -300,7 +298,7 @@ export default function EditAccount() {
               }}
             />
           )}
-        </TouchableOpacity>
+        </Pressable>
         <ThemedText type="tips" style={{color: BASE_COLORS.STONE400}} className="mb-5">Tap to change</ThemedText>
 
         <ThemedText type="subTitle" className="mb-1">Update personal information</ThemedText>

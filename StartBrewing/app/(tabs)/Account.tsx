@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import {
-  View,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Modal,
-} from "react-native";
+import { View, Dimensions, TouchableOpacity, Text, StyleSheet, Alert, ScrollView, Modal } from "react-native";
+import { ActivityIndicator, Avatar } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -16,8 +8,13 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "@/supabase";
 import { Image } from "expo-image";
 import { router, useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import Header from "@/components/header";
 import { getBeerImageSource } from "@/hooks/beer-image";
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const BASE_SCREEN_WIDTH = 375; 
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 type Profile = {
   id: string;
@@ -309,6 +306,16 @@ export default function Account() {
     }
   }, [userId, fetchBadges, fetchCompletedBrews]);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+      if (userId) {
+        fetchBadges(userId);
+        fetchCompletedBrews(userId);
+      }
+    }, [userId, fetchProfile, fetchBadges, fetchCompletedBrews])
+  );
+
   const onSignOut = useCallback(async () => {
     await supabase.auth.signOut();
     Alert.alert("Afgemeld");
@@ -324,9 +331,19 @@ export default function Account() {
 
     if (loading) {
       return (
-        <SafeAreaView>
-          <ActivityIndicator />
-        </SafeAreaView>
+        <SafeAreaView className="flex-1 items-center justify-center"
+        style={{
+          backgroundColor: BASE_COLORS.LIGHT_BG
+        }}
+      >
+        <ActivityIndicator 
+          animating size="large"
+          color={BASE_COLORS.ACCENT_PRIMARY}
+        />
+        <ThemedText type="defaultText" className="mt-3">
+          Loading account information...
+        </ThemedText>
+      </SafeAreaView>
       );
     }
 
@@ -339,30 +356,28 @@ export default function Account() {
     };
 
     return (
-      <>
+      <View
+        className="flex-1"
+        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+      >
         <ScrollView
           className="flex-1"
-          style={{
-            backgroundColor: BASE_COLORS.LIGHT_BG,
-            paddingHorizontal: 16,
-            paddingTop: 8,
-          }}
+          style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <Header
-            title="Account"
-            iconName="ArrowRight"
-            onIconPress={() => router.push("/HomePage")}
-            actionTestID="account-button"
+            title="My Account"
           />
 
-          {/* Profiel header */}
-          <View style={styles.section}>
+          <View>
             <View style={styles.avatarRow}>
               <View style={styles.avatarTouch}>
                 {avatarUrl ? (
-                  <Image
-                    source={{ uri: avatarUrl }}
-                    style={styles.avatar}
+                  <Avatar.Image
+                    source={{ uri: avatarUrl || "" }}
+                    size={Math.min(90 * scale, 300)}
+                    style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
                     onError={() => setAvatarUrl(null)}
                   />
                 ) : (
@@ -391,7 +406,7 @@ export default function Account() {
           </View>
 
           {/* Statistieken */}
-          <View style={[styles.section, styles.cardsRow]}>
+          <View style={[styles.cardsRow]}>
             <View style={styles.infoCard}>
               <ThemedText style={styles.cardLabel}>Badges</ThemedText>
               <ThemedText style={styles.cardValue}>{badgeCount}</ThemedText>
@@ -422,7 +437,7 @@ export default function Account() {
           </View>
 
           {/* Badges-overzicht (enkel foto) */}
-          <View style={styles.section}>
+          <View>
             <ThemedText style={styles.sectionTitle}>Your badges</ThemedText>
 
             {badgesLoading ? (
@@ -473,7 +488,7 @@ export default function Account() {
           </View>
 
           {/* Completed brews */}
-          <View style={styles.section}>
+          <View>
             <ThemedText style={styles.sectionTitle}>Completed brews</ThemedText>
 
             {brewsLoading ? (
@@ -580,14 +595,11 @@ export default function Account() {
             </View>
           </View>
         </Modal>
-      </>
+      </View>
     );
   };
 
   const styles = StyleSheet.create({
-    section: {
-      marginTop: 16,
-    },
     avatarRow: {
       flexDirection: "row",
       alignItems: "center",
