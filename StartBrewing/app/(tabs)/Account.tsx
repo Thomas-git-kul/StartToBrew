@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { View, Dimensions, TouchableOpacity, Text, StyleSheet, Alert, ScrollView, Modal } from "react-native";
-import { ActivityIndicator, Avatar } from "react-native-paper";
+import { ActivityIndicator, Avatar, Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -13,6 +13,9 @@ import Header from "@/components/header";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import { useFonts } from "@/hooks/use-fonts";
 import StatisticsCard from "@/components/ui/StatisticsCard"
+import Badge from "@/components/ui/Badge";
+import BadgeCollapsible from "@/components/ui/BadgeCollapsible";
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -384,7 +387,12 @@ export default function Account() {
               <Avatar.Image
                 source={{ uri: avatarUrl || "" }}
                 size={Math.min(90 * scale, 300)}
-                style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+                style={{ 
+                  backgroundColor: BASE_COLORS.LIGHT_BG, 
+                  overflow: "hidden",
+                  borderWidth: 1,
+                  borderColor: BASE_COLORS.STONE300 
+                }}
                 onError={() => setAvatarUrl(null)}
               />
             ) : (
@@ -428,87 +436,53 @@ export default function Account() {
           </View>
 
           {/* Statistieken */}
-          <View className="flex-row justify-between"
+          <View className="grid grid-cols-3 gap-2"
             style={{
-              gap: 12,
+              marginBottom: 24
             }}
           >
             <StatisticsCard
               title="Badges"
               value={badgeCount}
-              hint={badgeCount === 1 ? "badge earned" : "badges earned"}
             />
             <StatisticsCard
               title="Brews"
               value={completedBrewsCount}
-              hint={completedBrewsCount === 1 ? "brew completed" : "brews completed"}
             />
             <StatisticsCard
               title="Level"
               value={level || 0}
-              hint="Your brewing level"
             />
           </View>
 
           {/* Badges-overzicht (enkel foto) */}
-          <View>
-            <ThemedText style={styles.sectionTitle}>Your badges</ThemedText>
-
-            {badgesLoading ? (
-              <ActivityIndicator style={{ marginTop: 8 }} />
-            ) : badgeCount === 0 ? (
-              <ThemedText style={styles.emptyText}>
-                You have not earned any badges yet. Brew some beers to earn
-                badges!
-              </ThemedText>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.badgeScrollContent}
-              >
-                {badges.map((badge) => (
-                  <TouchableOpacity
-                    key={badge.id_badge}
-                    style={styles.badgeCard}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      setSelectedBadge(badge);
-                      setBadgeModalVisible(true);
-                    }}
-                  >
-                    <View style={styles.badgeIconContainer}>
-                      {badge.icon_url ? (
-                        <Image
-                          source={{ uri: badge.icon_url }}
-                          style={styles.badgeIconImage}
-                          contentFit="cover"
-                        />
-                      ) : (
-                        <View
-                          style={[
-                            styles.badgeIconImage,
-                            styles.badgeIconFallback,
-                          ]}
-                        >
-                          <Text style={styles.badgeIconText}>★</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-          </View>
+          <ThemedText type="title">Earned badges</ThemedText>
+          <ScrollView 
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="grid grid-cols-6 gap-2 mb-8"
+          >
+            {badges.map((badge) => (
+              <Badge
+                id_badge={badge.id_badge}
+                icon_url={badge.icon_url}
+                onPress={(badge) => {
+                  setSelectedBadge(badge);
+                  setBadgeModalVisible(true);
+                }}
+              />
+            ))}
+          </ScrollView>
 
           {/* Completed brews */}
-          <View>
-            <ThemedText style={styles.sectionTitle}>Completed brews</ThemedText>
-
-            {brewsLoading ? (
-              <ActivityIndicator style={{ marginTop: 8 }} />
-            ) : completedBrewsCount === 0 ? (
-              <ThemedText style={styles.emptyText}>
+          <ThemedText type="title">Completed brews</ThemedText>
+          <View
+            style={{
+              marginBottom: 36,
+            }}
+          >
+            {completedBrewsCount === 0 ? (
+              <ThemedText type="defaultText">
                 You have not completed any brews yet.
               </ThemedText>
             ) : (
@@ -552,21 +526,29 @@ export default function Account() {
             )}
           </View>
 
-          {/* Acties */}
-          <View style={styles.actionsColumn}>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonPrimary]}
-              onPress={onEditProfile}
-            >
-              <Text style={styles.buttonText}>Change profile</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.buttonSecondary]}
+          <View className="flex-row items-center justify-between">
+            <Button
+              mode="text"
               onPress={onSignOut}
-            >
-              <Text style={styles.buttonSecondaryText}>Sign off</Text>
-            </TouchableOpacity>
+              labelStyle={{
+                fontSize: Math.min(16 * scale, 24),
+                fontFamily: FontFamilies.BODY,
+                color: BASE_COLORS.TEXT_DARK,
+              }}
+            >Log Out</Button>
+            <Button
+              mode="contained"
+              onPress={onEditProfile}
+              labelStyle={{
+                fontSize: Math.min(16 * scale, 24),
+                color: BASE_COLORS.WHITE,
+                fontFamily: FontFamilies.BODY,
+              }}
+              style={{
+                borderRadius: 30,
+                backgroundColor: BASE_COLORS.TEXT_DARK,
+              }}
+            >Edit profile</Button>
           </View>
         </ScrollView>
 
@@ -614,146 +596,6 @@ export default function Account() {
   };
 
   const styles = StyleSheet.create({
-    avatarRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 16,
-    },
-    avatar: {
-      width: 96,
-      height: 96,
-      borderRadius: 48,
-      backgroundColor: BASE_COLORS.LIGHT_BG || "#eee",
-    },
-    avatarTouch: {
-      borderRadius: 48,
-      overflow: "hidden",
-    },
-    avatarFallback: {
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    initials: {
-      fontSize: 32,
-      fontWeight: "bold",
-      color: BASE_COLORS.TEXT_DARK,
-    },
-    profileTextBlock: {
-      flex: 1,
-    },
-    nameText: {
-      fontSize: 20,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 4,
-    },
-    usernameText: {
-      fontSize: 14,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.8,
-      marginBottom: 8,
-    },
-    bioText: {
-      fontSize: 14,
-      color: BASE_COLORS.TEXT_DARK,
-    },
-    cardsRow: {
-      flexDirection: "row",
-      gap: 12,
-    },
-    infoCard: {
-      flex: 1,
-      backgroundColor: BASE_COLORS.WHITE,
-      borderRadius: 10,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-    },
-    cardLabel: {
-      fontSize: 14,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 4,
-    },
-    cardValue: {
-      fontSize: 22,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.ACCENT_PRIMARY,
-      marginBottom: 4,
-    },
-    cardHint: {
-      fontSize: 12,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.7,
-    },
-    sectionTitle: {
-      fontSize: 16,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 8,
-    },
-    emptyText: {
-      fontSize: 14,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.8,
-    },
-    badgeScrollContent: {
-      paddingVertical: 4,
-      paddingRight: 4,
-    },
-    badgeCard: {
-      width: 90,
-      height: 90,
-      marginRight: 12,
-      backgroundColor: BASE_COLORS.WHITE,
-      borderRadius: 45,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 1,
-      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-    },
-    badgeIconContainer: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
-      overflow: "hidden",
-      backgroundColor: BASE_COLORS.WHITE,
-    },
-    badgeIconImage: {
-      width: "100%",
-      height: "100%",
-    },
-    badgeIconFallback: {
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    },
-    badgeIconText: {
-      fontSize: 28,
-      color: BASE_COLORS.WHITE,
-      fontWeight: "bold",
-    },
-    actionsColumn: {
-      marginTop: 32,
-      gap: 12,
-    },
-    button: {
-      height: 44,
-      paddingHorizontal: 16,
-      borderRadius: 8,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    buttonPrimary: {
-      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    },
-    buttonSecondary: {
-      backgroundColor: BASE_COLORS.WHITE,
-      borderWidth: 1,
-      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-    },
-    buttonText: { color: BASE_COLORS.WHITE, fontWeight: "bold" },
-    buttonSecondaryText: { color: BASE_COLORS.TEXT_DARK, fontWeight: "bold" },
     brewCard: {
       width: 140,
       marginRight: 12,

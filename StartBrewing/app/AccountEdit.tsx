@@ -148,6 +148,9 @@ export default function EditAccount() {
     }
 
     try {
+      // show the selected image immediately for instant feedback
+      setAvatarUrl(asset.uri);
+
       const url = await updateAvatar({
         userId,
         fileUri: asset.uri,
@@ -155,7 +158,8 @@ export default function EditAccount() {
         maxWidth: 512,
         maxHeight: 512,
       });
-      if (url) setAvatarUrl(url);
+      // append a cache-busting query param so the uploaded image is fetched fresh
+      if (url) setAvatarUrl(`${url}?v=${Date.now()}`);
     } catch (err: any) {
       Alert.alert("Upload failed", err.message ?? "Unknown Error");
     }
@@ -282,7 +286,12 @@ export default function EditAccount() {
             <Avatar.Image
               source={{ uri: avatarUrl || "" }}
               size={Math.min(90 * scale, 300)}
-              style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+              style={{ 
+                backgroundColor: BASE_COLORS.LIGHT_BG,
+                overflow: "hidden",
+                borderWidth: 1,
+                borderColor: BASE_COLORS.STONE300 
+              }}
               onError={() => setAvatarUrl(null)}
             />
           ) : (
