@@ -12,6 +12,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import Header from "@/components/header";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import { useFonts } from "@/hooks/use-fonts";
+import StatisticsCard from "@/components/ui/StatisticsCard"
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -399,7 +400,6 @@ export default function Account() {
                 }}
               />
             )}
-
             <View>
               <Text
                 style={{
@@ -421,45 +421,33 @@ export default function Account() {
             </View>
           </View>
 
-          <View
-            style={{
-              marginBottom: 24,
-            }}
-          >
+          <View style={{ marginBottom: 24 }}>
             {!!bio && (
               <ThemedText type="defaultText" numberOfLines={3}>{bio}</ThemedText>
             )}
           </View>
 
           {/* Statistieken */}
-          <View style={[styles.cardsRow]}>
-            <View style={styles.infoCard}>
-              <ThemedText style={styles.cardLabel}>Badges</ThemedText>
-              <ThemedText style={styles.cardValue}>{badgeCount}</ThemedText>
-              <ThemedText style={styles.cardHint}>
-                {badgeCount === 1 ? "badge earned" : "badges earned"}
-              </ThemedText>
-            </View>
-
-            <View style={styles.infoCard}>
-              <ThemedText style={styles.cardLabel}>Brews</ThemedText>
-              <ThemedText style={styles.cardValue}>
-                {completedBrewsCount}
-              </ThemedText>
-              <ThemedText style={styles.cardHint}>
-                {completedBrewsCount === 1
-                  ? "brew completed"
-                  : "brews completed"}
-              </ThemedText>
-            </View>
-
-            <View style={styles.infoCard}>
-              <ThemedText style={styles.cardLabel}>Level</ThemedText>
-              <ThemedText style={styles.cardValue}>{level || "-"}</ThemedText>
-              <ThemedText style={styles.cardHint}>
-                Your brewing level
-              </ThemedText>
-            </View>
+          <View className="flex-row justify-between"
+            style={{
+              gap: 12,
+            }}
+          >
+            <StatisticsCard
+              title="Badges"
+              value={badgeCount}
+              hint={badgeCount === 1 ? "badge earned" : "badges earned"}
+            />
+            <StatisticsCard
+              title="Brews"
+              value={completedBrewsCount}
+              hint={completedBrewsCount === 1 ? "brew completed" : "brews completed"}
+            />
+            <StatisticsCard
+              title="Level"
+              value={level || 0}
+              hint="Your brewing level"
+            />
           </View>
 
           {/* Badges-overzicht (enkel foto) */}
