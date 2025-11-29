@@ -25,9 +25,6 @@ const vars = {
 };
 
 try {
-  // Log compactly so it shows up in browser console or build logs.
-  // Do NOT log secret values — only presence booleans.
-  // eslint-disable-next-line no-console
   console.log('Env diagnostics:', vars);
 } catch (e) {
   // ignore
