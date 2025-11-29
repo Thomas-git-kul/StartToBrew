@@ -1,21 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  View,
-  ScrollView,
-  Dimensions,
-  ActivityIndicator,
-  Text,
-} from "react-native";
+import { View, ScrollView, Dimensions, ActivityIndicator, Text} from "react-native";
 import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
-import {
-  Pause,
-  Thermometer,
-  Play,
-  CheckCheck,
-  Lightbulb,
-} from "lucide-react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { Pause, Thermometer, Play, CheckCheck, Lightbulb, ChevronLeft, ChevronRight} from "lucide-react-native";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
 import { ThemedText } from "@/components/themed-text";
@@ -44,8 +32,14 @@ export default function Progress() {
   const [phaseDone, setPhaseDone] = useState(false);
   const { refreshProgress } = useUserProgressContext();
   const [dialogVisible, setDialogVisible] = useState(false);
+  const [allSteps, setAllSteps] = useState<any[]>([]);
+  const [isHistoricalStep, setIsHistoricalStep] = useState(false);
+  const [hasPreviousStep, setHasPreviousStep] = useState(false);
 
-  const loadStep = useCallback(async () => {
+  const currentStep = useRef<any>(null);
+  let CompletedStep = useRef<boolean>(false);
+
+  const loadStep = useCallback(async (stepId?: string) => {
     setLoading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -84,14 +78,38 @@ export default function Progress() {
           .order("step_id", { ascending: true });
         allSteps = [...allSteps, ...steps];
       }
-      //console.log('steps:', allSteps);
+      setAllSteps(allSteps);
 
-      const currentIndex = allSteps.findIndex(
-        (s) => s.step_id === brew.last_step_id
-      );
-      const currentStep = allSteps[currentIndex];
-      // const previousStep = allSteps[currentIndex - 1] ?? null;
+       const currentIndex = stepId
+        ? allSteps.findIndex((s) => s.step_id === stepId)
+        : allSteps.findIndex((s) => s.step_id === brew.last_step_id);
+
+        if (currentIndex === -1) {
+          console.error("No matching step found for last_step_id", brew.last_step_id);
+          setStepData(null);
+          setLoading(false);
+          return;
+        }
+
+      currentStep.current = allSteps[currentIndex];
       const nextStep = allSteps[currentIndex + 1];
+      console.log("currentStep:", currentStep.current);
+      setHasPreviousStep(currentIndex > 0);
+
+      const { data: brew_steps } = await supabase
+        .from("brew_steps")
+        .select("*")
+        .eq("id_brew", brewId)
+        .eq("step_id", currentStep.current.step_id)
+        .single();
+
+        console.log("brew_steps:", brew_steps);
+
+      // Check of we een historische stap bekijken
+      const isHistorical = brew_steps.status === "completed" || currentStep.current.status === "in_progress";
+      console.log("brew_steps.status:", brew_steps.status);
+      console.log("isHistorical:", isHistorical);
+      setIsHistoricalStep(isHistorical);
 
       const { data: tips } = await supabase
         .from("step_tips")
@@ -111,12 +129,12 @@ export default function Progress() {
           mode: "two",
           beer: brew.name,
           temp: nextStep.temp_c_target ?? null,
-          current_step_id: currentStep.step_id,
+          current_step_id: currentStep.current.step_id,
           next_step_id: nextStep.step_id,
           after_next_step_id: afterNextStep?.step_id ?? null,
           step1: {
-            title: currentStep.title,
-            desc: currentStep.description_md,
+            title: currentStep.current.title,
+            desc: currentStep.current.description_md,
             tips: tips?.tip_md ?? null,
             duration_sec: nextStep.start_offset_min ?? 0,
           },
@@ -131,22 +149,20 @@ export default function Progress() {
         mapped = {
           mode: "single",
           beer: brew.name,
-          temp: currentStep.temp_c_target ?? null,
-          current_step_id: currentStep.step_id,
+          temp: currentStep.current.temp_c_target ?? null,
+          current_step_id: currentStep.current.step_id,
           next_step_id: nextStep?.step_id ?? null,
           step1: {
-            title: currentStep.title,
-            desc: currentStep.description_md,
+            title: currentStep.current.title,
+            desc: currentStep.current.description_md,
             tips: tips?.tip_md ?? null,
-            duration_sec: currentStep.duration_min ?? 0 /* * 60*/,
+            duration_sec: currentStep.current.duration_min ?? 0 /* * 60*/,
           },
           step2: null,
         };
       }
 
       setStepData(mapped);
-
-      console.log("stepData: ", mapped);
 
       // reset timer state after reload
       setPhase(1);
@@ -159,9 +175,12 @@ export default function Progress() {
     setLoading(false);
   }, [brewId]);
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
+    setIsHistoricalStep(false);
     loadStep();
-  }, [loadStep]);
+  }, [loadStep])
+);
 
   const durationSec =
     phase === 1
@@ -177,6 +196,26 @@ export default function Progress() {
         brewId,
         stepData,
       });
+      return;
+    }
+
+    const currentIndex = allSteps.findIndex(
+      s => s.step_id === currentStep.current?.step_id
+    );
+    const nextStep = allSteps[currentIndex + 1];
+
+    if (!nextStep) {
+      // Laatste stap
+      await refreshProgress();
+      router.push("/homepage");
+      return;
+    }
+
+    console.log("isHistoricalStep:", isHistoricalStep);
+
+    if (isHistoricalStep) {
+      // Alleen terug naar volgende stap zonder DB updates
+      loadStep(nextStep.step_id);
       return;
     }
 
@@ -255,6 +294,30 @@ export default function Progress() {
       console.error("goToNextStep error:", error);
     }
   }, [brewId, stepData, loadStep, router]);
+
+  const goToPreviousStep = useCallback(() => {
+    if (!stepData || allSteps.length === 0) return;
+
+    // Vind index van huidige stap
+    const currentIndex = allSteps.findIndex(
+      (s) => s.step_id === currentStep.current?.step_id
+    );
+
+    if (currentIndex <= 0) {
+      console.log("No previous step available.");
+      return;
+    }
+
+    // Vind de vorige stap
+    const prevStep = allSteps[currentIndex - 1];
+
+    console.log("Going back to previous step:", prevStep);
+    setIsHistoricalStep(true);
+
+    // Herlaad die stap via loadStep
+    loadStep(prevStep.step_id);
+  }, [stepData, allSteps, loadStep]);
+
 
   // To delete brews
   const deleteBrew = useCallback(async () => {
@@ -387,7 +450,7 @@ export default function Progress() {
           </Text>
         )}
 
-        {hasTimer && (
+        {hasTimer && !CompletedStep.current && (
           <Card
             style={{
               marginBlock: 12,
@@ -496,24 +559,61 @@ export default function Progress() {
       <FAB
         testID="fab-button"
         mode="flat"
-        label="Next Step"
+        label={isHistoricalStep ? "Next" : "Next Step"}
         icon={(props) => {
-          return <CheckCheck {...props} size={Math.min(24 * scale, 34)} />;
+          return isHistoricalStep ? (
+            <ChevronRight {...props} size={Math.min(24 * scale, 34)} />
+          ) : (
+            <CheckCheck {...props} size={Math.min(24 * scale, 34)} />
+          );
         }}
         onPress={() => {
-          if (!phaseDone) return;
+          if (!phaseDone && !isHistoricalStep) return;
           goToNextStep();
         }}
-        disabled={!phaseDone}
+        disabled={!phaseDone && !isHistoricalStep}
         color={BASE_COLORS.WHITE}
         style={{
           borderRadius: 30,
-          backgroundColor: !phaseDone
+          backgroundColor: !phaseDone && !isHistoricalStep
             ? BASE_COLORS.STONE200
             : BASE_COLORS.TEXT_DARK,
           position: "absolute",
           bottom: 20,
           right: 20,
+        }}
+        theme={{
+          colors: {
+            onSurfaceDisabled: BASE_COLORS.STONE400,
+          },
+          fonts: {
+            labelLarge: {
+              fontSize: Math.min(16 * scale, 24),
+              fontFamily: FontFamilies.BODY,
+            },
+          },
+        }}
+      />
+      <FAB
+        testID="fab-button"
+        mode="flat"
+        label="Back Step"
+        icon={(props) => {
+          return <ChevronLeft {...props} size={Math.min(24 * scale, 34)} />;
+        }}
+        onPress={() => {
+          goToPreviousStep();
+        }}
+        disabled={!hasPreviousStep}
+        color={BASE_COLORS.WHITE}
+        style={{
+          borderRadius: 30,
+          backgroundColor: !hasPreviousStep 
+            ? BASE_COLORS.STONE200
+            : BASE_COLORS.TEXT_DARK,
+          position: "absolute",
+          bottom: 20,
+          left: 20,
         }}
         theme={{
           colors: {
