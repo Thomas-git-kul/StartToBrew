@@ -16,7 +16,6 @@ const renderWithNavigation = (ui: React.ReactElement) =>
   );
 
 // --- MOCKS VOOR NATIVE MODULES ---
-
 // --- MOCKS VOOR SUPABASE ---
 jest.mock('@/supabase', () => ({
   supabase: {
