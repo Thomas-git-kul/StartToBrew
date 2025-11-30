@@ -13,6 +13,7 @@ import {
 } from "@react-navigation/native";
 
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { ClickCounterProvider } from "@/context/ClickCounterContext";
 import { AppRefreshProvider } from "@/context/AppRefreshContext";
 
 // Diagnostics
@@ -95,7 +96,9 @@ export default function RootLayout() {
           <UserProgressProvider>
             <AppRefreshProvider>
               <FavoritesProvider>
-                <RootInner />
+                <ClickCounterProvider>
+                  <RootInner />
+                </ClickCounterProvider>
               </FavoritesProvider>
             </AppRefreshProvider>
           </UserProgressProvider>

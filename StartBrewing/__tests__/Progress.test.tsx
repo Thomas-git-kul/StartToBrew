@@ -240,6 +240,12 @@ const pushMock = jest.fn();
 const renderWithNavigation = (ui: React.ReactElement) =>
   render(<NavigationContainer>{ui}</NavigationContainer>);
 
+const renderProgress = async () => {
+  const utils = renderWithNavigation(<Progress />);
+  await act(async () => {});
+  return utils;
+};
+
 describe("<Progress />", () => {
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
@@ -248,24 +254,24 @@ describe("<Progress />", () => {
   });
 
   it("Loads and displays step data and calls Supabase", async () => {
-    const { findByText } = renderWithNavigation(<Progress />);
+    const { findByText } = await renderProgress();
     expect(await findByText("black IPA Progress")).toBeTruthy();
     expect(await findByText("60-min Citra")).toBeTruthy();
   });
 
   it("Shows tips", async () => {
-    const { findByText } = renderWithNavigation(<Progress />);
+    const { findByText } = await renderProgress();
     // our mock returns a tip for step 1 (see supabase mock), assert it shows
     expect(await findByText("Use a spoon")).toBeTruthy();
   });
 
   it("shows ingredients", async () => {
-    const { findByText } = renderWithNavigation(<Progress />);
+    const { findByText } = await renderProgress();
     expect(await findByText("• Malt (Hop): 100 g")).toBeTruthy();
   });
 
   it("navigates to the ChatBot through FAB button", async () => {
-    const { findByTestId, findByText } = renderWithNavigation(<Progress />);
+    const { findByTestId, findByText } = await renderProgress();
     
     // Wait for content to load
     await findByText("black IPA Progress");
@@ -277,8 +283,8 @@ describe("<Progress />", () => {
     expect(pushMock).toHaveBeenCalledWith("/ChatBot");
   });
 
-  it("snapshot", () => {
-    const tree = renderWithNavigation(<Progress />).toJSON();
+  it("snapshot", async () => {
+    const tree = (await renderProgress()).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });

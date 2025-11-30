@@ -4,12 +4,6 @@ import { NavigationContainer } from "@react-navigation/native";
 import SpecificRecipe from "../app/(tabs)/SpecificRecipe";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
-// --------------------------
-// Mock expo-router
-// --------------------------
-const pushMock = jest.fn();
-jest.mock("expo-router", () => ({ useRouter: jest.fn() }));
-
 jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
 jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
@@ -23,6 +17,13 @@ jest.mock("@/context/UserProgressContext", () => ({
     levelUp: null,
     acknowledgeLevelUp: jest.fn(),
     refreshProgress: jest.fn(),
+  }),
+}));
+
+jest.mock("@/context/ClickCounterContext", () => ({
+  useClickCounter: () => ({
+    clickCount: 0,
+    increment: jest.fn(),
   }),
 }));
 
@@ -374,8 +375,11 @@ jest.mock("@/context/FavoritesContext", () => ({
    HELPER
 ------------------------------- */
 
-const renderWithNavigation = (ui: React.ReactElement) =>
-  render(<NavigationContainer>{ui}</NavigationContainer>);
+const renderWithNavigation = async (ui: React.ReactElement) => {
+  const utils = render(<NavigationContainer>{ui}</NavigationContainer>);
+  await act(async () => {});
+  return utils;
+};
 
 /* ------------------------------
    TESTS
@@ -387,17 +391,17 @@ describe("<SpecificRecipe />", () => {
   });
 
   it("renders the title of the recipe", async () => {
-    const { findByText } = renderWithNavigation(<SpecificRecipe />);
+    const { findByText } = await renderWithNavigation(<SpecificRecipe />);
     expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
   });
 
   it("show startbrewing button", async () => {
-    const { findByText } = renderWithNavigation(<SpecificRecipe />);
+    const { findByText } = await renderWithNavigation(<SpecificRecipe />);
     expect(await findByText("Start Brewing")).toBeTruthy();
   });
 
   it("it opens the kits modal window when startbrewing is pressed and it routes to progress", async () => {
-    const { findByText, queryByText, getByTestId } = renderWithNavigation(
+    const { findByText, queryByText, getByTestId } = await renderWithNavigation(
       <SpecificRecipe />
     );
     expect(queryByText("Get your StarterKit now!")).toBeNull();
@@ -410,7 +414,7 @@ describe("<SpecificRecipe />", () => {
   });
 
   it("opens review modal and allows to click the stars", async () => {
-    const { findByText, findAllByTestId, queryByText } = renderWithNavigation(
+    const { findByText, findAllByTestId, queryByText } = await renderWithNavigation(
       <SpecificRecipe />
     );
 
@@ -430,8 +434,8 @@ describe("<SpecificRecipe />", () => {
     });
   });
 
-  it("snapshot", () => {
-    const tree = renderWithNavigation(<SpecificRecipe />).toJSON();
+  it("snapshot", async () => {
+    const tree = (await renderWithNavigation(<SpecificRecipe />)).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });
