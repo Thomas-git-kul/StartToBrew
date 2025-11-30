@@ -104,58 +104,47 @@ export default function Auth() {
         backgroundColor: BASE_COLORS.LIGHT_BG,
       }}
     >
-      <ThemedText type="titleBlack" className="text-center mb-10">
-        Welcome to StartToBrew!
-      </ThemedText>
+      <View className="mx-5">
+        <ThemedText type="titleBlack" className="text-center mb-10">Welcome to StartToBrew!</ThemedText>
+        <View className="mb-6">
+          <TextInput
+            placeholder="Email or Username"
+            value={identifier}
+            onChangeText={setIdentifier}
+          />
+          <TextInput
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          {loginError.length > 0 && <ErrorChip text={loginError} />}
+        </View>
 
-      <View className="gap-1 mx-5 mb-6">
-        <TextInput
-          placeholder="Email or Username"
-          value={identifier}
-          onChangeText={setIdentifier}
-        />
-        <TextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        {loginError.length > 0 && <ErrorChip text={loginError} />}
-      </View>
-
-      <View className="items-center gap-2">
-        <Button
-          mode="contained"
-          onPress={signInWithEmail}
-          labelStyle={{
-            fontSize: Math.min(16 * scale, 24),
-            color: BASE_COLORS.WHITE,
-            fontFamily: FontFamilies.BODY,
-          }}
-          style={{
-            borderRadius: 20,
-            backgroundColor: BASE_COLORS.TEXT_DARK,
-            width: "30%",
-          }}
-        >
-          Log In
-        </Button>
-        <Button
-          mode="contained"
-          onPress={() => router.push("../Registration")}
-          labelStyle={{
-            fontSize: Math.min(16 * scale, 24),
-            color: BASE_COLORS.WHITE,
-            fontFamily: FontFamilies.BODY,
-          }}
-          style={{
-            borderRadius: 20,
-            backgroundColor: BASE_COLORS.TEXT_DARK,
-            width: "30%",
-          }}
-        >
-          Sign Up
-        </Button>
+        <View className="flex-row items-center justify-between">
+          <Button
+            mode="text"
+            onPress={() => router.push("../Registration")}
+            labelStyle={{
+              fontSize: Math.min(16 * scale, 24),
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.TEXT_DARK,
+            }}
+          >Sign Up</Button>
+          <Button
+            mode="contained"
+            onPress={signInWithEmail}
+            labelStyle={{
+              fontSize: Math.min(16 * scale, 24),
+              color: BASE_COLORS.WHITE,
+              fontFamily: FontFamilies.BODY,
+            }}
+            style={{
+              borderRadius: 30,
+              backgroundColor: BASE_COLORS.TEXT_DARK,
+            }}
+          >Log In</Button>
+        </View>
       </View>
     </SafeAreaView>
   );
