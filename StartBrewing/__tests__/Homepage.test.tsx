@@ -445,7 +445,7 @@ describe("<HomePage />", () => {
   });
 
   it("toont de in-progress brews in de 'In progress' sectie", async () => {
-    const { findByText, getByText, toJSON } = renderWithNavigation(
+    const { findByText, getByText, toJSON } = await renderWithNavigation(
       <HomePage />
     );
 
