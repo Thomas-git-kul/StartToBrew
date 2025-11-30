@@ -58,7 +58,7 @@ type CompletedBrewWithImage = Brew & {
 };
 
 export default function Account() {
-  useFonts();
+  const fontsLoaded = useFonts();
 
   const [loading, setLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -90,6 +90,12 @@ export default function Account() {
     const parts = src.trim().split(/\s+/).slice(0, 2);
     return parts.map((p) => p[0]?.toUpperCase() ?? "").join("");
   }, [fullName, username]);
+
+  // If fonts are still loading, don't render the component yet.
+  // Tests should mock `useFonts` to return `true` so this short-circuits there.
+  if (fontsLoaded === false) {
+    return null;
+  }
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
