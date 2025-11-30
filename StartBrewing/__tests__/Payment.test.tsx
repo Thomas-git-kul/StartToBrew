@@ -1,128 +1,87 @@
+// __tests__/Payment.test.tsx
+import React from "react";
+import { render, waitFor } from "@testing-library/react-native";
+import { Linking } from "react-native";
 
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
-import PaymentScreen from "../app/Payment";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import * as StripeModule from "../Stripe";
-import { Platform } from "react-native";
-
-/* ------------------------------
-✅ MOCKS
-------------------------------- */
-
-// Use proper types for Jest mocks
-const pushMock = jest.fn() as jest.MockedFunction<() => void>;
-const backMock = jest.fn() as jest.MockedFunction<() => void>;
-
+// Mock expo-router before importing the screen
 jest.mock("expo-router", () => ({
-  useRouter: jest.fn(),
-  useLocalSearchParams: jest.fn(),
+  useRouter: () => ({ back: jest.fn(), replace: jest.fn() }),
+  useLocalSearchParams: () => ({ amount: "12345" }),
 }));
 
-jest.mock("@/hooks/use-fonts", () => ({
-  useFonts: () => true,
-}));
+// Mocks for components and safe-area
+jest.mock("@/components/header", () => {
+  const { Text } = require("react-native");
+  return ({ title }: any) => <Text>{title}</Text>;
+});
 
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
-  return {
-    ThemedText: ({ children, style }: any) => <Text style={style}>{children}</Text>,
-  };
-});
-
-jest.mock("@/components/header", () => {
-  const { View, Text, Pressable } = require("react-native");
-  return ({ title, onIconPress }: any) => (
-    <View>
-      <Text>{title}</Text>
-      <Pressable testID="header-back-button" onPress={onIconPress} />
-    </View>
-  );
+  return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
 });
 
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
   return {
     SafeAreaView: ({ children }: any) => <View>{children}</View>,
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   };
 });
 
-jest.mock("@/constants/Colors", () => ({
-  BASE_COLORS: {
-    WHITE: "#fff",
-    TEXT_DARK: "#000",
-    LIGHT_BG: "#eee",
+// Mock supabase
+jest.mock("@/supabase", () => ({
+  supabase: {
+    auth: { getUser: jest.fn() },
   },
 }));
-jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: { BODY: "System", HEADING: "System" },
-}));
 
-jest.mock("../Stripe", () => ({
-  StripeWrapper: ({ children }: any) => <>{children}</>,
-  createPaymentIntent: jest.fn().mockResolvedValue({ clientSecret: "test_secret" }),
-}));
+import { supabase } from "@/supabase";
+import PaymentScreen from "../app/Payment";
 
-jest.mock("@stripe/react-stripe-js", () => ({
-  Elements: ({ children }: any) => <>{children}</>,
-  CardElement: () => <></>,
-  useStripe: () => ({
-    confirmCardPayment: jest.fn().mockResolvedValue({ paymentIntent: { status: "succeeded" } }),
-  }),
-  useElements: () => ({ getElement: () => ({}) }),
-}));
+jest.spyOn(console, "error").mockImplementation(() => {});
 
-jest.mock("@stripe/stripe-js", () => ({ loadStripe: jest.fn() }));
-
-/* ------------------------------
-✅ TESTS
-------------------------------- */
-
-describe("<PaymentScreen />", () => {
+describe("PaymentScreen", () => {
   beforeEach(() => {
-    // Force web UI to render
-    (Platform as any).OS = "web";
+    jest.resetAllMocks();
 
-    (useRouter as jest.Mock).mockReturnValue({ push: pushMock, back: backMock });
-    (useLocalSearchParams as jest.Mock).mockReturnValue({ amount: "30049" });
-    pushMock.mockClear();
-    backMock.mockClear();
+    // default: user has an email
+    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      data: { user: { email: "test@example.com" } },
+    });
+
+    // mock Linking.openURL
+    jest.spyOn(Linking, "openURL").mockImplementation(jest.fn());
+
+    // default fetch -> returns object with url
+    (global as any).fetch = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ url: "https://checkout.test/session" }),
+    });
   });
 
-  it("renders main titles correctly", async () => {
+  it("renders header and basic UI", () => {
     const { getByText } = render(<PaymentScreen />);
-    await waitFor(() => getByText("Complete Your Purchase"));
-
-    expect(getByText("Complete Your Purchase")).toBeTruthy();
-    expect(getByText("Order Summary")).toBeTruthy();
-    expect(getByText(/Total Amount:/)).toBeTruthy();
-    expect(getByText("Payment Method")).toBeTruthy();
+    expect(getByText("Payment")).toBeTruthy();
   });
 
-  it("navigates back when header back button is pressed", async () => {
-    const { getByTestId } = render(<PaymentScreen />);
-    const backButton = await waitFor(() => getByTestId("header-back-button"));
+  it("initiates payment and opens checkout URL", async () => {
+    render(<PaymentScreen />);
 
-    fireEvent.press(backButton);
-    expect(backMock).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(Linking.openURL).toHaveBeenCalledWith(
+        "https://checkout.test/session"
+      );
+    });
   });
 
-  it("processes payment and shows success screen after Pay Now button is pressed", async () => {
-    const { getByText } = render(<PaymentScreen />);
-    
-    const payButton = await waitFor(() => getByText(/Pay Now/));
-    fireEvent.press(payButton);
+  it("shows error when checkout session creation fails", async () => {
+    // make fetch return no url
+    (global as any).fetch = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({}),
+    });
 
-    await waitFor(() => getByText("Payment Successful!"));
-    expect(getByText("Payment Successful!")).toBeTruthy();
-    expect(getByText("Thank you for your purchase.")).toBeTruthy();
+    const { findByText } = render(<PaymentScreen />);
 
-    const homeButton = getByText("Return to Home");
-    fireEvent.press(homeButton);
-    expect(pushMock).toHaveBeenCalledWith("/");
-  });
-
-  it("matches snapshot", async () => {
-    const tree = render(<PaymentScreen />).toJSON();
-    expect(tree).toMatchSnapshot();
+    const err = await findByText("Failed to create checkout session");
+    expect(err).toBeTruthy();
   });
 });

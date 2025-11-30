@@ -1,5 +1,5 @@
 import "../../global.css";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { analytics, logEvent } from "@/firebase/firebaseConfig";
 
 import { HapticTab } from "@/components/haptic-tab";
@@ -7,22 +7,38 @@ import { BASE_COLORS } from "@/constants/Colors";
 
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// 👉 Lucide icons
 import { Home, Calendar, Handbag, Beer, User } from "lucide-react-native";
+import { supabase } from "@/supabase";
 
 function TabLayout() {
-  // Custom tabBarButton to log analytics event
+  const router = useRouter();
+
   const createTabBarButton = (eventName: string, DefaultButton: any) => {
     const WrappedButton = (props: any) => {
-      const handlePress = (event: any) => {
+      const handlePress = async (event: any) => {
         if (analytics) {
           logEvent(analytics, eventName);
         }
-        if (props.onPress) {
-          props.onPress(event);
+
+        try {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+
+          if (!user) {
+            router.push("/Auth");
+            return;
+          }
+
+          if (props.onPress) {
+            props.onPress(event);
+          }
+        } catch (err: unknown) {
+          console.warn("Tab auth check failed:", err);
+          router.push("/Auth");
         }
       };
+
       return <DefaultButton {...props} onPress={handlePress} />;
     };
 
@@ -36,7 +52,6 @@ function TabLayout() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
       <View className="flex-1 mx-3">
-        {/* Tabs wrapper */}
         <Tabs
           screenOptions={{
             tabBarActiveTintColor: BASE_COLORS.TEXT_DARK,
@@ -50,16 +65,16 @@ function TabLayout() {
             },
           }}
         >
+          {/* HomePage: GEEN auth-guard, wel HapticTab */}
           <Tabs.Screen
             name="HomePage"
             options={{
               tabBarIcon: ({ color }) => <Home color={color} size={28} />,
-              tabBarButton: createTabBarButton(
-                "homepage_tab_pressed",
-                HapticTab
-              ),
+              tabBarButton: (props) => <HapticTab {...props} />,
             }}
           />
+
+          {/* Vanaf hier wél auth-guard */}
           <Tabs.Screen
             name="Agenda"
             options={{
@@ -94,6 +109,8 @@ function TabLayout() {
               ),
             }}
           />
+
+          {/* overige hidden routes ongewijzigd */}
           <Tabs.Screen
             name="progress"
             options={{
@@ -118,6 +135,12 @@ function TabLayout() {
               href: null,
             }}
           />
+          <Tabs.Screen
+            name="ChatBot"
+            options={{
+              href: null,
+            }}
+          />
         </Tabs>
       </View>
     </SafeAreaView>
@@ -125,5 +148,4 @@ function TabLayout() {
 }
 
 TabLayout.displayName = "TabLayout";
-
 export default TabLayout;
