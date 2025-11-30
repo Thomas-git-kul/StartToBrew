@@ -621,7 +621,9 @@ export default function Progress() {
                 return { shouldRepeat: false };
               }}
             >
-              {({ remainingTime }) => (
+              {({ remainingTime }) => {
+                const btnDisabled = phaseDone || isHistoricalStep;
+                return (
                 <View style={{ alignItems: "center" }}>
                   <Text
                     style={{
@@ -636,8 +638,14 @@ export default function Progress() {
                   <Button
                     mode="contained"
                     compact
-                    disabled={phaseDone}
+                    disabled={btnDisabled}
                     onPress={async () => {
+                      // If this is a historical step, ignore timer control (double-guard)
+                      if (isHistoricalStep) {
+                        console.debug("Historical step - timer controls disabled");
+                        return;
+                      }
+
                       const newActive = !timerActive;
 
                       const remainingSecs = remainingTime; // capture timer's current remaining seconds
@@ -698,30 +706,31 @@ export default function Progress() {
                     }}
                     style={{
                       borderRadius: 30,
-                      backgroundColor: !phaseDone
-                        ? BASE_COLORS.TEXT_DARK
-                        : BASE_COLORS.STONE200,
+                      backgroundColor: btnDisabled
+                        ? BASE_COLORS.STONE200
+                        : BASE_COLORS.TEXT_DARK,
                       paddingInline: 8,
                     }}
                   >
                     {timerActive ? (
                       <Pause
                         size={Math.min(18 * scale, 26)}
-                        color={BASE_COLORS.WHITE}
-                        fill={BASE_COLORS.WHITE}
+                        color={btnDisabled ? BASE_COLORS.STONE400 : BASE_COLORS.WHITE}
+                        fill={btnDisabled ? BASE_COLORS.STONE400 : BASE_COLORS.WHITE}
                         strokeWidth={0.5}
                       />
                     ) : (
                       <Play
                         size={Math.min(18 * scale, 26)}
-                        color={BASE_COLORS.WHITE}
-                        fill={BASE_COLORS.WHITE}
+                        color={btnDisabled ? BASE_COLORS.STONE400 : BASE_COLORS.WHITE}
+                        fill={btnDisabled ? BASE_COLORS.STONE400 : BASE_COLORS.WHITE}
                         strokeWidth={1}
                       />
                     )}
                   </Button>
                 </View>
-              )}
+              );
+              }}
             </CountdownCircleTimer>
           </Card>
         )}
