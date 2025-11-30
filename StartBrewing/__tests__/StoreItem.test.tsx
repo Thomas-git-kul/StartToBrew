@@ -37,6 +37,8 @@ jest.mock('../supabase', () => {
 });
 
 import React from "react";
+import TestRenderer from "react-test-renderer";
+const { act } = TestRenderer;
 import { render, fireEvent, waitFor, screen } from "@testing-library/react-native";
 import StoreItem from "../app/(tabs)/StoreItem";
 
@@ -125,7 +127,9 @@ describe("<StoreItem /> minimal test", () => {
     // Wait for the header button to appear
     const headerButton = await screen.findByTestId("mock-header-button");
 
-    fireEvent.press(headerButton);
+    await act(async () => {
+      fireEvent.press(headerButton);
+    });
     // Update expectation to match actual behavior
     expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
   });
@@ -144,14 +148,18 @@ describe("<StoreItem /> minimal test", () => {
     expect(priceText).toBeTruthy();
 
     // Increase quantity
-    fireEvent.press(plusBtn);
+    await act(async () => {
+      fireEvent.press(plusBtn);
+    });
     await waitFor(() => {
       expect(screen.getByDisplayValue("2")).toBeTruthy();
       expect(screen.getByText(/€\s?65[,\.]98/)).toBeTruthy();
     });
 
     // Decrease quantity
-    fireEvent.press(minusBtn);
+    await act(async () => {
+      fireEvent.press(minusBtn);
+    });
     await waitFor(() => {
       expect(screen.getByDisplayValue("1")).toBeTruthy();
       expect(screen.getByText(/€\s?32[,\.]99/)).toBeTruthy();
