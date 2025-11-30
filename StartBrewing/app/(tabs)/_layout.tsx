@@ -3,6 +3,7 @@ import { Tabs, useRouter } from "expo-router";
 import { analytics, logEvent } from "@/firebase/firebaseConfig";
 
 import { HapticTab } from "@/components/haptic-tab";
+import { useClickCounter } from "@/context/ClickCounterContext";
 import { BASE_COLORS } from "@/constants/Colors";
 
 import { View } from "react-native";
@@ -15,12 +16,21 @@ function TabLayout() {
 
   const createTabBarButton = (eventName: string, DefaultButton: any) => {
     const WrappedButton = (props: any) => {
-      const handlePress = async (event: any) => {
-        if (analytics) {
-          logEvent(analytics, eventName);
-        }
+      const { increment } = useClickCounter();
 
+      const handlePress = async (event: any) => {
         try {
+          // increment global click counter for analytics
+          try {
+            await increment("tab_press");
+          } catch (e) {
+            // ignore
+          }
+
+          if (analytics) {
+            logEvent(analytics, eventName);
+          }
+
           const {
             data: { user },
           } = await supabase.auth.getUser();

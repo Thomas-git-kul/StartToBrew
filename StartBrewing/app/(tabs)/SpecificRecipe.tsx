@@ -26,6 +26,7 @@ import { Star, Wheat, Hop } from "lucide-react-native";
 import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
 import { analytics, logEvent } from "@/firebase/firebaseConfig";
+import { useClickCounter } from "@/context/ClickCounterContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import StoreCard from "@/components/ui/StoreCard";
@@ -84,6 +85,7 @@ export default function SpecificRecipe() {
   const [reviewText, setReviewText] = useState("");
   const [kitsVisible, setKitsVisible] = useState(false);
   const [northStarLogged, setNorthStarLogged] = useState(false);
+  const { increment, get, reset } = useClickCounter();
   const { refreshProgress } = useUserProgressContext();
   const { triggerRefresh } = useAppRefresh();
 
@@ -282,7 +284,7 @@ export default function SpecificRecipe() {
     }
   };
 
-  const brewRecipe = async () => {
+  const brewRecipe = async (clicksToFirstBrew?: number) => {
     if (!recipe_slug || !recipe?.name) {
       console.warn("Cannot start brew: missing slug or recipe name.");
       return;
@@ -395,6 +397,9 @@ export default function SpecificRecipe() {
             recipe_slug: recipe_slug,
           };
           if (timeToFirstBrewSeconds != null) params.time_to_first_brew_seconds = timeToFirstBrewSeconds;
+          // get final clicks from counter if not explicitly passed
+          const finalClicks = clicksToFirstBrew != null ? clicksToFirstBrew : get();
+          if (finalClicks != null) params.clicks_to_first_brew = finalClicks;
 
           if (analytics) {
             logEvent(analytics, "north_star_first_brew", params);
@@ -403,6 +408,12 @@ export default function SpecificRecipe() {
             console.log("north_star_first_brew", params);
           }
           setNorthStarLogged(true);
+          // reset the global click counter after successful logging
+          try {
+            await reset();
+          } catch (e) {
+            // ignore
+          }
         } catch (e: any) {
           console.error("Failed to log north-star event:", e?.message ?? e);
         }
@@ -490,42 +501,12 @@ export default function SpecificRecipe() {
       if (userError || !user) {
         return;
       }
-
-      // If we've already logged locally, skip
-      if (northStarLogged) return;
-
-      // Check if the user has any brews already (first-ever check)
-      const { data: previousBrewsAll, error: prevAllError } = await supabase
-        .from("brews")
-        .select("id_brew")
-        .eq("user_id", user.id);
-      if (prevAllError) {
-        console.error("Error checking previous brews (initial press):", prevAllError?.message);
+      // increment the global click counter — do not log here; we only log when brew is created
+      try {
+        await increment("initial_start_press");
+      } catch (e) {
+        // ignore
       }
-      const isFirstEver = (previousBrewsAll?.length || 0) === 0;
-      if (!isFirstEver) return;
-
-      // compute time-to-first-brew using account created_at and now
-      const accountCreatedAt = user.created_at ? new Date(user.created_at) : null;
-      const now = new Date();
-      const timeToFirstBrewSeconds = accountCreatedAt
-        ? Math.max(0, Math.round((now.getTime() - accountCreatedAt.getTime()) / 1000))
-        : null;
-
-      const params: any = {
-        user_id: user.id,
-        // brew_id unknown yet because brew isn't created; set null
-        brew_id: null,
-        recipe_slug: recipe_slug,
-      };
-      if (timeToFirstBrewSeconds != null) params.time_to_first_brew_seconds = timeToFirstBrewSeconds;
-
-      if (analytics) {
-        logEvent(analytics, "north_star_first_brew", params);
-      } else {
-        console.log("north_star_first_brew", params);
-      }
-      setNorthStarLogged(true);
     } catch (e: any) {
       console.error("Error logging north-star on initial start press:", e?.message ?? e);
     }
@@ -994,9 +975,14 @@ export default function SpecificRecipe() {
               mode="flat"
               label="Ready to Start"
               color={BASE_COLORS.WHITE}
-              onPress={() => {
+              onPress={async () => {
+                try {
+                  await increment("modal_ready_start");
+                } catch (e) {
+                  // ignore
+                }
                 setKitsVisible(false);
-                brewRecipe();
+                await brewRecipe();
               }}
               style={{
                 backgroundColor: BASE_COLORS.TEXT_DARK,
