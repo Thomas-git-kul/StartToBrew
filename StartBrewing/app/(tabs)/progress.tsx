@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, ScrollView, Dimensions, ActivityIndicator, Text} from "react-native";
 import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
-import { Pause, Thermometer, Play, CheckCheck, Lightbulb, ChevronLeft, ChevronRight} from "lucide-react-native";
+import { Pause, Thermometer, Play, CheckCheck, Lightbulb, ChevronLeft, ChevronRight, MessageSquare, MessageCircle} from "lucide-react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -111,6 +111,64 @@ export default function Progress() {
         .eq("step_id", brew.last_step_id)
         .single();
 
+      // Load ingredients for current step
+      const ingredientRefsCurrentRes = await supabase
+        .from("step_ingredient_refs")
+        .select("*")
+        .eq("step_id", currentStep.current.step_id);
+      const ingredientRefsCurrent = ingredientRefsCurrentRes.data as { ingredient_id: number; amount_g: number | null }[] | null;
+
+      const currentIngredients: { name: string; kind: string; amount_g: number | null }[] = [];
+      if (ingredientRefsCurrent && ingredientRefsCurrent.length > 0) {
+        const ingredientIds = ingredientRefsCurrent.map((r) => r.ingredient_id);
+
+        const { data: ingRows } = await supabase
+          .from("ingredients")
+          .select("*")
+          .in("ingredient_id", ingredientIds);
+
+        // Combine ingredient + amount into unified objects
+        ingredientRefsCurrent.forEach((ref: { ingredient_id: number; amount_g: number | null }) => {
+          const info = ingRows.find((i: any) => i.ingredient_id === ref.ingredient_id);
+          if (info) {
+            currentIngredients.push({
+              name: info.name,
+              kind: info.kind,
+              amount_g: ref.amount_g,
+            });
+          }
+        });
+      }
+
+      let nextIngredients: { name: string; kind: string; amount_g: number | null }[] = [];
+        if (nextStep) {
+          const ingredientRefsNextRes = await supabase
+            .from("step_ingredient_refs")
+            .select("*")
+            .eq("step_id", nextStep.step_id);
+          const ingredientRefsNext = ingredientRefsNextRes.data as { ingredient_id: number; amount_g: number | null }[] | null;
+
+          if (ingredientRefsNext && ingredientRefsNext.length > 0) {
+            const ingredientIdsNext = ingredientRefsNext.map((r) => r.ingredient_id);
+
+            const { data: ingRowsNext } = await supabase
+              .from("ingredients")
+              .select("*")
+              .in("ingredient_id", ingredientIdsNext);
+
+            ingredientRefsNext.forEach((ref: { ingredient_id: number; amount_g: number | null }) => {
+              const info = ingRowsNext.find((i: any) => i.ingredient_id === ref.ingredient_id);
+              if (info) {
+                nextIngredients.push({
+                  name: info.name,
+                  kind: info.kind,
+                  amount_g: ref.amount_g,
+                });
+              }
+            });
+          }
+        }
+
       // Determine if there is multiple steps
       const nextHasOffset =
         nextStep && nextStep.start_offset_min && nextStep.start_offset_min > 0;
@@ -130,12 +188,14 @@ export default function Progress() {
             desc: currentStep.current.description_md,
             tips: tips?.tip_md ?? null,
             duration_sec: nextStep.start_offset_min ?? 0,
+            ingredients: currentIngredients,
           },
           step2: {
             title: nextStep.title,
             desc: nextStep.description_md,
             tips: tips?.tip_md ?? null,
             duration_sec: nextStep.duration_min ?? 0,
+            ingredients: nextIngredients,
           },
         };
       } else {
@@ -150,6 +210,7 @@ export default function Progress() {
             desc: currentStep.current.description_md,
             tips: tips?.tip_md ?? null,
             duration_sec: currentStep.current.duration_min ?? 0 /* * 60*/,
+            ingredients: currentIngredients,
           },
           step2: null,
         };
@@ -397,6 +458,7 @@ export default function Progress() {
       ? stepData.step1.desc
       : (stepData.step2?.desc ?? stepData.step1.desc);
   const tips = phase === 1 ? stepData.step1.tips : stepData.step2?.tips;
+  const ingredients: { name: string; kind: string; amount_g: number | null }[] = (phase === 1 ? stepData.step1.ingredients : stepData.step2?.ingredients) ?? [];
 
   return (
     <SafeAreaView
@@ -547,16 +609,33 @@ export default function Progress() {
           </Card>
         )}
 
-        <View className="mt-2">
-          {desc?.split(".").map((s: string, i: number) => {
-            const clean = s.trim();
-            if (!clean) return null;
-            return (
-              <ThemedText key={i} type="defaultText" className="mb-2">
-                {clean}.
-              </ThemedText>
-            );
-          })}
+        {(phase === 1 ? stepData.step1.ingredients : stepData.step2?.ingredients)?.length > 0 && (
+          <View>
+            <ThemedText type="subTitle">Ingredients:</ThemedText>
+
+            {(ingredients)
+              .map((ing, idx) => (
+                <View key={idx} className="mt-2 flex-row items-center">
+                  <ThemedText type="defaultText">• {ing.name} ({ing.kind}): {ing.amount_g} g</ThemedText>
+                </View>
+              ))}
+          </View>
+        )}
+
+        <View>
+          <ThemedText type="subTitle">Description:</ThemedText>
+        
+          <View className="mt-2">
+            {desc?.split(".").map((s: string, i: number) => {
+              const clean = s.trim();
+              if (!clean) return null;
+              return (
+                <ThemedText key={i} type="defaultText" className="mb-2">
+                  {clean}.
+                </ThemedText>
+              );
+            })}
+          </View>
         </View>
 
         {tips && (
@@ -628,6 +707,35 @@ export default function Progress() {
           position: "absolute",
           bottom: 20,
           left: 20,
+        }}
+        theme={{
+          colors: {
+            onSurfaceDisabled: BASE_COLORS.STONE400,
+          },
+          fonts: {
+            labelLarge: {
+              fontSize: Math.min(16 * scale, 24),
+              fontFamily: FontFamilies.BODY,
+            },
+          },
+        }}
+      />
+      <FAB
+        testID="chat-button"
+        mode="flat"
+        icon={(props) => {
+          return <MessageCircle {...props} size={Math.min(24 * scale, 34)} />;
+        }}
+        onPress={() => {
+          router.push(`/ChatBot`); 
+        }}
+        color={BASE_COLORS.WHITE}
+        style={{
+          borderRadius: 30,
+          backgroundColor: BASE_COLORS.TEXT_DARK,
+          position: "absolute",
+          bottom: 90,
+          right: 20,
         }}
         theme={{
           colors: {
