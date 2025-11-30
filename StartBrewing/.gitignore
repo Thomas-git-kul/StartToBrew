@@ -33,7 +33,7 @@ yarn-error.*
 # local env files
 .env.development
 .env.production
-.env
+.env 
 # Ignore environment files
 env.development
 env.production
