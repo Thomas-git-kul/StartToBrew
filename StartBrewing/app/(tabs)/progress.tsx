@@ -34,10 +34,10 @@ export default function Progress() {
   const [timerActive, setTimerActive] = useState(false);
   const [phaseDone, setPhaseDone] = useState(false);
   const { refreshProgress } = useUserProgressContext();
-  const [dialogVisible, setDialogVisible] = useState(false);
   const [allSteps, setAllSteps] = useState<any[]>([]);
   const [isHistoricalStep, setIsHistoricalStep] = useState(false);
   const [hasPreviousStep, setHasPreviousStep] = useState(false);
+  const [completedAt, setCompletedAt] = useState<Date | null>(null);
 
   const currentStep = useRef<any>(null);
   let CompletedStep = useRef<boolean>(false);
@@ -102,6 +102,8 @@ export default function Progress() {
         .eq("id_brew", brewId)
         .eq("step_id", currentStep.current.step_id)
         .single();
+      
+      setCompletedAt(brew_steps?.completed_at ? new Date(brew_steps.completed_at) : null);
 
       // Check of we een historische stap bekijken
       const isHistorical = brew_steps.status === "completed" || currentStep.current.status === "in_progress";
@@ -118,7 +120,7 @@ export default function Progress() {
         .from("step_ingredient_refs")
         .select("*")
         .eq("step_id", currentStep.current.step_id);
-      const ingredientRefsCurrent = ingredientRefsCurrentRes.data as { ingredient_id: number; amount_g: number | null }[] | null;
+      const ingredientRefsCurrent = ingredientRefsCurrentRes.data as { ingredient_id: string; amount_g: number | null }[] | null;
 
       const currentIngredients: { name: string; kind: string; amount_g: number | null }[] = [];
       if (ingredientRefsCurrent && ingredientRefsCurrent.length > 0) {
@@ -127,10 +129,10 @@ export default function Progress() {
         const { data: ingRows } = await supabase
           .from("ingredients")
           .select("*")
-          .in("ingredient_id", ingredientIds);
+          .in("ingredient_id", ingredientIds as string[]);
 
         // Combine ingredient + amount into unified objects
-        ingredientRefsCurrent.forEach((ref: { ingredient_id: number; amount_g: number | null }) => {
+        ingredientRefsCurrent.forEach((ref: { ingredient_id: String; amount_g: number | null }) => {
           const info = ingRows.find((i: any) => i.ingredient_id === ref.ingredient_id);
           if (info) {
             currentIngredients.push({
@@ -148,7 +150,7 @@ export default function Progress() {
             .from("step_ingredient_refs")
             .select("*")
             .eq("step_id", nextStep.step_id);
-          const ingredientRefsNext = ingredientRefsNextRes.data as { ingredient_id: number; amount_g: number | null }[] | null;
+          const ingredientRefsNext = ingredientRefsNextRes.data as { ingredient_id: string; amount_g: number | null }[] | null;
 
           if (ingredientRefsNext && ingredientRefsNext.length > 0) {
             const ingredientIdsNext = ingredientRefsNext.map((r) => r.ingredient_id);
@@ -158,7 +160,7 @@ export default function Progress() {
               .select("*")
               .in("ingredient_id", ingredientIdsNext);
 
-            ingredientRefsNext.forEach((ref: { ingredient_id: number; amount_g: number | null }) => {
+            ingredientRefsNext.forEach((ref: { ingredient_id: String; amount_g: number | null }) => {
               const info = ingRowsNext.find((i: any) => i.ingredient_id === ref.ingredient_id);
               if (info) {
                 nextIngredients.push({
@@ -394,32 +396,6 @@ export default function Progress() {
     loadStep(prevStep.step_id);
   }, [stepData, allSteps, loadStep]);
 
-
-  // To delete brews
-  const deleteBrew = useCallback(async () => {
-    if (!brewId) return;
-
-    try {
-      // Delete brew_steps first (FK constraint)
-      await supabase.from("brew_steps").delete().eq("id_brew", brewId);
-
-      // Delete the brew
-      await supabase.from("brews").delete().eq("id_brew", brewId);
-
-      router.push("/HomePage");
-    } catch (error) {
-      console.error("deleteBrew error:", error);
-    }
-  }, [brewId, router]);
-
-  const showDialog = () => setDialogVisible(true);
-  const hideDialog = () => setDialogVisible(false);
-
-  const confirmDeleteBrew = () => {
-    hideDialog();
-    deleteBrew();
-  };
-
   if (loading) {
     return (
       <SafeAreaView
@@ -472,10 +448,11 @@ export default function Progress() {
         iconNameLeft="ArrowLeft"
         onIconPressLeft={() => router.back()}
       />
-        <View style={{paddingBottom: 12}}>
-            {(() => {
-              const isCompleted = isHistoricalStep || phaseDone;
-              return (
+        <View style={{ paddingBottom: 12 }}>
+          {(() => {
+            const isCompleted = isHistoricalStep || phaseDone;
+            return (
+              <>
                 <Stepper
                   step={allSteps.findIndex(s => s.step_id === currentStep.current?.step_id) + 1}
                   total={allSteps.length}
@@ -486,8 +463,17 @@ export default function Progress() {
                   }}
                   onPrev={goToPreviousStep}
                 />
-              );
-            })()}
+
+                {/* Only show completion date for historical steps */}
+                {isHistoricalStep && completedAt && (
+                  <ThemedText type="subTitle" className="mt-2 ml-3">
+                    Completed on:{" "}
+                    {completedAt.toLocaleDateString()} at {completedAt.toLocaleTimeString()}
+                  </ThemedText>
+                )}
+              </>
+            );
+          })()}
         </View>
       <ScrollView
         className="px-3"
@@ -550,7 +536,8 @@ export default function Progress() {
         {hasTimer && !CompletedStep.current && (
           <Card
             style={{
-              marginBlock: 12,
+              marginTop: 8,
+              marginBottom: 24,
               padding: 16,
               borderRadius: 8,
               backgroundColor: BASE_COLORS.WHITE,
@@ -631,9 +618,8 @@ export default function Progress() {
         )}
 
         {(phase === 1 ? stepData.step1.ingredients : stepData.step2?.ingredients)?.length > 0 && (
-          <View>
+          <View className="mb-4">
             <ThemedText type="subTitle">Ingredients:</ThemedText>
-
             {(ingredients)
               .map((ing, idx) => (
                 <View key={idx} className="flex-row items-center">
@@ -643,7 +629,8 @@ export default function Progress() {
           </View>
         )}
 
-        <View>        
+        <View>  
+          <ThemedText type="subTitle">Description:</ThemedText>      
           <View className="mb-2">
             {desc?.split(".").map((s: string, i: number) => {
               const clean = s.trim();
@@ -658,19 +645,14 @@ export default function Progress() {
         </View>
 
         {tips && (
-          <Chip
-            mode="flat"
-            icon={() => (<Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />)}
-            style={{
-              backgroundColor: "transparent",
-              flex: 1,
-              flexWrap: "wrap"
-            }}
-          >
-            <ThemedText type="tips">
-              {tips}
+          <View className="mt-2 flex-row items-start gap-4">
+            <View>
+              <Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />
+            </View>
+            <ThemedText type="tips" style={{ marginTop: -34 }}>
+              {tips ?? "No tips available."}
             </ThemedText>
-          </Chip>
+          </View>
         )}
       </ScrollView>
       {/*

@@ -24,7 +24,7 @@ export default function Stepper({ step, total, onNext, onPrev, isCompleted = fal
         labelStyle={{
             fontSize: 16,
             fontFamily: FontFamilies.BODY,
-            color: BASE_COLORS.STONE600,
+            color: step <= 1 ? BASE_COLORS.STONE300 : BASE_COLORS.STONE600,
         }}
       >
         <View className="flex-row items-center justify-content"
@@ -50,19 +50,24 @@ export default function Stepper({ step, total, onNext, onPrev, isCompleted = fal
 
       {/* Next */}
       <Button
-        mode="contained"
+        mode="text"
         onPress={onNext}
         disabled={!isCompleted || step >= total}
         labelStyle={{
           fontSize: 16,
-          color: BASE_COLORS.WHITE,
           fontFamily: FontFamilies.BODY,
+          color: isCompleted ? BASE_COLORS.STONE600 : BASE_COLORS.STONE300,
         }}
-        style={{
-          borderRadius: 30,
-          backgroundColor: isCompleted ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200,
-        }}
-      >Next</Button>
+      >
+        <View className="flex-row items-center justify-content"
+          style={{
+            marginRight: -8,
+          }}
+        >
+          <Text>Next</Text>
+          <ChevronRight/>
+        </View>
+      </Button>
     </View>
   );
 }
