@@ -1,4 +1,5 @@
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { NavigationContainer } from "@react-navigation/native";
 
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock")
@@ -39,10 +40,13 @@ jest.mock("@/components/themed-text", () => {
 
 jest.mock("@/components/header", () => {
   const { View, Text, TouchableOpacity } = require("react-native");
-  return ({ title, onIconPress }: any) => (
+  return ({ title, onIconPress, onIconPressLeft }: any) => (
     <View>
       <TouchableOpacity onPress={onIconPress}>
         <Text>ArrowRight</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={onIconPressLeft}>
+        <Text>Settings</Text>
       </TouchableOpacity>
       <Text>{title}</Text>
     </View>
@@ -53,6 +57,36 @@ jest.mock("@/components/header", () => {
 jest.mock("expo-image", () => {
   const { Text } = require("react-native");
   return { Image: () => <Text>image-placeholder</Text> };
+});
+
+// mock react-native-paper to avoid needing Provider in tests
+jest.mock("react-native-paper", () => {
+  const React = require("react");
+  const { View, Text, TouchableOpacity } = require("react-native");
+
+  const Avatar = {
+    Image: (props: any) => React.createElement(View, props, React.createElement(Text, null, "avatar-image")),
+    Text: (props: any) => React.createElement(View, props, React.createElement(Text, null, props.label ?? "avatar-text")),
+  };
+
+  const Dialog = (props: any) => React.createElement(View, props, props.children);
+  Dialog.Title = (props: any) => React.createElement(Text, props, props.children);
+  Dialog.Content = (props: any) => React.createElement(View, props, props.children);
+  Dialog.Actions = (props: any) => React.createElement(View, props, props.children);
+
+  return {
+    Portal: ({ children }: any) => <>{children}</>,
+    Modal: ({ visible, children }: any) => (visible ? <View>{children}</View> : null),
+    ActivityIndicator: () => <View />,
+    Card: ({ children, ...rest }: any) => React.createElement(View, rest, children),
+    Dialog,
+    Button: ({ onPress, children }: any) => (
+      <TouchableOpacity onPress={onPress}>
+        <Text>{children}</Text>
+      </TouchableOpacity>
+    ),
+    Avatar,
+  };
 });
 
 // router mocks
@@ -192,35 +226,39 @@ jest.mock("@/supabase", () => {
 // component NA de mocks importeren
 import Account from "@/app/(tabs)/Account";
 
+const renderWithNavigation = (ui: React.ReactElement) => {
+  return render(<NavigationContainer>{ui}</NavigationContainer>);
+};
+
 describe("<Account />", () => {
   test("renders profile data + badges section + completed brews", async () => {
-    const { getByText } = render(<Account />);
+    const { getByText } = renderWithNavigation(<Account />);
 
     // profiel
     await waitFor(() => {
       expect(getByText("Test User")).toBeTruthy();
-      expect(getByText("@testuser")).toBeTruthy();
+      expect(getByText("testuser")).toBeTruthy();
     });
 
     // badges sectie
     await waitFor(() => {
       expect(getByText("Badges")).toBeTruthy();
-      expect(getByText("Your badges")).toBeTruthy();
+      expect(getByText("Earned badges")).toBeTruthy();
     });
 
     // completed brews (op basis van RPC-mock)
     await waitFor(() => {
-      expect(getByText("Completed brews")).toBeTruthy();
+      expect(getByText("Completed")).toBeTruthy();
       expect(getByText("My Finished Brew")).toBeTruthy();
     });
   });
 
   test("navigates to account edit", async () => {
-    const { getByText } = render(<Account />);
+    const { getByText } = renderWithNavigation(<Account />);
 
-    await waitFor(() => getByText("Change profile"));
+    await waitFor(() => getByText("Settings"));
 
-    fireEvent.press(getByText("Change profile"));
+    fireEvent.press(getByText("Settings"));
 
     expect(mockPush).toHaveBeenCalledWith("/AccountEdit");
   });

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Dimensions } from "react-native";
+import { View, Pressable, ActivityIndicator, Alert, ScrollView, Dimensions } from "react-native";
 import { Avatar, Button, Paragraph } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { ThemedText } from "@/components/themed-text";
@@ -14,7 +14,7 @@ import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
 import TextInput from "@/components/textInput";
 import ErrorChip from "@/components/errorChip";
-import Dialog from "@/components/dialog"
+import Dialog from "@/components/dialog";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -148,6 +148,9 @@ export default function EditAccount() {
     }
 
     try {
+      // show the selected image immediately for instant feedback
+      setAvatarUrl(asset.uri);
+
       const url = await updateAvatar({
         userId,
         fileUri: asset.uri,
@@ -155,7 +158,8 @@ export default function EditAccount() {
         maxWidth: 512,
         maxHeight: 512,
       });
-      if (url) setAvatarUrl(url);
+      // append a cache-busting query param so the uploaded image is fetched fresh
+      if (url) setAvatarUrl(`${url}?v=${Date.now()}`);
     } catch (err: any) {
       Alert.alert("Upload failed", err.message ?? "Unknown Error");
     }
@@ -262,28 +266,31 @@ export default function EditAccount() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
+    <SafeAreaView 
+      className="flex-1"
+      style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
-          title="Edit profile"
-        />
-
+        title="Edit profile"
+      />
       <ScrollView
-      className="flex-1, mx-3"
-        style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}
+        className="flex-1, mx-3"
+        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
+        <Pressable
           onPress={onChangeAvatar}
-          activeOpacity={0.3}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           {avatarUrl ? (
             <Avatar.Image
               source={{ uri: avatarUrl || "" }}
               size={Math.min(90 * scale, 300)}
-              style={{
+              style={{ 
                 backgroundColor: BASE_COLORS.LIGHT_BG,
+                overflow: "hidden",
+                borderWidth: 1,
+                borderColor: BASE_COLORS.STONE300 
               }}
               onError={() => setAvatarUrl(null)}
             />
@@ -300,7 +307,7 @@ export default function EditAccount() {
               }}
             />
           )}
-        </TouchableOpacity>
+        </Pressable>
         <ThemedText type="tips" style={{color: BASE_COLORS.STONE400}} className="mb-5">Tap to change</ThemedText>
 
         <ThemedText type="subTitle" className="mb-1">Update personal information</ThemedText>
