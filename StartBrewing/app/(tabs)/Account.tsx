@@ -488,7 +488,7 @@ export default function Account() {
             </View>
           </View>
           {!!bio && (
-            <ThemedText type="defaultText" style={{color: BASE_COLORS.STONE500}} numberOfLines={4} className="mb-8">{bio}</ThemedText>
+            <ThemedText type="defaultText" style={{color: BASE_COLORS.STONE500}} className="mb-8">{bio}</ThemedText>
           )}
 
           {/* Statistieken 
@@ -551,7 +551,7 @@ export default function Account() {
 
           {/* Completed brews */}
           <View className="flex-row justify-between">
-            <ThemedText type="title">Completed</ThemedText>
+            <ThemedText type="title">Completed brews</ThemedText>
             {completedBrewsCount > 3 && (
               <Button
                 mode="text"
@@ -561,7 +561,7 @@ export default function Account() {
                   fontFamily: FontFamilies.BODY,
                   color: BASE_COLORS.TEXT_DARK,
                 }}
-              >{showAllBadges ? "See less" : "See more"}</Button>
+              >{showAllBrews ? "See less" : "See more"}</Button>
             )}
           </View>
           <View>

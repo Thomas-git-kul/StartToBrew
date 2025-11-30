@@ -39,7 +39,6 @@ export default function StatisticsCard({
             fontFamily: FontFamilies.BODY,
             fontSize: Math.min(14 * scale, 26),
             color: BASE_COLORS.STONE900,
-            marginBottom: 4
           }}
         >{title}</Text>
         <Text
