@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, ScrollView, Dimensions, ActivityIndicator, Text, Pressable } from "react-native";
 import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
-import { Pause, Thermometer, Play, CheckCheck, Lightbulb, ChevronLeft, ChevronRight, MessageSquare, MessageCircle} from "lucide-react-native";
+import { Pause, BotMessageSquare, Thermometer, Play, CheckCheck, Lightbulb, ChevronLeft, ChevronRight, MessageSquare, MessageCircle} from "lucide-react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -472,21 +472,28 @@ export default function Progress() {
         iconNameLeft="ArrowLeft"
         onIconPressLeft={() => router.back()}
       />
+        <View style={{paddingBottom: 12}}>
+            {(() => {
+              const isCompleted = isHistoricalStep || phaseDone;
+              return (
+                <Stepper
+                  step={allSteps.findIndex(s => s.step_id === currentStep.current?.step_id) + 1}
+                  total={allSteps.length}
+                  isCompleted={isCompleted}
+                  onNext={() => {
+                    if (!phaseDone && !isHistoricalStep) return;
+                    goToNextStep();
+                  }}
+                  onPrev={goToPreviousStep}
+                />
+              );
+            })()}
+        </View>
       <ScrollView
         className="px-3"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 85 }}
+        contentContainerStyle={{ paddingBottom: 85, }}
       >
-        <Stepper
-          step={allSteps.findIndex(s => s.step_id === currentStep.current?.step_id) + 1}
-          total={allSteps.length}
-          onNext={() => {
-            if (!phaseDone && !isHistoricalStep) return;
-            goToNextStep();
-          }}
-          onPrev={goToPreviousStep}
-        />
-
         <View className="flex-row justify-between items-center">
           <ThemedText type="title"
           /*
@@ -742,27 +749,21 @@ export default function Progress() {
       <FAB
         testID="chat-button"
         mode="flat"
-        icon={(props) => <MessageCircle size={props.size} strokeWidth={0} color={props.color} fill={props.color}/>}
+        icon={(props) => <BotMessageSquare size={props.size} color={BASE_COLORS.WHITE}/>}
         onPress={() => {
           router.push(`/ChatBot`); 
         }}
         color={BASE_COLORS.WHITE}
         style={{
-          borderRadius: 30,
-          backgroundColor: BASE_COLORS.TEXT_DARK,
           position: "absolute",
-          bottom: 90,
-          right: 20,
+          right: 10,
+          bottom: 25,
+          backgroundColor: BASE_COLORS.TEXT_DARK,
+          borderRadius: 45,
         }}
         theme={{
           colors: {
             onSurfaceDisabled: BASE_COLORS.STONE400,
-          },
-          fonts: {
-            labelLarge: {
-              fontSize: Math.min(16 * scale, 24),
-              fontFamily: FontFamilies.BODY,
-            },
           },
         }}
       />

@@ -10,13 +10,12 @@ interface StepperProps {
   total: number;
   onNext: () => void;
   onPrev: () => void;
+  isCompleted?: boolean;
 }
 
-export default function Stepper({ step, total, onNext, onPrev }: StepperProps) {
+export default function Stepper({ step, total, onNext, onPrev, isCompleted = false }: StepperProps) {
   return (
-    <View className="flex-row items-center justify-between"
-    
-    >
+    <View className="flex-row items-center justify-between">
       {/* Previous */}
       <Button
         mode="text"
@@ -27,13 +26,22 @@ export default function Stepper({ step, total, onNext, onPrev }: StepperProps) {
             fontFamily: FontFamilies.BODY,
             color: BASE_COLORS.STONE600,
         }}
-      >Previous</Button>
+      >
+        <View className="flex-row items-center justify-content"
+          style={{
+            marginLeft: -8,
+          }}
+        >
+          <ChevronLeft/>
+          <Text>Previous</Text>
+        </View>
+      </Button>
 
       {/* Step Display */}
       <Text
         style={{
           fontSize: 16,
-          fontFamily: FontFamilies.BODY_BOLD,
+          fontFamily: isCompleted ? FontFamilies.BODY : FontFamilies.BODY_BOLD,
           color: BASE_COLORS.STONE600,
         }}
       >
@@ -44,7 +52,7 @@ export default function Stepper({ step, total, onNext, onPrev }: StepperProps) {
       <Button
         mode="contained"
         onPress={onNext}
-        disabled={step >= total}
+        disabled={!isCompleted || step >= total}
         labelStyle={{
           fontSize: 16,
           color: BASE_COLORS.WHITE,
@@ -52,7 +60,7 @@ export default function Stepper({ step, total, onNext, onPrev }: StepperProps) {
         }}
         style={{
           borderRadius: 30,
-          backgroundColor: BASE_COLORS.TEXT_DARK,
+          backgroundColor: isCompleted ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200,
         }}
       >Next</Button>
     </View>
