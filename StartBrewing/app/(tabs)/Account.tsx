@@ -537,15 +537,21 @@ export default function Account() {
           ) : (
             <View className="grid grid-cols-3 gap-2 mb-8">
               {(showAllBadges ? badges : badges.slice(0, 3)).map((badge) => (
-                <Badge
-                  key={badge.id_badge}
-                  id_badge={badge.id_badge}
-                  icon_url={badge.icon_url}
-                  onPress={() => {
-                    setSelectedBadge(badge);
-                    setBadgeModalVisible(true);
-                  }}
-                />
+                <View key={badge.id_badge} style={{ alignItems: "center" }}>
+                  <Badge
+                    id_badge={badge.id_badge}
+                    icon_url={badge.icon_url}
+                    onPress={() => {
+                      setSelectedBadge(badge);
+                      setBadgeModalVisible(true);
+                    }}
+                  />
+                  {!!badge.name && (
+                    <ThemedText type="defaultText" style={{ marginTop: 4 }}>
+                      {badge.name}
+                    </ThemedText>
+                  )}
+                </View>
               ))}
             </View>
           )}
