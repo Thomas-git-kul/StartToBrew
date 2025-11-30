@@ -204,6 +204,26 @@ jest.mock("@/supabase", () => {
           delete: () => ({ eq: async () => ({ data: [], error: null }) }),
         };
 
+      case "step_ingredient_refs":
+        return {
+          select: () => ({
+            eq: () => ({
+              data: [{ ingredient_id: 1, amount_g: 100 }],
+              error: null,
+            }),
+          }),
+        };
+
+      case "ingredients":
+        return {
+          select: () => ({
+            in: () => ({
+              data: [{ ingredient_id: 1, name: "Malt", kind: "Hop" }],
+              error: null,
+            }),
+          }),
+        };
+
       default:
         return {
           select: () => ({ eq: async () => ({ data: [], error: null }) }),
@@ -227,16 +247,34 @@ describe("<Progress />", () => {
     jest.clearAllMocks();
   });
 
-  it("laadt en toont stapgegevens en roept Supabase aan", async () => {
+  it("Loads and displays step data and calls Supabase", async () => {
     const { findByText } = renderWithNavigation(<Progress />);
     expect(await findByText("black IPA Progress")).toBeTruthy();
     expect(await findByText("60-min Citra")).toBeTruthy();
   });
 
-  it("toont tips", async () => {
+  it("Shows tips", async () => {
     const { findByText } = renderWithNavigation(<Progress />);
     // our mock returns a tip for step 1 (see supabase mock), assert it shows
     expect(await findByText("Use a spoon")).toBeTruthy();
+  });
+
+  it("shows ingredients", async () => {
+    const { findByText } = renderWithNavigation(<Progress />);
+    expect(await findByText("• Malt (Hop): 100 g")).toBeTruthy();
+  });
+
+  it("navigates to the ChatBot through FAB button", async () => {
+    const { findByTestId, findByText } = renderWithNavigation(<Progress />);
+    
+    // Wait for content to load
+    await findByText("black IPA Progress");
+
+    const chatFab = await findByTestId("chat-button");
+
+    await act(async () => fireEvent.press(chatFab));
+
+    expect(pushMock).toHaveBeenCalledWith("/ChatBot");
   });
 
   it("snapshot", () => {
