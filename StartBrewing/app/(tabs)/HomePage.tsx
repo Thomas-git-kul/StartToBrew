@@ -55,7 +55,7 @@ function HomePageContent() {
       try {
         const {
           data: { user },
-        } = await supabase.auth.getUser(); // user is hier correct getypt
+        } = await supabase.auth.getUser();
 
         if (!user) {
           router.push("/Auth");
@@ -74,7 +74,7 @@ function HomePageContent() {
       let mounted = true;
 
       const fetchPopularRecipes = async (
-        ratingWeight = 0.8, //pas deze waardes aan om de weging van popular recipes te veranderen
+        ratingWeight = 0.8,
         reviewWeight = 0.2,
         reviewScale = 20
       ) => {
@@ -378,19 +378,18 @@ function HomePageContent() {
 
       {/* Floating Action Button */}
       <FAB
-        icon={(props) => <Plus size={props.size} color={props.color} />}
+        mode="flat"
+        icon={(props) => <Plus size={props.size} strokeWidth={3} color={props.color} />}
         testID="fab"
         style={{
           position: "absolute",
           right: 10,
           bottom: 25,
           backgroundColor: BASE_COLORS.TEXT_DARK,
-          borderRadius: 20,
+          borderRadius: 45,
         }}
         color={BASE_COLORS.WHITE}
         onPress={withAuthGuard(() => router.push("/Recipes"))}
-        mode="elevated"
-        size="medium"
       />
     </View>
   );

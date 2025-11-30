@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, ScrollView, Dimensions, ActivityIndicator, Text} from "react-native";
+import { View, ScrollView, Dimensions, ActivityIndicator, Text, Pressable } from "react-native";
 import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
 import { Pause, Thermometer, Play, CheckCheck, Lightbulb, ChevronLeft, ChevronRight, MessageSquare, MessageCircle} from "lucide-react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
@@ -13,6 +13,8 @@ import { supabase } from "@/supabase";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useUserProgressContext } from "@/context/UserProgressContext";
 import DialogCustom from "@/components/dialog";
+import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
+import Stepper from "@/components/Stepper"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -283,7 +285,6 @@ export default function Progress() {
     }
 
     if (isHistoricalStep) {
-      // Alleen terug naar volgende stap zonder DB updates
       loadStep(nextStep.step_id);
       return;
     }
@@ -466,41 +467,52 @@ export default function Progress() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
       <Header
-        title={"Progress"}
-        iconName="Trash"
-        onIconPress={showDialog}
+        title={stepData.beer}
+        actionTestIDLeft="back-header"
+        iconNameLeft="ArrowLeft"
+        onIconPressLeft={() => router.back()}
       />
       <ScrollView
         className="px-3"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 85 }}
       >
-        <ThemedText type="title" className="mb-2">
-          {stepData.beer}
-        </ThemedText>
+        <Stepper
+          step={allSteps.findIndex(s => s.step_id === currentStep.current?.step_id) + 1}
+          total={allSteps.length}
+          onNext={() => {
+            if (!phaseDone && !isHistoricalStep) return;
+            goToNextStep();
+          }}
+          onPrev={goToPreviousStep}
+        />
+
         <View className="flex-row justify-between items-center">
-          <Text
+          <ThemedText type="title"
+          /*
             style={{
               fontSize: Math.min(18 * scale, 26),
               fontFamily: FontFamilies.BODY,
               color: BASE_COLORS.STONE700,
             }}
-          >
-            {title}
-          </Text>
+          */
+          >{title}</ThemedText>
           {hasTemp && (
             <Chip
               style={{
-                alignItems: "center",
+                alignItems: "flex-start",
                 backgroundColor: BASE_COLORS.WHITE,
                 shadowColor: BASE_COLORS.STONE700,
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.07,
+                paddingVertical: 4,
+                paddingHorizontal: 8,
               }}
               textStyle={{
                 fontSize: Math.min(17 * scale, 26),
                 color: BASE_COLORS.STONE500,
                 fontFamily: FontFamilies.BODY,
+                flexWrap: 'wrap',
               }}
               icon={(props) => (
                 <Thermometer
@@ -510,7 +522,9 @@ export default function Progress() {
                   fill={BASE_COLORS.AMBER600}
                 />
               )}
-            >{`${stepData.temp}°C`}</Chip>
+            >
+              <Text style={{ flexWrap: 'wrap' }}>{`${stepData.temp}°C`}</Text>
+            </Chip>
           )}
         </View>
         {stepData.mode === "two" && phase === 1 && (
@@ -615,17 +629,15 @@ export default function Progress() {
 
             {(ingredients)
               .map((ing, idx) => (
-                <View key={idx} className="mt-2 flex-row items-center">
+                <View key={idx} className="flex-row items-center">
                   <ThemedText type="defaultText">• {ing.name} ({ing.kind}): {ing.amount_g} g</ThemedText>
                 </View>
               ))}
           </View>
         )}
 
-        <View>
-          <ThemedText type="subTitle">Description:</ThemedText>
-        
-          <View className="mt-2">
+        <View>        
+          <View className="mb-2">
             {desc?.split(".").map((s: string, i: number) => {
               const clean = s.trim();
               if (!clean) return null;
@@ -639,16 +651,22 @@ export default function Progress() {
         </View>
 
         {tips && (
-          <View className="mt-2 flex-row items-start">
-            <Lightbulb
-              size={Math.min(30 * scale, 50)}
-              color={BASE_COLORS.ACCENT_LIGHT}
-              className="mr-2"
-            />
-            <ThemedText type="tips">{tips}</ThemedText>
-          </View>
+          <Chip
+            mode="flat"
+            icon={() => (<Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />)}
+            style={{
+              backgroundColor: "transparent",
+              flex: 1,
+              flexWrap: "wrap"
+            }}
+          >
+            <ThemedText type="tips">
+              {tips}
+            </ThemedText>
+          </Chip>
         )}
       </ScrollView>
+      {/*
       <FAB
         testID="fab-button"
         mode="flat"
@@ -720,12 +738,11 @@ export default function Progress() {
           },
         }}
       />
+      */}
       <FAB
         testID="chat-button"
         mode="flat"
-        icon={(props) => {
-          return <MessageCircle {...props} size={Math.min(24 * scale, 34)} />;
-        }}
+        icon={(props) => <MessageCircle size={props.size} strokeWidth={0} color={props.color} fill={props.color}/>}
         onPress={() => {
           router.push(`/ChatBot`); 
         }}
@@ -748,16 +765,6 @@ export default function Progress() {
             },
           },
         }}
-      />
-      <DialogCustom
-        title="Confirm Brew Deletion"
-        text={`Are you sure you want to delete \"${stepData?.beer}\" brew?`}
-        visible={dialogVisible}
-        onDismiss={hideDialog}
-        cancelBtn="Cancel"
-        yesBtn="Delete"
-        onPressCancel={hideDialog}
-        onPressYes={confirmDeleteBrew}
       />
     </SafeAreaView>
   );

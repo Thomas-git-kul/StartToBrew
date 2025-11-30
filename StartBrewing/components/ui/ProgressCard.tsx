@@ -8,9 +8,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
-const IMAGE_WIDTH = Math.min(120, SCREEN_WIDTH * 0.20);
-const IMAGE_HEIGHT = IMAGE_WIDTH * 1.5;
-
 interface ProgressCardProps {
   title: string;
   progress: number;
@@ -64,9 +61,13 @@ return (
         <ProgressBar
             progress={progress}
             color={BASE_COLORS.ACCENT_PRIMARY}
+            fillStyle={{
+              borderRadius: 6,
+            }}
             style={{
-                height: Math.min(10 * scale, 12),
-                borderRadius: 6,
+              height: Math.min(10 * scale, 12),
+              borderRadius: 6,
+              backgroundColor: BASE_COLORS.STONE100
             }}
         />
       </View>
