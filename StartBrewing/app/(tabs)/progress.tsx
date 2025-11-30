@@ -291,10 +291,100 @@ export default function Progress() {
     phaseRef.current = phase;
   }, [phase]);
 
+  const handlePlay = useCallback(async (remainingSecs: number) => {
+    if (!brewId || !currentStep.current?.step_id) {
+      console.error("Missing brewId or current step when starting timer", { brewId, step: currentStep.current });
+      return;
+    }
+
+    try {
+      const { data: upData, error: upErr } = await supabase
+        .from("brew_steps")
+        .update({
+          completed_at: new Date().toISOString(),
+          time_left: remainingSecs,
+          status: "in_progress",
+        })
+        .eq("id_brew", brewId)
+        .eq("step_id", currentStep.current.step_id)
+        .select();
+
+      if (upErr) {
+        console.error("Supabase update error (start)", upErr);
+      } else {
+        console.debug("Supabase update success (start)", upData);
+        setCompletedAt(new Date(upData?.[0]?.completed_at ?? new Date().toISOString()));
+      }
+    } catch (e) {
+      console.error("Failed to persist timer start state", e);
+    }
+
+    setTimerActive(true);
+  }, [brewId]);
+
+  const handlePause = useCallback(async (remainingSecs: number) => {
+    if (!brewId || !currentStep.current?.step_id) {
+      console.error("Missing brewId or current step when pausing timer", { brewId, step: currentStep.current });
+      return;
+    }
+
+    try {
+      const { data: upData, error: upErr } = await supabase
+        .from("brew_steps")
+        .update({
+          completed_at: null,
+          time_left: remainingSecs,
+          status: "in_progress",
+        })
+        .eq("id_brew", brewId)
+        .eq("step_id", currentStep.current.step_id)
+        .select();
+
+      if (upErr) {
+        console.error("Supabase update error (pause)", upErr);
+      } else {
+        console.debug("Supabase update success (pause)", upData);
+        setCompletedAt(null);
+      }
+    } catch (e) {
+      console.error("Failed to persist timer pause state", e);
+    }
+
+    setTimerActive(false);
+  }, [brewId]);
+
   const durationSec =
     phase === 1
       ? (stepData?.step1?.duration_sec ?? 0)
       : (stepData?.step2?.duration_sec ?? 0);
+
+  const handleComplete = useCallback((totalElapsedTime: number) => {
+    // Persist completion in background and update UI synchronously
+    (async () => {
+      try {
+        await supabase
+          .from("brew_steps")
+          .update({
+            time_left: null,
+            status: "completed",
+            completed_at: new Date().toISOString(),
+          })
+          .eq("id_brew", brewId)
+          .eq("step_id", currentStep.current.step_id);
+      } catch (e) {
+        console.error("Failed to persist completion", e);
+      }
+    })();
+
+    if (stepData?.mode === "two" && phase === 1) {
+      setTimerActive(false);
+      setPhase(2);
+      return { shouldRepeat: false };
+    }
+    setPhaseDone(true);
+    setTimerActive(false);
+    return { shouldRepeat: false };
+  }, [brewId, stepData, phase]);
 
   const hasTimer = durationSec > 0;
   const hasTemp = stepData?.temp != null;
@@ -512,7 +602,7 @@ export default function Progress() {
       <ScrollView
         className="px-3"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 85, }}
+        contentContainerStyle={{ paddingBottom: 95 }}
       >
         <View className="flex-row justify-between items-center">
           <ThemedText type="title"
@@ -593,33 +683,7 @@ export default function Progress() {
                 !phaseDone ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200
               }
               strokeWidth={10}
-              onComplete={() => {
-                // Fire-and-forget: persist completion without blocking the timer lib
-                (async () => {
-                  try {
-                    await supabase
-                      .from("brew_steps")
-                      .update({
-                        time_left: null,
-                        status: "completed",
-                        completed_at: new Date().toISOString(),
-                      })
-                      .eq("id_brew", brewId)
-                      .eq("step_id", currentStep.current.step_id);
-                  } catch (e) {
-                    console.error("Failed to persist completion", e);
-                  }
-                })();
-
-                if (stepData.mode === "two" && phase === 1) {
-                  setTimerActive(false);
-                  setPhase(2);
-                  return { shouldRepeat: false };
-                }
-                setPhaseDone(true);
-                setTimerActive(false);
-                return { shouldRepeat: false };
-              }}
+              onComplete={handleComplete}
             >
               {({ remainingTime }) => {
                 const btnDisabled = phaseDone || isHistoricalStep;
@@ -640,68 +704,18 @@ export default function Progress() {
                     compact
                     disabled={btnDisabled}
                     onPress={async () => {
-                      // If this is a historical step, ignore timer control (double-guard)
                       if (isHistoricalStep) {
                         console.debug("Historical step - timer controls disabled");
                         return;
                       }
 
+                      const remainingSecs = remainingTime; // capture timer's current remaining seconds
                       const newActive = !timerActive;
 
-                      const remainingSecs = remainingTime; // capture timer's current remaining seconds
-
-                      if (!brewId || !currentStep.current?.step_id) {
-                        console.error("Missing brewId or current step when toggling timer", { brewId, step: currentStep.current });
-                        setTimerActive(newActive);
-                        return;
-                      }
-
-                      try {
-                        if (newActive) {
-                          // TIMER STARTED / RESUMED → store start timestamp + remaining time
-                          const { data: upData, error: upErr } = await supabase
-                            .from("brew_steps")
-                            .update({
-                              completed_at: new Date().toISOString(),
-                              time_left: remainingSecs,
-                              status: "in_progress",
-                            })
-                            .eq("id_brew", brewId)
-                            .eq("step_id", currentStep.current.step_id)
-                            .select();
-
-                          if (upErr) {
-                            console.error("Supabase update error (start)", upErr);
-                          } else {
-                            console.debug("Supabase update success (start)", upData);
-                            setCompletedAt(new Date(upData?.[0]?.completed_at ?? new Date().toISOString()));
-                          }
-                        } else {
-                          // TIMER PAUSED → clear completed_at (last start) and persist remaining time
-                          const { data: upData, error: upErr } = await supabase
-                            .from("brew_steps")
-                            .update({
-                              completed_at: null,
-                              time_left: remainingSecs,
-                              status: "in_progress",
-                            })
-                            .eq("id_brew", brewId)
-                            .eq("step_id", currentStep.current.step_id)
-                            .select();
-
-                          if (upErr) {
-                            console.error("Supabase update error (pause)", upErr);
-                          } else {
-                            console.debug("Supabase update success (pause)", upData);
-                            setCompletedAt(null);
-                          }
-                        }
-
-                        // Only update UI play state after persistence attempt
-                        setTimerActive(newActive);
-                      } catch (e) {
-                        console.error("Failed to persist timer state", e);
-                        setTimerActive(newActive);
+                      if (newActive) {
+                        await handlePlay(remainingSecs);
+                      } else {
+                        await handlePause(remainingSecs);
                       }
                     }}
                     style={{
