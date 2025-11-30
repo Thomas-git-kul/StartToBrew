@@ -91,11 +91,6 @@ export default function Account() {
     return parts.map((p) => p[0]?.toUpperCase() ?? "").join("");
   }, [fullName, username]);
 
-  // If fonts are still loading, don't render the component yet.
-  // Tests should mock `useFonts` to return `true` so this short-circuits there.
-  if (fontsLoaded === false) {
-    return null;
-  }
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -661,5 +656,11 @@ export default function Account() {
       </View>
     );
   };
+  // If fonts are still loading, don't render the component yet.
+  // Tests should mock `useFonts` to return `true` so this short-circuits there.
+  if (fontsLoaded === false) {
+    return null;
+  }
+
   return <AccountInner />;
 }

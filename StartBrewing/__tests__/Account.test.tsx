@@ -6,7 +6,7 @@ jest.mock("@react-native-async-storage/async-storage", () =>
 );
 
 jest.mock("@/hooks/use-fonts", () => ({
-  useFonts: () => true,
+  useFonts: () => {},
 }));
 
 jest.mock("@/hooks/beer-image", () => ({
