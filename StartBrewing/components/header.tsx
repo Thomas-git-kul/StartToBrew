@@ -9,6 +9,7 @@ const iconMap: Record<string, LucideIcon> = {
   ShoppingCart: Icons.ShoppingCart,
   Calendar1: Icons.Calendar1,
   ArrowRight: Icons.ArrowRight,
+  ArrowLeft: Icons.ArrowLeft,
   House: Icons.House,
   HeartPlus: Icons.HeartPlus,
   Heart: Icons.Heart,
@@ -44,7 +45,7 @@ export default function HeaderBar({
   const IconComponentLeft = iconNameLeft ? iconMap[iconNameLeft] : undefined;
 
   return (
-    <Appbar.Header style={{ backgroundColor: BASE_COLORS.LIGHT_BG }} mode="center-aligned">
+    <Appbar.Header style={{ backgroundColor: BASE_COLORS.LIGHT_BG, }} mode="center-aligned">
       {IconComponentLeft && onIconPressLeft && (
           <Appbar.Action
             icon={() => (
@@ -62,7 +63,7 @@ export default function HeaderBar({
       )}
       <Appbar.Content
         title={title}
-        titleStyle={{ fontFamily: FontFamilies.BODY_BOLD, color: BASE_COLORS.TEXT_DARK }}
+        titleStyle={{ fontFamily: FontFamilies.BODY_BOLD, color: BASE_COLORS.TEXT_DARK, }}
       />
 
       {IconComponent && onIconPress && (

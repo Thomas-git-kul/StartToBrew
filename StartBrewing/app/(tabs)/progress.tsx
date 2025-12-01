@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, ScrollView, Dimensions, ActivityIndicator, Text} from "react-native";
+import { View, ScrollView, Dimensions, ActivityIndicator, Text, Pressable } from "react-native";
 import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
-import { Pause, Thermometer, Play, CheckCheck, Lightbulb, ChevronLeft, ChevronRight, MessageSquare, MessageCircle} from "lucide-react-native";
+import { Pause, BotMessageSquare, Thermometer, Play, CheckCheck, Lightbulb, ChevronLeft, ChevronRight, MessageSquare, MessageCircle} from "lucide-react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -13,6 +13,8 @@ import { supabase } from "@/supabase";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useUserProgressContext } from "@/context/UserProgressContext";
 import DialogCustom from "@/components/dialog";
+import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
+import Stepper from "@/components/Stepper"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -32,10 +34,11 @@ export default function Progress() {
   const [timerActive, setTimerActive] = useState(false);
   const [phaseDone, setPhaseDone] = useState(false);
   const { refreshProgress } = useUserProgressContext();
-  const [dialogVisible, setDialogVisible] = useState(false);
   const [allSteps, setAllSteps] = useState<any[]>([]);
   const [isHistoricalStep, setIsHistoricalStep] = useState(false);
   const [hasPreviousStep, setHasPreviousStep] = useState(false);
+  const [completedAt, setCompletedAt] = useState<Date | null>(null);
+  const [remaining, setRemaining] = useState(null);
 
   const currentStep = useRef<any>(null);
   let CompletedStep = useRef<boolean>(false);
@@ -100,6 +103,24 @@ export default function Progress() {
         .eq("id_brew", brewId)
         .eq("step_id", currentStep.current.step_id)
         .single();
+      
+      setCompletedAt(brew_steps?.completed_at ? new Date(brew_steps.completed_at) : null);
+
+      // Prepare auto-start restore values if there is a stored timer
+      let autoStartRemaining: number | null = null;
+      let autoStartExpired = false;
+      if (brew_steps?.completed_at && brew_steps?.time_left != null) {
+        const lastStart = new Date(brew_steps.completed_at).getTime();
+        const now = Date.now();
+        const elapsedSec = Math.floor((now - lastStart) / 1000);
+
+        const newRemaining = Math.max(0, brew_steps.time_left - elapsedSec);
+        if (newRemaining > 0) {
+          autoStartRemaining = newRemaining;
+        } else {
+          autoStartExpired = true;
+        }
+      }
 
       // Check of we een historische stap bekijken
       const isHistorical = brew_steps.status === "completed" || currentStep.current.status === "in_progress";
@@ -116,7 +137,7 @@ export default function Progress() {
         .from("step_ingredient_refs")
         .select("*")
         .eq("step_id", currentStep.current.step_id);
-      const ingredientRefsCurrent = ingredientRefsCurrentRes.data as { ingredient_id: number; amount_g: number | null }[] | null;
+      const ingredientRefsCurrent = ingredientRefsCurrentRes.data as { ingredient_id: string; amount_g: number | null }[] | null;
 
       const currentIngredients: { name: string; kind: string; amount_g: number | null }[] = [];
       if (ingredientRefsCurrent && ingredientRefsCurrent.length > 0) {
@@ -125,10 +146,10 @@ export default function Progress() {
         const { data: ingRows } = await supabase
           .from("ingredients")
           .select("*")
-          .in("ingredient_id", ingredientIds);
+          .in("ingredient_id", ingredientIds as string[]);
 
         // Combine ingredient + amount into unified objects
-        ingredientRefsCurrent.forEach((ref: { ingredient_id: number; amount_g: number | null }) => {
+        ingredientRefsCurrent.forEach((ref: { ingredient_id: String; amount_g: number | null }) => {
           const info = ingRows.find((i: any) => i.ingredient_id === ref.ingredient_id);
           if (info) {
             currentIngredients.push({
@@ -146,7 +167,7 @@ export default function Progress() {
             .from("step_ingredient_refs")
             .select("*")
             .eq("step_id", nextStep.step_id);
-          const ingredientRefsNext = ingredientRefsNextRes.data as { ingredient_id: number; amount_g: number | null }[] | null;
+          const ingredientRefsNext = ingredientRefsNextRes.data as { ingredient_id: string; amount_g: number | null }[] | null;
 
           if (ingredientRefsNext && ingredientRefsNext.length > 0) {
             const ingredientIdsNext = ingredientRefsNext.map((r) => r.ingredient_id);
@@ -156,7 +177,7 @@ export default function Progress() {
               .select("*")
               .in("ingredient_id", ingredientIdsNext);
 
-            ingredientRefsNext.forEach((ref: { ingredient_id: number; amount_g: number | null }) => {
+            ingredientRefsNext.forEach((ref: { ingredient_id: String; amount_g: number | null }) => {
               const info = ingRowsNext.find((i: any) => i.ingredient_id === ref.ingredient_id);
               if (info) {
                 nextIngredients.push({
@@ -216,12 +237,29 @@ export default function Progress() {
         };
       }
 
-      setStepData(mapped);
+      // If we have a stored running timer, apply recalculated remaining time
+      if (autoStartRemaining != null) {
+        // apply remaining to the visible timer (step1 is the timer holder for both modes)
+        if (mapped.mode === "single") {
+          mapped.step1.duration_sec = autoStartRemaining;
+        } else {
+          // for merged (two) mode we keep remaining on step1 (phase 1) so user returns where they left
+          mapped.step1.duration_sec = autoStartRemaining;
+        }
+        setTimerActive(true);
+        setPhaseDone(false);
+      } else if (autoStartExpired) {
+        // Timer expired while away
+        setTimerActive(false);
+        setPhaseDone(true);
+      } else {
+        // reset timer state after reload
+        setPhase(1);
+        setTimerActive(false);
+        setPhaseDone(mapped.mode === "single" && mapped.step1.duration_sec === 0);
+      }
 
-      // reset timer state after reload
-      setPhase(1);
-      setTimerActive(false);
-      setPhaseDone(mapped.mode === "single" && mapped.step1.duration_sec === 0);
+      setStepData(mapped);
     } catch (e) {
       console.error("loadStep error", e);
       setStepData(null);
@@ -253,10 +291,100 @@ export default function Progress() {
     phaseRef.current = phase;
   }, [phase]);
 
+  const handlePlay = useCallback(async (remainingSecs: number) => {
+    if (!brewId || !currentStep.current?.step_id) {
+      console.error("Missing brewId or current step when starting timer", { brewId, step: currentStep.current });
+      return;
+    }
+
+    try {
+      const { data: upData, error: upErr } = await supabase
+        .from("brew_steps")
+        .update({
+          completed_at: new Date().toISOString(),
+          time_left: remainingSecs,
+          status: "in_progress",
+        })
+        .eq("id_brew", brewId)
+        .eq("step_id", currentStep.current.step_id)
+        .select();
+
+      if (upErr) {
+        console.error("Supabase update error (start)", upErr);
+      } else {
+        console.debug("Supabase update success (start)", upData);
+        setCompletedAt(new Date(upData?.[0]?.completed_at ?? new Date().toISOString()));
+      }
+    } catch (e) {
+      console.error("Failed to persist timer start state", e);
+    }
+
+    setTimerActive(true);
+  }, [brewId]);
+
+  const handlePause = useCallback(async (remainingSecs: number) => {
+    if (!brewId || !currentStep.current?.step_id) {
+      console.error("Missing brewId or current step when pausing timer", { brewId, step: currentStep.current });
+      return;
+    }
+
+    try {
+      const { data: upData, error: upErr } = await supabase
+        .from("brew_steps")
+        .update({
+          completed_at: null,
+          time_left: remainingSecs,
+          status: "in_progress",
+        })
+        .eq("id_brew", brewId)
+        .eq("step_id", currentStep.current.step_id)
+        .select();
+
+      if (upErr) {
+        console.error("Supabase update error (pause)", upErr);
+      } else {
+        console.debug("Supabase update success (pause)", upData);
+        setCompletedAt(null);
+      }
+    } catch (e) {
+      console.error("Failed to persist timer pause state", e);
+    }
+
+    setTimerActive(false);
+  }, [brewId]);
+
   const durationSec =
     phase === 1
       ? (stepData?.step1?.duration_sec ?? 0)
       : (stepData?.step2?.duration_sec ?? 0);
+
+  const handleComplete = useCallback((totalElapsedTime: number) => {
+    // Persist completion in background and update UI synchronously
+    (async () => {
+      try {
+        await supabase
+          .from("brew_steps")
+          .update({
+            time_left: null,
+            status: "completed",
+            completed_at: new Date().toISOString(),
+          })
+          .eq("id_brew", brewId)
+          .eq("step_id", currentStep.current.step_id);
+      } catch (e) {
+        console.error("Failed to persist completion", e);
+      }
+    })();
+
+    if (stepData?.mode === "two" && phase === 1) {
+      setTimerActive(false);
+      setPhase(2);
+      return { shouldRepeat: false };
+    }
+    setPhaseDone(true);
+    setTimerActive(false);
+    return { shouldRepeat: false };
+  }, [brewId, stepData, phase]);
 
   const hasTimer = durationSec > 0;
   const hasTemp = stepData?.temp != null;
@@ -283,7 +411,6 @@ export default function Progress() {
     }
 
     if (isHistoricalStep) {
-      // Alleen terug naar volgende stap zonder DB updates
       loadStep(nextStep.step_id);
       return;
     }
@@ -393,32 +520,6 @@ export default function Progress() {
     loadStep(prevStep.step_id);
   }, [stepData, allSteps, loadStep]);
 
-
-  // To delete brews
-  const deleteBrew = useCallback(async () => {
-    if (!brewId) return;
-
-    try {
-      // Delete brew_steps first (FK constraint)
-      await supabase.from("brew_steps").delete().eq("id_brew", brewId);
-
-      // Delete the brew
-      await supabase.from("brews").delete().eq("id_brew", brewId);
-
-      router.push("/HomePage");
-    } catch (error) {
-      console.error("deleteBrew error:", error);
-    }
-  }, [brewId, router]);
-
-  const showDialog = () => setDialogVisible(true);
-  const hideDialog = () => setDialogVisible(false);
-
-  const confirmDeleteBrew = () => {
-    hideDialog();
-    deleteBrew();
-  };
-
   if (loading) {
     return (
       <SafeAreaView
@@ -466,41 +567,69 @@ export default function Progress() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
       <Header
-        title={"Progress"}
-        iconName="Trash"
-        onIconPress={showDialog}
+        title={stepData.beer}
+        actionTestIDLeft="back-header"
+        iconNameLeft="ArrowLeft"
+        onIconPressLeft={() => router.back()}
       />
+        <View style={{ paddingBottom: 12 }}>
+          {(() => {
+            const isCompleted = isHistoricalStep || phaseDone;
+            return (
+              <>
+                <Stepper
+                  step={allSteps.findIndex(s => s.step_id === currentStep.current?.step_id) + 1}
+                  total={allSteps.length}
+                  isCompleted={isCompleted}
+                  onNext={() => {
+                    if (!phaseDone && !isHistoricalStep) return;
+                    goToNextStep();
+                  }}
+                  onPrev={goToPreviousStep}
+                />
+
+                {/* Only show completion date for historical steps */}
+                {isHistoricalStep && completedAt && (
+                  <ThemedText type="subTitle" className="mt-2 ml-3">
+                    Completed on:{" "}
+                    {completedAt.toLocaleDateString()} at {completedAt.toLocaleTimeString()}
+                  </ThemedText>
+                )}
+              </>
+            );
+          })()}
+        </View>
       <ScrollView
         className="px-3"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 85 }}
+        contentContainerStyle={{ paddingBottom: 95 }}
       >
-        <ThemedText type="title" className="mb-2">
-          {stepData.beer}
-        </ThemedText>
         <View className="flex-row justify-between items-center">
-          <Text
+          <ThemedText type="title"
+          /*
             style={{
               fontSize: Math.min(18 * scale, 26),
               fontFamily: FontFamilies.BODY,
               color: BASE_COLORS.STONE700,
             }}
-          >
-            {title}
-          </Text>
+          */
+          >{title}</ThemedText>
           {hasTemp && (
             <Chip
               style={{
-                alignItems: "center",
+                alignItems: "flex-start",
                 backgroundColor: BASE_COLORS.WHITE,
                 shadowColor: BASE_COLORS.STONE700,
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.07,
+                paddingVertical: 4,
+                paddingHorizontal: 8,
               }}
               textStyle={{
                 fontSize: Math.min(17 * scale, 26),
                 color: BASE_COLORS.STONE500,
                 fontFamily: FontFamilies.BODY,
+                flexWrap: 'wrap',
               }}
               icon={(props) => (
                 <Thermometer
@@ -510,7 +639,9 @@ export default function Progress() {
                   fill={BASE_COLORS.AMBER600}
                 />
               )}
-            >{`${stepData.temp}°C`}</Chip>
+            >
+              <Text style={{ flexWrap: 'wrap' }}>{`${stepData.temp}°C`}</Text>
+            </Chip>
           )}
         </View>
         {stepData.mode === "two" && phase === 1 && (
@@ -529,7 +660,8 @@ export default function Progress() {
         {hasTimer && !CompletedStep.current && (
           <Card
             style={{
-              marginBlock: 12,
+              marginTop: 8,
+              marginBottom: 24,
               padding: 16,
               borderRadius: 8,
               backgroundColor: BASE_COLORS.WHITE,
@@ -551,18 +683,11 @@ export default function Progress() {
                 !phaseDone ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200
               }
               strokeWidth={10}
-              onComplete={() => {
-                if (stepData.mode === "two" && phase === 1) {
-                  setTimerActive(false);
-                  setPhase(2);
-                  return { shouldRepeat: false };
-                }
-                setPhaseDone(true);
-                setTimerActive(false);
-                return { shouldRepeat: false };
-              }}
+              onComplete={handleComplete}
             >
-              {({ remainingTime }) => (
+              {({ remainingTime }) => {
+                const btnDisabled = phaseDone || isHistoricalStep;
+                return (
                 <View style={{ alignItems: "center" }}>
                   <Text
                     style={{
@@ -577,55 +702,68 @@ export default function Progress() {
                   <Button
                     mode="contained"
                     compact
-                    disabled={phaseDone}
-                    onPress={() => setTimerActive((p) => !p)}
+                    disabled={btnDisabled}
+                    onPress={async () => {
+                      if (isHistoricalStep) {
+                        console.debug("Historical step - timer controls disabled");
+                        return;
+                      }
+
+                      const remainingSecs = remainingTime; // capture timer's current remaining seconds
+                      const newActive = !timerActive;
+
+                      if (newActive) {
+                        await handlePlay(remainingSecs);
+                      } else {
+                        await handlePause(remainingSecs);
+                      }
+                    }}
                     style={{
                       borderRadius: 30,
-                      backgroundColor: !phaseDone
-                        ? BASE_COLORS.TEXT_DARK
-                        : BASE_COLORS.STONE200,
+                      backgroundColor: btnDisabled
+                        ? BASE_COLORS.STONE200
+                        : BASE_COLORS.TEXT_DARK,
                       paddingInline: 8,
                     }}
                   >
                     {timerActive ? (
                       <Pause
                         size={Math.min(18 * scale, 26)}
-                        color={BASE_COLORS.WHITE}
-                        fill={BASE_COLORS.WHITE}
+                        color={btnDisabled ? BASE_COLORS.STONE400 : BASE_COLORS.WHITE}
+                        fill={btnDisabled ? BASE_COLORS.STONE400 : BASE_COLORS.WHITE}
                         strokeWidth={0.5}
                       />
                     ) : (
                       <Play
                         size={Math.min(18 * scale, 26)}
-                        color={BASE_COLORS.WHITE}
-                        fill={BASE_COLORS.WHITE}
+                        color={btnDisabled ? BASE_COLORS.STONE400 : BASE_COLORS.WHITE}
+                        fill={btnDisabled ? BASE_COLORS.STONE400 : BASE_COLORS.WHITE}
                         strokeWidth={1}
                       />
                     )}
                   </Button>
                 </View>
-              )}
+              );
+              }}
             </CountdownCircleTimer>
           </Card>
         )}
 
         {(phase === 1 ? stepData.step1.ingredients : stepData.step2?.ingredients)?.length > 0 && (
-          <View>
+          <View className="mb-4">
             <ThemedText type="subTitle">Ingredients:</ThemedText>
-
             {(ingredients)
               .map((ing, idx) => (
-                <View key={idx} className="mt-2 flex-row items-center">
+                <View key={idx} className="flex-row items-center">
                   <ThemedText type="defaultText">• {ing.name} ({ing.kind}): {ing.amount_g} g</ThemedText>
                 </View>
               ))}
           </View>
         )}
 
-        <View>
-          <ThemedText type="subTitle">Description:</ThemedText>
-        
-          <View className="mt-2">
+        <View>  
+          <ThemedText type="subTitle">Description:</ThemedText>      
+          <View className="mb-2">
             {desc?.split(".").map((s: string, i: number) => {
               const clean = s.trim();
               if (!clean) return null;
@@ -639,16 +777,17 @@ export default function Progress() {
         </View>
 
         {tips && (
-          <View className="mt-2 flex-row items-start">
-            <Lightbulb
-              size={Math.min(30 * scale, 50)}
-              color={BASE_COLORS.ACCENT_LIGHT}
-              className="mr-2"
-            />
-            <ThemedText type="tips">{tips}</ThemedText>
+          <View className="mt-2 flex-row items-start gap-4">
+            <View>
+              <Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />
+            </View>
+            <ThemedText type="tips" style={{ marginTop: -34 }}>
+              {tips ?? "No tips available."}
+            </ThemedText>
           </View>
         )}
       </ScrollView>
+      {/*
       <FAB
         testID="fab-button"
         mode="flat"
@@ -720,44 +859,27 @@ export default function Progress() {
           },
         }}
       />
+      */}
       <FAB
         testID="chat-button"
         mode="flat"
-        icon={(props) => {
-          return <MessageCircle {...props} size={Math.min(24 * scale, 34)} />;
-        }}
+        icon={(props) => <BotMessageSquare size={props.size} color={BASE_COLORS.WHITE}/>}
         onPress={() => {
           router.push(`/ChatBot`); 
         }}
         color={BASE_COLORS.WHITE}
         style={{
-          borderRadius: 30,
-          backgroundColor: BASE_COLORS.TEXT_DARK,
           position: "absolute",
-          bottom: 90,
-          right: 20,
+          right: 10,
+          bottom: 25,
+          backgroundColor: BASE_COLORS.TEXT_DARK,
+          borderRadius: 45,
         }}
         theme={{
           colors: {
             onSurfaceDisabled: BASE_COLORS.STONE400,
           },
-          fonts: {
-            labelLarge: {
-              fontSize: Math.min(16 * scale, 24),
-              fontFamily: FontFamilies.BODY,
-            },
-          },
         }}
-      />
-      <DialogCustom
-        title="Confirm Brew Deletion"
-        text={`Are you sure you want to delete \"${stepData?.beer}\" brew?`}
-        visible={dialogVisible}
-        onDismiss={hideDialog}
-        cancelBtn="Cancel"
-        yesBtn="Delete"
-        onPressCancel={hideDialog}
-        onPressYes={confirmDeleteBrew}
       />
     </SafeAreaView>
   );

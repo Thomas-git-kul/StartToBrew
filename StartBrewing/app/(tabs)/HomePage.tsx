@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
+import Dialog from "@/components/dialog";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import { useFocusEffect } from "@react-navigation/native";
@@ -45,6 +46,8 @@ function HomePageContent() {
 
   const [inProgress, setInProgress] = useState<InProgressBrew[]>([]);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; name?: string } | null>(null);
 
   // Auth-guard helper: alle acties gaan eerst langs Supabase auth.
   const withAuthGuard = (action: () => void) => {
@@ -52,7 +55,7 @@ function HomePageContent() {
       try {
         const {
           data: { user },
-        } = await supabase.auth.getUser(); // user is hier correct getypt
+        } = await supabase.auth.getUser();
 
         if (!user) {
           router.push("/Auth");
@@ -71,7 +74,7 @@ function HomePageContent() {
       let mounted = true;
 
       const fetchPopularRecipes = async (
-        ratingWeight = 0.8, //pas deze waardes aan om de weging van popular recipes te veranderen
+        ratingWeight = 0.8,
         reviewWeight = 0.2,
         reviewScale = 20
       ) => {
@@ -238,14 +241,34 @@ function HomePageContent() {
         }
       };
 
-      loadProgress();
-      fetchPopularRecipes();
+    loadProgress();
+    fetchPopularRecipes();
+    return () => {
+      mounted = false;
+    };
+  }, []));
 
-      return () => {
-        mounted = false;
-      };
-    }, [])
-  );
+  // Open confirmation modal for deletion (modal handles actual deletion)
+  const handleDeleteBrew = (id: string | number | undefined, name?: string) => {
+    if (!id) return;
+    setDeleteTarget({ id, name });
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDeleteBrew = async () => {
+    const id = deleteTarget?.id;
+    const name = deleteTarget?.name;
+    setDeleteDialogVisible(false);
+    setDeleteTarget(null);
+    if (!id) return;
+    try {
+      await supabase.from("brew_steps").delete().eq("id_brew", id);
+      await supabase.from("brews").delete().eq("id_brew", id);
+      setInProgress((prev) => prev.filter((b) => b.id !== id));
+    } catch (e) {
+      console.warn("Failed to delete brew:", e);
+    }
+  };
 
   return (
     <View className="flex-1">
@@ -283,12 +306,13 @@ function HomePageContent() {
                   key={brew.id}
                   title={brew.name}
                   progress={brew.progress}
-                  onPress={withAuthGuard(() =>
+                    onPress={withAuthGuard(() =>
                     router.push({
                       pathname: "/progress",
                       params: { id: brew.id },
                     })
                   )}
+                    onDelete={() => handleDeleteBrew(brew.id)}
                 />
               ))
             )}
@@ -341,21 +365,31 @@ function HomePageContent() {
         )}
       </ScrollView>
 
+      <Dialog
+        title="Confirm Brew Deletion"
+        text={`Are you sure you want to delete "${deleteTarget?.name ?? "this"}" brew?`}
+        visible={deleteDialogVisible}
+        onDismiss={() => setDeleteDialogVisible(false)}
+        cancelBtn="Cancel"
+        yesBtn="Delete"
+        onPressCancel={() => setDeleteDialogVisible(false)}
+        onPressYes={confirmDeleteBrew}
+      />
+
       {/* Floating Action Button */}
       <FAB
-        icon={(props) => <Plus size={props.size} color={props.color} />}
+        mode="flat"
+        icon={(props) => <Plus size={props.size} strokeWidth={3} color={props.color} />}
         testID="fab"
         style={{
           position: "absolute",
           right: 10,
           bottom: 25,
           backgroundColor: BASE_COLORS.TEXT_DARK,
-          borderRadius: 20,
+          borderRadius: 45,
         }}
         color={BASE_COLORS.WHITE}
         onPress={withAuthGuard(() => router.push("/Recipes"))}
-        mode="elevated"
-        size="medium"
       />
     </View>
   );

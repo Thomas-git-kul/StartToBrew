@@ -83,3 +83,4 @@ const styles = StyleSheet.create({
     color: BASE_COLORS.ACCENT_LIGHT
   },
 });
+

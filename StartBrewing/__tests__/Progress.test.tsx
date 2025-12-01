@@ -80,6 +80,12 @@ jest.mock("lucide-react-native", () => {
     Play: make("Play"),
     CheckCheck: make("CheckCheck"),
     Lightbulb: make("Lightbulb"),
+    // Icons used by Stepper and the FAB
+    ChevronLeft: make("ChevronLeft"),
+    ChevronRight: make("ChevronRight"),
+    BotMessageSquare: make("BotMessageSquare"),
+    MessageSquare: make("MessageSquare"),
+    MessageCircle: make("MessageCircle"),
   };
 });
 
