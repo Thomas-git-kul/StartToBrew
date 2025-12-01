@@ -23,8 +23,7 @@ export default function NotFound() {
       <View className="mx-5 flex-column gap-3">
         <ThemedText type="titleBlack">Oops — page not found</ThemedText>
         <ThemedText type="defaultText">
-          The page you are trying to reach doesn&apos;t exist or has been removed.
-          Check the URL or go back to the home page.
+          The page you are trying to reach doesn&apos;t exist or has been removed. Check the URL or go back to the home page.
         </ThemedText>
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", width: "100%", marginTop: 8 }}>
           <Button
