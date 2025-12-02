@@ -9,6 +9,18 @@ jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => {},
 }));
 
+// Mock useFocusEffect so it doesn't repeatedly trigger fetches during tests.
+// Do not invoke the callback in tests; fetchProfile is run via the mount effect.
+jest.mock('@react-navigation/native', () => {
+  const actualNav = jest.requireActual('@react-navigation/native');
+  return {
+    ...actualNav,
+    useFocusEffect: (_cb: any) => {
+      // no-op in tests to avoid focus-driven re-fetch loops
+    },
+  };
+});
+
 jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => "test-image",
 }));
@@ -231,6 +243,11 @@ const renderWithNavigation = (ui: React.ReactElement) => {
 };
 
 describe("<Account />", () => {
+  beforeEach(() => {
+    // clear mocks between tests
+    jest.clearAllMocks();
+  });
+
   test("renders profile data + badges section + completed brews", async () => {
     const { getByText } = renderWithNavigation(<Account />);
 
