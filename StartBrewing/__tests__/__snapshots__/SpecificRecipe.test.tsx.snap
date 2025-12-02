@@ -5,17 +5,327 @@ exports[`<SpecificRecipe /> snapshot 1`] = `
   <Text>
     Recipe
   </Text>
-  <View
-    className="flex-1 items-center justify-center"
+  <RCTScrollView
+    className="flex-1 mx-3"
+    contentContainerStyle={
+      {
+        "paddingBottom": 70,
+      }
+    }
+    showsVerticalScrollIndicator={false}
   >
-    <View />
-    <Text
-      className="mt-3"
-      type="defaultText"
-    >
-      Loading recipe...
-    </Text>
-  </View>
+    <View>
+      <View>
+        <Text
+          type="titleBlack"
+        >
+          Den Ballaste Point Sculpin IPA 60
+        </Text>
+      </View>
+      <View
+        className="items-center mb-5"
+      >
+        <View
+          style={
+            {
+              "aspectRatio": 0.75,
+              "borderRadius": 16,
+              "overflow": "hidden",
+              "width": "100%",
+            }
+          }
+        >
+          <Image
+            resizeMode="cover"
+            source={
+              {
+                "uri": "test-beer-image",
+              }
+            }
+            style={
+              {
+                "height": "100%",
+                "width": "100%",
+              }
+            }
+          />
+        </View>
+      </View>
+      <View
+        className="flex-row mb-5 gap-2 items-center"
+      >
+        <Text>
+          Star
+        </Text>
+        <Text
+          type="subTitle"
+        >
+          0.00
+           / 5
+        </Text>
+        <Text
+          type="subTitle"
+        >
+          (
+          0
+           reviews)
+        </Text>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onClick={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            {
+              "opacity": 1,
+            }
+          }
+        >
+          <Text>
+            <Text
+              style={
+                {
+                  "color": "#000000",
+                }
+              }
+              type="subTitle"
+            >
+              Add Review
+            </Text>
+          </Text>
+        </View>
+      </View>
+      <View
+        className="flex-row flex-wrap gap-x-2 gap-y-2 mb-5"
+      >
+        <View>
+          <Text>
+            American IPA
+          </Text>
+        </View>
+        <View>
+          <Text>
+            7.2% ABV
+          </Text>
+        </View>
+        <View>
+          <Text>
+            89.3 IBU
+          </Text>
+        </View>
+        <View>
+          <Text>
+            6 SRM
+          </Text>
+        </View>
+        <View>
+          <Text>
+            19 L batch
+          </Text>
+        </View>
+        <View>
+          <Text>
+            Difficulty ★☆☆
+          </Text>
+        </View>
+        <View>
+          <Text>
+            clear
+          </Text>
+        </View>
+      </View>
+      <Text
+        className="mb-3"
+        type="defaultText"
+      >
+        Den Ballaste Point Sculpin IPA 60 is a classic American IPA voor hopliefhebbers.
+      </Text>
+      <View
+        className="mt-2 mb-4"
+      >
+        <Text
+          className=""
+          type="defaultText"
+        >
+          Ingredients:
+        </Text>
+        <View
+          className="flex-row items-start mt-2 ml-3 gap-3"
+        >
+          <Text
+            type="defaultText"
+          >
+            •
+          </Text>
+          <Text
+            type="defaultText"
+          >
+            11 g 
+            Main
+             
+            (yeast)
+          </Text>
+        </View>
+        <View
+          className="flex-row items-start mt-2 ml-3 gap-3"
+        >
+          <Text
+            type="defaultText"
+          >
+            •
+          </Text>
+          <Text
+            type="defaultText"
+          >
+            4500 g 
+            Pale Ale Malt
+             
+            (grain)
+          </Text>
+        </View>
+        <View
+          className="flex-row items-start mt-2 ml-3 gap-3"
+        >
+          <Text
+            type="defaultText"
+          >
+            •
+          </Text>
+          <Text
+            type="defaultText"
+          >
+            45 g 
+            Centennial
+             
+            (hop)
+          </Text>
+        </View>
+        <View
+          className="flex-row items-start mt-2 ml-3 gap-3"
+        >
+          <Text
+            type="defaultText"
+          >
+            •
+          </Text>
+          <Text
+            type="defaultText"
+          >
+            45 g 
+            Amarillo
+             
+            (hop)
+          </Text>
+        </View>
+        <View
+          className="flex-row items-start mt-2 ml-3 gap-3"
+        >
+          <Text
+            type="defaultText"
+          >
+            •
+          </Text>
+          <Text
+            type="defaultText"
+          >
+            45 g 
+            Simcoe
+             
+            (hop)
+          </Text>
+        </View>
+        <View
+          className="flex-row items-start mt-2 ml-3 gap-3"
+        >
+          <Text
+            type="defaultText"
+          >
+            •
+          </Text>
+          <Text
+            type="defaultText"
+          >
+            45 g 
+            Columbus
+             
+            (hop)
+          </Text>
+        </View>
+        <View
+          className="flex-row items-start mt-2 ml-3 gap-3"
+        >
+          <Text
+            type="defaultText"
+          >
+            •
+          </Text>
+          <Text
+            type="defaultText"
+          >
+            500 g 
+            Munich
+             
+            (grain)
+          </Text>
+        </View>
+        <View
+          className="flex-row items-start mt-2 ml-3 gap-3"
+        >
+          <Text
+            type="defaultText"
+          >
+            •
+          </Text>
+          <Text
+            type="defaultText"
+          >
+            250 g 
+            Crystal 60l
+             
+            (grain)
+          </Text>
+        </View>
+      </View>
+      <View
+        className="mt-2 mb-4"
+      >
+        <Text
+          className="mb-2"
+          type="defaultText"
+        >
+          Reviews:
+        </Text>
+        <Text
+          type="defaultText"
+        >
+          This beer has no reviews yet.
+        </Text>
+      </View>
+    </View>
+  </RCTScrollView>
   <View
     style={
       {

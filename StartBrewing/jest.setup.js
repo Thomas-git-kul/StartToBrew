@@ -1,17 +1,14 @@
-import '@testing-library/jest-native/extend-expect';
+require('@testing-library/jest-native/extend-expect');
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
 
 jest.mock('react-native-safe-area-context', () => {
   return {
     useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
     SafeAreaProvider: ({ children }) => children,
-  };
-});
-
-jest.mock('expo-router', () => {
-  const React = require('react');
-  return {
-    Link: ({ children }) => React.createElement('div', null, children),
-    Redirect: () => null,
+    SafeAreaView: ({ children }) => children,
   };
 });
 
@@ -24,28 +21,25 @@ jest.mock("@expo/vector-icons", () => {
   };
 });
 
-// Ensure focus effects run inside act to avoid "not wrapped in act" warnings
-try {
-  const { act } = require('react-test-renderer');
-  jest.mock('@react-navigation/native', () => {
-    const actual = jest.requireActual('@react-navigation/native');
-    return {
-      ...actual,
-      useFocusEffect: (cb) => {
-        // run the provided callback inside act so state updates are properly batched in tests
-        act(() => {
-          cb();
-        });
-      },
-    };
-  });
-} catch (e) {
-  // If test renderer isn't available, skip the mock to avoid breaking the setup.
-}
+jest.mock('@react-navigation/native', () => {
+  const actual = jest.requireActual('@react-navigation/native');
+  let act;
+  try {
+    act = require('react-test-renderer').act;
+  } catch (e) {
+    // act not available, fallback
+    act = (cb) => cb();
+  }
+  return {
+    ...actual,
+    useFocusEffect: (cb) => {
+      act(() => {
+        cb();
+      });
+    },
+  };
+});
 
-// Provide a safe global mock for the Supabase client so components' useEffects
-// don't perform unexpected async work during tests. Individual tests may
-// override this with their own `jest.mock('@/supabase', ...)` if needed.
 try {
   jest.mock('@/supabase', () => {
     const DB = {
