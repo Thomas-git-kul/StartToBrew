@@ -145,21 +145,6 @@ export default function Auth() {
             }}
           >Log In</Button>
         </View>
-        <View className="mt-4 items-center">
-          <Button
-            mode="outlined"
-            onPress={() => router.push("/test")}
-            labelStyle={{
-              fontSize: Math.min(14 * scale, 20),
-              fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.TEXT_DARK,
-            }}
-            style={{
-              borderRadius: 20,
-              borderColor: BASE_COLORS.TEXT_DARK,
-            }}
-          >Go to /test (trigger 404)</Button>
-        </View>
       </View>
     </SafeAreaView>
   );
