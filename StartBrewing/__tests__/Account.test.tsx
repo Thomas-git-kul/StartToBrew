@@ -263,3 +263,4 @@ describe("<Account />", () => {
     expect(mockPush).toHaveBeenCalledWith("/AccountEdit");
   });
 });
+
