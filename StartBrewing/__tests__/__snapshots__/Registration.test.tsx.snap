@@ -268,7 +268,13 @@ exports[`<Registration /> matches snapshot 1`] = `
                     }
                     testID="cross-fade-icon-current"
                   >
-                    <View>
+                    <View
+                      style={
+                        {
+                          "marginRight": -8,
+                        }
+                      }
+                    >
                       <RNSVGSvgView
                         align="xMidYMid"
                         bbHeight={28}

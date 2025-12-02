@@ -1,7 +1,7 @@
 import { ActivityIndicator } from "react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ThemedText } from "../components/themed-text";
+import { ThemedText } from "./themed-text";
 
 interface SpinnerProps {
   title: string;
