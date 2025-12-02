@@ -520,9 +520,10 @@ export default function Account() {
             )}
           </View>
           {badgesLoading ? (
-             <View className="py-4 items-center">
-                <ActivityIndicator animating size="small" color={BASE_COLORS.ACCENT_PRIMARY} />
-              </View>
+            <Spinner 
+              title="Loading badges..."
+              size="small"
+            />
           ) : badges.length === 0 ? (
             <ThemedText type="defaultText" className="mb-8">Brew beers to earn badges.</ThemedText>
           ) : (
@@ -559,9 +560,10 @@ export default function Account() {
           </View>
           <View>
             {brewsLoading ? (
-              <View className="py-4 items-center">
-                <ActivityIndicator animating size="small" color={BASE_COLORS.ACCENT_PRIMARY} />
-              </View>
+              <Spinner 
+                title="Loading brews..."
+                size="small"
+              />
             ) : completedBrewsCount === 0 ? (
               <ThemedText type="defaultText">You have not completed any brews yet.</ThemedText>
             ) : (

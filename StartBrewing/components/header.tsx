@@ -15,7 +15,8 @@ const iconMap: Record<string, LucideIcon> = {
   Heart: Icons.Heart,
   Trash: Icons.Trash,
   Settings: Icons.Settings,
-  LogOut: Icons.LogOut
+  LogOut: Icons.LogOut,
+  UserCog: Icons.UserCog
 };
 
 interface HeaderBarProps {
@@ -49,7 +50,7 @@ export default function HeaderBar({
       {IconComponentLeft && onIconPressLeft && (
           <Appbar.Action
             icon={() => (
-              <View>
+              <View style={{ marginLeft: -8 }}>
                 <IconComponentLeft
                   size={28}
                   strokeWidth={2}
@@ -70,7 +71,7 @@ export default function HeaderBar({
         <View>
           <Appbar.Action
             icon={() => (
-              <View>
+              <View style={{ marginRight: -8 }}>
                 <IconComponent
                   size={28}
                   stroke={filled ? BASE_COLORS.ACCENT_PRIMARY : BASE_COLORS.TEXT_DARK}
