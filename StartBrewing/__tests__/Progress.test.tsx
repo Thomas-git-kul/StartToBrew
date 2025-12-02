@@ -286,7 +286,7 @@ describe("<Progress />", () => {
 
     await act(async () => fireEvent.press(chatFab));
 
-    expect(pushMock).toHaveBeenCalledWith("/ChatBot");
+    expect(pushMock).toHaveBeenCalledWith("/ChatBot?fromProgress=1");
   });
 
   it("snapshot", async () => {

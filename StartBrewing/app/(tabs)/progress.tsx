@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, ScrollView, Dimensions, ActivityIndicator, Text, Pressable } from "react-native";
-import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
-import { Pause, BotMessageSquare, Thermometer, Play, CheckCheck, Lightbulb, ChevronLeft, ChevronRight, MessageSquare, MessageCircle} from "lucide-react-native";
+import { Card, FAB, Chip, Button } from "react-native-paper";
+import { Pause, BotMessageSquare, Thermometer, Play, Lightbulb, MessageSquare, MessageCircle} from "lucide-react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -12,8 +12,6 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "@/supabase";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useUserProgressContext } from "@/context/UserProgressContext";
-import DialogCustom from "@/components/dialog";
-import { transparent } from "react-native-paper/lib/typescript/styles/themes/v2/colors";
 import Stepper from "@/components/Stepper"
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -406,7 +404,7 @@ export default function Progress() {
     if (!nextStep) {
       // Laatste stap
       await refreshProgress();
-      router.push("/homepage");
+      router.push("/HomePage");
       return;
     }
 
@@ -865,7 +863,7 @@ export default function Progress() {
         mode="flat"
         icon={(props) => <BotMessageSquare size={props.size} color={BASE_COLORS.WHITE}/>}
         onPress={() => {
-          router.push(`/ChatBot`); 
+          router.push(`/ChatBot?fromProgress=${brewId}`);
         }}
         color={BASE_COLORS.WHITE}
         style={{
