@@ -1,53 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Agenda Component matches snapshot 1`] = `
-<View
-  className="flex-1"
-  style={
-    {
-      "backgroundColor": "#FAFAF9",
-    }
-  }
->
+[
   <Text>
     Agenda
-  </Text>
-  <View
-    style={
-      {
-        "backgroundColor": "#FAFAF9",
-        "borderRadius": 20,
-        "marginBottom": 20,
-        "overflow": "hidden",
-        "shadowColor": "#44403c",
-        "shadowOffset": {
-          "height": 1,
-          "width": 0,
-        },
-        "shadowOpacity": 0.1,
-      }
-    }
-  >
-    <Text
-      onPress={[Function]}
-      testID="calendar"
-    >
-      Calendar
-    </Text>
-  </View>
-  <View
-    className="items-center justify-center my-4"
-  >
-    <Text
-      animating={true}
-      color="#B45309"
-      size="small"
-    >
-      Loading...
-    </Text>
-    <Text>
-      Loading progress...
-    </Text>
-  </View>
-</View>
+  </Text>,
+  <ActivityIndicator
+    animating={true}
+    color="#B45309"
+    size="large"
+  />,
+  <Text>
+    Loading progress...
+  </Text>,
+]
 `;

@@ -20,21 +20,20 @@ exports[`<HomePage /> snapshot 1`] = `
       }
     }
   >
-    <View
-      className="flex-1"
-    >
+    <View>
       <View>
         <Text>
           StartToBrew
         </Text>
       </View>
       <RCTScrollView
-        showsVerticalScrollIndicator={false}
-        style={
+        contentContainerClassName="mx-3"
+        contentContainerStyle={
           {
             "backgroundColor": "#eee",
           }
         }
+        showsVerticalScrollIndicator={false}
       >
         <View>
           <Text>

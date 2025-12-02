@@ -349,32 +349,17 @@ const NavigationContainer = require("@react-navigation/native").NavigationContai
    TEST UTIL
 ------------------------------- */
 
+const { render: renderWithAct, fireEvent: fireEventWithAct } = require('../tests/test-utils');
+
 const renderWithNavigation = async (ui: React.ReactElement) => {
-  // `render` from testing-library handles `act()` for us — avoid wrapping
-  try {
-    // Use the real Paper `Provider` so react-native-paper internals (Portal) are available in tests
-    const { Provider: PaperProvider } = require("react-native-paper");
-    const renderResult = render(
-      <NavigationContainer>
-        <PaperProvider>
-          <FavoritesProvider>{ui}</FavoritesProvider>
-        </PaperProvider>
-      </NavigationContainer>
-    );
-    // allow immediate microtasks and a macrotask to run so effects settle
-    // (one microtask pass isn't always enough for nested async effects)
-    await Promise.resolve();
-    await new Promise((res) => setTimeout(res, 0));
-    return renderResult;
-  } catch (err: any) {
-    // Log inner errors of AggregateError where possible for debugging
-    try {
-      console.error("renderWithNavigation caught:", err, err.errors || err.innerErr || null);
-    } catch (e) {
-      console.error("renderWithNavigation caught (unknown shape):", err);
-    }
-    throw err;
-  }
+  const { Provider: PaperProvider } = require('react-native-paper');
+  return renderWithAct(
+    <NavigationContainer>
+      <PaperProvider>
+        <FavoritesProvider>{ui}</FavoritesProvider>
+      </PaperProvider>
+    </NavigationContainer>
+  );
 };
 
 /* ------------------------------

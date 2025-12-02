@@ -18,7 +18,10 @@ jest.mock("@/hooks/use-fonts", () => ({
 
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
-  return { SafeAreaProvider: ({ children }: any) => <View>{children}</View> };
+  return {
+    SafeAreaProvider: ({ children }: any) => <View>{children}</View>,
+    SafeAreaView: ({ children, style }: any) => <View style={style}>{children}</View>,
+  };
 });
 
 interface StoreCardProps {

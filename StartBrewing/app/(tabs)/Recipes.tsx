@@ -1,20 +1,6 @@
 import { useState, useEffect } from "react";
-import {
-  View,
-  ScrollView,
-  Dimensions,
-  StyleSheet,
-  Text,
-  FlatList,
-} from "react-native";
-import {
-  Searchbar,
-  ActivityIndicator,
-  Chip,
-  Button,
-  Modal,
-  Portal,
-} from "react-native-paper";
+import { View, ScrollView, Dimensions, StyleSheet, Text, FlatList } from "react-native";
+import { Searchbar, ActivityIndicator, Chip, Button, Modal, Portal } from "react-native-paper";
 import { Search, X, Check } from "lucide-react-native";
 import BeerCard from "../../components/ui/RecipeCard";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -29,6 +15,7 @@ import { getBeerImageSource } from "@/hooks/beer-image";
 import { FontFamilies } from "@/constants/Fonts";
 import TextInput from "@/components/textInput";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Spinner from "@/components/spinner";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -620,16 +607,9 @@ export default function Recipes() {
   const renderListHeader = () => (
     <View>
       {recommendedLoading && (
-        <View className="flex-row items-center mb-2">
-          <ActivityIndicator
-            animating
-            size="small"
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="ml-2">
-            Loading recommendations...
-          </ThemedText>
-        </View>
+        <Spinner 
+          title="Loading recipes..."
+        />
       )}
 
       {recommendedRecipes.length > 0 && (
@@ -639,10 +619,7 @@ export default function Recipes() {
           </ThemedText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {recommendedRecipes.map((item) => (
-              <View
-                key={item.recipe_slug}
-                style={{ marginRight: 12, width: Math.min(260 * scale, 280) }}
-              >
+              <View key={item.recipe_slug} className="mr-2">
                 <BeerCard
                   {...item}
                   isFavorite={favoriteSlugs.includes(item.recipe_slug)}
@@ -682,31 +659,8 @@ export default function Recipes() {
     >
       <Header title="Recipes" />
 
-      <View style={{ paddingHorizontal: 16 }}>
-        <Searchbar
-          placeholder="Search"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          inputStyle={{
-            color: BASE_COLORS.STONE700,
-            fontFamily: FontFamilies.BODY,
-          }}
-          icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
-          clearIcon={
-            searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined
-          }
-          onClearIconPress={() => setSearchQuery("")}
-          style={{
-            backgroundColor: BASE_COLORS.WHITE,
-            borderColor: BASE_COLORS.STONE300,
-            borderWidth: 1,
-            marginBottom: 15,
-          }}
-        />
-      </View>
-
       {/* Horizontal scrollable category chips */}
-      <View style={{ paddingVertical: 8 }}>
+      <View className="mx-3 pb-2">
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {[...filterCategories]
             .sort((a, b) => {
@@ -876,16 +830,10 @@ export default function Recipes() {
       </Portal>
 
       {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator
-            animating
-            size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading recipes...
-          </ThemedText>
-        </View>
+        <Spinner 
+          title="Searching recipes..."
+          size="small"
+        />
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
           <ThemedText type="title" className="mb-2 text-center">
@@ -898,6 +846,7 @@ export default function Recipes() {
       ) : (
         <FlatList
           showsVerticalScrollIndicator={false}
+          contentContainerClassName="mx-3"
           data={otherRecipes}
           keyExtractor={(item) => item.recipe_slug}
           renderItem={({ item }) => (
@@ -918,7 +867,31 @@ export default function Recipes() {
               }
             />
           )}
-          ListHeaderComponent={renderListHeader}
+          ListHeaderComponent={() => (
+            <View>
+              <Searchbar
+                placeholder="Search"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                inputStyle={{
+                  color: BASE_COLORS.STONE700,
+                  fontFamily: FontFamilies.BODY,
+                }}
+                icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+                clearIcon={
+                  searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined
+                }
+                onClearIconPress={() => setSearchQuery("")}
+                style={{
+                  backgroundColor: BASE_COLORS.WHITE,
+                  borderColor: BASE_COLORS.STONE300,
+                  borderWidth: 1,
+                  marginBottom: 15,
+                }}
+              />
+              {renderListHeader()}
+            </View>
+          )}
           ListEmptyComponent={
             <View className="items-center mt-6 px-6">
               <ThemedText type="defaultText" className="text-center mb-2">

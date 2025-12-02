@@ -20,6 +20,7 @@ exports[`ChatBot snapshot 1`] = `
       style={
         [
           {
+            "backgroundColor": "#eee",
             "flex": 1,
           },
           {
@@ -28,56 +29,106 @@ exports[`ChatBot snapshot 1`] = `
         ]
       }
     >
-      <View
-        style={
-          {
-            "flex": 1,
-          }
-        }
-      >
+      <View>
         <RCTScrollView
-          contentContainerStyle={
-            {
-              "paddingBottom": 10,
-            }
-          }
-          style={
-            {
-              "flex": 1,
-              "paddingHorizontal": 12,
-              "paddingTop": 10,
-            }
-          }
+          showsVerticalScrollIndicator={false}
         >
           <View>
-            <View
-              style={
-                {
-                  "alignSelf": "flex-start",
-                  "backgroundColor": "#fff",
-                  "borderRadius": 16,
-                  "marginVertical": 4,
-                  "maxWidth": "80%",
-                  "padding": 10,
+            <View>
+              <View
+                className="flex-row items-center gap-2"
+              >
+                <View>
+                  <Text>
+                    BotMessageSquare
+                  </Text>
+                </View>
+                <Text
+                  style={
+                    {
+                      "color": undefined,
+                      "fontFamily": undefined,
+                      "fontSize": 14,
+                    }
+                  }
+                >
+                  BeerBot
+                </Text>
+              </View>
+              <View
+                style={
+                  {
+                    "alignSelf": "flex-start",
+                    "marginBottom": 4,
+                    "maxWidth": "90%",
+                    "paddingInline": 16,
+                  }
                 }
-              }
-              testID="bot-msg-0"
-            >
-              <Text>
-                Hey! How can I help you today?
-              </Text>
+                testID="bot-msg-0"
+              >
+                <Text>
+                  Hey! How can I help you today?
+                </Text>
+              </View>
             </View>
           </View>
         </RCTScrollView>
         <View
-          style={
-            {
-              "alignItems": "center",
-              "flexDirection": "row",
-              "paddingVertical": 8,
-            }
-          }
+          className="flex flex-row items-center justify-between gap-2 py-2"
         >
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onFocus={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+          >
+            <Text>
+              Plus
+            </Text>
+          </View>
+          <TextInput
+            onChangeText={[Function]}
+            placeholder="Type a message..."
+            style={
+              {
+                "backgroundColor": "#fff",
+                "borderColor": undefined,
+                "borderRadius": 20,
+                "borderWidth": 1,
+                "flex": 1,
+                "fontFamily": "System",
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              }
+            }
+            testID="chat-input"
+            value=""
+          />
           <View
             accessibilityState={
               {
@@ -108,113 +159,18 @@ exports[`ChatBot snapshot 1`] = `
             onStartShouldSetResponder={[Function]}
             style={
               {
-                "alignItems": "center",
                 "backgroundColor": "#000",
-                "borderRadius": 20,
-                "height": 40,
-                "justifyContent": "center",
-                "marginRight": 8,
+                "borderRadius": 45,
                 "opacity": 1,
-                "paddingHorizontal": 16,
-                "paddingVertical": 8,
-                "width": 40,
               }
             }
+            testID="send-button"
           >
-            <Text
-              style={
-                {
-                  "color": "#fff",
-                  "fontFamily": "System",
-                  "fontSize": 16,
-                }
-              }
-            >
-              +
-            </Text>
-          </View>
-          <TextInput
-            onChangeText={[Function]}
-            placeholder="Type a message..."
-            style={
-              {
-                "backgroundColor": "#fff",
-                "borderColor": "#ccc",
-                "borderRadius": 20,
-                "borderWidth": 1,
-                "flex": 1,
-                "fontFamily": "System",
-                "paddingHorizontal": 16,
-                "paddingVertical": 10,
-              }
-            }
-            testID="chat-input"
-            value=""
-          />
-          <View
-            style={
-              {
-                "marginLeft": 8,
-              }
-            }
-          >
-            <View
-              accessibilityState={
-                {
-                  "busy": undefined,
-                  "checked": undefined,
-                  "disabled": undefined,
-                  "expanded": undefined,
-                  "selected": undefined,
-                }
-              }
-              accessibilityValue={
-                {
-                  "max": undefined,
-                  "min": undefined,
-                  "now": undefined,
-                  "text": undefined,
-                }
-              }
-              accessible={true}
-              collapsable={false}
-              focusable={true}
-              onClick={[Function]}
-              onResponderGrant={[Function]}
-              onResponderMove={[Function]}
-              onResponderRelease={[Function]}
-              onResponderTerminate={[Function]}
-              onResponderTerminationRequest={[Function]}
-              onStartShouldSetResponder={[Function]}
-              style={
-                {
-                  "alignItems": "center",
-                  "backgroundColor": "#000",
-                  "borderRadius": 20,
-                  "justifyContent": "center",
-                  "minHeight": 40,
-                  "minWidth": 60,
-                  "opacity": 1,
-                  "paddingHorizontal": 16,
-                  "paddingVertical": 8,
-                }
-              }
-              testID="send-button"
-            >
+            <Text>
               <Text>
-                <Text
-                  style={
-                    {
-                      "color": "#fff",
-                      "fontFamily": "System",
-                      "fontSize": 16,
-                    }
-                  }
-                >
-                  Send
-                </Text>
+                SendHorizonal
               </Text>
-            </View>
+            </Text>
           </View>
         </View>
       </View>

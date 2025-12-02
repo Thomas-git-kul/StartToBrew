@@ -1,9 +1,8 @@
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import { Card } from "react-native-paper"
 import { Image } from "expo-image";
 import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
 
 type BadgeProps = {
   id_badge: number;
@@ -51,35 +50,3 @@ export default function Badge({
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  badgeCard: {
-    backgroundColor: BASE_COLORS.WHITE,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-  },
-  badgeIconContainer: {
-    overflow: "hidden",
-    backgroundColor: BASE_COLORS.WHITE,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  badgeIconImage: {
-    width: "100%",
-    height: "100%",
-  },
-  badgeIconFallback: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-  },
-  badgeIconText: {
-    fontSize: 28,
-    color: BASE_COLORS.WHITE,
-    fontWeight: "bold",
-    fontFamily: FontFamilies.HEADING,
-  },
-});
