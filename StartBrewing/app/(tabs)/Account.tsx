@@ -15,7 +15,8 @@ import { useFonts } from "@/hooks/use-fonts";
 import StatisticsCard from "@/components/ui/StatisticsCard"
 import Badge from "@/components/ui/Badge";
 import CompletedCard from '@/components/ui/CompletedCard';
-import Dialog from "@/components/dialog"
+import Dialog from "@/components/dialog";
+import Spinner from "@/components/spinner";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -342,19 +343,9 @@ export default function Account() {
 
     if (loading) {
       return (
-        <SafeAreaView className="flex-1 items-center justify-center"
-        style={{
-          backgroundColor: BASE_COLORS.LIGHT_BG
-        }}
-      >
-        <ActivityIndicator 
-          animating size="large"
-          color={BASE_COLORS.ACCENT_PRIMARY}
+        <Spinner
+          title="Loading account information..."
         />
-        <ThemedText type="defaultText" className="mt-3">
-          Loading account information...
-        </ThemedText>
-      </SafeAreaView>
       );
     }
 
@@ -367,25 +358,25 @@ export default function Account() {
     };
 
     return (
-      <View
+      <SafeAreaView
         className="flex-1"
         style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
       >
+        <Header
+          title={username}
+          actionTestID="log-out-icon"
+          iconName="LogOut"
+          onIconPress={() => setDialogVisible(true)}
+          actionTestIDLeft="settings-icon"
+          iconNameLeft="Settings"
+          onIconPressLeft={onEditProfile}
+        />
         <ScrollView
-          className="flex-1"
+          contentContainerClassName="mx-3"
           style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Header
-            title={username}
-            actionTestID="log-out-icon"
-            iconName="LogOut"
-            onIconPress={() => setDialogVisible(true)}
-            actionTestIDLeft="settings-icon"
-            iconNameLeft="Settings"
-            onIconPressLeft={onEditProfile}
-          />
             {/*
             <View className="flex-row items-center justify-between">
               <Button
@@ -654,7 +645,7 @@ export default function Account() {
           onPressCancel={onSignOut}
           onPressYes={() => setDialogVisible(false)}
         />
-      </View>
+      </SafeAreaView>
     );
   };
   // If fonts are still loading, don't render the component yet.

@@ -61,13 +61,13 @@ function TabLayout() {
       className="flex-1"
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
-      <View className="flex-1 mx-3">
+      <View className="flex-1">
         <Tabs
           screenOptions={{
             tabBarActiveTintColor: BASE_COLORS.TEXT_DARK,
             tabBarInactiveTintColor: BASE_COLORS.STONE400,
             headerShown: false,
-            tabBarShowLabel: false,
+            tabBarShowLabel: true,
             tabBarStyle: {
               backgroundColor: BASE_COLORS.LIGHT_BG,
               borderTopWidth: 0,
@@ -80,6 +80,7 @@ function TabLayout() {
             name="HomePage"
             options={{
               tabBarIcon: ({ color }) => <Home color={color} size={28} />,
+              tabBarLabel: "Home",
               tabBarButton: (props) => <HapticTab {...props} />,
             }}
           />

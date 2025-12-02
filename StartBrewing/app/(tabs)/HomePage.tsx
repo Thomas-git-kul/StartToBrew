@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
-import { FAB, ActivityIndicator } from "react-native-paper";
+import { FAB } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { useFonts } from "@/hooks/use-fonts";
 import BeerCard from "@/components/ui/RecipeCard";
@@ -14,6 +14,8 @@ import Dialog from "@/components/dialog";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import { useFocusEffect } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Spinner from "@/components/spinner";
 
 interface Beer {
   recipe_slug: string;
@@ -271,25 +273,20 @@ function HomePageContent() {
   };
 
   return (
-    <View className="flex-1">
+    <SafeAreaView className="flex-1" style ={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header title="StartToBrew" />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+        contentContainerClassName="mx-3"
+        contentContainerStyle={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
       >
         {/* In progress section */}
         <ThemedText type="title">In progress</ThemedText>
         {loading ? (
-          <View className="items-center justify-center my-4">
-            <ActivityIndicator
-              animating
-              size="small"
-              color={BASE_COLORS.ACCENT_PRIMARY}
-            />
-            <ThemedText type="defaultText" className="mt-2">
-              Loading progress...
-            </ThemedText>
-          </View>
+          <Spinner
+            title="Loading progress..."
+            size= "small"
+          />
         ) : error ? (
           <View className="items-center justify-center my-4 px-6">
             <ThemedText type="defaultText" className="text-center">
@@ -319,19 +316,13 @@ function HomePageContent() {
           </View>
         )}
 
-        <ThemedText type="title">Popular recipes</ThemedText>
+        <ThemedText type="title" className="mt-4">Popular recipes</ThemedText>
 
         {loading ? (
-          <View className="items-center justify-center my-4">
-            <ActivityIndicator
-              animating
-              size="small"
-              color={BASE_COLORS.ACCENT_PRIMARY}
-            />
-            <ThemedText type="defaultText" className="mt-2">
-              Loading recipes...
-            </ThemedText>
-          </View>
+          <Spinner
+            title="Loading recipes..."
+            size="small"
+          />
         ) : error ? (
           <View className="items-center justify-center my-4 px-6">
             <ThemedText type="defaultText" className="text-center">
@@ -391,7 +382,7 @@ function HomePageContent() {
         color={BASE_COLORS.WHITE}
         onPress={withAuthGuard(() => router.push("/Recipes"))}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
