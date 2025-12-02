@@ -546,11 +546,6 @@ export default function Account() {
                       setBadgeModalVisible(true);
                     }}
                   />
-                  {!!badge.name && (
-                    <ThemedText type="defaultText" style={{ marginTop: 4 }}>
-                      {badge.name}
-                    </ThemedText>
-                  )}
                 </View>
               ))}
             </View>
