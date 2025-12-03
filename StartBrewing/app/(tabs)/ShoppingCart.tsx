@@ -215,6 +215,23 @@ export default function ShoppingCart() {
     loadCart();
   }, []));
 
+  const debounceTimers = React.useRef<Record<string, number>>({});
+
+  const debouncedUpdateQuantity = (
+    store_item_id: number,
+    newQty: number,
+    starterkit: boolean
+  ) => {
+    const key = `${store_item_id}-${starterkit}`;
+    if (debounceTimers.current[key]) {
+      clearTimeout(debounceTimers.current[key]);
+    }
+    debounceTimers.current[key] = setTimeout(() => {
+      updateCartQuantity(store_item_id, newQty, starterkit);
+    }, 800);
+  };
+
+
   return (
     <SafeAreaView 
       className="flex-1" 
@@ -273,7 +290,8 @@ export default function ShoppingCart() {
                   },
                 } as any)
               }
-              onQuantityChange={(newQty, starterkit) => updateCartQuantity(order.store_item_id, newQty, starterkit)}
+              onQuantityChange={(newQty, starterkit) => 
+                debouncedUpdateQuantity(order.store_item_id, newQty, starterkit)}
             />
           ))}
         </View>
@@ -300,23 +318,21 @@ export default function ShoppingCart() {
           </View>
 
           {/* Proceed */}
-          <View className="mt-5">
+          <View className="items-end mb-4">
             <Button
               mode="contained"
               onPress={() => router.push({
                 pathname: "/Payment" as any,
                 params: { amount: Math.round(total * 100) } // convert to cents
               } as any)}
-              style={{
-                backgroundColor: BASE_COLORS.TEXT_DARK,
-                alignSelf: "flex-start",
-                marginBottom: 10
-              }}
-              contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
-              labelStyle={{ 
-                fontSize: 15,
+              labelStyle={{
+                fontSize: 16,
                 color: BASE_COLORS.WHITE,
-                fontFamily: FontFamilies.BODY
+                fontFamily: FontFamilies.BODY,
+              }}
+              style={{
+                borderRadius: 30,
+                backgroundColor: BASE_COLORS.TEXT_DARK,
               }}
             >Proceed to payment</Button>
           </View>
