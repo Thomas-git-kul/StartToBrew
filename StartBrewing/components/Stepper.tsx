@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { Button } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
