@@ -47,7 +47,7 @@ export default function StorePage() {
     2: require("@/assets/images/hop.png"),
     3: require("@/assets/images/yeast.png"),
     4: require("@/assets/images/starterkit2.png"),
-    5: require("@/assets/images/Airlock.png"),
+    5: require("@/assets/images/equipment.png"),
     6: require("@/assets/images/measurement.png"),
   }
 

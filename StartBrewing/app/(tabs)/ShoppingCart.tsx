@@ -3,7 +3,7 @@ import { View, ScrollView } from "react-native";
 import { Button, ActivityIndicator } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import OrderCard from "@/components/ui/OrderCard";
 import { useFonts } from "@/hooks/use-fonts";
 import Header from '@/components/header';
@@ -20,6 +20,7 @@ interface CartItem {
   quantity: number;
   price: string;
   starterkit: boolean;
+  categoryId?: number | null;
 }
 interface StoreItem {
   id_store_item: number;
@@ -32,6 +33,7 @@ interface StarterKit {
   id_starter_kit: number;
   name: string;
   price: number;
+  category_id: number;
 }
 
 const exampleImages: Record<number, any> = {
@@ -49,6 +51,8 @@ export default function ShoppingCart() {
 
   const [orders, setOrders] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { from, id, categoryId } = useLocalSearchParams() as { from?: string, id?: number, categoryId?: number };
+  
 
   // Format Euro prices
   const formatter = useMemo(
@@ -111,6 +115,8 @@ export default function ShoppingCart() {
             price: `€${kit?.price?.toFixed(2) ?? "0.00"}`,
             starterkit: true,
             image: exampleImages[4], // example image for starter kits
+            categoryId: 4,
+
           };
         } else {
           // Regular store item
@@ -122,6 +128,7 @@ export default function ShoppingCart() {
             price: `€${storeItem?.price?.toFixed(2) ?? "0.00"}`,
             starterkit: false,
             image: exampleImages[storeItem?.category_id ?? 1],
+            categoryId: storeItem?.category_id ?? null,
           };
         }
       });
@@ -216,6 +223,21 @@ export default function ShoppingCart() {
 
       <Header
         title='Shopping Cart'
+        actionTestID="back-button"
+        iconNameLeft="ArrowLeft"
+        onIconPressLeft={() => {
+          if (from === "storeitem") {
+            router.push({
+              pathname: "/StoreItem",
+              params: {
+                id: id,
+                categoryNumber: categoryId,
+              },
+            });
+          } else {
+            router.push("/Store");
+          }
+        }}
       />
       {loading ? (
         <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
@@ -244,7 +266,11 @@ export default function ShoppingCart() {
               onPress={() =>
                 router.push({
                   pathname: "/StoreItem",
-                  params: { id: order.store_item_id, categoryNumber: order.starterkit ? 4 : 0 },
+                  params: {
+                    id: order.store_item_id,
+                    categoryNumber: order.categoryId?.toString() ?? "",
+                    from: "cart",
+                  },
                 } as any)
               }
               onQuantityChange={(newQty, starterkit) => updateCartQuantity(order.store_item_id, newQty, starterkit)}

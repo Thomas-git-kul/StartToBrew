@@ -952,7 +952,7 @@ export default function SpecificRecipe() {
                         setKitsVisible(false);
                         router.push({
                           pathname: "/StoreItem",
-                          params: { id: kit.id, categoryNumber: 4 },
+                          params: { id: kit.id, categoryNumber: 4, from: "specificrecipe", recipe_slug: recipe_slug },
                         } as any);
                       }}
                     />
