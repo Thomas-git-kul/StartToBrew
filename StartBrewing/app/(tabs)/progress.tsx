@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, ScrollView, Dimensions, ActivityIndicator, Text, Pressable } from "react-native";
+import { View, ScrollView, Dimensions, Text } from "react-native";
 import { Card, FAB, Chip, Button } from "react-native-paper";
 import { Pause, BotMessageSquare, Thermometer, Play, Lightbulb, MessageSquare, MessageCircle} from "lucide-react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
@@ -13,6 +13,7 @@ import { supabase } from "@/supabase";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useUserProgressContext } from "@/context/UserProgressContext";
 import Stepper from "@/components/stepper";
+import Spinner from "@/components/spinner";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -521,19 +522,9 @@ export default function Progress() {
 
   if (loading) {
     return (
-      <SafeAreaView
-        className="flex-1 justify-center items-center"
-        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
-      >
-        <ActivityIndicator
-          animating
-          size="large"
-          color={BASE_COLORS.ACCENT_PRIMARY}
-        />
-        <ThemedText type="defaultText" className="mt-3">
-          Loading progress...
-        </ThemedText>
-      </SafeAreaView>
+      <Spinner 
+        title="Loading progress..."
+      />
     );
   }
   if (!stepData) {

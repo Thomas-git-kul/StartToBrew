@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { View, Alert, ScrollView, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, ActivityIndicator } from "react-native-paper";
+import { Button } from "react-native-paper";
 import CheckBox from "expo-checkbox";
 import { router } from "expo-router";
 import { supabase } from "@/supabase";
@@ -12,6 +12,7 @@ import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import Header from "@/components/header";
 import ErrorChip from "@/components/errorChip";
+import Spinner from "@/components/spinner";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -161,19 +162,9 @@ export default function Registration() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center"
-        style={{
-          backgroundColor: BASE_COLORS.LIGHT_BG
-        }}
-      >
-        <ActivityIndicator 
-            animating size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading account information...
-          </ThemedText>
-      </SafeAreaView>
+      <Spinner 
+        title="Loading registration..."
+      />
     );
   }
 
