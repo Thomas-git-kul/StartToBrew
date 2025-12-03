@@ -50,7 +50,7 @@ export default function Auth() {
         .single();
 
       if (error || !data) {
-        setLoginError("Incorrect username");
+        setLoginError("Username not linked to an account");
         return;
       }
 
@@ -64,7 +64,7 @@ export default function Auth() {
         .single();
 
       if (error || !data) {
-        setLoginError("Incorrect email");
+        setLoginError("Email not linked to an account");
         return;
       }
     }
