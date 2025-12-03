@@ -69,8 +69,13 @@ export default function PaymentScreen() {
   }, []);
 
   return (
-    <Spinner 
-      title="Loading payment information..."
-    />
+    <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
+      <Header title="Payment" />
+      {loading ? (
+        <Spinner title="Loading payment information..." />
+      ) : error ? (
+        <ThemedText>{error}</ThemedText>
+      ) : null}
+    </SafeAreaView>
   );
 }
