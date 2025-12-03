@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { TouchableOpacity, View, Image, ScrollView, Alert, Dimensions } from "react-native";
-import { FAB, Modal, Portal, Chip, Button, TextInput } from "react-native-paper";
+import { FAB, Modal, Portal, Chip, Button } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
@@ -19,6 +19,7 @@ import ReviewCard from "@/components/ui/ReviewCard";
 import { useUserProgressContext } from "@/context/UserProgressContext";
 import { useAppRefresh } from "@/context/AppRefreshContext";
 import Spinner from "@/components/spinner";
+import TextInput from "@/components/textInput";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -765,7 +766,7 @@ export default function SpecificRecipe() {
               </ThemedText>
             ) : (
               displayedReviews.map((r, idx) => (
-                <View key={idx} className="ml-1">
+                <View key={idx}>
                   <ReviewCard review={r as any} />
                 </View>
               ))
@@ -794,26 +795,11 @@ export default function SpecificRecipe() {
             Rate this recipe
           </ThemedText>
           <TextInput
-            mode="outlined"
-            label="Write a review (optional)"
-            placeholder="Share your thoughts about this beer..."
-            placeholderTextColor={BASE_COLORS.STONE300}
+            placeholder="(optional) Share your thoughts about this beer..."
             value={reviewText}
             onChangeText={setReviewText}
             multiline
             numberOfLines={4}
-            outlineColor={BASE_COLORS.ACCENT_PRIMARY}
-            activeOutlineColor={BASE_COLORS.ACCENT_PRIMARY}
-            selectionColor={BASE_COLORS.ACCENT_PRIMARY}
-            textColor="#000000"
-            theme={{
-              colors: { text: "#000000", placeholder: BASE_COLORS.STONE300 },
-            }}
-            style={{
-              marginBottom: 12,
-              backgroundColor: BASE_COLORS.LIGHT_BG,
-              color: "#000000",
-            }}
           />
 
           <View className="flex-row justify-center gap-3">
