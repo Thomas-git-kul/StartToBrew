@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Pressable, ActivityIndicator, Alert, ScrollView, Dimensions } from "react-native";
+import { View, Pressable, Alert, ScrollView, Dimensions } from "react-native";
 import { Avatar, Button, Paragraph } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { ThemedText } from "@/components/themed-text";
@@ -15,6 +15,7 @@ import { useFonts } from "@/hooks/use-fonts";
 import TextInput from "@/components/textInput";
 import ErrorChip from "@/components/errorChip";
 import Dialog from "@/components/dialog";
+import Spinner from "@/components/spinner";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -249,19 +250,9 @@ export default function EditAccount() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center"
-        style={{
-          backgroundColor: BASE_COLORS.LIGHT_BG
-        }}
-      >
-        <ActivityIndicator 
-            animating size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading account information...
-          </ThemedText>
-      </SafeAreaView>
+      <Spinner 
+        title="Loading account information..."
+      />
     );
   }
 

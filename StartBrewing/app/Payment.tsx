@@ -7,6 +7,7 @@ import { BASE_COLORS } from "@/constants/Colors";
 import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
+import Spinner from "@/components/spinner";
 
 export default function PaymentScreen() {
   const router = useRouter();
@@ -68,27 +69,8 @@ export default function PaymentScreen() {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 justify-center items-center px-6">
-      <Header
-        title="Payment"
-        iconName="ArrowLeft"
-        onIconPress={() => router.back()}
-      />
-
-      {loading && (
-        <>
-          <ActivityIndicator />
-          <ThemedText style={{ marginTop: 10 }}>
-            Redirecting to secure checkout…
-          </ThemedText>
-        </>
-      )}
-
-      {error && (
-        <ThemedText style={{ color: "red", marginTop: 10 }}>
-          {error}
-        </ThemedText>
-      )}
-    </SafeAreaView>
+    <Spinner 
+      title="Loading payment information..."
+    />
   );
 }
