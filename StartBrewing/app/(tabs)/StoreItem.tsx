@@ -312,14 +312,14 @@ export default function StoreItem() {
           showsVerticalScrollIndicator={false}
         >
           <ThemedText type="titleBlack">{item?.name ?? (loading ? "Loading…" : "Item")}</ThemedText>
-          {/* Primary image (single) */}
           <View
             style={{
               height: IMAGE_HEIGHT,
               borderRadius: 20,
               overflow: "hidden",
-              borderWidth: 1,
-              borderColor: BASE_COLORS.STONE200,
+              shadowColor: BASE_COLORS.STONE700,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
             }}
           >
             <Image

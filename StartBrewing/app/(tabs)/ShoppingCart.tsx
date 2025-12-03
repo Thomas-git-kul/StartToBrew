@@ -12,6 +12,7 @@ import { ThemedText } from "@/components/themed-text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/supabase";
 import { useFocusEffect } from "@react-navigation/native";
+import Spinner from "../../components/spinner";
 
 interface CartItem {
   store_item_id: number;
@@ -257,15 +258,9 @@ export default function ShoppingCart() {
         }}
       />
       {loading ? (
-        <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
-          <ActivityIndicator 
-            animating size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY} 
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading progress...
-          </ThemedText>
-        </SafeAreaView>
+        <Spinner 
+          title="Loading shoppingcart..."
+        />
       ) : (
         <ScrollView 
           className="mx-3"
@@ -274,30 +269,30 @@ export default function ShoppingCart() {
           <ThemedText type="title">Order Summary</ThemedText>
 
         {/* Order cards */}
-        <View className="mx-1">
-          {orders.map((order, index) => (
-            <OrderCard
-              key={index}
-              {...order}
-              starterkit={order.starterkit}
-              onPress={() =>
-                router.push({
-                  pathname: "/StoreItem",
-                  params: {
-                    id: order.store_item_id,
-                    categoryNumber: order.categoryId?.toString() ?? "",
-                    from: "cart",
-                  },
-                } as any)
-              }
-              onQuantityChange={(newQty, starterkit) => 
-                debouncedUpdateQuantity(order.store_item_id, newQty, starterkit)}
-            />
-          ))}
-        </View>
+          <View className="mx-1">
+            {orders.map((order, index) => (
+              <OrderCard
+                key={index}
+                {...order}
+                starterkit={order.starterkit}
+                onPress={() =>
+                  router.push({
+                    pathname: "/StoreItem",
+                    params: {
+                      id: order.store_item_id,
+                      categoryNumber: order.categoryId?.toString() ?? "",
+                      from: "cart",
+                    },
+                  } as any)
+                }
+                onQuantityChange={(newQty, starterkit) => 
+                  debouncedUpdateQuantity(order.store_item_id, newQty, starterkit)}
+              />
+            ))}
+          </View>
 
           {/* Subtotal */}
-          <View className='mt-3 mr-2 items-end'>
+          <View className='mt-1 mr-2 items-end'>
             <ThemedText type="accentDark">Subtotal: {formatter.format(total)}</ThemedText>
           </View>
 
