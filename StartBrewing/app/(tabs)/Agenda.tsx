@@ -386,7 +386,7 @@ export default function Agenda() {
                   >{brew.beer}</Text>
                   {brew.showProgressButton && brew.progressDate === currentDate && (
                   <Button onPress={() => {
-                    router.push({ pathname: "/progress", params: { id: brew.id_brew } });
+                    router.push({ pathname: "/progress", params: { id: brew.id_brew, from: "agenda" } });
                     // console.log(`Brew ID: ${brew.id_brew}`);
                   }}>
                     <Text 

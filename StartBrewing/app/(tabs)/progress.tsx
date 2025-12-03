@@ -36,7 +36,8 @@ export default function Progress() {
   const [isHistoricalStep, setIsHistoricalStep] = useState(false);
   const [hasPreviousStep, setHasPreviousStep] = useState(false);
   const [completedAt, setCompletedAt] = useState<Date | null>(null);
-  const [remaining, setRemaining] = useState(null);
+  const { from } = useLocalSearchParams() as { from?: string };
+
 
   const currentStep = useRef<any>(null);
   let CompletedStep = useRef<boolean>(false);
@@ -568,7 +569,7 @@ export default function Progress() {
         title={stepData.beer}
         actionTestIDLeft="back-header"
         iconNameLeft="ArrowLeft"
-        onIconPressLeft={() => router.back()}
+        onIconPressLeft={() => router.push(from === "agenda" ? "/Agenda" : "/HomePage")}
       />
         <View style={{ paddingBottom: 12 }}>
           {(() => {
