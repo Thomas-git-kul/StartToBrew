@@ -5,6 +5,7 @@ import { NavigationContainer } from "@react-navigation/native";
 const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
+  useLocalSearchParams: () => ({}),
 }));
 
 // Mock supabase to avoid native AsyncStorage import in native client
@@ -50,6 +51,6 @@ describe("<ShoppingCart /> minimal test", () => {
   it("renders header and initial loading state", () => {
     const { getByText } = renderWithNavigation(<ShoppingCart />);
     expect(getByText("Shopping Cart")).toBeTruthy();
-    expect(getByText("Loading progress...")).toBeTruthy();
+    expect(getByText("Loading shoppingcart...")).toBeTruthy();
   });
 });

@@ -76,7 +76,7 @@ export default function OrderCard({
           }}
           resizeMode="cover"
         />
-        <View className='flex-1 flex-row items-center gap-2 ml-2'>
+        <View className='flex-1 flex-row items-center gap-2 ml-3'>
           <View className="flex-1 mr-2">
             <Text
               numberOfLines={2}

@@ -10,6 +10,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 jest.mock('../supabase', () => {
   return {
     supabase: {
+      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }) },
       from: jest.fn().mockImplementation((table: string) => {
         if (table === "starter_kits") {
           return {
@@ -130,8 +131,13 @@ describe("<StoreItem /> minimal test", () => {
     await act(async () => {
       fireEvent.press(headerButton);
     });
-    // Update expectation to match actual behavior
-    expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
+    // Update expectation to match actual behavior (object with pathname + params)
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathname: "/ShoppingCart",
+        params: expect.objectContaining({ id: "1", from: "storeitem" }),
+      })
+    );
   });
 
   it("increments and decrements quantity and updates total price", async () => {
