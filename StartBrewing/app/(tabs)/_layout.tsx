@@ -3,6 +3,7 @@ import { Tabs, useRouter } from "expo-router";
 import { analytics, logEvent } from "@/firebase/firebaseConfig";
 
 import { HapticTab } from "@/components/haptic-tab";
+import { useClickCounter } from "@/context/ClickCounterContext";
 import { BASE_COLORS } from "@/constants/Colors";
 
 import { View } from "react-native";
@@ -15,12 +16,21 @@ function TabLayout() {
 
   const createTabBarButton = (eventName: string, DefaultButton: any) => {
     const WrappedButton = (props: any) => {
-      const handlePress = async (event: any) => {
-        if (analytics) {
-          logEvent(analytics, eventName);
-        }
+      const { increment } = useClickCounter();
 
+      const handlePress = async (event: any) => {
         try {
+          // increment global click counter for analytics
+          try {
+            await increment("tab_press");
+          } catch (e) {
+            // ignore
+          }
+
+          if (analytics) {
+            logEvent(analytics, eventName);
+          }
+
           const {
             data: { user },
           } = await supabase.auth.getUser();
@@ -51,13 +61,13 @@ function TabLayout() {
       className="flex-1"
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
-      <View className="flex-1 mx-3">
+      <View className="flex-1">
         <Tabs
           screenOptions={{
             tabBarActiveTintColor: BASE_COLORS.TEXT_DARK,
             tabBarInactiveTintColor: BASE_COLORS.STONE400,
             headerShown: false,
-            tabBarShowLabel: false,
+            tabBarShowLabel: true,
             tabBarStyle: {
               backgroundColor: BASE_COLORS.LIGHT_BG,
               borderTopWidth: 0,
@@ -70,6 +80,7 @@ function TabLayout() {
             name="HomePage"
             options={{
               tabBarIcon: ({ color }) => <Home color={color} size={28} />,
+              tabBarLabel: "Home",
               tabBarButton: (props) => <HapticTab {...props} />,
             }}
           />
@@ -131,6 +142,12 @@ function TabLayout() {
           />
           <Tabs.Screen
             name="SpecificRecipe"
+            options={{
+              href: null,
+            }}
+          />
+          <Tabs.Screen
+            name="ChatBot"
             options={{
               href: null,
             }}

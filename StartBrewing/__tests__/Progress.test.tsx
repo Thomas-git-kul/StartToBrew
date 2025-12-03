@@ -5,10 +5,14 @@ import { NavigationContainer } from "@react-navigation/native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { supabase } from "@/supabase";
 
-jest.mock("expo-router", () => ({
-  useRouter: jest.fn(),
-  useLocalSearchParams: jest.fn(),
-}));
+jest.mock("expo-router", () => {
+  const React = require("react");
+  return {
+    useRouter: jest.fn(),
+    useLocalSearchParams: jest.fn(),
+    useFocusEffect: (callback: any) => React.useEffect(() => callback(), []),
+  };
+});
 
 jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
 
@@ -76,6 +80,12 @@ jest.mock("lucide-react-native", () => {
     Play: make("Play"),
     CheckCheck: make("CheckCheck"),
     Lightbulb: make("Lightbulb"),
+    // Icons used by Stepper and the FAB
+    ChevronLeft: make("ChevronLeft"),
+    ChevronRight: make("ChevronRight"),
+    BotMessageSquare: make("BotMessageSquare"),
+    MessageSquare: make("MessageSquare"),
+    MessageCircle: make("MessageCircle"),
   };
 });
 
@@ -112,16 +122,26 @@ jest.mock("@/supabase", () => {
         return {
           select: () => ({
             eq: () => ({
-              single: async () => ({
-                data: {
-                  id_brew: 1,
-                  recipe_slug: "black-ipa",
-                  name: "black IPA Progress",
-                  last_step_id: "1",
-                  status_id: 2,
-                },
-                error: null,
-              }),
+                  single: async () => ({
+                    data: {
+                      id_brew: 1,
+                      recipe_slug: "black-ipa",
+                      name: "black IPA Progress",
+                      last_step_id: "1",
+                      status_id: 2,
+                    },
+                    error: null,
+                  }),
+                  maybeSingle: async () => ({
+                    data: {
+                      id_brew: 1,
+                      recipe_slug: "black-ipa",
+                      name: "black IPA Progress",
+                      last_step_id: "1",
+                      status_id: 2,
+                    },
+                    error: null,
+                  }),
             }),
           }),
           update: () => ({
@@ -134,7 +154,8 @@ jest.mock("@/supabase", () => {
         return {
           select: () => ({
             eq: () => ({
-              order: async () => ({ data: [{ phase_id: "phase-1", position: 1 }], error: null }),
+                  order: async () => ({ data: [{ phase_id: "phase-1", position: 1 }], error: null }),
+                  maybeSingle: async () => ({ data: [{ phase_id: "phase-1", position: 1 }], error: null }),
             }),
           }),
         };
@@ -143,7 +164,7 @@ jest.mock("@/supabase", () => {
         return {
           select: () => ({
             eq: () => ({
-              order: async () => ({
+                  order: async () => ({
                 data: [
                   {
                     step_id: "1",
@@ -158,7 +179,23 @@ jest.mock("@/supabase", () => {
                   },
                 ],
                 error: null,
-              }),
+                  }),
+                  maybeSingle: async () => ({
+                    data: [
+                      {
+                        step_id: "1",
+                        title: "60-min Citra",
+                        title_2: "15-min Mosaic",
+                        description_md: "At T-60: briefly kill the flame to prevent foam, add hops, then resume boil.",
+                        description_md_2: "At T-15: briefly kill the flame to prevent foam, add hops, then resume boil.",
+                        start_offset_min: 0,
+                        duration_min: 0.02,
+                        next_step_id: null,
+                        temp_c_target: 100,
+                      },
+                    ],
+                    error: null,
+                  }),
             }),
           }),
         };
@@ -167,7 +204,8 @@ jest.mock("@/supabase", () => {
         return {
           select: () => ({
             eq: () => ({
-              single: async () => ({ data: { step_id: "1", tip_md: "Use a spoon" }, error: null }),
+                  single: async () => ({ data: { step_id: "1", tip_md: "Use a spoon" }, error: null }),
+                  maybeSingle: async () => ({ data: { step_id: "1", tip_md: "Use a spoon" }, error: null }),
             }),
           }),
         };
@@ -175,12 +213,60 @@ jest.mock("@/supabase", () => {
       case "brew_steps":
         return {
           select: () => ({
-            eq: async () => ({ data: [{ brew_step_id: 10, brew_id: "1", step_id: "1", position: 1, done_at: null }], error: null }),
+            eq: function(idField: string, idValue: any) {
+              // return another object that supports .eq(step_id, ...) and .single()
+              return {
+                eq: function(stepField: string, stepValue: any) {
+                      return {
+                        single: async () => ({
+                          data: {
+                            brew_step_id: 10,
+                            id_brew: 1,
+                            step_id: 1,
+                            status: "in_progress",  // <- belangrijk, want loadStep checkt dit
+                            position: 1,
+                            completed_at: null,
+                          },
+                          error: null,
+                        }),
+                        maybeSingle: async () => ({
+                          data: {
+                            brew_step_id: 10,
+                            id_brew: 1,
+                            step_id: 1,
+                            status: "in_progress",
+                            position: 1,
+                            completed_at: null,
+                          },
+                          error: null,
+                        }),
+                      };
+                },
+              };
+            },
           }),
-          update: () => ({
-            eq: () => ({ eq: async () => ({ data: [], error: null }) }),
-          }),
+          update: () => ({ eq: () => ({ eq: async () => ({ data: [], error: null }) }) }),
           delete: () => ({ eq: async () => ({ data: [], error: null }) }),
+        };
+
+      case "step_ingredient_refs":
+        return {
+          select: () => ({
+            eq: () => ({
+              data: [{ ingredient_id: 1, amount_g: 100 }],
+              error: null,
+            }),
+          }),
+        };
+
+      case "ingredients":
+        return {
+          select: () => ({
+            in: () => ({
+              data: [{ ingredient_id: 1, name: "Malt", kind: "Hop" }],
+              error: null,
+            }),
+          }),
         };
 
       default:
@@ -199,6 +285,12 @@ const pushMock = jest.fn();
 const renderWithNavigation = (ui: React.ReactElement) =>
   render(<NavigationContainer>{ui}</NavigationContainer>);
 
+const renderProgress = async () => {
+  const utils = renderWithNavigation(<Progress />);
+  await act(async () => {});
+  return utils;
+};
+
 describe("<Progress />", () => {
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue({ push: pushMock });
@@ -206,20 +298,38 @@ describe("<Progress />", () => {
     jest.clearAllMocks();
   });
 
-  it("laadt en toont stapgegevens en roept Supabase aan", async () => {
-    const { findByText } = renderWithNavigation(<Progress />);
+  it("Loads and displays step data and calls Supabase", async () => {
+    const { findByText } = await renderProgress();
     expect(await findByText("black IPA Progress")).toBeTruthy();
     expect(await findByText("60-min Citra")).toBeTruthy();
   });
 
-  it("toont tips", async () => {
-    const { findByText } = renderWithNavigation(<Progress />);
+  it("Shows tips", async () => {
+    const { findByText } = await renderProgress();
     // our mock returns a tip for step 1 (see supabase mock), assert it shows
     expect(await findByText("Use a spoon")).toBeTruthy();
   });
 
-  it("snapshot", () => {
-    const tree = renderWithNavigation(<Progress />).toJSON();
+  it("shows ingredients", async () => {
+    const { findByText } = await renderProgress();
+    expect(await findByText("• Malt (Hop): 100 g")).toBeTruthy();
+  });
+
+  it("navigates to the ChatBot through FAB button", async () => {
+    const { findByTestId, findByText } = await renderProgress();
+    
+    // Wait for content to load
+    await findByText("black IPA Progress");
+
+    const chatFab = await findByTestId("chat-button");
+
+    await act(async () => fireEvent.press(chatFab));
+
+    expect(pushMock).toHaveBeenCalledWith("/ChatBot?fromProgress=1");
+  });
+
+  it("snapshot", async () => {
+    const tree = (await renderProgress()).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });

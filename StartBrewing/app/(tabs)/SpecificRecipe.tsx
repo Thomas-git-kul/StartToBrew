@@ -1,21 +1,6 @@
 import { useState, useEffect } from "react";
-import {
-  View,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Dimensions,
-} from "react-native";
-import {
-  FAB,
-  Modal,
-  Portal,
-  Chip,
-  ActivityIndicator,
-  Button,
-  TextInput,
-} from "react-native-paper";
+import { TouchableOpacity, View, Image, ScrollView, Alert, Dimensions } from "react-native";
+import { FAB, Modal, Portal, Chip, Button } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
@@ -25,12 +10,16 @@ import { useFonts } from "@/hooks/use-fonts";
 import { Star, Wheat, Hop } from "lucide-react-native";
 import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
+import { analytics, logEvent } from "@/firebase/firebaseConfig";
+import { useClickCounter } from "@/context/ClickCounterContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import StoreCard from "@/components/ui/StoreCard";
 import ReviewCard from "@/components/ui/ReviewCard";
 import { useUserProgressContext } from "@/context/UserProgressContext";
 import { useAppRefresh } from "@/context/AppRefreshContext";
+import Spinner from "@/components/spinner";
+import TextInput from "@/components/textInput";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -61,7 +50,7 @@ export default function SpecificRecipe() {
   useFonts();
 
   const router = useRouter();
-  const { recipe_slug } = useLocalSearchParams<{ recipe_slug?: string }>();
+  const { recipe_slug, from } = useLocalSearchParams<{ recipe_slug?: string, from?: string }>();
 
   const [loading, setLoading] = useState(true);
   const [recipe, setRecipe] = useState<{
@@ -82,6 +71,8 @@ export default function SpecificRecipe() {
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [kitsVisible, setKitsVisible] = useState(false);
+  const [northStarLogged, setNorthStarLogged] = useState(false);
+  const { increment, get, reset } = useClickCounter();
   const { refreshProgress } = useUserProgressContext();
   const { triggerRefresh } = useAppRefresh();
 
@@ -280,7 +271,7 @@ export default function SpecificRecipe() {
     }
   };
 
-  const brewRecipe = async () => {
+  const brewRecipe = async (clicksToFirstBrew?: number) => {
     if (!recipe_slug || !recipe?.name) {
       console.warn("Cannot start brew: missing slug or recipe name.");
       return;
@@ -334,6 +325,17 @@ export default function SpecificRecipe() {
 
       const firstStepId = firstStepData.step_id;
 
+      const { data: previousBrewsAll, error: prevAllError } = await supabase
+        .from("brews")
+        .select("id_brew")
+        .eq("user_id", user.id);
+
+      if (prevAllError) {
+        console.error("Error checking previous brews:", prevAllError?.message);
+      }
+
+      const isFirstEver = (previousBrewsAll?.length || 0) === 0;
+
       const { data: previousBrews, error: prevError } = await supabase
         .from("brews")
         .select("id_brew")
@@ -365,6 +367,44 @@ export default function SpecificRecipe() {
       }
 
       const brewId = brewData[0].id_brew;
+
+      // If this is the user's first-ever brew, log a north-star analytics event
+      // but skip if we already logged when the user first pressed Start Brewing
+      if (isFirstEver && !northStarLogged) {
+        try {
+          const accountCreatedAt = user.created_at ? new Date(user.created_at) : null;
+          const brewStartedAt = brewData[0].start_date ? new Date(brewData[0].start_date) : new Date();
+          const timeToFirstBrewSeconds = accountCreatedAt
+            ? Math.max(0, Math.round((brewStartedAt.getTime() - accountCreatedAt.getTime()) / 1000))
+            : null;
+
+          const params: any = {
+            user_id: user.id,
+            brew_id: brewId,
+            recipe_slug: recipe_slug,
+          };
+          if (timeToFirstBrewSeconds != null) params.time_to_first_brew_seconds = timeToFirstBrewSeconds;
+          // get final clicks from counter if not explicitly passed
+          const finalClicks = clicksToFirstBrew != null ? clicksToFirstBrew : get();
+          if (finalClicks != null) params.clicks_to_first_brew = finalClicks;
+
+          if (analytics) {
+            logEvent(analytics, "north_star_first_brew", params);
+          } else {
+            // Fallback logging when Firebase Analytics not available (native or during tests)
+            console.log("north_star_first_brew", params);
+          }
+          setNorthStarLogged(true);
+          // reset the global click counter after successful logging
+          try {
+            await reset();
+          } catch (e) {
+            // ignore
+          }
+        } catch (e: any) {
+          console.error("Failed to log north-star event:", e?.message ?? e);
+        }
+      }
 
       const { data: allSteps, error: stepsError } = await supabase
         .from("steps")
@@ -432,6 +472,30 @@ export default function SpecificRecipe() {
     } catch (e: any) {
       console.error("Error fetching kits:", e.message);
       return [];
+    }
+  };
+
+  // Called when the user first presses the bottom 'Start Brewing' FAB.
+  // We log the north-star event here (time-to-first-brew measured to this press)
+  // and then open the starter kit modal.
+  const handleInitialStartPress = async () => {
+    try {
+      // open kits modal immediately
+      setKitsVisible(true);
+
+      // get user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        return;
+      }
+      // increment the global click counter — do not log here; we only log when brew is created
+      try {
+        await increment("initial_start_press");
+      } catch (e) {
+        // ignore
+      }
+    } catch (e: any) {
+      console.error("Error logging north-star on initial start press:", e?.message ?? e);
     }
   };
 
@@ -545,18 +609,14 @@ export default function SpecificRecipe() {
         filled={isFavoriteIconFilled}
         onIconPress={handleToggleFavorite}
         actionTestID="heart-button"
+        iconNameLeft="ArrowLeft"
+        actionTestIDLeft="back-button"
+        onIconPressLeft={() => router.push(from === "account" ? "/Account" : "/Recipes")}
       />
       {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator
-            animating
-            size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading recipe...
-          </ThemedText>
-        </View>
+        <Spinner 
+          title="Loading recipe..." 
+        />
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
           <ThemedText type="title" className="mb-2 text-center">
@@ -573,9 +633,7 @@ export default function SpecificRecipe() {
           showsVerticalScrollIndicator={false}
         >
           {/* Title */}
-          <View>
-            <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
-          </View>
+          <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
 
           {/* Image */}
           <View className="items-center mb-5">
@@ -638,22 +696,6 @@ export default function SpecificRecipe() {
                   Add Review
                 </ThemedText>
               </Button>
-              /*
-             <Button
-                onPress={() => setReviewVisible(true)}
-                labelStyle={{ 
-                  fontSize: Math.min(12 * scale, 24),
-                  color: BASE_COLORS.STONE700,
-                  fontFamily: FontFamilies.BODY_LIGHT,            
-                }}
-                style={{
-                  position: "absolute",
-                  right: 0,
-                  borderRadius: 20,
-                  backgroundColor: BASE_COLORS.AMBER200,
-                }}
-              >Add Review</Button>
-              */
             )}
           </View>
 
@@ -724,37 +766,12 @@ export default function SpecificRecipe() {
               </ThemedText>
             ) : (
               displayedReviews.map((r, idx) => (
-                <View key={idx} className="ml-1">
+                <View key={idx}>
                   <ReviewCard review={r as any} />
                 </View>
               ))
             )}
           </View>
-
-          {/* Starterkit 
-          <View className="mt-2 mb-4">
-            <ThemedText type="title" className="">Get your StarterKit now!</ThemedText>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="mt-3"
-            >
-              {kits.length === 0 ? (
-                <ThemedText type="defaultText" className="ml-1">No starter kits available for this recipe.</ThemedText>
-              ) : (
-                kits.map((kit) => (
-                  <StoreCard
-                    key={kit.id_starter_kit}
-                    image={require("@/assets/images/starterkit2.png")}
-                    title={`${kit.name} • ${kit.size_liters}L`}
-                    price={`$${kit.price.toFixed(2)}`}
-                    onPress={() => router.push(`/store/starter-kit/${kit.id_starter_kit}`)}
-                  />
-                ))
-              )}
-            </ScrollView>
-          </View>
-          */}
         </ScrollView>
       )}
 
@@ -778,26 +795,11 @@ export default function SpecificRecipe() {
             Rate this recipe
           </ThemedText>
           <TextInput
-            mode="outlined"
-            label="Write a review (optional)"
-            placeholder="Share your thoughts about this beer..."
-            placeholderTextColor={BASE_COLORS.STONE300}
+            placeholder="(optional) Share your thoughts about this beer..."
             value={reviewText}
             onChangeText={setReviewText}
             multiline
             numberOfLines={4}
-            outlineColor={BASE_COLORS.ACCENT_PRIMARY}
-            activeOutlineColor={BASE_COLORS.ACCENT_PRIMARY}
-            selectionColor={BASE_COLORS.ACCENT_PRIMARY}
-            textColor="#000000"
-            theme={{
-              colors: { text: "#000000", placeholder: BASE_COLORS.STONE300 },
-            }}
-            style={{
-              marginBottom: 12,
-              backgroundColor: BASE_COLORS.LIGHT_BG,
-              color: "#000000",
-            }}
           />
 
           <View className="flex-row justify-center gap-3">
@@ -875,7 +877,7 @@ export default function SpecificRecipe() {
                         setKitsVisible(false);
                         router.push({
                           pathname: "/StoreItem",
-                          params: { id: kit.id, categoryNumber: 4 },
+                          params: { id: kit.id, categoryNumber: 4, from: "specificrecipe", recipe_slug: recipe_slug },
                         } as any);
                       }}
                     />
@@ -898,9 +900,14 @@ export default function SpecificRecipe() {
               mode="flat"
               label="Ready to Start"
               color={BASE_COLORS.WHITE}
-              onPress={() => {
+              onPress={async () => {
+                try {
+                  await increment("modal_ready_start");
+                } catch (e) {
+                  // ignore
+                }
                 setKitsVisible(false);
-                brewRecipe();
+                await brewRecipe();
               }}
               style={{
                 backgroundColor: BASE_COLORS.TEXT_DARK,
@@ -933,7 +940,7 @@ export default function SpecificRecipe() {
             mode="flat"
             label="Start Brewing"
             color={BASE_COLORS.WHITE}
-            onPress={() => setKitsVisible(true)}
+            onPress={() => handleInitialStartPress()}
             /*onPress={brewRecipe}*/
             style={{
               backgroundColor: BASE_COLORS.TEXT_DARK,

@@ -1,8 +1,20 @@
 import { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { PlatformPressable } from "@react-navigation/elements";
 import * as Haptics from "expo-haptics";
+import { useClickCounter } from "@/context/ClickCounterContext";
 
 export function HapticTab(props: BottomTabBarButtonProps) {
+  const { increment } = useClickCounter();
+
+  const handlePress = async (ev: any) => {
+    try {
+      await increment("haptic_tab");
+    } catch (e) {
+      // ignore
+    }
+    props.onPress?.(ev);
+  };
+
   return (
     <PlatformPressable
       {...props}
@@ -13,6 +25,7 @@ export function HapticTab(props: BottomTabBarButtonProps) {
         }
         props.onPressIn?.(ev);
       }}
+      onPress={handlePress}
     />
   );
 }

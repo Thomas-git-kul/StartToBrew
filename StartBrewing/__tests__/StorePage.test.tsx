@@ -1,4 +1,6 @@
 import React from "react";
+import TestRenderer from "react-test-renderer";
+const { act } = TestRenderer;
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import StorePage from "../app/(tabs)/Store";
 import { supabase } from "../supabase";
@@ -16,7 +18,10 @@ jest.mock("@/hooks/use-fonts", () => ({
 
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
-  return { SafeAreaProvider: ({ children }: any) => <View>{children}</View> };
+  return {
+    SafeAreaProvider: ({ children }: any) => <View>{children}</View>,
+    SafeAreaView: ({ children, style }: any) => <View style={style}>{children}</View>,
+  };
 });
 
 interface StoreCardProps {
@@ -166,7 +171,12 @@ describe("<StorePage />", () => {
   it("navigates to cart when cart button pressed", async () => {
     const { getByTestId } = renderWithNavigation(<StorePage />);
     await waitFor(() => {
+      expect(getByTestId("cart-button")).toBeTruthy();
+    });
+    await act(async () => {
       fireEvent.press(getByTestId("cart-button")); // use testID, not text
+    });
+    await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
     });
   });

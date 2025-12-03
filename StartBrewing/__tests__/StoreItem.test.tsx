@@ -10,6 +10,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 jest.mock('../supabase', () => {
   return {
     supabase: {
+      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }) },
       from: jest.fn().mockImplementation((table: string) => {
         if (table === "starter_kits") {
           return {
@@ -37,6 +38,8 @@ jest.mock('../supabase', () => {
 });
 
 import React from "react";
+import TestRenderer from "react-test-renderer";
+const { act } = TestRenderer;
 import { render, fireEvent, waitFor, screen } from "@testing-library/react-native";
 import StoreItem from "../app/(tabs)/StoreItem";
 
@@ -125,9 +128,16 @@ describe("<StoreItem /> minimal test", () => {
     // Wait for the header button to appear
     const headerButton = await screen.findByTestId("mock-header-button");
 
-    fireEvent.press(headerButton);
-    // Update expectation to match actual behavior
-    expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
+    await act(async () => {
+      fireEvent.press(headerButton);
+    });
+    // Update expectation to match actual behavior (object with pathname + params)
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathname: "/ShoppingCart",
+        params: expect.objectContaining({ id: "1", from: "storeitem" }),
+      })
+    );
   });
 
   it("increments and decrements quantity and updates total price", async () => {
@@ -144,14 +154,18 @@ describe("<StoreItem /> minimal test", () => {
     expect(priceText).toBeTruthy();
 
     // Increase quantity
-    fireEvent.press(plusBtn);
+    await act(async () => {
+      fireEvent.press(plusBtn);
+    });
     await waitFor(() => {
       expect(screen.getByDisplayValue("2")).toBeTruthy();
       expect(screen.getByText(/€\s?65[,\.]98/)).toBeTruthy();
     });
 
     // Decrease quantity
-    fireEvent.press(minusBtn);
+    await act(async () => {
+      fireEvent.press(minusBtn);
+    });
     await waitFor(() => {
       expect(screen.getByDisplayValue("1")).toBeTruthy();
       expect(screen.getByText(/€\s?32[,\.]99/)).toBeTruthy();
