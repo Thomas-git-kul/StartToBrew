@@ -71,3 +71,4 @@ export default function Stepper({ step, total, onNext, onPrev, isCompleted = fal
     </View>
   );
 }
+
