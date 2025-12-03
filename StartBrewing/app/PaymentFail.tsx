@@ -77,7 +77,7 @@ export default function PaymentFail() {
         {/* Back to Home Button */}
         <Button
           mode="contained"
-          onPress={() => router.replace("/HomePage")}
+          onPress={() => router.replace("/ShoppingCart")}
           labelStyle={{
             fontSize: Math.min(16 * scale, 24),
             color: BASE_COLORS.WHITE,
@@ -87,7 +87,7 @@ export default function PaymentFail() {
             borderRadius: 30,
             backgroundColor: BASE_COLORS.TEXT_DARK,
           }}
-        >Back to Home</Button>
+        >Back to Shoppingcart</Button>
       </View>
     </SafeAreaView>
   );
