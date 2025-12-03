@@ -271,6 +271,9 @@ export default function EditAccount() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
         title="Edit profile"
+        iconNameLeft="ArrowLeft"
+        actionTestIDLeft="back-button"
+        onIconPressLeft={() => setDialogVisible(true)}
       />
       <ScrollView
         className="flex-1, mx-3"
