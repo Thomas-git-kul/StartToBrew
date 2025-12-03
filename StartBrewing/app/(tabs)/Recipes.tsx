@@ -613,10 +613,8 @@ export default function Recipes() {
       )}
 
       {recommendedRecipes.length > 0 && (
-        <View className="mb-4">
-          <ThemedText type="subTitle" className="mb-2">
-            Recommended for you
-          </ThemedText>
+        <View className="mb-2">
+          <ThemedText type="title">Recommended for you</ThemedText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {recommendedRecipes.map((item) => (
               <View key={item.recipe_slug} className="mr-2">
@@ -643,9 +641,7 @@ export default function Recipes() {
       )}
 
       {otherRecipes.length > 0 && (
-        <ThemedText type="subTitle" className="mb-1">
-          All recipes
-        </ThemedText>
+        <ThemedText type="title" className="mb-1">All recipes</ThemedText>
       )}
     </View>
   );
@@ -831,8 +827,7 @@ export default function Recipes() {
 
       {loading ? (
         <Spinner 
-          title="Searching recipes..."
-          size="small"
+          title="Loading recipes..."
         />
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
@@ -861,7 +856,7 @@ export default function Recipes() {
                     recipe_slug: item.recipe_slug,
                     isFavorite: favoriteSlugs.includes(item.recipe_slug)
                       ? "true"
-                      : "false",
+                      : "false"
                   },
                 })
               }

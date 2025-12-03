@@ -84,8 +84,8 @@ export default function HeaderBar({
                     size={18}
                     style={{
                       position: "absolute",
-                      top: -5,
-                      right: -5,
+                      top: -3,
+                      right: 2,
                       backgroundColor: BASE_COLORS.RED600,
                       color: "white",
                     }}

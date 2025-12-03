@@ -53,7 +53,6 @@ export default function CustomTextInput({
         numberOfLines={numberOfLines}
         keyboardType={keyboardType}
         maxLength={maxLength}
-
         placeholderTextColor={BASE_COLORS.STONE400}
         selectionColor={BASE_COLORS.ACCENT_PRIMARY}
         style={{

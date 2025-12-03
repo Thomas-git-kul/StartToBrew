@@ -432,7 +432,7 @@ export default function Account() {
                   fontSize: Math.min(16 * scale, 24),
                   fontFamily: FontFamilies.BODY,
                   color: BASE_COLORS.STONE900,
-                  marginBottom: 12,
+                  marginBottom: 4,
                 }}
               >{fullName || "Name not set"}</Text>
             </View>
@@ -480,7 +480,7 @@ export default function Account() {
             </View>
           </View>
           {!!bio && (
-            <ThemedText type="defaultText" style={{color: BASE_COLORS.STONE500}} className="mb-8">{bio}</ThemedText>
+            <ThemedText type="defaultText" style={{color: BASE_COLORS.STONE500}} className="mb-6">{bio}</ThemedText>
           )}
 
           {/* Statistieken 
@@ -578,7 +578,7 @@ export default function Account() {
                       if (brew.recipe_slug) {
                         router.push({
                           pathname: "/SpecificRecipe",
-                          params: { recipe_slug: brew.recipe_slug },
+                          params: { recipe_slug: brew.recipe_slug, from: "account" },
                         });
                       }
                     }}

@@ -54,6 +54,7 @@ export default function OrderCard({
 
   return (
     <Card
+      onPress={onPress}
       style={{
         marginBottom: 6,
         backgroundColor: BASE_COLORS.WHITE,
@@ -64,7 +65,7 @@ export default function OrderCard({
         paddingRight: 8,
       }}
     >
-      <Pressable onPress={onPress} style={{ flexDirection: 'row' }}>
+      <View style={{ flexDirection: 'row' }}>
         <Image
           source={image}
           style={{
@@ -75,8 +76,8 @@ export default function OrderCard({
           }}
           resizeMode="cover"
         />
-        <View className='flex-1 flex-row items-center gap-2 ml-2'>
-          <View className="flex-1">
+        <View className='flex-1 flex-row items-center gap-2 ml-3'>
+          <View className="flex-1 mr-2">
             <Text
               numberOfLines={2}
               style={{
@@ -88,15 +89,15 @@ export default function OrderCard({
           </View>
 
           {/* Quantity Selector */}
-          <View className="flex-row items-center gap-1">
+          <View className="flex-row items-center">
             <Pressable onPress={() => handleQuantityChange(Math.max(0, localQuantity - 1))}>
               <CircleMinus size={20} color={BASE_COLORS.STONE500} />
             </Pressable>
+
             <TextInput
               value={localQuantity.toString()}
               readOnly={true}
               inputMode="numeric"
-              // autoFocus={true}
               enterKeyHint="done"
               maxLength={2}
               onChangeText={(text) => {
@@ -105,12 +106,11 @@ export default function OrderCard({
               }}
               selectionColor={BASE_COLORS.ACCENT_PRIMARY}
               style={{
-                width: 40,
+                width: 25,
                 textAlign: "center",
                 fontFamily: FontFamilies.BODY,
                 fontSize: Math.min(16 * scale, 22),
                 color: BASE_COLORS.STONE700,
-                paddingVertical: 0,
               }}
             />
             <Pressable onPress={() => handleQuantityChange(localQuantity + 1)}>
@@ -119,13 +119,13 @@ export default function OrderCard({
           </View>
 
           {/* Price */}
-          <View style={{ width: 70, alignItems: 'flex-end' }}>
+          <View style={{ width: 60, alignItems: 'flex-end' }}>
             <Text style={{ fontFamily: FontFamilies.BODY, color: BASE_COLORS.STONE600 }}>
               {formatter.format(unitPrice * localQuantity)}
             </Text>
           </View>
         </View>
-      </Pressable>
+      </View>
     </Card>
   );
 };

@@ -15,13 +15,11 @@ exports[`<SpecificRecipe /> snapshot 1`] = `
     showsVerticalScrollIndicator={false}
   >
     <View>
-      <View>
-        <Text
-          type="titleBlack"
-        >
-          Den Ballaste Point Sculpin IPA 60
-        </Text>
-      </View>
+      <Text
+        type="titleBlack"
+      >
+        Den Ballaste Point Sculpin IPA 60
+      </Text>
       <View
         className="items-center mb-5"
       >

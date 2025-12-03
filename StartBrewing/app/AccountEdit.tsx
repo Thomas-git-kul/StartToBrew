@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Pressable, ActivityIndicator, Alert, ScrollView, Dimensions } from "react-native";
+import { View, Pressable, Alert, ScrollView, Dimensions } from "react-native";
 import { Avatar, Button, Paragraph } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { ThemedText } from "@/components/themed-text";
@@ -15,6 +15,7 @@ import { useFonts } from "@/hooks/use-fonts";
 import TextInput from "@/components/textInput";
 import ErrorChip from "@/components/errorChip";
 import Dialog from "@/components/dialog";
+import Spinner from "@/components/spinner";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -249,19 +250,9 @@ export default function EditAccount() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center"
-        style={{
-          backgroundColor: BASE_COLORS.LIGHT_BG
-        }}
-      >
-        <ActivityIndicator 
-            animating size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading account information...
-          </ThemedText>
-      </SafeAreaView>
+      <Spinner 
+        title="Loading account information..."
+      />
     );
   }
 
@@ -271,6 +262,9 @@ export default function EditAccount() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
         title="Edit profile"
+        iconNameLeft="ArrowLeft"
+        actionTestIDLeft="back-button"
+        onIconPressLeft={() => setDialogVisible(true)}
       />
       <ScrollView
         className="flex-1, mx-3"
@@ -398,18 +392,13 @@ export default function EditAccount() {
 
         <View className="flex-row justify-between">
           <Button
-            mode="contained"
+            mode="text"
             onPress={() => setDialogVisible(true)}
             disabled={saving}
-            labelStyle={{ 
-              fontSize: Math.min(14 * scale, 24),
-              color: BASE_COLORS.WHITE,
-              fontFamily: FontFamilies.BODY,            
-            }}
-            style={{
-              borderRadius: 20,
-              marginBottom: 15,
-              backgroundColor: BASE_COLORS.STONE300,
+            labelStyle={{
+              fontSize: Math.min(16 * scale, 24),
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.TEXT_DARK,
             }}
           >Cancel</Button>
           <Button
@@ -418,7 +407,7 @@ export default function EditAccount() {
             disabled={saving}
             loading={saving} 
             labelStyle={{ 
-              fontSize: Math.min(14 * scale, 24),
+              fontSize: Math.min(16 * scale, 24),
               color: BASE_COLORS.WHITE,
               fontFamily: FontFamilies.BODY,            
             }}

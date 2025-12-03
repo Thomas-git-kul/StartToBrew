@@ -4,6 +4,7 @@ import { Card } from "react-native-paper";
 import { Star } from "lucide-react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
+import { ThemedText } from "../themed-text";
 
 type Review = {
   rating: number;
@@ -28,35 +29,39 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
   return (
     <View style={{ marginBottom: 10 }}>
       <Card
-        mode="elevated"
         style={{
-          borderRadius: 10,
+          borderRadius: 12,
           backgroundColor: BASE_COLORS.WHITE,
           padding: 12,
+          shadowColor: BASE_COLORS.STONE700,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-          <Star
-            size={16}
-            color={BASE_COLORS.ACCENT_LIGHT}
-            fill={BASE_COLORS.ACCENT_LIGHT}
-            style={{ marginRight: 8 }}
-          />
-          <Text style={{
-            fontFamily: FontFamilies.BODY,
-            color: BASE_COLORS.STONE700,
-            fontSize: 14,
-          }}>
-            {formatRating(review.rating)}/5
-          </Text>
-          {review.username && (
+        <View className="flex-row items-center justify-between mb-2">
+          <View className="flex-row items-center">
+            <Star
+              size={16}
+              color={BASE_COLORS.ACCENT_LIGHT}
+              fill={BASE_COLORS.ACCENT_LIGHT}
+              style={{ marginRight: 8 }}
+            />
             <Text style={{
-              fontFamily: FontFamilies.BODY_LIGHT,
-              color: BASE_COLORS.TEXT_DARK,
-              fontSize: 12,
-              marginLeft: 8,
-            }}>{`@${review.username}`}</Text>
-          )}
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.STONE700,
+              fontSize: 14,
+            }}>
+              {formatRating(review.rating)}/5
+            </Text>
+            {review.username && (
+              <Text style={{
+                fontFamily: FontFamilies.BODY_LIGHT,
+                color: BASE_COLORS.STONE700,
+                fontSize: 12,
+                marginLeft: 8,
+              }}>{`@${review.username}`}</Text>
+            )}
+          </View>
           {dateStr && (
             <Text style={{
               fontFamily: FontFamilies.BODY_LIGHT,
@@ -68,17 +73,9 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
         </View>
 
         {review.review_text ? (
-          <Text style={{
-            fontFamily: FontFamilies.BODY_LIGHT,
-            color: BASE_COLORS.STONE700,
-            fontSize: 14,
-          }}>{review.review_text}</Text>
+          <ThemedText type="defaultText">{review.review_text}</ThemedText>
         ) : (
-          <Text style={{
-            fontFamily: FontFamilies.BODY_LIGHT,
-            color: BASE_COLORS.STONE500,
-            fontSize: 14,
-          }}>No comment</Text>
+          <ThemedText type="defaultText">No comment</ThemedText>
         )}
       </Card>
     </View>

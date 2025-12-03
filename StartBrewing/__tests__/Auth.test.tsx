@@ -152,7 +152,7 @@ describe("<Auth />", () => {
     fireEvent.press(getByText("Log In"));
 
     await waitFor(() => {
-      expect(queryByText("Incorrect username")).toBeTruthy();
+      expect(queryByText("Username not linked to an account")).toBeTruthy();
     });
   });
 
