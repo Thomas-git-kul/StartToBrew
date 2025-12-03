@@ -401,18 +401,13 @@ export default function EditAccount() {
 
         <View className="flex-row justify-between">
           <Button
-            mode="contained"
+            mode="text"
             onPress={() => setDialogVisible(true)}
             disabled={saving}
-            labelStyle={{ 
-              fontSize: Math.min(14 * scale, 24),
-              color: BASE_COLORS.WHITE,
-              fontFamily: FontFamilies.BODY,            
-            }}
-            style={{
-              borderRadius: 20,
-              marginBottom: 15,
-              backgroundColor: BASE_COLORS.STONE300,
+            labelStyle={{
+              fontSize: Math.min(16 * scale, 24),
+              fontFamily: FontFamilies.BODY,
+              color: BASE_COLORS.TEXT_DARK,
             }}
           >Cancel</Button>
           <Button
@@ -421,7 +416,7 @@ export default function EditAccount() {
             disabled={saving}
             loading={saving} 
             labelStyle={{ 
-              fontSize: Math.min(14 * scale, 24),
+              fontSize: Math.min(16 * scale, 24),
               color: BASE_COLORS.WHITE,
               fontFamily: FontFamilies.BODY,            
             }}
