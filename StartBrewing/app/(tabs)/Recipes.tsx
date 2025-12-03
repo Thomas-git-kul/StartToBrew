@@ -831,8 +831,7 @@ export default function Recipes() {
 
       {loading ? (
         <Spinner 
-          title="Searching recipes..."
-          size="small"
+          title="Loading recipes..."
         />
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
@@ -861,7 +860,7 @@ export default function Recipes() {
                     recipe_slug: item.recipe_slug,
                     isFavorite: favoriteSlugs.includes(item.recipe_slug)
                       ? "true"
-                      : "false",
+                      : "false"
                   },
                 })
               }

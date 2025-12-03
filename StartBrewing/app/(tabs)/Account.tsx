@@ -578,7 +578,7 @@ export default function Account() {
                       if (brew.recipe_slug) {
                         router.push({
                           pathname: "/SpecificRecipe",
-                          params: { recipe_slug: brew.recipe_slug },
+                          params: { recipe_slug: brew.recipe_slug, from: "account" },
                         });
                       }
                     }}

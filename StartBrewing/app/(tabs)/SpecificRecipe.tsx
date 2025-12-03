@@ -1,21 +1,6 @@
 import { useState, useEffect } from "react";
-import {
-  View,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Dimensions,
-} from "react-native";
-import {
-  FAB,
-  Modal,
-  Portal,
-  Chip,
-  ActivityIndicator,
-  Button,
-  TextInput,
-} from "react-native-paper";
+import { TouchableOpacity, View, Image, ScrollView, Alert, Dimensions } from "react-native";
+import { FAB, Modal, Portal, Chip, Button, TextInput } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
@@ -33,6 +18,7 @@ import StoreCard from "@/components/ui/StoreCard";
 import ReviewCard from "@/components/ui/ReviewCard";
 import { useUserProgressContext } from "@/context/UserProgressContext";
 import { useAppRefresh } from "@/context/AppRefreshContext";
+import Spinner from "@/components/spinner";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -63,7 +49,7 @@ export default function SpecificRecipe() {
   useFonts();
 
   const router = useRouter();
-  const { recipe_slug } = useLocalSearchParams<{ recipe_slug?: string }>();
+  const { recipe_slug, from } = useLocalSearchParams<{ recipe_slug?: string, from?: string }>();
 
   const [loading, setLoading] = useState(true);
   const [recipe, setRecipe] = useState<{
@@ -622,18 +608,14 @@ export default function SpecificRecipe() {
         filled={isFavoriteIconFilled}
         onIconPress={handleToggleFavorite}
         actionTestID="heart-button"
+        iconNameLeft="ArrowLeft"
+        actionTestIDLeft="back-button"
+        onIconPressLeft={() => router.push(from === "account" ? "/Account" : "/Recipes")}
       />
       {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator
-            animating
-            size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading recipe...
-          </ThemedText>
-        </View>
+        <Spinner 
+          title="Loading recipe..." 
+        />
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
           <ThemedText type="title" className="mb-2 text-center">
@@ -650,9 +632,7 @@ export default function SpecificRecipe() {
           showsVerticalScrollIndicator={false}
         >
           {/* Title */}
-          <View>
-            <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
-          </View>
+          <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
 
           {/* Image */}
           <View className="items-center mb-5">
@@ -715,22 +695,6 @@ export default function SpecificRecipe() {
                   Add Review
                 </ThemedText>
               </Button>
-              /*
-             <Button
-                onPress={() => setReviewVisible(true)}
-                labelStyle={{ 
-                  fontSize: Math.min(12 * scale, 24),
-                  color: BASE_COLORS.STONE700,
-                  fontFamily: FontFamilies.BODY_LIGHT,            
-                }}
-                style={{
-                  position: "absolute",
-                  right: 0,
-                  borderRadius: 20,
-                  backgroundColor: BASE_COLORS.AMBER200,
-                }}
-              >Add Review</Button>
-              */
             )}
           </View>
 
@@ -807,31 +771,6 @@ export default function SpecificRecipe() {
               ))
             )}
           </View>
-
-          {/* Starterkit 
-          <View className="mt-2 mb-4">
-            <ThemedText type="title" className="">Get your StarterKit now!</ThemedText>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="mt-3"
-            >
-              {kits.length === 0 ? (
-                <ThemedText type="defaultText" className="ml-1">No starter kits available for this recipe.</ThemedText>
-              ) : (
-                kits.map((kit) => (
-                  <StoreCard
-                    key={kit.id_starter_kit}
-                    image={require("@/assets/images/starterkit2.png")}
-                    title={`${kit.name} • ${kit.size_liters}L`}
-                    price={`$${kit.price.toFixed(2)}`}
-                    onPress={() => router.push(`/store/starter-kit/${kit.id_starter_kit}`)}
-                  />
-                ))
-              )}
-            </ScrollView>
-          </View>
-          */}
         </ScrollView>
       )}
 
