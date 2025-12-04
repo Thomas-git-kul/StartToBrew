@@ -197,6 +197,17 @@ function HomePageContent() {
             phase_id: string;
           }
 
+          interface StepRow {
+            step_id: string | number;
+            duration_min?: number | null;
+          }
+
+          interface CompletedStepRow {
+            step_id: string | number;
+            steps?: { duration_min?: number | null } | null;
+            time_left?: number | null;
+          }
+
           const inProgressResult = brews?.length
             ? await Promise.all(
                 brews.map(async (brew: BrewRow) => {
@@ -209,22 +220,64 @@ function HomePageContent() {
 
                   const phaseIds = phases?.map((p) => p.phase_id) ?? [];
 
-                  const { data: totalSteps } = await supabase
+                  const { data: totalSteps } = (await supabase
                     .from("steps")
-                    .select("step_id")
-                    .in("phase_id", phaseIds);
+                    .select("step_id, duration_min")
+                    .in("phase_id", phaseIds)) as { data: StepRow[] | null };
 
-                  const { data: completedSteps } = await supabase
+                  const { data: completedSteps } = (await supabase
                     .from("brew_steps")
-                    .select("step_id")
+                    .select("step_id, steps(duration_min), time_left")
                     .eq("id_brew", brew.id_brew)
-                    .eq("status", "completed");
+                    .eq("status", "completed")) as { data: CompletedStepRow[] | null };
 
+                  const durations = (totalSteps || [])
+                    .map((s) => s.duration_min)
+                    .filter((d): d is number => typeof d === "number" && d > 0);
+
+                  const avgDuration = durations.length > 0
+                    ? durations.reduce((a, b) => a + b, 0) / durations.length
+                    : 60; // fallback: 1 uur als ALLES null is
+
+                  // 1) Bepaal totale workload (met tijd)
+                  const totalWorkload = (totalSteps || []).reduce((sum: number, step: { duration_min?: number | null }) => {
+                    const dur = step.duration_min;
+                    return sum + (dur && dur > 0 ? dur : avgDuration);
+                  }, 0);
+
+                  // 2) Completed workload + gedeeltelijk in-progress workload
+                  let completedWorkload = 0;
+
+                  (completedSteps || []).forEach((step: CompletedStepRow) => {
+                      const dur = step.steps?.duration_min ?? null;
+                      const fullDuration = dur && dur > 0 ? dur : avgDuration;
+
+                      console.log(`Brew ${brew.name}: time_left = ${step.time_left}`);
+
+                      // Normal completed step → full duration
+                      if (step.steps && step.time_left == null) {
+                        completedWorkload += fullDuration;
+                        return;
+                      }
+
+                      // Step is in_progress → partial progress
+                      if (step.time_left != null) {
+                        const remaining = step.time_left;
+                        const completedPart = Math.max(fullDuration - remaining, 0);
+
+                        completedWorkload += completedPart;
+                        return;
+                      }
+                    }
+                  );
+
+                  // 3) Progress berekenen
                   const progress =
-                    totalSteps && completedSteps
-                      ? completedSteps.length / totalSteps.length
-                      : 0;
+                    totalWorkload > 0 ? completedWorkload / totalWorkload : 0;
 
+                  console.log(
+                    `Brew ${brew.name} - Total: ${totalWorkload}, Completed: ${completedWorkload}, Avg: ${avgDuration}, Progress: ${progress * 100}%`
+                  );
                   return { id: brew.id_brew, name: brew.name, progress };
                 })
               )
