@@ -2,44 +2,42 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import PaymentSuccess from "../app/PaymentSuccess";
-import { useRouter, useLocalSearchParams } from "expo-router";
 import emailjs from "@emailjs/browser";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { supabase } from "@/supabase";
 
+/* Silence console */
 jest.spyOn(console, "error").mockImplementation(() => {});
 jest.spyOn(console, "warn").mockImplementation(() => {});
 jest.spyOn(console, "log").mockImplementation(() => {});
 
 /* ------------------------------
-   MOCKS
+   ROUTER MOCK
 ------------------------------- */
-
 const replaceMock = jest.fn();
-
 jest.mock("expo-router", () => ({
   useRouter: jest.fn(),
   useLocalSearchParams: jest.fn(),
 }));
 
+/* ------------------------------
+   EMAILJS MOCK
+------------------------------- */
 jest.mock("@emailjs/browser", () => ({
   send: jest.fn(() => Promise.resolve({ text: "ok" })),
 }));
 
+/* ------------------------------
+   SAFE AREA MOCK
+------------------------------- */
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
-  return {
-    SafeAreaView: ({ children }: any) => <View>{children}</View>,
-  };
+  return { SafeAreaView: ({ children }: any) => <View>{children}</View> };
 });
 
-jest.mock("@/components/header", () => {
-  const { View, Text } = require("react-native");
-  return ({ title }: any) => (
-    <View>
-      <Text>{title}</Text>
-    </View>
-  );
-});
-
+/* ------------------------------
+   UI MOCKS
+------------------------------- */
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
@@ -50,51 +48,127 @@ jest.mock("lucide-react-native", () => {
   return { CheckCircle: () => <Text>CheckIcon</Text> };
 });
 
-/* Colors & Fonts (light mocks) */
 jest.mock("@/constants/Colors", () => ({
-  BASE_COLORS: {
-    TEXT_BODY: "#000",
-    TEXT_DARK: "#000",
-  },
+  BASE_COLORS: { TEXT_DARK: "#000", LIGHT_BG: "#fff" },
 }));
 
 jest.mock("@/constants/Fonts", () => ({
-  FontFamilies: {
-    BODY: "System",
-    BODY_LIGHT: "System",
+  FontFamilies: { BODY: "System" },
+}));
+
+/* ------------------------------
+   SUPABASE MOCK (single source of truth)
+------------------------------- */
+const mockFrom = jest.fn();
+
+jest.mock("@/supabase", () => ({
+  supabase: {
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: "test-user" } },
+        error: null,
+      }),
+    },
+    from: (...args: any[]) => mockFrom(...args),
   },
 }));
+
+/* ------------------------------
+   SUPABASE TABLE BEHAVIOR
+------------------------------- */
+let orderItemsInsertMock: jest.Mock;
+
+beforeEach(() => {
+  jest.clearAllMocks();
+
+  (useRouter as jest.Mock).mockReturnValue({ replace: replaceMock });
+
+  (useLocalSearchParams as jest.Mock).mockReturnValue({
+    email: "test@example.com",
+    amount: "500",
+    order_id: "123",
+  });
+
+  orderItemsInsertMock = jest.fn().mockResolvedValue({ error: null });
+
+  mockFrom.mockImplementation((table: string) => {
+    switch (table) {
+      case "shopping_carts":
+        return {
+          select: () => ({
+            eq: () => ({
+              single: jest.fn().mockResolvedValue({
+                data: { id_cart: 55 },
+                error: null,
+              }),
+            }),
+          }),
+          delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+        };
+
+      case "shopping_cart_items":
+        return {
+          select: () => ({
+            eq: () => ({
+              data: [
+                {
+                  store_item_id: 99,
+                  quantity: 2,
+                  starter_kit: true,
+                },
+              ],
+              error: null,
+            }),
+          }),
+          delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+        };
+
+      case "orders":
+        return {
+          select: () => ({
+            eq: () => ({
+              single: jest.fn().mockResolvedValue({
+                data: null, // not found → should create new order
+                error: { message: "not found" },
+              }),
+            }),
+          }),
+          insert: () => ({
+            select: () => ({
+              single: jest.fn().mockResolvedValue({
+                data: { id_order: 123 },
+                error: null,
+              }),
+            }),
+          }),
+        };
+
+      case "order_items":
+        return {
+          insert: orderItemsInsertMock,
+        };
+
+      default:
+        return {};
+    }
+  });
+});
 
 /* ------------------------------
    TESTS
 ------------------------------- */
 
 describe("<PaymentSuccess />", () => {
-  beforeEach(() => {
-    (useRouter as jest.Mock).mockReturnValue({ replace: replaceMock });
-    replaceMock.mockClear();
-
-    (useLocalSearchParams as jest.Mock).mockReturnValue({
-      email: "test@example.com",
-      amount: "500",
-      order_id: "ORDER123",
-    });
-
-    (emailjs.send as jest.Mock).mockClear();
-  });
-
-  it("renders essential UI elements", () => {
+  it("renders essential UI", () => {
     const { getByText } = render(<PaymentSuccess />);
 
     expect(getByText("Payment Successful!")).toBeTruthy();
-    expect(
-      getByText("Thank you for your purchase! You can now return to the homepage!")
-    ).toBeTruthy();
+    expect(getByText("Thank you for your purchase! You can now return to the homepage!")).toBeTruthy();
     expect(getByText("Back to Home")).toBeTruthy();
     expect(getByText("CheckIcon")).toBeTruthy();
   });
 
-  it("calls emailjs.send with correct params", async () => {
+  it("sends email with correct parameters", async () => {
     render(<PaymentSuccess />);
 
     await waitFor(() => {
@@ -107,22 +181,38 @@ describe("<PaymentSuccess />", () => {
       {
         customer_email: "test@example.com",
         amount: "5.00",
-        order_id: "ORDER123",
+        order_id: "123",
       },
       process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY
     );
   });
 
-  it("navigates to /HomePage when button is pressed", () => {
+  it("inserts order_items including starter_kit", async () => {
+    render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(orderItemsInsertMock).toHaveBeenCalled();
+    });
+
+    expect(orderItemsInsertMock).toHaveBeenCalledWith([
+      {
+        order_id: 123,
+        store_item_id: 99,
+        quantity: 2,
+        starter_kit: true,
+      },
+    ]);
+  });
+
+  it("navigates to HomePage", () => {
     const { getByText } = render(<PaymentSuccess />);
 
-    const button = getByText("Back to Home");
-    fireEvent.press(button);
+    fireEvent.press(getByText("Back to Home"));
 
     expect(replaceMock).toHaveBeenCalledWith("/HomePage");
   });
 
-  it("snapshot", () => {
+  it("matches snapshot", () => {
     const tree = render(<PaymentSuccess />).toJSON();
     expect(tree).toMatchSnapshot();
   });
