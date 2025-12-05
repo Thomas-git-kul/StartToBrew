@@ -152,19 +152,14 @@ export default function Progress() {
         // Check of we een historische stap bekijken
         const isHistorical =
           brew_steps.status === "completed";
-          console.log("brew_steps.status", brew_steps.status);
         setIsHistoricalStep(isHistorical);
 
         // Check of we een forward stap bekijken
         const isForwardStep =
           brew_steps.status === "pending" &&
           brew.last_step_id != brew_steps.step_id;
-          console.log("brew.last_step_id:", brew.last_step_id, 
-            '\nbrew_steps.step_id:', brew_steps.step_id, 
-            '\nstatus:', brew_steps.status);
 
         setIsForwardStep(isForwardStep);
-        console.log("isForwardStep:", isForwardStep);
 
         const { data: tips } = await supabase
           .from("step_tips")
