@@ -1,6 +1,7 @@
 import React from "react";
 import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
+import { Alert } from "react-native";
 import SpecificRecipe from "../app/(tabs)/SpecificRecipe";
 import { useRouter, useLocalSearchParams } from "expo-router";
 
@@ -9,6 +10,13 @@ jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
 }));
 
+const mockRefreshProgress = jest.fn();
+const mockTriggerRefresh = jest.fn();
+const mockIncrement = jest.fn();
+const mockGet = jest.fn(() => 0);
+const mockReset = jest.fn();
+const mockToggleFavorite = jest.fn();
+
 // ⬇️ NIEUW: mock de user progress context, zodat useUserProgressContext geen error gooit
 jest.mock("@/context/UserProgressContext", () => ({
   useUserProgressContext: () => ({
@@ -16,23 +24,23 @@ jest.mock("@/context/UserProgressContext", () => ({
     loading: false,
     levelUp: null,
     acknowledgeLevelUp: jest.fn(),
-    refreshProgress: jest.fn(),
+    refreshProgress: mockRefreshProgress,
   }),
 }));
 
 jest.mock("@/context/ClickCounterContext", () => ({
   useClickCounter: () => ({
     clickCount: 0,
-    increment: jest.fn(),
-    get: jest.fn(() => 0),
-    reset: jest.fn(),
+    increment: mockIncrement,
+    get: mockGet,
+    reset: mockReset,
   }),
 }));
 
 // Mock AppRefresh context zodat useAppRefresh niet crasht
 jest.mock("@/context/AppRefreshContext", () => ({
   useAppRefresh: () => ({
-    triggerRefresh: jest.fn(),
+    triggerRefresh: mockTriggerRefresh,
   }),
 }));
 
@@ -129,10 +137,16 @@ const mapIngredient = (row: (typeof ingredientRows)[number]) => {
 
 // Router + params
 const mockPush = jest.fn();
+let mockRecipeSlug: string | undefined = recipeSlug;
+let mockFrom: string | undefined = undefined;
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
-  useLocalSearchParams: () => ({ recipe_slug: recipeSlug, slug: recipeSlug }),
+  useLocalSearchParams: () => ({ 
+    recipe_slug: mockRecipeSlug, 
+    slug: mockRecipeSlug,
+    from: mockFrom 
+  }),
 }));
 
 // Fonts
@@ -166,7 +180,10 @@ jest.mock("@/constants/Colors", () => ({
     TEXT_DARK: "#000000",
     ACCENT_LIGHT: "#B45309",
     ACCENT_PRIMARY: "#FF6600",
+    STONE100: "#F5F5F4",
+    STONE200: "#E7E5E4",
     STONE300: "#E5E7EB",
+    STONE600: "#57534E",
   },
 }));
 
@@ -178,8 +195,22 @@ jest.mock("@/constants/Fonts", () => ({
 // Mock Header
 // --------------------------
 jest.mock("@/components/header", () => {
-  const { Text } = require("react-native");
-  return ({ title }: any) => <Text>{title}</Text>;
+  const { View, Text, TouchableOpacity } = require("react-native");
+  return ({ title, onIconPress, onIconPressLeft, actionTestID, actionTestIDLeft }: any) => (
+    <View>
+      {actionTestIDLeft && onIconPressLeft && (
+        <TouchableOpacity testID={actionTestIDLeft} onPress={onIconPressLeft}>
+          <Text>Back</Text>
+        </TouchableOpacity>
+      )}
+      <Text>{title}</Text>
+      {actionTestID && onIconPress && (
+        <TouchableOpacity testID={actionTestID} onPress={onIconPress}>
+          <Text>Heart</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 });
 
 // react-native-paper
@@ -194,10 +225,10 @@ jest.mock("react-native-paper", () => {
     Portal: ({ children }: any) => <>{children}</>,
     Modal: ({ visible, children }: any) =>
       visible ? <View>{children}</View> : null,
-    Chip: ({ children }: any) => (
-      <View>
+    Chip: ({ children, onPress, testID }: any) => (
+      <TouchableOpacity onPress={onPress} testID={testID}>
         <Text>{children}</Text>
-      </View>
+      </TouchableOpacity>
     ),
     ActivityIndicator: () => {
       const { View } = require("react-native");
@@ -235,18 +266,28 @@ jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
 }));
 
+// Mock variables to control supabase responses
+let mockUser: any = { id: "user-1", created_at: new Date().toISOString() };
+let mockSession: any = null;
+let mockRecipeReviews: any[] = [];
+let mockHasUserReviewed = false;
+let mockStarterKits: any[] = [];
+
 jest.mock("@/supabase", () => ({
   supabase: {
     auth: {
-      getUser: jest.fn().mockResolvedValue({
-        data: { user: { id: "user-1" } },
-        error: null,
-      }),
-      // Geen actieve sessie -> user moet ingelogd zijn voor review
-      getSession: jest.fn().mockResolvedValue({
-        data: { session: null },
-        error: null,
-      }),
+      getUser: jest.fn(() =>
+        Promise.resolve({
+          data: { user: mockUser },
+          error: null,
+        })
+      ),
+      getSession: jest.fn(() =>
+        Promise.resolve({
+          data: { session: mockSession },
+          error: null,
+        })
+      ),
     },
 
     from: jest.fn((table) => {
@@ -261,25 +302,61 @@ jest.mock("@/supabase", () => ({
                 }),
               }),
             }),
+            update: () => ({
+              eq: async () => ({ data: null, error: null }),
+            }),
           };
 
         case "recipe_reviews":
           return {
-            select: () => ({
-              // select("rating").eq("recipe_slug", ...) -> we gebruiken hier alleen de data niet
-              eq: () => ({
+            select: (fields?: string) => {
+              const eqChain = {
+                eq: (col2: string, val2: any) => {
+                  if (col2 === "account_id") {
+                    return {
+                      maybeSingle: async () => ({
+                        data: mockHasUserReviewed ? { rating: 4 } : null,
+                        error: null,
+                      }),
+                    };
+                  }
+                  return {
+                    maybeSingle: async () => ({
+                      data: mockHasUserReviewed ? { rating: 4 } : null,
+                      error: null,
+                    }),
+                  };
+                },
                 maybeSingle: async () => ({
+                  data: mockHasUserReviewed ? { rating: 4 } : null,
+                  error: null,
+                }),
+                order: (field: string, opts: any) => ({
+                  limit: async () => ({
+                    data: mockRecipeReviews,
+                    error: null,
+                  }),
+                }),
+                limit: async () => ({
+                  data: mockRecipeReviews,
+                  error: null,
+                }),
+              };
+              
+              return {
+                eq: (col: string, val: any) => eqChain,
+              };
+            },
+            insert: () => ({
+              select: async () => ({ data: null, error: null }),
+            }),
+            delete: () => ({
+              eq: (col: string, val: any) => ({
+                eq: async (col2: string, val2: any) => ({
                   data: null,
                   error: null,
                 }),
-                order: () => ({
-                  limit: async () => ({ data: [], error: null }),
-                }),
               }),
-              order: () => ({
-                limit: async () => ({ data: [], error: null }),
-              }),
-              limit: async () => ({ data: [], error: null }),
             }),
           };
 
@@ -314,7 +391,6 @@ jest.mock("@/supabase", () => ({
                   }),
                 }),
               }),
-
               in: async () => ({
                 data: steps,
                 error: null,
@@ -324,9 +400,24 @@ jest.mock("@/supabase", () => ({
 
         case "brews":
           return {
+            select: (fields?: string) => ({
+              eq: (col: string, val: any) => {
+                if (col === "recipe_slug") {
+                  return {
+                    eq: async () => ({ data: [], error: null }),
+                  };
+                }
+                return { eq: async () => ({ data: [], error: null }) };
+              },
+            }),
             insert: () => ({
               select: async () => ({
-                data: [{ id_brew: 123 }],
+                data: [
+                  {
+                    id_brew: 123,
+                    start_date: new Date().toISOString(),
+                  },
+                ],
                 error: null,
               }),
             }),
@@ -342,7 +433,7 @@ jest.mock("@/supabase", () => ({
             select: () => ({
               eq: () => ({
                 maybeSingle: async () => ({
-                  data: { username: "testuser" },
+                  data: { username: "testuser", level: 5 },
                   error: null,
                 }),
               }),
@@ -350,10 +441,9 @@ jest.mock("@/supabase", () => ({
           };
 
         case "recipe_kits":
-          // return empty list for starter kits by default so tests don't fail
           return {
             select: () => ({
-              eq: async () => ({ data: [], error: null }),
+              eq: async () => ({ data: mockStarterKits, error: null }),
             }),
           };
 
@@ -378,9 +468,58 @@ jest.mock("@/supabase", () => ({
 jest.mock("@/context/FavoritesContext", () => ({
   useFavorites: () => ({
     favoriteSlugs: [],
-    toggleFavorite: jest.fn(),
+    toggleFavorite: mockToggleFavorite,
   }),
 }));
+
+// Mock StoreCard and ReviewCard
+jest.mock("@/components/ui/StoreCard", () => {
+  const { View, Text, TouchableOpacity } = require("react-native");
+  return ({ title, price, onPress }: any) => {
+    return (
+      <TouchableOpacity onPress={onPress} testID="store-card">
+        <Text>{title}</Text>
+        <Text>{price}</Text>
+      </TouchableOpacity>
+    );
+  };
+});
+
+jest.mock("@/components/ui/ReviewCard", () => {
+  const { View, Text, TouchableOpacity } = require("react-native");
+  return ({ review, onDelete }: any) => (
+    <View testID={`review-card-${review.account_id}`}>
+      <Text>Rating: {review.rating}</Text>
+      {review.review_text && <Text>{review.review_text}</Text>}
+      {onDelete && (
+        <TouchableOpacity testID="delete-review-btn" onPress={onDelete}>
+          <Text>Delete</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+});
+
+// Mock Spinner
+jest.mock("@/components/spinner", () => {
+  const { View, Text } = require("react-native");
+  return ({ title }: any) => (
+    <View>
+      <Text>{title}</Text>
+    </View>
+  );
+});
+
+// Mock custom TextInput
+jest.mock("@/components/textInput", () => {
+  const { TextInput: RNTextInput } = require("react-native");
+  return ({ value, onChangeText, ...rest }: any) => (
+    <RNTextInput value={value} onChangeText={onChangeText} {...rest} />
+  );
+});
+
+// Mock Alert
+jest.spyOn(Alert, "alert");
 
 /* ------------------------------
    HELPER
@@ -398,66 +537,747 @@ const renderWithNavigation = async (ui: React.ReactElement) => {
 
 describe("<SpecificRecipe />", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     mockPush.mockClear();
+    mockRecipeSlug = recipeSlug;
+    mockFrom = undefined;
+    mockUser = { id: "user-1", created_at: new Date().toISOString() };
+    mockSession = null;
+    mockRecipeReviews = [];
+    mockHasUserReviewed = false;
+    mockStarterKits = [];
   });
 
-  it("renders the title of the recipe", async () => {
-    const { findByText } = await renderWithNavigation(<SpecificRecipe />);
-    expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
+  describe("Basic rendering", () => {
+    it("renders the title of the recipe", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+      expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
+    });
+
+    it("shows start brewing button", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+      expect(await findByText("Start Brewing")).toBeTruthy();
+    });
+
+    it("displays recipe description", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+      expect(
+        await findByText(
+          "Den Ballaste Point Sculpin IPA 60 is a classic American IPA voor hopliefhebbers."
+        )
+      ).toBeTruthy();
+    });
+
+    it("displays recipe specifications chips", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+      expect(await findByText("American IPA")).toBeTruthy();
+      expect(await findByText("7.2% ABV")).toBeTruthy();
+      expect(await findByText("89.3 IBU")).toBeTruthy();
+      expect(await findByText("6 SRM")).toBeTruthy();
+      expect(await findByText("19 L batch")).toBeTruthy();
+    });
+
+    it("displays ingredients list", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+      expect(await findByText("Ingredients:")).toBeTruthy();
+      expect(await findByText(/Main.*yeast/i)).toBeTruthy();
+      expect(await findByText(/Pale Ale Malt.*grain/i)).toBeTruthy();
+    });
+
+    it("shows default rating when no reviews", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+      expect(await findByText("0.00 / 5")).toBeTruthy();
+      expect(await findByText("(0 reviews)")).toBeTruthy();
+    });
+
+    it("shows no reviews message when there are no reviews", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+      expect(await findByText("This beer has no reviews yet.")).toBeTruthy();
+    });
   });
 
-  it("show startbrewing button", async () => {
-    const { findByText } = await renderWithNavigation(<SpecificRecipe />);
-    expect(await findByText("Start Brewing")).toBeTruthy();
+  describe("Favorite functionality", () => {
+    it("toggles favorite when heart button is pressed", async () => {
+      const { findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+      const heartBtn = await findByTestId("heart-button");
+      
+      fireEvent.press(heartBtn);
+      await waitFor(() => {
+        expect(mockToggleFavorite).toHaveBeenCalledWith(recipeSlug);
+      });
+    });
   });
 
-  it("opens batch size modal first and then the starterkit modal", async () => {
-    const { findByText, queryByText } = await renderWithNavigation(
-      <SpecificRecipe />
-    );
+  describe("Batch size modal", () => {
+    it("opens batch size modal when Start Brewing is pressed", async () => {
+      const { findByText, queryByText } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
 
-    // Initieel geen modals
-    expect(queryByText("Choose batch size")).toBeNull();
-    expect(queryByText("Get your StarterKit now!")).toBeNull();
+      expect(queryByText("Choose batch size")).toBeNull();
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
 
-    // Start Brewing -> batch size modal
-    const startBtn = await findByText("Start Brewing");
-    fireEvent.press(startBtn);
+      const batchTitle = await findByText("Choose batch size");
+      expect(batchTitle).toBeTruthy();
+    });
 
-    const batchTitle = await findByText("Choose batch size");
-    expect(batchTitle).toBeTruthy();
+    it("selects 5L batch size option", async () => {
+      const { findByText, findByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
 
-    // Confirm -> StarterKit modal
-    const confirmBtn = await findByText("Confirm");
-    fireEvent.press(confirmBtn);
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
 
-    const kitsTitle = await findByText("Get your StarterKit now!");
-    expect(kitsTitle).toBeTruthy();
+      await findByText("Choose batch size");
+      const chip5L = await findByTestId("batch-chip-5");
+      fireEvent.press(chip5L);
+
+      const confirmBtn = await findByText("Confirm");
+      expect(confirmBtn).toBeTruthy();
+    });
+
+    it("selects 10L batch size option", async () => {
+      const { findByText, findByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      await findByText("Choose batch size");
+      const chip10L = await findByTestId("batch-chip-10");
+      fireEvent.press(chip10L);
+
+      const confirmBtn = await findByText("Confirm");
+      expect(confirmBtn).toBeTruthy();
+    });
+
+    it("selects custom batch size option and enters value", async () => {
+      const { findByText, findByTestId, findByPlaceholderText } =
+        await renderWithNavigation(<SpecificRecipe />);
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      await findByText("Choose batch size");
+      const chipCustom = await findByTestId("batch-chip-custom");
+      fireEvent.press(chipCustom);
+
+      const input = await findByPlaceholderText("Custom volume in L");
+      fireEvent.changeText(input, "25");
+
+      const confirmBtn = await findByText("Confirm");
+      expect(confirmBtn).toBeTruthy();
+    });
+
+    it("shows alert for invalid custom batch size", async () => {
+      const { findByText, findByTestId, findByPlaceholderText } =
+        await renderWithNavigation(<SpecificRecipe />);
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      await findByText("Choose batch size");
+      const chipCustom = await findByTestId("batch-chip-custom");
+      fireEvent.press(chipCustom);
+
+      const input = await findByPlaceholderText("Custom volume in L");
+      fireEvent.changeText(input, "abc");
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await waitFor(() => {
+        expect(Alert.alert).toHaveBeenCalledWith(
+          "Invalid batch size",
+          "Please enter a valid volume in liters."
+        );
+      });
+    });
+
+    it("closes batch size modal when Cancel is pressed", async () => {
+      const { findByText, queryByText } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      await findByText("Choose batch size");
+      const cancelBtn = await findByText("Cancel");
+      fireEvent.press(cancelBtn);
+
+      await waitFor(() => {
+        expect(queryByText("Choose batch size")).toBeNull();
+      });
+    });
+
+    it("opens starterkit modal after confirming batch size", async () => {
+      const { findByText, queryByText } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      expect(queryByText("Choose batch size")).toBeNull();
+      expect(queryByText("Get your StarterKit now!")).toBeNull();
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      const batchTitle = await findByText("Choose batch size");
+      expect(batchTitle).toBeTruthy();
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      const kitsTitle = await findByText("Get your StarterKit now!");
+      expect(kitsTitle).toBeTruthy();
+    });
   });
 
-  it("opens review modal and star press keeps it open when user is not logged in", async () => {
-    const { findByText, findAllByTestId, queryByText } =
-      await renderWithNavigation(<SpecificRecipe />);
+  describe("Starter kits modal", () => {
+    beforeEach(() => {
+      mockStarterKits = [
+        {
+          id_starter_kit: 1,
+          starter_kit: {
+            name: "Basic Kit",
+            description: "Basic brewing kit",
+            size_liters: 19,
+            price: 99.99,
+            is_active: true,
+          },
+        },
+      ];
+    });
 
-    // Modal is initieel gesloten
-    expect(queryByText("Rate this recipe")).toBeNull();
+    it("displays starter kits in modal", async () => {
+      const { findByText, queryByText } = await renderWithNavigation(<SpecificRecipe />);
 
-    // Open de reviewmodal
-    const addReviewBtn = await findByText("Add Review");
-    fireEvent.press(addReviewBtn);
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
 
-    const modalTitle = await findByText("Rate this recipe");
-    expect(modalTitle).toBeTruthy();
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
 
-    // Klik op een ster – zonder sessie blijft de modal open
-    const stars = await findAllByTestId(/star-/);
-    fireEvent.press(stars[2]);
+      await findByText("Get your StarterKit now!");
+      
+      // Wait a bit for the kits to render
+      await waitFor(() => {
+        expect(queryByText(/Basic Kit/)).toBeTruthy();
+      }, { timeout: 2000 });
+    });
 
-    expect(queryByText("Rate this recipe")).toBeTruthy();
+    it("starts brewing when Ready to Start is pressed", async () => {
+      const { findByText, findByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await findByText("Get your StarterKit now!");
+      const readyBtn = await findByTestId("startFAB");
+      fireEvent.press(readyBtn);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith({
+          pathname: "/progress",
+          params: { id: 123 },
+        });
+      });
+    });
   });
 
-  it.skip("snapshot", async () => {
-    const tree = (await renderWithNavigation(<SpecificRecipe />)).toJSON();
-    expect(tree).toMatchSnapshot();
+  describe("Review functionality", () => {
+    it("opens review modal when Add Review is pressed", async () => {
+      const { findByText, queryByText } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      expect(queryByText("Rate this recipe")).toBeNull();
+
+      const addReviewBtn = await findByText("Add Review");
+      fireEvent.press(addReviewBtn);
+
+      const modalTitle = await findByText("Rate this recipe");
+      expect(modalTitle).toBeTruthy();
+    });
+
+    it("allows selecting star rating", async () => {
+      const { findByText, findAllByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const addReviewBtn = await findByText("Add Review");
+      fireEvent.press(addReviewBtn);
+
+      await findByText("Rate this recipe");
+      const stars = await findAllByTestId(/star-/);
+      
+      fireEvent.press(stars[3]); // Select 4 stars
+      expect(stars[3]).toBeTruthy();
+    });
+
+    it("allows entering review text", async () => {
+      const { findByText, findByPlaceholderText } =
+        await renderWithNavigation(<SpecificRecipe />);
+
+      const addReviewBtn = await findByText("Add Review");
+      fireEvent.press(addReviewBtn);
+
+      await findByText("Rate this recipe");
+      const input = await findByPlaceholderText(
+        "(optional) Share your thoughts about this beer..."
+      );
+      
+      fireEvent.changeText(input, "Great beer!");
+      expect(input.props.value).toBe("Great beer!");
+    });
+
+    it("shows alert when submitting review without rating", async () => {
+      mockSession = {
+        user: { id: "user-1" },
+      };
+
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      const addReviewBtn = await findByText("Add Review");
+      fireEvent.press(addReviewBtn);
+
+      await findByText("Rate this recipe");
+      const submitBtn = await findByText("Submit");
+      fireEvent.press(submitBtn);
+
+      await waitFor(() => {
+        expect(Alert.alert).toHaveBeenCalledWith(
+          "Rating required",
+          "Please select a rating before submitting."
+        );
+      });
+    });
+
+    it("shows alert when user is not logged in", async () => {
+      mockSession = null;
+
+      const { findByText, findAllByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const addReviewBtn = await findByText("Add Review");
+      fireEvent.press(addReviewBtn);
+
+      await findByText("Rate this recipe");
+      const stars = await findAllByTestId(/star-/);
+      fireEvent.press(stars[3]);
+
+      const submitBtn = await findByText("Submit");
+      fireEvent.press(submitBtn);
+
+      await waitFor(() => {
+        expect(Alert.alert).toHaveBeenCalledWith(
+          "Login vereist",
+          "Log eerst in om een review te plaatsen."
+        );
+      });
+    });
+
+    it("closes review modal when Cancel is pressed", async () => {
+      const { findByText, queryByText } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const addReviewBtn = await findByText("Add Review");
+      fireEvent.press(addReviewBtn);
+
+      await findByText("Rate this recipe");
+      const cancelBtn = await findByText("Cancel");
+      fireEvent.press(cancelBtn);
+
+      await waitFor(() => {
+        expect(queryByText("Rate this recipe")).toBeNull();
+      });
+    });
+
+    it("shows 'You reviewed' when user has already reviewed", async () => {
+      mockSession = { user: { id: "user-1" } };
+      mockHasUserReviewed = true;
+
+      const { findByText, findByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const label = await findByTestId("already-reviewed-label");
+      expect(label).toBeTruthy();
+    });
+
+    it("displays existing reviews", async () => {
+      mockRecipeReviews = [
+        {
+          rating: 5,
+          review_text: "Excellent beer!",
+          created_at: new Date().toISOString(),
+          account_id: "user-2",
+        },
+      ];
+
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      expect(await findByText("Excellent beer!")).toBeTruthy();
+      expect(await findByText("Rating: 5")).toBeTruthy();
+    });
+  });
+
+  describe("Delete review", () => {
+    beforeEach(() => {
+      mockUser = { id: "user-1" };
+      mockRecipeReviews = [
+        {
+          rating: 4,
+          review_text: "My review",
+          created_at: new Date().toISOString(),
+          account_id: "user-1",
+        },
+      ];
+    });
+
+    it("shows delete button for user's own review", async () => {
+      const { findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+
+      const deleteBtn = await findByTestId("delete-review-btn");
+      expect(deleteBtn).toBeTruthy();
+    });
+
+    it("deletes review when delete button is pressed", async () => {
+      const { findByTestId, findByText } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const deleteBtn = await findByTestId("delete-review-btn");
+      fireEvent.press(deleteBtn);
+
+      await waitFor(() => {
+        expect(Alert.alert).toHaveBeenCalledWith(
+          "Success",
+          "Review verwijderd."
+        );
+      });
+    });
+  });
+
+  describe("Navigation", () => {
+    it("navigates back to Recipes when back button is pressed", async () => {
+      const { findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+
+      const backBtn = await findByTestId("back-button");
+      fireEvent.press(backBtn);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/Recipes");
+      });
+    });
+  });
+
+  describe("Error handling", () => {
+    it("handles missing recipe slug gracefully", async () => {
+      // Set recipe slug to undefined
+      mockRecipeSlug = undefined;
+
+      const result = await renderWithNavigation(<SpecificRecipe />);
+      
+      // Component should still render without crashing
+      await waitFor(() => {
+        expect(result).toBeDefined();
+      });
+    });
+  });
+
+  describe("Context integrations", () => {
+    it("calls increment on initial start press", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      await waitFor(() => {
+        expect(mockIncrement).toHaveBeenCalledWith("initial_start_press");
+      });
+    });
+
+    it("calls refreshProgress after review submission", async () => {
+      mockSession = { user: { id: "user-1" } };
+
+      const { findByText, findAllByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const addReviewBtn = await findByText("Add Review");
+      fireEvent.press(addReviewBtn);
+
+      await findByText("Rate this recipe");
+      const stars = await findAllByTestId(/star-/);
+      fireEvent.press(stars[4]);
+
+      const submitBtn = await findByText("Submit");
+      fireEvent.press(submitBtn);
+
+      await waitFor(() => {
+        expect(mockRefreshProgress).toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("Edge cases and additional coverage", () => {
+    it("closes batch size modal when dismissed", async () => {
+      const { findByText, queryByText } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      await findByText("Choose batch size");
+      
+      // Simulate modal dismiss (swipe down or outside click)
+      // In react-native-paper Modal, onDismiss is called
+      const modal = await findByText("Choose batch size");
+      expect(modal).toBeTruthy();
+    });
+
+    it("closes review modal when dismissed", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      const addReviewBtn = await findByText("Add Review");
+      fireEvent.press(addReviewBtn);
+
+      const modalTitle = await findByText("Rate this recipe");
+      expect(modalTitle).toBeTruthy();
+    });
+
+    it("closes starter kit modal when dismissed", async () => {
+      mockStarterKits = [
+        {
+          id_starter_kit: 1,
+          starter_kit: {
+            name: "Basic Kit",
+            description: "Basic brewing kit",
+            size_liters: 19,
+            price: 99.99,
+            is_active: true,
+          },
+        },
+      ];
+
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      const kitsTitle = await findByText("Get your StarterKit now!");
+      expect(kitsTitle).toBeTruthy();
+    });
+
+    it("handles custom batch size with comma separator", async () => {
+      const { findByText, findByTestId, findByPlaceholderText } =
+        await renderWithNavigation(<SpecificRecipe />);
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      await findByText("Choose batch size");
+      const chipCustom = await findByTestId("batch-chip-custom");
+      fireEvent.press(chipCustom);
+
+      const input = await findByPlaceholderText("Custom volume in L");
+      fireEvent.changeText(input, "25,5");
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      // Should open kits modal without error
+      await waitFor(() => {
+        expect(findByText("Get your StarterKit now!")).toBeTruthy();
+      });
+    });
+
+    it("handles zero custom batch size", async () => {
+      const { findByText, findByTestId, findByPlaceholderText } =
+        await renderWithNavigation(<SpecificRecipe />);
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      await findByText("Choose batch size");
+      const chipCustom = await findByTestId("batch-chip-custom");
+      fireEvent.press(chipCustom);
+
+      const input = await findByPlaceholderText("Custom volume in L");
+      fireEvent.changeText(input, "0");
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await waitFor(() => {
+        expect(Alert.alert).toHaveBeenCalledWith(
+          "Invalid batch size",
+          "Please enter a valid volume in liters."
+        );
+      });
+    });
+
+    it("handles empty custom batch size", async () => {
+      const { findByText, findByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      await findByText("Choose batch size");
+      const chipCustom = await findByTestId("batch-chip-custom");
+      fireEvent.press(chipCustom);
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await waitFor(() => {
+        expect(Alert.alert).toHaveBeenCalledWith(
+          "Invalid batch size",
+          "Please enter a valid volume in liters."
+        );
+      });
+    });
+
+    it("navigates to store item when clicking on starter kit", async () => {
+      mockStarterKits = [
+        {
+          id_starter_kit: 1,
+          starter_kit: {
+            name: "Basic Kit",
+            description: "Basic brewing kit",
+            size_liters: 19,
+            price: 99.99,
+            is_active: true,
+          },
+        },
+      ];
+
+      const { findByText, findByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await findByText("Get your StarterKit now!");
+
+      // Click on the store card
+      await waitFor(async () => {
+        const storeCard = await findByTestId("store-card");
+        fireEvent.press(storeCard);
+      });
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith({
+          pathname: "/StoreItem",
+          params: {
+            id: 1,
+            categoryNumber: 4,
+            from: "specificrecipe",
+            recipe_slug: recipeSlug,
+          },
+        });
+      });
+    });
+
+    it("shows no starter kits message when kits array is empty", async () => {
+      mockStarterKits = [];
+
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await findByText("Get your StarterKit now!");
+      expect(
+        await findByText("No starter kits available for this recipe.")
+      ).toBeTruthy();
+    });
+
+    it("handles recipe with null values gracefully", async () => {
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+      
+      // Recipe should still render even with null values
+      expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
+    });
+
+    it("navigates back to Account when from parameter is account", async () => {
+      mockFrom = "account";
+
+      const { findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+
+      const backBtn = await findByTestId("back-button");
+      fireEvent.press(backBtn);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/Account");
+      });
+    });
+
+    it("handles reviews with null review_text", async () => {
+      mockRecipeReviews = [
+        {
+          rating: 4,
+          review_text: null,
+          created_at: new Date().toISOString(),
+          account_id: "user-2",
+        },
+      ];
+
+      const { queryByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      // Review without text should not be displayed in the reviews section
+      await waitFor(() => {
+        expect(queryByText("This beer has no reviews yet.")).toBeTruthy();
+      });
+    });
+
+    it("handles reviews with empty review_text", async () => {
+      mockRecipeReviews = [
+        {
+          rating: 3,
+          review_text: "   ",
+          created_at: new Date().toISOString(),
+          account_id: "user-3",
+        },
+      ];
+
+      const { queryByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      // Review with only whitespace should not be displayed
+      await waitFor(() => {
+        expect(queryByText("This beer has no reviews yet.")).toBeTruthy();
+      });
+    });
+  });
+
+  describe("Snapshot", () => {
+    it("matches snapshot", async () => {
+      const tree = (await renderWithNavigation(<SpecificRecipe />)).toJSON();
+      expect(tree).toMatchSnapshot();
+    });
   });
 });

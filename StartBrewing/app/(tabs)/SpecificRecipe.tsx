@@ -901,6 +901,7 @@ export default function SpecificRecipe() {
               return (
                 <Chip
                   key={val}
+                  testID={`batch-chip-${val}`}
                   mode={selected ? "flat" : "outlined"}
                   selected={selected}
                   onPress={() =>
@@ -933,6 +934,7 @@ export default function SpecificRecipe() {
               const selected = selectedBatchSizeOption === "custom";
               return (
                 <Chip
+                  testID="batch-chip-custom"
                   mode={selected ? "flat" : "outlined"}
                   selected={selected}
                   onPress={() => setSelectedBatchSizeOption("custom")}
