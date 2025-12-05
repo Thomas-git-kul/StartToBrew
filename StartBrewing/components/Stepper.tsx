@@ -52,11 +52,11 @@ export default function Stepper({ step, total, onNext, onPrev, isCompleted = fal
       <Button
         mode="text"
         onPress={onNext}
-        disabled={!isCompleted || step >= total}
+        disabled={step >= total}
         labelStyle={{
           fontSize: 16,
           fontFamily: FontFamilies.BODY,
-          color: isCompleted ? BASE_COLORS.STONE600 : BASE_COLORS.STONE300,
+          color: step >= total ? BASE_COLORS.STONE300 : BASE_COLORS.STONE600,
         }}
       >
         <View className="flex-row items-center justify-content"

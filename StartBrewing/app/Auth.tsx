@@ -145,6 +145,8 @@ export default function Auth() {
             }}
           >Log In</Button>
         </View>
+
+        
       </View>
     </SafeAreaView>
   );
