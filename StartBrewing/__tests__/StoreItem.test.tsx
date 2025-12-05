@@ -7,7 +7,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 // Mock Supabase completely
-jest.mock('../supabase', () => {
+jest.mock('../supabase/index', () => {
   return {
     supabase: {
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }) },
@@ -38,9 +38,7 @@ jest.mock('../supabase', () => {
 });
 
 import React from "react";
-import TestRenderer from "react-test-renderer";
-const { act } = TestRenderer;
-import { render, fireEvent, waitFor, screen } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, screen, act } from "@testing-library/react-native";
 import StoreItem from "../app/(tabs)/StoreItem";
 
 // --- MOCKS --- //
@@ -83,7 +81,7 @@ jest.mock("@/components/themed-text", () => {
 });
 
 // Mock Supabase
-import { supabase } from "../supabase";
+import { supabase } from "../supabase/index";
 (supabase.from as jest.Mock).mockImplementation((table: string) => {
   if (table === "starter_kits") {
     return {
