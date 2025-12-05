@@ -206,6 +206,8 @@ function HomePageContent() {
             step_id: string | number;
             steps?: { duration_min?: number | null } | null;
             time_left?: number | null;
+            status: string;
+            completed_at?: Date | null;
           }
 
           const inProgressResult = brews?.length
@@ -227,9 +229,9 @@ function HomePageContent() {
 
                   const { data: completedSteps } = (await supabase
                     .from("brew_steps")
-                    .select("step_id, steps(duration_min), time_left")
+                    .select("step_id, steps(duration_min), time_left, status, completed_at")
                     .eq("id_brew", brew.id_brew)
-                    .eq("status", "completed")) as { data: CompletedStepRow[] | null };
+                    .in("status", ["completed", "in_progress"])) as { data: CompletedStepRow[] | null };
 
                   const durations = (totalSteps || [])
                     .map((s) => s.duration_min)
@@ -251,8 +253,22 @@ function HomePageContent() {
                   (completedSteps || []).forEach((step: CompletedStepRow) => {
                       const dur = step.steps?.duration_min ?? null;
                       const fullDuration = dur && dur > 0 ? dur : avgDuration;
-
                       console.log(`Brew ${brew.name}: time_left = ${step.time_left}`);
+
+                      const lastUpdate = step.completed_at ? new Date(step.completed_at).getTime() : null;
+                      const now = Date.now();
+
+                      let dynamicRemaining = step.time_left ?? fullDuration;
+
+                      if (step.status === "in_progress" && lastUpdate) {
+                        const elapsedMs = now - lastUpdate;
+                        const elapsedMin = elapsedMs / 1000;
+
+                        // Dynamisch tijd herberekenen
+                        dynamicRemaining = Math.max(0,
+                          (step.time_left ?? fullDuration) - elapsedMin
+                        );
+                      }
 
                       // Normal completed step → full duration
                       if (step.steps && step.time_left == null) {
@@ -260,10 +276,12 @@ function HomePageContent() {
                         return;
                       }
 
+                      console.log(`Brew ${brew.name}`, 'dynamicRemaining:', dynamicRemaining);
+
                       // Step is in_progress → partial progress
                       if (step.time_left != null) {
                         const remaining = step.time_left;
-                        const completedPart = Math.max(fullDuration - remaining, 0);
+                        const completedPart = Math.max(fullDuration - dynamicRemaining, 0);
 
                         completedWorkload += completedPart;
                         return;
@@ -275,9 +293,7 @@ function HomePageContent() {
                   const progress =
                     totalWorkload > 0 ? completedWorkload / totalWorkload : 0;
 
-                  console.log(
-                    `Brew ${brew.name} - Total: ${totalWorkload}, Completed: ${completedWorkload}, Avg: ${avgDuration}, Progress: ${progress * 100}%`
-                  );
+                  console.log(`Brew ${brew.name} \nTotal: ${totalWorkload} \nCompleted: ${completedWorkload} \nAvg: ${avgDuration}, Progress: ${progress * 100}%`);
                   return { id: brew.id_brew, name: brew.name, progress };
                 })
               )
