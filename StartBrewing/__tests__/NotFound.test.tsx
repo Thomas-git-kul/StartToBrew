@@ -1,6 +1,6 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
-import NotFound from "../app/[...NotFound]";
+import NotFound from "../app/+not-found";
 import { useRouter } from "expo-router";
 
 // --------------------------

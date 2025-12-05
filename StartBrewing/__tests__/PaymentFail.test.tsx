@@ -90,7 +90,7 @@ describe("<PaymentFail />", () => {
     expect(
       getByText("Unfortunately, your payment could not be completed.\nPlease try again or contact support.")
     ).toBeTruthy();
-    expect(getByText("Back to Home")).toBeTruthy();
+    expect(getByText("Back to Shoppingcart")).toBeTruthy();
     expect(getByText("XIcon")).toBeTruthy();
   });
 
@@ -114,13 +114,13 @@ describe("<PaymentFail />", () => {
     );
   });
 
-  it("navigates to /HomePage when button is pressed", () => {
+  it("navigates to shoppingcart when button is pressed", () => {
     const { getByText } = render(<PaymentFail />);
 
-    const button = getByText("Back to Home");
+    const button = getByText("Back to Shoppingcart");
     fireEvent.press(button);
 
-    expect(replaceMock).toHaveBeenCalledWith("/HomePage");
+    expect(replaceMock).toHaveBeenCalledWith("/ShoppingCart");
   });
 
   it("snapshot", () => {

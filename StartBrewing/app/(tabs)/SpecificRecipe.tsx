@@ -1,36 +1,32 @@
 import { useState, useEffect } from "react";
 import {
+  TouchableOpacity,
   View,
   Image,
   ScrollView,
-  TouchableOpacity,
   Alert,
   Dimensions,
 } from "react-native";
-import {
-  FAB,
-  Modal,
-  Portal,
-  Chip,
-  ActivityIndicator,
-  Button,
-  TextInput,
-} from "react-native-paper";
+import { FAB, Modal, Portal, Chip, Button } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
-import { Star, Wheat, Hop } from "lucide-react-native";
+import { Star } from "lucide-react-native";
 import { ThemedText } from "@/components/themed-text";
 import { supabase } from "@/supabase";
+import { analytics, logEvent } from "@/firebase/firebaseConfig";
+import { useClickCounter } from "@/context/ClickCounterContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import StoreCard from "@/components/ui/StoreCard";
 import ReviewCard from "@/components/ui/ReviewCard";
 import { useUserProgressContext } from "@/context/UserProgressContext";
 import { useAppRefresh } from "@/context/AppRefreshContext";
+import Spinner from "@/components/spinner";
+import TextInput from "@/components/textInput";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -47,7 +43,7 @@ type Recipe = {
   description: string | null;
   difficulty: number | null;
   rating: number | null;
-  haze_level: number | null; // 1 = clear, 2 = light haze, 3 = hazy
+  haze_level: number | null;
 };
 
 type IngredientRow = {
@@ -61,27 +57,20 @@ export default function SpecificRecipe() {
   useFonts();
 
   const router = useRouter();
-  const { recipe_slug } = useLocalSearchParams<{ recipe_slug?: string }>();
+  const { recipe_slug, from } = useLocalSearchParams<{
+    recipe_slug?: string;
+    from?: string;
+  }>();
 
   const [loading, setLoading] = useState(true);
-  const [recipe, setRecipe] = useState<{
-    recipe_slug: string;
-    name: string;
-    style: string;
-    batch_size_l: number;
-    abv_target: number;
-    ibu_target: number;
-    srm_target: number;
-    description: string;
-    difficulty: number;
-    rating: number;
-    haze_level: number;
-  } | null>(null);
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
 
   const [reviewVisible, setReviewVisible] = useState(false);
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [kitsVisible, setKitsVisible] = useState(false);
+  const [northStarLogged, setNorthStarLogged] = useState(false);
+  const { increment, get, reset } = useClickCounter();
   const { refreshProgress } = useUserProgressContext();
   const { triggerRefresh } = useAppRefresh();
 
@@ -103,6 +92,16 @@ export default function SpecificRecipe() {
   const [isFavoriteIconFilled, setIsFavoriteIconFilled] = useState(isFavorite);
   const [kits, setKits] = useState<any[]>([]);
 
+  // Batch size selectie
+  const [batchSizeModalVisible, setBatchSizeModalVisible] = useState(false);
+  const [selectedBatchSizeOption, setSelectedBatchSizeOption] = useState<
+    "5" | "10" | "19" | "custom"
+  >("19");
+  const [customBatchSize, setCustomBatchSize] = useState<string>("");
+  const [selectedBatchSize, setSelectedBatchSize] = useState<number | null>(
+    null
+  );
+
   const handleToggleFavorite = async () => {
     if (!recipe_slug) return;
     try {
@@ -113,7 +112,6 @@ export default function SpecificRecipe() {
     }
   };
 
-  // Check if current logged-in user already reviewed this recipe
   const checkUserReviewed = async (slugToCheck: string) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -130,11 +128,10 @@ export default function SpecificRecipe() {
         .maybeSingle();
       setHasUserReviewed(!!existingReview);
     } catch {
-      // Fail silently – keep previous state
+      // ignore
     }
   };
 
-  // Herbruikbare fetch functie (recept + ingrediënten + reviews)
   const fetchRecipeBundle = async (slug: string) => {
     try {
       setLoading(true);
@@ -148,12 +145,12 @@ export default function SpecificRecipe() {
         .eq("recipe_slug", slug)
         .single();
 
-      console.log("recipe data", recipeData);
-
       if (recipeError) throw recipeError;
 
       const { data: ingredientData, error: ingredientError } =
-        await supabase.rpc("get_recipe_ingredients", { _recipe_slug: slug });
+        await supabase.rpc("get_recipe_ingredients", {
+          _recipe_slug: slug,
+        });
       if (ingredientError) throw ingredientError;
 
       const { data: reviewsData, error: reviewsError } = await supabase
@@ -176,7 +173,7 @@ export default function SpecificRecipe() {
           }
         : null;
 
-      setRecipe(recipeWithRating);
+      setRecipe(recipeWithRating as Recipe | null);
       setIngredients((ingredientData || []) as IngredientRow[]);
       setReviewCount(count);
     } catch (e: any) {
@@ -190,7 +187,6 @@ export default function SpecificRecipe() {
     if (!recipe_slug) return;
     setRating(value);
     try {
-      // Controleer of user sessie aanwezig is (web en native)
       const { data: sessionData, error: sessionError } =
         await supabase.auth.getSession();
       if (sessionError) throw sessionError;
@@ -200,7 +196,6 @@ export default function SpecificRecipe() {
         return;
       }
 
-      // Controleer of de ingelogde user al een review voor dit recept heeft
       const { data: existingReview, error: existingError } = await supabase
         .from("recipe_reviews")
         .select("rating")
@@ -210,12 +205,11 @@ export default function SpecificRecipe() {
       if (existingError) throw existingError;
       if (existingReview) {
         Alert.alert("Review bestaat al", "Je hebt dit recept al beoordeeld.");
-        setHasUserReviewed(true); // direct UI update
+        setHasUserReviewed(true);
         setReviewVisible(false);
         return;
       }
 
-      // Insert nieuwe review met account_id (jouw DB gebruikt `account_id`)
       const { error: insertError } = await supabase
         .from("recipe_reviews")
         .insert({
@@ -228,7 +222,6 @@ export default function SpecificRecipe() {
         throw insertError;
       }
 
-      // Na succesvolle insert: herbereken gemiddelde en count en update recepten-tabel
       const { data: reviewsData, error: reviewsError } = await supabase
         .from("recipe_reviews")
         .select("rating")
@@ -241,7 +234,6 @@ export default function SpecificRecipe() {
           count
         : null;
 
-      // Werk de aggregate kolommen in recipes bij
       const updatePayload: any = {};
       if (avg != null) updatePayload.rating = parseFloat(avg.toFixed(2));
       updatePayload.review_count = count;
@@ -252,19 +244,14 @@ export default function SpecificRecipe() {
         .eq("recipe_slug", recipe_slug);
       if (updateError) throw updateError;
 
-      // Refetch local bundle voor UI
       await fetchRecipeBundle(recipe_slug);
-      // Refresh the reviews list so the newly submitted review appears immediately
       await fetchReviews(recipe_slug);
-      // Notify other screens (e.g. Recipes list) to refresh their data
       try {
         triggerRefresh();
-      } catch (e) {
-        // ignore if provider not mounted for some reason
+      } catch {
+        // ignore
       }
-      // Markeer dat user nu gereviewd heeft en dubbelcheck
       setHasUserReviewed(true);
-      // clear review text after successful submit
       setReviewText("");
       checkUserReviewed(recipe_slug);
 
@@ -280,7 +267,10 @@ export default function SpecificRecipe() {
     }
   };
 
-  const brewRecipe = async () => {
+  const brewRecipe = async (
+    clicksToFirstBrew?: number,
+    batchSizeL?: number
+  ) => {
     if (!recipe_slug || !recipe?.name) {
       console.warn("Cannot start brew: missing slug or recipe name.");
       return;
@@ -334,16 +324,35 @@ export default function SpecificRecipe() {
 
       const firstStepId = firstStepData.step_id;
 
+      const { data: previousBrewsAll, error: prevAllError } = await supabase
+        .from("brews")
+        .select("id_brew")
+        .eq("user_id", user.id);
+
+      if (prevAllError) {
+        console.error("Error checking previous brews:", prevAllError?.message);
+      }
+
+      const isFirstEver = (previousBrewsAll?.length || 0) === 0;
+
       const { data: previousBrews, error: prevError } = await supabase
         .from("brews")
         .select("id_brew")
         .eq("user_id", user.id)
         .eq("recipe_slug", recipe_slug);
 
-      const brewNumber = (previousBrews?.length || 0) + 1;
+      if (prevError) {
+        console.error(
+          "Error checking previous brews for recipe:",
+          prevError?.message
+        );
+      }
 
+      const brewNumber = (previousBrews?.length || 0) + 1;
       const brewName =
         brewNumber === 1 ? recipe.name : `${recipe.name} (#${brewNumber})`;
+
+      const finalBatchSize = batchSizeL ?? recipe.batch_size_l ?? 19;
 
       const newBrew = {
         user_id: user.id,
@@ -352,6 +361,7 @@ export default function SpecificRecipe() {
         status_id: 1,
         recipe_slug: recipe_slug,
         last_step_id: firstStepId,
+        batch_size_l: finalBatchSize,
       };
 
       const { data: brewData, error: insertError } = await supabase
@@ -365,6 +375,51 @@ export default function SpecificRecipe() {
       }
 
       const brewId = brewData[0].id_brew;
+
+      if (isFirstEver && !northStarLogged) {
+        try {
+          const accountCreatedAt = user.created_at
+            ? new Date(user.created_at)
+            : null;
+          const brewStartedAt = brewData[0].start_date
+            ? new Date(brewData[0].start_date)
+            : new Date();
+          const timeToFirstBrewSeconds = accountCreatedAt
+            ? Math.max(
+                0,
+                Math.round(
+                  (brewStartedAt.getTime() - accountCreatedAt.getTime()) / 1000
+                )
+              )
+            : null;
+
+          const params: any = {
+            user_id: user.id,
+            brew_id: brewId,
+            recipe_slug: recipe_slug,
+          };
+          if (timeToFirstBrewSeconds != null)
+            params.time_to_first_brew_seconds = timeToFirstBrewSeconds;
+
+          const finalClicks =
+            clicksToFirstBrew != null ? clicksToFirstBrew : get();
+          if (finalClicks != null) params.clicks_to_first_brew = finalClicks;
+
+          if (analytics) {
+            logEvent(analytics, "north_star_first_brew", params);
+          } else {
+            console.log("north_star_first_brew", params);
+          }
+          setNorthStarLogged(true);
+          try {
+            await reset();
+          } catch {
+            // ignore
+          }
+        } catch (e: any) {
+          console.error("Failed to log north-star event:", e?.message ?? e);
+        }
+      }
 
       const { data: allSteps, error: stepsError } = await supabase
         .from("steps")
@@ -418,20 +473,25 @@ export default function SpecificRecipe() {
         )
         .eq("recipe_slug", slug);
 
-      // console.log("Starterkits response:", data, "error:", error);
-
       if (error) throw error;
 
-      // flatten
       const kits = data?.map((row: any) => ({
         id: row.id_starter_kit,
         ...row.starter_kit,
       }));
       setKits(kits);
-      // console.log("Starterkits response:", kits)
     } catch (e: any) {
       console.error("Error fetching kits:", e.message);
       return [];
+    }
+  };
+
+  const handleInitialStartPress = async () => {
+    setBatchSizeModalVisible(true);
+    try {
+      await increment("initial_start_press");
+    } catch {
+      // ignore
     }
   };
 
@@ -448,7 +508,6 @@ export default function SpecificRecipe() {
 
       const rows = data || [];
 
-      // Fetch usernames for each review (profiles table stores username)
       const reviewsWithUser = await Promise.all(
         rows.map(async (r: any) => {
           try {
@@ -463,7 +522,7 @@ export default function SpecificRecipe() {
               created_at: r.created_at,
               username: profileData?.username ?? null,
             };
-          } catch (e) {
+          } catch {
             return {
               rating: r.rating,
               review_text: r.review_text,
@@ -523,16 +582,41 @@ export default function SpecificRecipe() {
       ? recipe.rating.toFixed(2)
       : "0.00";
 
-  // Bepaal image source o.b.v. haze + srm (valt terug op default-image in util)
   const beerImageSource =
     recipe != null
       ? getBeerImageSource(recipe.haze_level, recipe.srm_target)
       : require("@/assets/images/default-beer.png");
 
-  // only show reviews that contain text
   const displayedReviews = (reviews || []).filter(
     (r) => r.review_text && String(r.review_text).trim().length > 0
   );
+
+  const handleConfirmBatchSize = () => {
+    let size: number;
+
+    if (selectedBatchSizeOption === "custom") {
+      const parsed = Number((customBatchSize || "").replace(",", "."));
+      if (!parsed || parsed <= 0) {
+        Alert.alert(
+          "Invalid batch size",
+          "Please enter a valid volume in liters."
+        );
+        return;
+      }
+      size = parsed;
+    } else {
+      size =
+        selectedBatchSizeOption === "5"
+          ? 5
+          : selectedBatchSizeOption === "10"
+            ? 10
+            : 19;
+    }
+
+    setSelectedBatchSize(size);
+    setBatchSizeModalVisible(false);
+    setKitsVisible(true);
+  };
 
   return (
     <SafeAreaView
@@ -545,18 +629,14 @@ export default function SpecificRecipe() {
         filled={isFavoriteIconFilled}
         onIconPress={handleToggleFavorite}
         actionTestID="heart-button"
+        iconNameLeft="ArrowLeft"
+        actionTestIDLeft="back-button"
+        onIconPressLeft={() =>
+          router.push(from === "account" ? "/Account" : "/Recipes")
+        }
       />
       {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator
-            animating
-            size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading recipe...
-          </ThemedText>
-        </View>
+        <Spinner title="Loading recipe..." />
       ) : error ? (
         <View className="flex-1 items-center justify-center px-6">
           <ThemedText type="title" className="mb-2 text-center">
@@ -573,9 +653,7 @@ export default function SpecificRecipe() {
           showsVerticalScrollIndicator={false}
         >
           {/* Title */}
-          <View>
-            <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
-          </View>
+          <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
 
           {/* Image */}
           <View className="items-center mb-5">
@@ -630,6 +708,10 @@ export default function SpecificRecipe() {
                   position: "absolute",
                   right: 0,
                 }}
+                labelStyle={{
+                  color: BASE_COLORS.TEXT_DARK,
+                  fontFamily: FontFamilies.BODY,
+                }}
               >
                 <ThemedText
                   type="subTitle"
@@ -638,22 +720,6 @@ export default function SpecificRecipe() {
                   Add Review
                 </ThemedText>
               </Button>
-              /*
-             <Button
-                onPress={() => setReviewVisible(true)}
-                labelStyle={{ 
-                  fontSize: Math.min(12 * scale, 24),
-                  color: BASE_COLORS.STONE700,
-                  fontFamily: FontFamilies.BODY_LIGHT,            
-                }}
-                style={{
-                  position: "absolute",
-                  right: 0,
-                  borderRadius: 20,
-                  backgroundColor: BASE_COLORS.AMBER200,
-                }}
-              >Add Review</Button>
-              */
             )}
           </View>
 
@@ -690,9 +756,7 @@ export default function SpecificRecipe() {
 
           {/* Ingredients */}
           <View className="mt-2 mb-4">
-            <ThemedText type="defaultText" className="">
-              Ingredients:
-            </ThemedText>
+            <ThemedText type="defaultText">Ingredients:</ThemedText>
             {ingredients.length === 0 ? (
               <ThemedText type="defaultText">
                 No ingredients found for this recipe.
@@ -724,39 +788,142 @@ export default function SpecificRecipe() {
               </ThemedText>
             ) : (
               displayedReviews.map((r, idx) => (
-                <View key={idx} className="ml-1">
+                <View key={idx}>
                   <ReviewCard review={r as any} />
                 </View>
               ))
             )}
           </View>
-
-          {/* Starterkit 
-          <View className="mt-2 mb-4">
-            <ThemedText type="title" className="">Get your StarterKit now!</ThemedText>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="mt-3"
-            >
-              {kits.length === 0 ? (
-                <ThemedText type="defaultText" className="ml-1">No starter kits available for this recipe.</ThemedText>
-              ) : (
-                kits.map((kit) => (
-                  <StoreCard
-                    key={kit.id_starter_kit}
-                    image={require("@/assets/images/starterkit2.png")}
-                    title={`${kit.name} • ${kit.size_liters}L`}
-                    price={`$${kit.price.toFixed(2)}`}
-                    onPress={() => router.push(`/store/starter-kit/${kit.id_starter_kit}`)}
-                  />
-                ))
-              )}
-            </ScrollView>
-          </View>
-          */}
         </ScrollView>
       )}
+
+      {/* Modal voor batch size selectie */}
+      <Portal>
+        <Modal
+          visible={batchSizeModalVisible}
+          onDismiss={() => setBatchSizeModalVisible(false)}
+          contentContainerStyle={{
+            backgroundColor: BASE_COLORS.LIGHT_BG,
+            padding: 20,
+            borderRadius: 16,
+            marginHorizontal: 24,
+            borderWidth: 1,
+            borderColor: BASE_COLORS.STONE200,
+          }}
+        >
+          <ThemedText type="title" className="text-center mb-4">
+            Choose batch size
+          </ThemedText>
+
+          <View className="flex-row flex-wrap gap-2 mb-4">
+            {["5", "10", "19"].map((val) => {
+              const selected = selectedBatchSizeOption === val;
+              return (
+                <Chip
+                  key={val}
+                  mode={selected ? "flat" : "outlined"}
+                  selected={selected}
+                  onPress={() =>
+                    setSelectedBatchSizeOption(val as "5" | "10" | "19")
+                  }
+                  style={{
+                    marginRight: 4,
+                    borderRadius: 20,
+                    borderWidth: selected ? 0 : 1,
+                    borderColor: selected
+                      ? "transparent"
+                      : BASE_COLORS.STONE300,
+                    backgroundColor: selected
+                      ? BASE_COLORS.TEXT_DARK
+                      : BASE_COLORS.STONE100,
+                    paddingHorizontal: 6,
+                  }}
+                  textStyle={{
+                    fontFamily: FontFamilies.BODY,
+                    fontSize: Math.min(14 * scale, 18),
+                    color: selected ? BASE_COLORS.WHITE : BASE_COLORS.TEXT_DARK,
+                  }}
+                >
+                  {val} L
+                </Chip>
+              );
+            })}
+            {/* Custom chip */}
+            {(() => {
+              const selected = selectedBatchSizeOption === "custom";
+              return (
+                <Chip
+                  mode={selected ? "flat" : "outlined"}
+                  selected={selected}
+                  onPress={() => setSelectedBatchSizeOption("custom")}
+                  style={{
+                    marginRight: 4,
+                    borderRadius: 20,
+                    borderWidth: selected ? 0 : 1,
+                    borderColor: selected
+                      ? "transparent"
+                      : BASE_COLORS.STONE300,
+                    backgroundColor: selected
+                      ? BASE_COLORS.TEXT_DARK
+                      : BASE_COLORS.STONE100,
+                    paddingHorizontal: 6,
+                  }}
+                  textStyle={{
+                    fontFamily: FontFamilies.BODY,
+                    fontSize: Math.min(14 * scale, 18),
+                    color: selected ? BASE_COLORS.WHITE : BASE_COLORS.TEXT_DARK,
+                  }}
+                >
+                  Custom
+                </Chip>
+              );
+            })()}
+          </View>
+
+          {selectedBatchSizeOption === "custom" && (
+            <View className="mb-4">
+              <TextInput
+                placeholder="Custom volume in L"
+                keyboardType="numeric"
+                value={customBatchSize}
+                onChangeText={(text) => {
+                  // Filter: alleen cijfers en decimaalteken (punt of komma)
+                  const filtered = text.replace(/[^0-9.,]/g, '');
+                  setCustomBatchSize(filtered);
+                }}
+              />
+            </View>
+          )}
+
+          <View className="flex-row justify-end gap-3 mt-2">
+            <Button
+              onPress={() => setBatchSizeModalVisible(false)}
+              mode="text"
+              labelStyle={{
+                color: BASE_COLORS.STONE600,
+                fontFamily: FontFamilies.BODY,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleConfirmBatchSize}
+              style={{
+                backgroundColor: BASE_COLORS.TEXT_DARK,
+                borderRadius: 24,
+                paddingHorizontal: 16,
+              }}
+              labelStyle={{
+                color: BASE_COLORS.WHITE,
+                fontFamily: FontFamilies.BODY,
+              }}
+            >
+              Confirm
+            </Button>
+          </View>
+        </Modal>
+      </Portal>
 
       {/* Modal for reviews */}
       <Portal>
@@ -778,26 +945,11 @@ export default function SpecificRecipe() {
             Rate this recipe
           </ThemedText>
           <TextInput
-            mode="outlined"
-            label="Write a review (optional)"
-            placeholder="Share your thoughts about this beer..."
-            placeholderTextColor={BASE_COLORS.STONE300}
+            placeholder="(optional) Share your thoughts about this beer..."
             value={reviewText}
             onChangeText={setReviewText}
             multiline
             numberOfLines={4}
-            outlineColor={BASE_COLORS.ACCENT_PRIMARY}
-            activeOutlineColor={BASE_COLORS.ACCENT_PRIMARY}
-            selectionColor={BASE_COLORS.ACCENT_PRIMARY}
-            textColor="#000000"
-            theme={{
-              colors: { text: "#000000", placeholder: BASE_COLORS.STONE300 },
-            }}
-            style={{
-              marginBottom: 12,
-              backgroundColor: BASE_COLORS.LIGHT_BG,
-              color: "#000000",
-            }}
           />
 
           <View className="flex-row justify-center gap-3">
@@ -875,7 +1027,12 @@ export default function SpecificRecipe() {
                         setKitsVisible(false);
                         router.push({
                           pathname: "/StoreItem",
-                          params: { id: kit.id, categoryNumber: 4 },
+                          params: {
+                            id: kit.id,
+                            categoryNumber: 4,
+                            from: "specificrecipe",
+                            recipe_slug: recipe_slug,
+                          },
                         } as any);
                       }}
                     />
@@ -898,9 +1055,16 @@ export default function SpecificRecipe() {
               mode="flat"
               label="Ready to Start"
               color={BASE_COLORS.WHITE}
-              onPress={() => {
+              onPress={async () => {
+                try {
+                  await increment("modal_ready_start");
+                } catch {
+                  // ignore
+                }
                 setKitsVisible(false);
-                brewRecipe();
+                const sizeToUse =
+                  selectedBatchSize ?? recipe?.batch_size_l ?? 19;
+                await brewRecipe(undefined, sizeToUse);
               }}
               style={{
                 backgroundColor: BASE_COLORS.TEXT_DARK,
@@ -933,8 +1097,7 @@ export default function SpecificRecipe() {
             mode="flat"
             label="Start Brewing"
             color={BASE_COLORS.WHITE}
-            onPress={() => setKitsVisible(true)}
-            /*onPress={brewRecipe}*/
+            onPress={handleInitialStartPress}
             style={{
               backgroundColor: BASE_COLORS.TEXT_DARK,
               borderRadius: 30,

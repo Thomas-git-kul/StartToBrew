@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
-import { FAB, ActivityIndicator } from "react-native-paper";
+import { FAB } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { useFonts } from "@/hooks/use-fonts";
 import BeerCard from "@/components/ui/RecipeCard";
@@ -10,9 +10,12 @@ import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { Plus } from "lucide-react-native";
 import ProgressCard from "@/components/ui/ProgressCard";
+import Dialog from "@/components/dialog";
 import { supabase } from "@/supabase";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import { useFocusEffect } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Spinner from "@/components/spinner";
 
 interface Beer {
   recipe_slug: string;
@@ -45,6 +48,8 @@ function HomePageContent() {
 
   const [inProgress, setInProgress] = useState<InProgressBrew[]>([]);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; name?: string } | null>(null);
 
   // Auth-guard helper: alle acties gaan eerst langs Supabase auth.
   const withAuthGuard = (action: () => void) => {
@@ -52,7 +57,7 @@ function HomePageContent() {
       try {
         const {
           data: { user },
-        } = await supabase.auth.getUser(); // user is hier correct getypt
+        } = await supabase.auth.getUser();
 
         if (!user) {
           router.push("/Auth");
@@ -71,7 +76,7 @@ function HomePageContent() {
       let mounted = true;
 
       const fetchPopularRecipes = async (
-        ratingWeight = 0.8, //pas deze waardes aan om de weging van popular recipes te veranderen
+        ratingWeight = 0.8,
         reviewWeight = 0.2,
         reviewScale = 20
       ) => {
@@ -192,6 +197,17 @@ function HomePageContent() {
             phase_id: string;
           }
 
+          interface StepRow {
+            step_id: string | number;
+            duration_min?: number | null;
+          }
+
+          interface CompletedStepRow {
+            step_id: string | number;
+            steps?: { duration_min?: number | null } | null;
+            time_left?: number | null;
+          }
+
           const inProgressResult = brews?.length
             ? await Promise.all(
                 brews.map(async (brew: BrewRow) => {
@@ -204,22 +220,64 @@ function HomePageContent() {
 
                   const phaseIds = phases?.map((p) => p.phase_id) ?? [];
 
-                  const { data: totalSteps } = await supabase
+                  const { data: totalSteps } = (await supabase
                     .from("steps")
-                    .select("step_id")
-                    .in("phase_id", phaseIds);
+                    .select("step_id, duration_min")
+                    .in("phase_id", phaseIds)) as { data: StepRow[] | null };
 
-                  const { data: completedSteps } = await supabase
+                  const { data: completedSteps } = (await supabase
                     .from("brew_steps")
-                    .select("step_id")
+                    .select("step_id, steps(duration_min), time_left")
                     .eq("id_brew", brew.id_brew)
-                    .eq("status", "completed");
+                    .eq("status", "completed")) as { data: CompletedStepRow[] | null };
 
+                  const durations = (totalSteps || [])
+                    .map((s) => s.duration_min)
+                    .filter((d): d is number => typeof d === "number" && d > 0);
+
+                  const avgDuration = durations.length > 0
+                    ? durations.reduce((a, b) => a + b, 0) / durations.length
+                    : 60; // fallback: 1 uur als ALLES null is
+
+                  // 1) Bepaal totale workload (met tijd)
+                  const totalWorkload = (totalSteps || []).reduce((sum: number, step: { duration_min?: number | null }) => {
+                    const dur = step.duration_min;
+                    return sum + (dur && dur > 0 ? dur : avgDuration);
+                  }, 0);
+
+                  // 2) Completed workload + gedeeltelijk in-progress workload
+                  let completedWorkload = 0;
+
+                  (completedSteps || []).forEach((step: CompletedStepRow) => {
+                      const dur = step.steps?.duration_min ?? null;
+                      const fullDuration = dur && dur > 0 ? dur : avgDuration;
+
+                      console.log(`Brew ${brew.name}: time_left = ${step.time_left}`);
+
+                      // Normal completed step → full duration
+                      if (step.steps && step.time_left == null) {
+                        completedWorkload += fullDuration;
+                        return;
+                      }
+
+                      // Step is in_progress → partial progress
+                      if (step.time_left != null) {
+                        const remaining = step.time_left;
+                        const completedPart = Math.max(fullDuration - remaining, 0);
+
+                        completedWorkload += completedPart;
+                        return;
+                      }
+                    }
+                  );
+
+                  // 3) Progress berekenen
                   const progress =
-                    totalSteps && completedSteps
-                      ? completedSteps.length / totalSteps.length
-                      : 0;
+                    totalWorkload > 0 ? completedWorkload / totalWorkload : 0;
 
+                  console.log(
+                    `Brew ${brew.name} - Total: ${totalWorkload}, Completed: ${completedWorkload}, Avg: ${avgDuration}, Progress: ${progress * 100}%`
+                  );
                   return { id: brew.id_brew, name: brew.name, progress };
                 })
               )
@@ -238,35 +296,50 @@ function HomePageContent() {
         }
       };
 
-      loadProgress();
-      fetchPopularRecipes();
+    loadProgress();
+    fetchPopularRecipes();
+    return () => {
+      mounted = false;
+    };
+  }, []));
 
-      return () => {
-        mounted = false;
-      };
-    }, [])
-  );
+  // Open confirmation modal for deletion (modal handles actual deletion)
+  const handleDeleteBrew = (id: string | number | undefined, name?: string) => {
+    if (!id) return;
+    setDeleteTarget({ id, name });
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDeleteBrew = async () => {
+    const id = deleteTarget?.id;
+    const name = deleteTarget?.name;
+    setDeleteDialogVisible(false);
+    setDeleteTarget(null);
+    if (!id) return;
+    try {
+      await supabase.from("brew_steps").delete().eq("id_brew", id);
+      await supabase.from("brews").delete().eq("id_brew", id);
+      setInProgress((prev) => prev.filter((b) => b.id !== id));
+    } catch (e) {
+      console.warn("Failed to delete brew:", e);
+    }
+  };
 
   return (
-    <View className="flex-1">
+    <SafeAreaView className="flex-1" style ={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header title="StartToBrew" />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+        contentContainerClassName="mx-3"
+        contentContainerStyle={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
       >
         {/* In progress section */}
         <ThemedText type="title">In progress</ThemedText>
         {loading ? (
-          <View className="items-center justify-center my-4">
-            <ActivityIndicator
-              animating
-              size="small"
-              color={BASE_COLORS.ACCENT_PRIMARY}
-            />
-            <ThemedText type="defaultText" className="mt-2">
-              Loading progress...
-            </ThemedText>
-          </View>
+          <Spinner
+            title="Loading progress..."
+            size= "small"
+          />
         ) : error ? (
           <View className="items-center justify-center my-4 px-6">
             <ThemedText type="defaultText" className="text-center">
@@ -283,31 +356,26 @@ function HomePageContent() {
                   key={brew.id}
                   title={brew.name}
                   progress={brew.progress}
-                  onPress={withAuthGuard(() =>
+                    onPress={withAuthGuard(() =>
                     router.push({
                       pathname: "/progress",
                       params: { id: brew.id },
                     })
                   )}
+                    onDelete={() => handleDeleteBrew(brew.id)}
                 />
               ))
             )}
           </View>
         )}
 
-        <ThemedText type="title">Popular recipes</ThemedText>
+        <ThemedText type="title" className="mt-4">Popular recipes</ThemedText>
 
         {loading ? (
-          <View className="items-center justify-center my-4">
-            <ActivityIndicator
-              animating
-              size="small"
-              color={BASE_COLORS.ACCENT_PRIMARY}
-            />
-            <ThemedText type="defaultText" className="mt-2">
-              Loading recipes...
-            </ThemedText>
-          </View>
+          <Spinner
+            title="Loading recipes..."
+            size="small"
+          />
         ) : error ? (
           <View className="items-center justify-center my-4 px-6">
             <ThemedText type="defaultText" className="text-center">
@@ -341,23 +409,33 @@ function HomePageContent() {
         )}
       </ScrollView>
 
+      <Dialog
+        title="Confirm Brew Deletion"
+        text={`Are you sure you want to delete "${deleteTarget?.name ?? "this"}" brew?`}
+        visible={deleteDialogVisible}
+        onDismiss={() => setDeleteDialogVisible(false)}
+        cancelBtn="Cancel"
+        yesBtn="Delete"
+        onPressCancel={() => setDeleteDialogVisible(false)}
+        onPressYes={confirmDeleteBrew}
+      />
+
       {/* Floating Action Button */}
       <FAB
-        icon={(props) => <Plus size={props.size} color={props.color} />}
+        mode="flat"
+        icon={(props) => <Plus size={props.size} strokeWidth={3} color={props.color} />}
         testID="fab"
         style={{
           position: "absolute",
           right: 10,
           bottom: 25,
           backgroundColor: BASE_COLORS.TEXT_DARK,
-          borderRadius: 20,
+          borderRadius: 45,
         }}
         color={BASE_COLORS.WHITE}
         onPress={withAuthGuard(() => router.push("/Recipes"))}
-        mode="elevated"
-        size="medium"
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

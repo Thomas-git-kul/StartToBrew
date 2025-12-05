@@ -6,6 +6,17 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 fetchMock.enableMocks();
 
+// Mock lucide icons used by ChatBot
+jest.mock('lucide-react-native', () => {
+  const { Text } = require('react-native');
+  const make = (name: string) => (props: any) => require('react').createElement(Text, null, name);
+  return {
+    SendHorizonal: make('SendHorizonal'),
+    Plus: make('Plus'),
+    BotMessageSquare: make('BotMessageSquare'),
+  };
+});
+
 const renderWithNavigation = (ui: React.ReactElement) =>
   render(
     <SafeAreaProvider>
@@ -16,7 +27,6 @@ const renderWithNavigation = (ui: React.ReactElement) =>
   );
 
 // --- MOCKS VOOR NATIVE MODULES ---
-
 // --- MOCKS VOOR SUPABASE ---
 jest.mock('@/supabase', () => ({
   supabase: {
@@ -66,6 +76,9 @@ jest.mock('expo-font', () => ({
   useFonts: () => [true], // fonts loaded
 }));
 
+// Mock the project hook that wraps expo-font to avoid loading fonts in tests
+jest.mock('@/hooks/use-fonts', () => ({ useFonts: () => true }));
+
 // Mock Alert
 import { Alert } from 'react-native';
 jest.spyOn(Alert, 'alert').mockImplementation(() => {});
@@ -82,7 +95,8 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 global.fetch = require('jest-fetch-mock');
 
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useLocalSearchParams: () => ({}),
 }));
 
 export const useGlobalSearchParams = () => ({});
@@ -92,20 +106,32 @@ jest.mock('react-native-safe-area-context', () => {
   const React = require('react');
   const { View } = require('react-native');
   return {
-    SafeAreaProvider: ({ children }: any) => <View>{children}</View>,
+    SafeAreaProvider: ({ children }: any) => React.createElement(View, null, children),
+    SafeAreaView: ({ children }: any) => React.createElement(View, null, children),
     useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   };
 });
 
 // Mock react-native-paper Button to avoid needing a Provider in tests
 jest.mock('react-native-paper', () => {
-  const { TouchableOpacity, Text } = require('react-native');
+  const React = require('react');
+  const { TouchableOpacity, Text, View } = require('react-native');
   return {
     Button: ({ children, ...props }: any) => (
       <TouchableOpacity {...props}>
         <Text>{children}</Text>
       </TouchableOpacity>
     ),
+    Avatar: {
+      Icon: ({ icon }: any) => {
+        try {
+          const IconComp = typeof icon === 'function' ? icon() : null;
+          return React.createElement(View, null, IconComp);
+        } catch (e) {
+          return React.createElement(View, null);
+        }
+      },
+    },
   };
 });
 
@@ -124,6 +150,12 @@ jest.mock('@/constants/Fonts', () => ({
     BODY_LIGHT: 'System',
   },
 }));
+
+// Mock ThemedText used by Spinner and other components
+jest.mock('@/components/themed-text', () => {
+  const { Text } = require('react-native');
+  return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
+});
 
 beforeEach(() => {
   fetchMock.resetMocks();
@@ -151,9 +183,9 @@ describe('ChatBot', () => {
   it('sends a text message and receives bot response', async () => {
     fetchMock.mockResponseOnce(JSON.stringify({ text: 'Bot response' }));
 
-    const { findByPlaceholderText, findByText } = renderWithNavigation(<ChatBot />);
+    const { findByPlaceholderText, findByTestId, findByText } = renderWithNavigation(<ChatBot />);
     const input = await findByPlaceholderText('Type a message...');
-    const sendButton = await findByText('Send');
+    const sendButton = await findByTestId('send-button');
 
     fireEvent.changeText(input, 'Hallo');
     fireEvent.press(sendButton);
@@ -167,8 +199,8 @@ describe('ChatBot', () => {
   });
 
   it('does not send if input and image are empty', async () => {
-    const { findByText, findAllByText } = renderWithNavigation(<ChatBot />);
-    const sendButton = await findByText('Send');
+    const { findByTestId, findAllByText } = renderWithNavigation(<ChatBot />);
+    const sendButton = await findByTestId('send-button');
     fireEvent.press(sendButton);
 
     // only the initial bot message should be present

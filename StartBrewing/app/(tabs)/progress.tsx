@@ -1,21 +1,15 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  View,
-  ScrollView,
-  Dimensions,
-  ActivityIndicator,
-  Text,
-} from "react-native";
-import { Card, FAB, Chip, Button, Dialog, Portal } from "react-native-paper";
+import { View, ScrollView, Dimensions, Text } from "react-native";
+import { Card, FAB, Chip, Button } from "react-native-paper";
 import {
   Pause,
+  BotMessageSquare,
   Thermometer,
   Play,
-  CheckCheck,
   Lightbulb,
 } from "lucide-react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
 import { ThemedText } from "@/components/themed-text";
@@ -24,11 +18,15 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "@/supabase";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useUserProgressContext } from "@/context/UserProgressContext";
-import DialogCustom from "@/components/dialog";
+import Spinner from "@/components/spinner";
+import Stepper from "@/components/Stepper";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
+
+// Default batch size waarop alle recepten gebaseerd zijn
+const BASE_BATCH_SIZE_L = 19;
 
 export default function Progress() {
   useFonts();
@@ -40,133 +38,438 @@ export default function Progress() {
   const [stepData, setStepData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [phase, setPhase] = useState(1);
+  const phaseRef = useRef(1);
   const [timerActive, setTimerActive] = useState(false);
   const [phaseDone, setPhaseDone] = useState(false);
   const { refreshProgress } = useUserProgressContext();
-  const [dialogVisible, setDialogVisible] = useState(false);
+  const [allSteps, setAllSteps] = useState<any[]>([]);
+  const [isHistoricalStep, setIsHistoricalStep] = useState(false);
+  const [hasPreviousStep, setHasPreviousStep] = useState(false);
+  const [completedAt, setCompletedAt] = useState<Date | null>(null);
+  const { from } = useLocalSearchParams() as { from?: string };
 
-  const loadStep = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) {
-        setLoading(false);
-        return;
-      }
+  const currentStep = useRef<any>(null);
+  let CompletedStep = useRef<boolean>(false);
 
-      const { data: brew } = await supabase
-        .from("brews")
-        .select("id_brew, recipe_slug, name, last_step_id, status_id")
-        .eq("id_brew", brewId)
-        .single();
-      // console.log('brew:',brew);
+  const loadStep = useCallback(
+    async (stepId?: string) => {
+      setLoading(true);
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData?.user) {
+          setLoading(false);
+          return;
+        }
 
-      if (!brew) {
-        setStepData(null);
-        setLoading(false);
-        return;
-      }
+        const { data: brew } = await supabase
+          .from("brews")
+          .select(
+            "id_brew, recipe_slug, name, last_step_id, status_id, batch_size_l"
+          )
+          .eq("id_brew", brewId)
+          .single();
 
-      // Load phases and steps
-      const { data: phases } = await supabase
-        .from("phases")
-        .select("*")
-        .eq("recipe_slug", brew.recipe_slug)
-        .order("position", { ascending: true });
-      // console.log('phases:',phases);
+        if (!brew) {
+          setStepData(null);
+          setLoading(false);
+          return;
+        }
 
-      let allSteps: any[] = [];
-      for (const phase of phases) {
-        const { data: steps } = await supabase
-          .from("steps")
+        // schaalfactor obv batch_size_l t.o.v. 19 L
+        const scaleFactor =
+          (brew.batch_size_l ?? BASE_BATCH_SIZE_L) / BASE_BATCH_SIZE_L;
+
+        // Load phases and steps
+        const { data: phases } = await supabase
+          .from("phases")
           .select("*")
-          .eq("phase_id", phase.phase_id)
-          .order("step_id", { ascending: true });
-        allSteps = [...allSteps, ...steps];
+          .eq("recipe_slug", brew.recipe_slug)
+          .order("position", { ascending: true });
+
+        let allStepsLocal: any[] = [];
+        for (const phase of phases) {
+          const { data: steps } = await supabase
+            .from("steps")
+            .select("*")
+            .eq("phase_id", phase.phase_id)
+            .order("step_id", { ascending: true });
+          allStepsLocal = [...allStepsLocal, ...(steps ?? [])];
+        }
+        setAllSteps(allStepsLocal);
+
+        const currentIndex = stepId
+          ? allStepsLocal.findIndex((s) => s.step_id === stepId)
+          : allStepsLocal.findIndex((s) => s.step_id === brew.last_step_id);
+
+        if (currentIndex === -1) {
+          console.error(
+            "No matching step found for last_step_id",
+            brew.last_step_id
+          );
+          setStepData(null);
+          setLoading(false);
+          return;
+        }
+
+        currentStep.current = allStepsLocal[currentIndex];
+        const nextStep = allStepsLocal[currentIndex + 1];
+        setHasPreviousStep(currentIndex > 0);
+
+        const { data: brew_steps } = await supabase
+          .from("brew_steps")
+          .select("*")
+          .eq("id_brew", brewId)
+          .eq("step_id", currentStep.current.step_id)
+          .single();
+
+        setCompletedAt(
+          brew_steps?.completed_at ? new Date(brew_steps.completed_at) : null
+        );
+
+        // Prepare auto-start restore values if there is a stored timer
+        let autoStartRemaining: number | null = null;
+        let autoStartExpired = false;
+        if (brew_steps?.completed_at && brew_steps?.time_left != null) {
+          const lastStart = new Date(brew_steps.completed_at).getTime();
+          const now = Date.now();
+          const elapsedSec = Math.floor((now - lastStart) / 1000);
+
+          const newRemaining = Math.max(0, brew_steps.time_left - elapsedSec);
+          if (newRemaining > 0) {
+            autoStartRemaining = newRemaining;
+          } else {
+            autoStartExpired = true;
+          }
+        }
+
+        // Check of we een historische stap bekijken
+        const isHistorical =
+          brew_steps.status === "completed" ||
+          currentStep.current.status === "in_progress";
+        setIsHistoricalStep(isHistorical);
+
+        const { data: tips } = await supabase
+          .from("step_tips")
+          .select("step_id, tip_md")
+          .eq("step_id", brew.last_step_id)
+          .single();
+
+        // Load ingredients for current step
+        const ingredientRefsCurrentRes = await supabase
+          .from("step_ingredient_refs")
+          .select("*")
+          .eq("step_id", currentStep.current.step_id);
+        const ingredientRefsCurrent = ingredientRefsCurrentRes.data as
+          | {
+              ingredient_id: string;
+              amount: number | null;
+              unit: string | null;
+            }[]
+          | null;
+
+        const currentIngredients: {
+          name: string;
+          kind: string;
+          amount: number | null;
+          unit: string | null;
+        }[] = [];
+        if (ingredientRefsCurrent && ingredientRefsCurrent.length > 0) {
+          const ingredientIds = ingredientRefsCurrent.map(
+            (r) => r.ingredient_id
+          );
+
+          const { data: ingRows } = await supabase
+            .from("ingredients")
+            .select("*")
+            .in("ingredient_id", ingredientIds as string[]);
+
+          // Combine ingredient + scaled amount + unit
+          ingredientRefsCurrent.forEach(
+            (ref: {
+              ingredient_id: string;
+              amount: number | null;
+              unit: string | null;
+            }) => {
+              const info = ingRows?.find(
+                (i: any) => i.ingredient_id === ref.ingredient_id
+              );
+              if (info) {
+                currentIngredients.push({
+                  name: info.name,
+                  kind: info.kind,
+                  amount: ref.amount != null ? ref.amount * scaleFactor : null,
+                  unit: ref.unit,
+                });
+              }
+            }
+          );
+        }
+
+        let nextIngredients: {
+          name: string;
+          kind: string;
+          amount: number | null;
+          unit: string | null;
+        }[] = [];
+        if (nextStep) {
+          const ingredientRefsNextRes = await supabase
+            .from("step_ingredient_refs")
+            .select("*")
+            .eq("step_id", nextStep.step_id);
+          const ingredientRefsNext = ingredientRefsNextRes.data as
+            | {
+                ingredient_id: string;
+                amount: number | null;
+                unit: string | null;
+              }[]
+            | null;
+
+          if (ingredientRefsNext && ingredientRefsNext.length > 0) {
+            const ingredientIdsNext = ingredientRefsNext.map(
+              (r) => r.ingredient_id
+            );
+
+            const { data: ingRowsNext } = await supabase
+              .from("ingredients")
+              .select("*")
+              .in("ingredient_id", ingredientIdsNext as string[]);
+
+            ingredientRefsNext.forEach(
+              (ref: {
+                ingredient_id: string;
+                amount: number | null;
+                unit: string | null;
+              }) => {
+                const info = ingRowsNext?.find(
+                  (i: any) => i.ingredient_id === ref.ingredient_id
+                );
+                if (info) {
+                  nextIngredients.push({
+                    name: info.name,
+                    kind: info.kind,
+                    amount:
+                      ref.amount != null ? ref.amount * scaleFactor : null,
+                    unit: ref.unit,
+                  });
+                }
+              }
+            );
+          }
+        }
+
+        // Determine if there is multiple steps
+        const nextHasOffset =
+          nextStep &&
+          nextStep.start_offset_min &&
+          nextStep.start_offset_min > 0;
+        let mapped;
+        if (nextHasOffset) {
+          const afterNextStep = allStepsLocal[currentIndex + 2] ?? null;
+
+          mapped = {
+            mode: "two",
+            beer: brew.name,
+            temp: nextStep.temp_c_target ?? null,
+            current_step_id: currentStep.current.step_id,
+            next_step_id: nextStep.step_id,
+            after_next_step_id: afterNextStep?.step_id ?? null,
+            step1: {
+              title: currentStep.current.title,
+              desc: currentStep.current.description_md,
+              tips: tips?.tip_md ?? null,
+              duration_sec: nextStep.start_offset_min ?? 0,
+              ingredients: currentIngredients,
+            },
+            step2: {
+              title: nextStep.title,
+              desc: nextStep.description_md,
+              tips: tips?.tip_md ?? null,
+              duration_sec: nextStep.duration_min ?? 0,
+              ingredients: nextIngredients,
+            },
+          };
+        } else {
+          mapped = {
+            mode: "single",
+            beer: brew.name,
+            temp: currentStep.current.temp_c_target ?? null,
+            current_step_id: currentStep.current.step_id,
+            next_step_id: nextStep?.step_id ?? null,
+            step1: {
+              title: currentStep.current.title,
+              desc: currentStep.current.description_md,
+              tips: tips?.tip_md ?? null,
+              duration_sec: currentStep.current.duration_min ?? 0,
+              ingredients: currentIngredients,
+            },
+            step2: null,
+          };
+        }
+
+        // If we have a stored running timer, apply recalculated remaining time
+        if (autoStartRemaining != null) {
+          if (mapped.mode === "single") {
+            mapped.step1.duration_sec = autoStartRemaining;
+          } else {
+            mapped.step1.duration_sec = autoStartRemaining;
+          }
+          setTimerActive(true);
+          setPhaseDone(false);
+        } else if (autoStartExpired) {
+          setTimerActive(false);
+          setPhaseDone(true);
+        } else {
+          setPhase(1);
+          setTimerActive(false);
+          setPhaseDone(
+            mapped.mode === "single" && mapped.step1.duration_sec === 0
+          );
+        }
+
+        setStepData(mapped);
+      } catch (e) {
+        console.error("loadStep error", e);
+        setStepData(null);
       }
-      //console.log('steps:', allSteps);
+      setLoading(false);
+    },
+    [brewId]
+  );
 
-      const currentIndex = allSteps.findIndex(
-        (s) => s.step_id === brew.last_step_id
-      );
-      const currentStep = allSteps[currentIndex];
-      // const previousStep = allSteps[currentIndex - 1] ?? null;
-      const nextStep = allSteps[currentIndex + 1];
-
-      const { data: tips } = await supabase
-        .from("step_tips")
-        .select("step_id, tip_md")
-        .eq("step_id", brew.last_step_id)
-        .single();
-      // console.log('tips:',tips);
-
-      // Determine if there is multiple steps
-      const nextHasOffset =
-        nextStep && nextStep.start_offset_min && nextStep.start_offset_min > 0;
-      let mapped;
-      if (nextHasOffset) {
-        const afterNextStep = allSteps[currentIndex + 2] ?? null;
-
-        mapped = {
-          mode: "two",
-          beer: brew.name,
-          temp: nextStep.temp_c_target ?? null,
-          current_step_id: currentStep.step_id,
-          next_step_id: nextStep.step_id,
-          after_next_step_id: afterNextStep?.step_id ?? null,
-          step1: {
-            title: currentStep.title,
-            desc: currentStep.description_md,
-            tips: tips?.tip_md ?? null,
-            duration_sec: nextStep.start_offset_min ?? 0,
-          },
-          step2: {
-            title: nextStep.title,
-            desc: nextStep.description_md,
-            tips: tips?.tip_md ?? null,
-            duration_sec: nextStep.duration_min ?? 0,
-          },
-        };
-      } else {
-        mapped = {
-          mode: "single",
-          beer: brew.name,
-          temp: currentStep.temp_c_target ?? null,
-          current_step_id: currentStep.step_id,
-          next_step_id: nextStep?.step_id ?? null,
-          step1: {
-            title: currentStep.title,
-            desc: currentStep.description_md,
-            tips: tips?.tip_md ?? null,
-            duration_sec: currentStep.duration_min ?? 0 /* * 60*/,
-          },
-          step2: null,
-        };
-      }
-
-      setStepData(mapped);
-
-      console.log("stepData: ", mapped);
-
-      // reset timer state after reload
-      setPhase(1);
-      setTimerActive(false);
-      setPhaseDone(mapped.mode === "single" && mapped.step1.duration_sec === 0);
-    } catch (e) {
-      console.error("loadStep error", e);
-      setStepData(null);
-    }
-    setLoading(false);
-  }, [brewId]);
+  useFocusEffect(
+    useCallback(() => {
+      setIsHistoricalStep(false);
+      loadStep();
+    }, [loadStep])
+  );
 
   useEffect(() => {
-    loadStep();
-  }, [loadStep]);
+    if (!stepData) return;
+
+    if (stepData.mode === "two" && phase === 2) {
+      setHasPreviousStep(true);
+    } else {
+      const currentIndex = allSteps.findIndex(
+        (s) => s.step_id === currentStep.current?.step_id
+      );
+      setHasPreviousStep(currentIndex > 0);
+    }
+  }, [stepData, phase, allSteps]);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  const handlePlay = useCallback(
+    async (remainingSecs: number) => {
+      if (!brewId || !currentStep.current?.step_id) {
+        console.error("Missing brewId or current step when starting timer", {
+          brewId,
+          step: currentStep.current,
+        });
+        return;
+      }
+
+      try {
+        const { data: upData, error: upErr } = await supabase
+          .from("brew_steps")
+          .update({
+            completed_at: new Date().toISOString(),
+            time_left: remainingSecs,
+            status: "in_progress",
+          })
+          .eq("id_brew", brewId)
+          .eq("step_id", currentStep.current.step_id)
+          .select();
+
+        if (upErr) {
+          console.error("Supabase update error (start)", upErr);
+        } else {
+          console.debug("Supabase update success (start)", upData);
+          setCompletedAt(
+            new Date(upData?.[0]?.completed_at ?? new Date().toISOString())
+          );
+        }
+      } catch (e) {
+        console.error("Failed to persist timer start state", e);
+      }
+
+      setTimerActive(true);
+    },
+    [brewId]
+  );
+
+  const handlePause = useCallback(
+    async (remainingSecs: number) => {
+      if (!brewId || !currentStep.current?.step_id) {
+        console.error("Missing brewId or current step when pausing timer", {
+          brewId,
+          step: currentStep.current,
+        });
+        return;
+      }
+
+      try {
+        const { data: upData, error: upErr } = await supabase
+          .from("brew_steps")
+          .update({
+            completed_at: null,
+            time_left: remainingSecs,
+            status: "in_progress",
+          })
+          .eq("id_brew", brewId)
+          .eq("step_id", currentStep.current.step_id)
+          .select();
+
+        if (upErr) {
+          console.error("Supabase update error (pause)", upErr);
+        } else {
+          console.debug("Supabase update success (pause)", upData);
+          setCompletedAt(null);
+        }
+      } catch (e) {
+        console.error("Failed to persist timer pause state", e);
+      }
+
+      setTimerActive(false);
+    },
+    [brewId]
+  );
 
   const durationSec =
     phase === 1
       ? (stepData?.step1?.duration_sec ?? 0)
       : (stepData?.step2?.duration_sec ?? 0);
+
+  const handleComplete = useCallback(
+    (totalElapsedTime: number) => {
+      (async () => {
+        try {
+          await supabase
+            .from("brew_steps")
+            .update({
+              time_left: null,
+              status: "completed",
+              completed_at: new Date().toISOString(),
+            })
+            .eq("id_brew", brewId)
+            .eq("step_id", currentStep.current.step_id);
+        } catch (e) {
+          console.error("Failed to persist completion", e);
+        }
+      })();
+
+      if (stepData?.mode === "two" && phase === 1) {
+        setTimerActive(false);
+        setPhase(2);
+        return { shouldRepeat: false };
+      }
+      setPhaseDone(true);
+      setTimerActive(false);
+      return { shouldRepeat: false };
+    },
+    [brewId, stepData, phase]
+  );
 
   const hasTimer = durationSec > 0;
   const hasTemp = stepData?.temp != null;
@@ -180,32 +483,45 @@ export default function Progress() {
       return;
     }
 
+    const currentIndex = allSteps.findIndex(
+      (s) => s.step_id === currentStep.current?.step_id
+    );
+    const nextStep = allSteps[currentIndex + 1];
+
+    if (!nextStep) {
+      await refreshProgress();
+      router.push("/HomePage");
+      return;
+    }
+
+    if (isHistoricalStep) {
+      loadStep(nextStep.step_id);
+      return;
+    }
+
     try {
-      const updates = [];
-      //start brewing
-      // If brew is planned: change status → in_progress + set start date
+      const updates: { step_id: string }[] = [];
+
       const { data: brewStatus } = await supabase
         .from("brews")
         .select("status_id")
         .eq("id_brew", brewId)
         .single();
 
-      if (brewStatus?.status_id === 1) { // assuming 1 = planned
+      if (brewStatus?.status_id === 1) {
         await supabase
           .from("brews")
           .update({
-            status_id: 2, // in_progress
-            start_date: new Date().toISOString()
+            status_id: 2,
+            start_date: new Date().toISOString(),
           })
           .eq("id_brew", brewId);
       }
 
-      // Always complete the current step
       updates.push({
         step_id: stepData.current_step_id,
       });
 
-      // If two steps form one → also complete step2
       if (stepData.mode === "two" && stepData.next_step_id) {
         updates.push({
           step_id: stepData.next_step_id,
@@ -226,11 +542,9 @@ export default function Progress() {
       let newLastStepId;
 
       if (stepData.mode === "two") {
-        // Skip both currentStep + nextStep → go to the step AFTER nextStep
         const afterMergedStep = stepData.after_next_step_id ?? null;
         newLastStepId = afterMergedStep;
       } else {
-        // normal single-step behaviour
         newLastStepId = stepData.next_step_id;
       }
 
@@ -254,49 +568,43 @@ export default function Progress() {
     } catch (error) {
       console.error("goToNextStep error:", error);
     }
-  }, [brewId, stepData, loadStep, router]);
+  }, [
+    brewId,
+    stepData,
+    loadStep,
+    router,
+    allSteps,
+    isHistoricalStep,
+    refreshProgress,
+  ]);
 
-  // To delete brews
-  const deleteBrew = useCallback(async () => {
-    if (!brewId) return;
+  const goToPreviousStep = useCallback(() => {
+    if (!stepData || allSteps.length === 0) return;
 
-    try {
-      // Delete brew_steps first (FK constraint)
-      await supabase.from("brew_steps").delete().eq("id_brew", brewId);
-
-      // Delete the brew
-      await supabase.from("brews").delete().eq("id_brew", brewId);
-
-      router.push("/HomePage");
-    } catch (error) {
-      console.error("deleteBrew error:", error);
+    if (stepData.mode === "two" && phaseRef.current === 2) {
+      setPhase(1);
+      setPhaseDone(false);
+      setTimerActive(false);
+      return;
     }
-  }, [brewId, router]);
 
-  const showDialog = () => setDialogVisible(true);
-  const hideDialog = () => setDialogVisible(false);
+    const currentIndex = allSteps.findIndex(
+      (s) => s.step_id === currentStep.current?.step_id
+    );
 
-  const confirmDeleteBrew = () => {
-    hideDialog();
-    deleteBrew();
-  };
+    if (currentIndex <= 0) {
+      console.log("No previous step available.");
+      return;
+    }
+
+    const prevStep = allSteps[currentIndex - 1];
+
+    setIsHistoricalStep(true);
+    loadStep(prevStep.step_id);
+  }, [stepData, allSteps, loadStep]);
 
   if (loading) {
-    return (
-      <SafeAreaView
-        className="flex-1 justify-center items-center"
-        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
-      >
-        <ActivityIndicator
-          animating
-          size="large"
-          color={BASE_COLORS.ACCENT_PRIMARY}
-        />
-        <ThemedText type="defaultText" className="mt-3">
-          Loading progress...
-        </ThemedText>
-      </SafeAreaView>
-    );
+    return <Spinner title="Loading progress..." />;
   }
   if (!stepData) {
     return (
@@ -320,6 +628,25 @@ export default function Progress() {
       ? stepData.step1.desc
       : (stepData.step2?.desc ?? stepData.step1.desc);
   const tips = phase === 1 ? stepData.step1.tips : stepData.step2?.tips;
+  const ingredients: {
+    name: string;
+    kind: string;
+    amount: number | null;
+    unit: string | null;
+  }[] =
+    (phase === 1 ? stepData.step1.ingredients : stepData.step2?.ingredients) ??
+    [];
+
+  const formatAmount = (amount: number | null, unit: string | null) => {
+    if (amount == null) return null;
+    const effectiveUnit = unit ?? "g";
+    if (effectiveUnit === "L") {
+      const rounded = Math.round(amount * 10) / 10;
+      return `${rounded} ${effectiveUnit}`;
+    }
+    const rounded = Math.round(amount);
+    return `${rounded} ${effectiveUnit}`;
+  };
 
   return (
     <SafeAreaView
@@ -327,41 +654,66 @@ export default function Progress() {
       style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
     >
       <Header
-        title={"Progress"}
-        iconName="Trash"
-        onIconPress={showDialog}
+        title={stepData.beer}
+        actionTestIDLeft="back-header"
+        iconNameLeft="ArrowLeft"
+        onIconPressLeft={() =>
+          router.push(from === "agenda" ? "/Agenda" : "/HomePage")
+        }
       />
+      <View style={{ paddingBottom: 12 }}>
+        {(() => {
+          const isCompleted = isHistoricalStep || phaseDone;
+          return (
+            <>
+              <Stepper
+                step={
+                  allSteps.findIndex(
+                    (s) => s.step_id === currentStep.current?.step_id
+                  ) + 1
+                }
+                total={allSteps.length}
+                isCompleted={isCompleted}
+                onNext={() => {
+                  if (!phaseDone && !isHistoricalStep) return;
+                  goToNextStep();
+                }}
+                onPrev={goToPreviousStep}
+              />
+
+              {isHistoricalStep && completedAt && (
+                <ThemedText type="subTitle" className="mt-2 ml-3">
+                  Completed on: {completedAt.toLocaleDateString()} at{" "}
+                  {completedAt.toLocaleTimeString()}
+                </ThemedText>
+              )}
+            </>
+          );
+        })()}
+      </View>
       <ScrollView
         className="px-3"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 85 }}
+        contentContainerStyle={{ paddingBottom: 95 }}
       >
-        <ThemedText type="title" className="mb-2">
-          {stepData.beer}
-        </ThemedText>
         <View className="flex-row justify-between items-center">
-          <Text
-            style={{
-              fontSize: Math.min(18 * scale, 26),
-              fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.STONE700,
-            }}
-          >
-            {title}
-          </Text>
+          <ThemedText type="title">{title}</ThemedText>
           {hasTemp && (
             <Chip
               style={{
-                alignItems: "center",
+                alignItems: "flex-start",
                 backgroundColor: BASE_COLORS.WHITE,
                 shadowColor: BASE_COLORS.STONE700,
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.07,
+                paddingVertical: 4,
+                paddingHorizontal: 8,
               }}
               textStyle={{
                 fontSize: Math.min(17 * scale, 26),
                 color: BASE_COLORS.STONE500,
                 fontFamily: FontFamilies.BODY,
+                flexWrap: "wrap",
               }}
               icon={(props) => (
                 <Thermometer
@@ -371,7 +723,9 @@ export default function Progress() {
                   fill={BASE_COLORS.AMBER600}
                 />
               )}
-            >{`${stepData.temp}°C`}</Chip>
+            >
+              <Text style={{ flexWrap: "wrap" }}>{`${stepData.temp}°C`}</Text>
+            </Chip>
           )}
         </View>
         {stepData.mode === "two" && phase === 1 && (
@@ -387,10 +741,11 @@ export default function Progress() {
           </Text>
         )}
 
-        {hasTimer && (
+        {hasTimer && !CompletedStep.current && (
           <Card
             style={{
-              marginBlock: 12,
+              marginTop: 8,
+              marginBottom: 24,
               padding: 16,
               borderRadius: 8,
               backgroundColor: BASE_COLORS.WHITE,
@@ -412,130 +767,158 @@ export default function Progress() {
                 !phaseDone ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200
               }
               strokeWidth={10}
-              onComplete={() => {
-                if (stepData.mode === "two" && phase === 1) {
-                  setTimerActive(false);
-                  setPhase(2);
-                  return { shouldRepeat: false };
-                }
-                setPhaseDone(true);
-                setTimerActive(false);
-                return { shouldRepeat: false };
-              }}
+              onComplete={handleComplete}
             >
-              {({ remainingTime }) => (
-                <View style={{ alignItems: "center" }}>
-                  <Text
-                    style={{
-                      fontSize: Math.min(22 * scale, 28),
-                      color: BASE_COLORS.STONE800,
-                      fontFamily: FontFamilies.BODY,
-                      marginBottom: 8,
-                    }}
-                  >
-                    {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
-                  </Text>
-                  <Button
-                    mode="contained"
-                    compact
-                    disabled={phaseDone}
-                    onPress={() => setTimerActive((p) => !p)}
-                    style={{
-                      borderRadius: 30,
-                      backgroundColor: !phaseDone
-                        ? BASE_COLORS.TEXT_DARK
-                        : BASE_COLORS.STONE200,
-                      paddingInline: 8,
-                    }}
-                  >
-                    {timerActive ? (
-                      <Pause
-                        size={Math.min(18 * scale, 26)}
-                        color={BASE_COLORS.WHITE}
-                        fill={BASE_COLORS.WHITE}
-                        strokeWidth={0.5}
-                      />
-                    ) : (
-                      <Play
-                        size={Math.min(18 * scale, 26)}
-                        color={BASE_COLORS.WHITE}
-                        fill={BASE_COLORS.WHITE}
-                        strokeWidth={1}
-                      />
-                    )}
-                  </Button>
-                </View>
-              )}
+              {({ remainingTime }) => {
+                const btnDisabled = phaseDone || isHistoricalStep;
+                return (
+                  <View style={{ alignItems: "center" }}>
+                    <Text
+                      style={{
+                        fontSize: Math.min(22 * scale, 28),
+                        color: BASE_COLORS.STONE800,
+                        fontFamily: FontFamilies.BODY,
+                        marginBottom: 8,
+                      }}
+                    >
+                      {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
+                    </Text>
+                    <Button
+                      mode="contained"
+                      compact
+                      disabled={btnDisabled}
+                      onPress={async () => {
+                        if (isHistoricalStep) {
+                          console.debug(
+                            "Historical step - timer controls disabled"
+                          );
+                          return;
+                        }
+
+                        const remainingSecs = remainingTime;
+                        const newActive = !timerActive;
+
+                        if (newActive) {
+                          await handlePlay(remainingSecs);
+                        } else {
+                          await handlePause(remainingSecs);
+                        }
+                      }}
+                      style={{
+                        borderRadius: 30,
+                        backgroundColor: btnDisabled
+                          ? BASE_COLORS.STONE200
+                          : BASE_COLORS.TEXT_DARK,
+                        paddingInline: 8,
+                      }}
+                    >
+                      {timerActive ? (
+                        <Pause
+                          size={Math.min(18 * scale, 26)}
+                          color={
+                            btnDisabled
+                              ? BASE_COLORS.STONE400
+                              : BASE_COLORS.WHITE
+                          }
+                          fill={
+                            btnDisabled
+                              ? BASE_COLORS.STONE400
+                              : BASE_COLORS.WHITE
+                          }
+                          strokeWidth={0.5}
+                        />
+                      ) : (
+                        <Play
+                          size={Math.min(18 * scale, 26)}
+                          color={
+                            btnDisabled
+                              ? BASE_COLORS.STONE400
+                              : BASE_COLORS.WHITE
+                          }
+                          fill={
+                            btnDisabled
+                              ? BASE_COLORS.STONE400
+                              : BASE_COLORS.WHITE
+                          }
+                          strokeWidth={1}
+                        />
+                      )}
+                    </Button>
+                  </View>
+                );
+              }}
             </CountdownCircleTimer>
           </Card>
         )}
 
-        <View className="mt-2">
-          {desc?.split(".").map((s: string, i: number) => {
-            const clean = s.trim();
-            if (!clean) return null;
-            return (
-              <ThemedText key={i} type="defaultText" className="mb-2">
-                {clean}.
-              </ThemedText>
-            );
-          })}
+        {(phase === 1
+          ? stepData.step1.ingredients
+          : stepData.step2?.ingredients
+        )?.length > 0 && (
+          <View className="mb-4">
+            <ThemedText type="subTitle">Ingredients:</ThemedText>
+            {ingredients.map((ing, idx) => {
+              const amountLabel = formatAmount(ing.amount, ing.unit);
+              return (
+                <View key={idx} className="flex-row items-center">
+                  <ThemedText type="defaultText">
+                    • {ing.name} ({ing.kind})
+                    {amountLabel ? `: ${amountLabel}` : ""}
+                  </ThemedText>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        <View>
+          <ThemedText type="subTitle">Description:</ThemedText>
+          <View className="mb-2">
+            {desc?.split(".").map((s: string, i: number) => {
+              const clean = s.trim();
+              if (!clean) return null;
+              return (
+                <ThemedText key={i} type="defaultText" className="mb-2">
+                  {clean}.
+                </ThemedText>
+              );
+            })}
+          </View>
         </View>
 
         {tips && (
-          <View className="mt-2 flex-row items-start">
-            <Lightbulb
-              size={Math.min(30 * scale, 50)}
-              color={BASE_COLORS.ACCENT_LIGHT}
-              className="mr-2"
-            />
-            <ThemedText type="tips">{tips}</ThemedText>
+          <View className="mt-2 flex-row items-start gap-4">
+            <View>
+              <Lightbulb size={30} color={BASE_COLORS.ACCENT_LIGHT} />
+            </View>
+            <ThemedText type="tips" style={{ marginTop: -34 }}>
+              {tips ?? "No tips available."}
+            </ThemedText>
           </View>
         )}
       </ScrollView>
       <FAB
-        testID="fab-button"
+        testID="chat-button"
         mode="flat"
-        label="Next Step"
-        icon={(props) => {
-          return <CheckCheck {...props} size={Math.min(24 * scale, 34)} />;
-        }}
+        icon={(props) => (
+          <BotMessageSquare size={props.size} color={BASE_COLORS.WHITE} />
+        )}
         onPress={() => {
-          if (!phaseDone) return;
-          goToNextStep();
+          router.push(`/ChatBot?fromProgress=${brewId}`);
         }}
-        disabled={!phaseDone}
         color={BASE_COLORS.WHITE}
         style={{
-          borderRadius: 30,
-          backgroundColor: !phaseDone
-            ? BASE_COLORS.STONE200
-            : BASE_COLORS.TEXT_DARK,
           position: "absolute",
-          bottom: 20,
-          right: 20,
+          right: 10,
+          bottom: 25,
+          backgroundColor: BASE_COLORS.TEXT_DARK,
+          borderRadius: 45,
         }}
         theme={{
           colors: {
             onSurfaceDisabled: BASE_COLORS.STONE400,
           },
-          fonts: {
-            labelLarge: {
-              fontSize: Math.min(16 * scale, 24),
-              fontFamily: FontFamilies.BODY,
-            },
-          },
         }}
-      />
-      <DialogCustom
-        title="Confirm Brew Deletion"
-        text={`Are you sure you want to delete \"${stepData?.beer}\" brew?`}
-        visible={dialogVisible}
-        onDismiss={hideDialog}
-        cancelBtn="Cancel"
-        yesBtn="Delete"
-        onPressCancel={hideDialog}
-        onPressYes={confirmDeleteBrew}
       />
     </SafeAreaView>
   );

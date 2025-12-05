@@ -1,13 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, TextInput, ScrollView, Text, ActivityIndicator, StyleSheet, Image, Platform, TouchableOpacity, Alert, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, Image, Platform, Alert, KeyboardAvoidingView, Pressable } from 'react-native';
+import { Avatar } from "react-native-paper";
 import Markdown from 'react-native-markdown-display';
 import * as ImagePicker from 'expo-image-picker';
 import { BASE_COLORS } from '@/constants/Colors';
 import { FontFamilies } from '@/constants/Fonts';
-import { useFonts } from 'expo-font';
+import { useFonts } from "@/hooks/use-fonts";
 import { useRouter } from 'expo-router';
 import Header from '@/components/header';
 import { Button } from 'react-native-paper';
+import Spinner from '@/components/spinner';
+import { useLocalSearchParams } from "expo-router";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { SendHorizonal, Plus, BotMessageSquare } from "lucide-react-native";
 
 type ChatMessage = {
   from: 'bot' | 'user';
@@ -17,6 +22,8 @@ type ChatMessage = {
 };
 
 export default function ChatBot() {
+  useFonts();
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     { from: 'bot', text: 'Hey! How can I help you today?' },
   ]);
@@ -26,6 +33,8 @@ export default function ChatBot() {
 
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
+
+  const { fromProgress } = useLocalSearchParams();
   
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -136,161 +145,152 @@ export default function ChatBot() {
   >
     <Header
       title="ChatBot"
+      actionTestIDLeft='back-header'
+      iconNameLeft='ArrowLeft'
+      onIconPressLeft={() => {
+        if (fromProgress) {
+          router.push(`/progress?id=${fromProgress}`);
+        } else {
+          router.back();
+        }
+      }}
+
     />
 
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ 
+        flex: 1, 
+        backgroundColor: BASE_COLORS.LIGHT_BG
+      }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
-      <View style={{ flex: 1 }}>
-        
-        <ScrollView 
-          ref={scrollViewRef} 
-          style={styles.chat} 
-          contentContainerStyle={{ paddingBottom: 10 }} // extra ruimte voor input
-        >
+      <SafeAreaView className='flex-1 mx-3'>
+        <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef}>
           {messages.map((msg, i) => (
-            <View 
-              key={i}
-              testID={msg.from === 'bot' ? `bot-msg-${i}` : `user-msg-${i}`}
-              style={msg.from === 'user' ? styles.userMsg : styles.botMsg}>
-              {msg.data && (
-                <Image
-                  source={{ uri: typeof msg.data === 'string' && msg.data.startsWith('data:') ? msg.data : `data:image/jpeg;base64,${msg.data}` }}
-                  style={{ width: 150, height: 150, marginBottom: 4, borderRadius: 8 }}
-                />
+            <View key={i}>
+              {msg.from === "bot" && (
+                <View className="flex-row items-center gap-2">
+                  <Avatar.Icon 
+                    size={32} 
+                    icon={() => <BotMessageSquare size={20} color={BASE_COLORS.STONE700} />} 
+                    style={{ backgroundColor: "transparent" }} 
+                  />
+                  <Text
+                    style={{
+                      fontFamily: FontFamilies.BODY_BOLD,
+                      fontSize: 14,
+                      color: BASE_COLORS.STONE700,
+                    }}
+                  >BeerBot</Text>
+                </View>
               )}
-              {msg.text && (msg.from === 'user' ? (
-                <Markdown style={{ body: { color: BASE_COLORS.WHITE } }}>{msg.text}</Markdown>
-              ) : (
-                <Markdown>{msg.text}</Markdown>
-              ))}
+
+              <View
+                testID={msg.from === "bot" ? `bot-msg-${i}` : `user-msg-${i}`}
+                style={msg.from === "user" ? styles.userMsg : styles.botMsg}
+              >
+                {msg.text && (
+                  <Markdown
+                    style={{
+                      body: {
+                        color:
+                          msg.from === "user"
+                            ? BASE_COLORS.STONE950
+                            : BASE_COLORS.STONE950,
+                      },
+                    }}
+                  >{msg.text}</Markdown>
+                )}
+
+                {msg.data && (
+                  <Image
+                    source={{
+                      uri:
+                        typeof msg.data === "string" && msg.data.startsWith("data:")
+                          ? msg.data
+                          : `data:image/jpeg;base64,${msg.data}`,
+                    }}
+                    style={{
+                      width: "100%",
+                      height: 200,
+                      marginBottom: 12,
+                      borderRadius: 8,
+                    }}
+                  />
+                )}
+              </View>
             </View>
           ))}
 
-          {loading && <ActivityIndicator size="large" style={{ marginTop: 10 }} />}
+          {loading && 
+            <Spinner title="Thinking..." size="large" />
+          }
         </ScrollView>
 
+        {/* INPUT ROW absoluut onderaan */}
+        <View className="flex flex-row items-center justify-between gap-2 py-2">
+          <Pressable
+            onPress={pickOrTakePhoto}
+          >
+            <Plus color={BASE_COLORS.STONE700} strokeWidth={3}/>
+          </Pressable>
+
+          <TextInput
+            testID="chat-input"
+            value={input}
+            onChangeText={setInput}
+            placeholder="Type a message..."
+            style={{
+              flex: 1,
+              borderWidth: 1,
+              borderColor: BASE_COLORS.STONE200,
+              borderRadius: 20,
+              paddingHorizontal: 16,
+              paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+              backgroundColor: BASE_COLORS.WHITE,
+              fontFamily: FontFamilies.BODY_LIGHT,
+            }}
+          />
+            <Button
+              testID="send-button"
+              onPress={send}
+              style={{
+                backgroundColor: BASE_COLORS.TEXT_DARK,
+                borderRadius: 45,
+              }}
+            >
+              <SendHorizonal color={BASE_COLORS.WHITE}/>
+            </Button>
+        </View>
+
         {image && (
-          <View style={styles.previewContainer}>
+          <View className="items-start pb-2">
             <Image
               source={{ uri: image.uri }}
               style={{ width: 150, height: 150, borderRadius: 8 }}
             />
           </View>
         )}
-
-        {/* INPUT ROW absoluut onderaan */}
-          <View style={styles.inputRow}>
-            <TouchableOpacity
-              style={[styles.plusButton, { backgroundColor: BASE_COLORS.TEXT_DARK }]}
-              onPress={pickOrTakePhoto}
-            >
-              <Text style={styles.sendButtonText}>+</Text>
-            </TouchableOpacity>
-
-            <TextInput
-              testID="chat-input"
-              style={styles.input}
-              value={input}
-              onChangeText={setInput}
-              placeholder="Type a message..."
-            />
-
-            <View style={styles.buttonGroup}>
-              <Button
-                testID="send-button"
-                onPress={send}
-                style={[styles.sendButton, { backgroundColor: BASE_COLORS.TEXT_DARK }]}
-              >
-                <Text style={styles.sendButtonText}>Send</Text>
-              </Button>
-            </View>
-          </View>
-        </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   </View>
 );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: BASE_COLORS.LIGHT_BG,
-  },
-  chat: {
-    flex: 1,
-    paddingHorizontal: 12,
-    paddingTop: 10,
-  },
   userMsg: {
     alignSelf: 'flex-end',
-    backgroundColor: BASE_COLORS.TEXT_DARK,
-    marginVertical: 4,
-    padding: 10,
-    borderRadius: 16,
-    maxWidth: '80%',
+    backgroundColor: BASE_COLORS.STONE200,
+    marginBottom: 4,
+    paddingInline: 16,
+    borderRadius: 24,
+    maxWidth: '90%',
   },
   botMsg: {
     alignSelf: 'flex-start',
-    backgroundColor: BASE_COLORS.WHITE,
-    marginVertical: 4,
-    padding: 10,
-    borderRadius: 16,
-    maxWidth: '80%',
-  },
-  previewContainer: {
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  plusButton: {
-    width: 40,
-    height: 40,
-    backgroundColor: BASE_COLORS.TEXT_DARK,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  plusText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    lineHeight: 24,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
-    backgroundColor: '#fff',
-    fontFamily: FontFamilies.BODY_LIGHT,
-  },
-  buttonGroup: {
-    marginLeft: 8,
-  },
-  sendButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 60,
-    minHeight: 40,
-  },
-  sendButtonText: {
-    color: BASE_COLORS.WHITE,
-    fontSize: 16,
-    fontFamily: FontFamilies.BODY,
+    marginBottom: 4,
+    paddingInline: 16,
+    maxWidth: '90%',
   },
 });

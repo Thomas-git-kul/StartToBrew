@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, ScrollView, Dimensions, FlatList, ActivityIndicator } from "react-native";
+import { View, ScrollView, Dimensions, FlatList } from "react-native";
 import { Searchbar, Chip, Button } from "react-native-paper";
 import { Search, X, Check } from "lucide-react-native";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -11,6 +11,8 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "../../supabase";
 import { ThemedText } from "../../components/themed-text";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Spinner from "../../components/spinner";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -45,7 +47,7 @@ export default function StorePage() {
     2: require("@/assets/images/hop.png"),
     3: require("@/assets/images/yeast.png"),
     4: require("@/assets/images/starterkit2.png"),
-    5: require("@/assets/images/Airlock.png"),
+    5: require("@/assets/images/equipment.png"),
     6: require("@/assets/images/measurement.png"),
   }
 
@@ -185,16 +187,9 @@ export default function StorePage() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
-        <ActivityIndicator 
-          animating
-          size="large"
-          color={BASE_COLORS.ACCENT_PRIMARY}
-        />
-        <ThemedText type="defaultText" className="mt-3">
-          Loading store items...
-        </ThemedText>
-      </View>
+      <Spinner
+        title="Loading store..."
+      />
     );
   }
 
@@ -212,7 +207,7 @@ export default function StorePage() {
       />
 
       {/* Horizontal scrollable category chips */}
-      <View style={{ height: 60 }}>
+      <View style={{ height: 60 }} className="mx-3 h-60">
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -229,7 +224,7 @@ export default function StorePage() {
                   isSelected
                     ? () => (
                         <View style={{ flexDirection: "row", alignItems: "center" }}>
-                          <Check size={Math.min(14 * scale, 20)} color={BASE_COLORS.WHITE} />
+                          <Check size={14} color={BASE_COLORS.WHITE} />
                         </View>
                       )
                     : undefined
@@ -237,7 +232,7 @@ export default function StorePage() {
                 textStyle={{
                   color: isSelected ? BASE_COLORS.WHITE : BASE_COLORS.STONE500,
                   fontFamily: FontFamilies.BODY,
-                  fontSize: Math.min(14 * scale, 16),
+                  fontSize: 14,
                 }}
                 style={{
                   marginRight: 10,
@@ -261,6 +256,32 @@ export default function StorePage() {
         </ScrollView>
       </View>
 
+      {/* Search Bar */}
+      <View className="mx-3">
+        <Searchbar
+          placeholder="Search"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          inputStyle={{
+            color: BASE_COLORS.STONE700,
+            fontFamily: FontFamilies.BODY,
+          }}
+          icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+          clearIcon={
+            searchQuery
+              ? () => <X size={18} color={BASE_COLORS.STONE500} />
+              : undefined
+          }
+          onClearIconPress={() => setSearchQuery("")}
+          style={{
+            backgroundColor: BASE_COLORS.WHITE,
+            borderColor: BASE_COLORS.STONE300,
+            borderWidth: 1,
+            marginBottom: 16,
+          }}
+        />
+      </View>
+
       {/* Items List */}
       <FlatList
         data={items.filter(filterMatches)}
@@ -270,34 +291,8 @@ export default function StorePage() {
           justifyContent: "space-between",
           marginBottom: 16,
         }}
-        contentContainerStyle={{
-          paddingBottom: 40,
-        }}
+        contentContainerClassName="mx-3"
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <Searchbar
-            placeholder="Search"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            inputStyle={{
-              color: BASE_COLORS.STONE700,
-              fontFamily: FontFamilies.BODY,
-            }}
-            icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
-            clearIcon={
-              searchQuery
-                ? () => <X size={18} color={BASE_COLORS.STONE500} />
-                : undefined
-            }
-            onClearIconPress={() => setSearchQuery("")}
-            style={{
-              backgroundColor: BASE_COLORS.WHITE,
-              borderColor: BASE_COLORS.STONE300,
-              borderWidth: 1,
-              marginBottom: 16,
-            }}
-          />
-        }
         renderItem={({ item }) => (
           <View style={{ width: "48%" }}>
             <StoreCard
