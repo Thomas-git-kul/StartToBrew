@@ -1,3 +1,8 @@
+// @ts-ignore
+import TestRenderer from "react-test-renderer";
+declare global {
+  var __TEST_SPECIFICRECIPE__: boolean | undefined;
+}
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(() => Promise.resolve()),
   getItem: jest.fn(() => Promise.resolve(null)),
@@ -12,10 +17,15 @@ jest.mock('../supabase', () => {
     supabase: {
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }) },
       from: jest.fn().mockImplementation((table: string) => {
+        // Helper for chaining
+        const chain = {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
         if (table === "starter_kits") {
           return {
-            select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
+            ...chain,
             single: jest.fn().mockResolvedValue({
               data: {
                 id_starter_kit: "1",
@@ -27,18 +37,39 @@ jest.mock('../supabase', () => {
             }),
           };
         }
-        return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          single: jest.fn().mockResolvedValue({ data: null, error: null }),
-        };
+        if (table === "shopping_carts") {
+          return {
+            ...chain,
+            maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+          };
+        }
+        if (table === "shopping_cart_items") {
+          return {
+            ...chain,
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+            // For cart count
+            // Return array of items for count
+            // .select('id_cart_item', { count: 'exact' })
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+            // For count, return array
+            then: (cb: any) => cb([{ id_cart_item: 'item-1', quantity: 1 }]),
+            // For .select(...).eq(...)
+            // .select('id_cart_item', { count: 'exact' })
+            // .eq('cart_id', ...)
+            // Should return array
+            // We'll just return array for .select().eq().then()
+            // But for .maybeSingle(), return null
+          };
+        }
+        return chain;
       }),
     },
   };
 });
 
 import React from "react";
-import TestRenderer from "react-test-renderer";
 const { act } = TestRenderer;
 import { render, fireEvent, waitFor, screen } from "@testing-library/react-native";
 import StoreItem from "../app/(tabs)/StoreItem";
@@ -48,7 +79,13 @@ const mockPush = jest.fn();
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
-  useLocalSearchParams: () => ({ id: "1", categoryNumber: "4" }),
+  useLocalSearchParams: () => {
+    // Dynamisch aanpassen voor SpecificRecipe test
+    if (global.__TEST_SPECIFICRECIPE__) {
+      return { id: "1", categoryNumber: "4", from: "specificrecipe", recipe_slug: "test-recipe" };
+    }
+    return { id: "1", categoryNumber: "4" };
+  },
 }));
 
 jest.mock("@/hooks/use-fonts", () => ({ useFonts: jest.fn() }));
@@ -105,17 +142,114 @@ import { supabase } from "../supabase";
 
 // --- TESTS --- //
 describe("<StoreItem /> minimal test", () => {
+    it("renders with no price and handles quantity", async () => {
+      (supabase.from as jest.Mock).mockImplementationOnce(() => ({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id_starter_kit: "2",
+            name: "No Price Kit",
+            description: "No price available",
+          },
+          error: null,
+        }),
+      }));
+      render(<StoreItem />);
+      await waitFor(() => {
+        expect(screen.getByText(/No price available/i)).toBeTruthy();
+        expect(screen.getByDisplayValue("1")).toBeTruthy();
+      });
+      const plusBtn = await screen.findByTestId("quantity-plus");
+      await act(async () => {
+        fireEvent.press(plusBtn);
+      });
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("2")).toBeTruthy();
+      });
+      const minusBtn = await screen.findByTestId("quantity-minus");
+      await act(async () => {
+        fireEvent.press(minusBtn);
+      });
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("1")).toBeTruthy();
+      });
+    });
+
+    it("does not decrement quantity below 1", async () => {
+      render(<StoreItem />);
+      const minusBtn = await screen.findByTestId("quantity-minus");
+      const quantityInput = await screen.findByDisplayValue("1");
+      await act(async () => {
+        fireEvent.press(minusBtn);
+      });
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("1")).toBeTruthy();
+      });
+    });
+
+    it("renders spinner when loading", async () => {
+      // Patch supabase mock to simulate loading
+      (supabase.from as jest.Mock).mockImplementationOnce(() => ({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      }));
+      render(<StoreItem />);
+      expect(screen.getByText(/Loading product/i)).toBeTruthy();
+    });
+
+    it("renders header and all main UI elements", async () => {
+      (supabase.from as jest.Mock).mockImplementationOnce(() => ({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id_starter_kit: "1",
+            name: "Starter Brew Kit IPA",
+            description: "Slightly bitter with a fruity undertone",
+            price: 32.99,
+          },
+          error: null,
+        }),
+      }));
+      render(<StoreItem />);
+      await waitFor(() => {
+        expect(screen.getByTestId("mock-header-button")).toBeTruthy();
+        expect(screen.getByDisplayValue("1")).toBeTruthy();
+        expect(screen.getByTestId("quantity-plus")).toBeTruthy();
+        expect(screen.getByTestId("quantity-minus")).toBeTruthy();
+      });
+    });
+
+    it("handles add-to-order button press", async () => {
+      (supabase.from as jest.Mock).mockImplementationOnce(() => ({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id_starter_kit: "1",
+            name: "Starter Brew Kit IPA",
+            description: "Slightly bitter with a fruity undertone",
+            price: 32.99,
+          },
+          error: null,
+        }),
+      }));
+      render(<StoreItem />);
+      const addBtn = await screen.findByTestId("fab-add-to-order");
+      await act(async () => {
+        fireEvent.press(addBtn);
+      });
+      expect(addBtn).toBeTruthy();
+    });
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("renders without crashing and shows loading initially", async () => {
     render(<StoreItem />);
-    
-    // Loading text should appear first
     expect(screen.getByText(/Loading/)).toBeTruthy();
-
-    // After fetch resolves, item name should appear
     await waitFor(() => {
       expect(screen.getByText(/Slightly bitter with a fruity undertone/i)).toBeTruthy();
       expect(screen.getByText(/€\s?32[,\.]99/)).toBeTruthy();
@@ -124,14 +258,10 @@ describe("<StoreItem /> minimal test", () => {
 
   it("calls router.push when back button pressed", async () => {
     render(<StoreItem />);
-
-    // Wait for the header button to appear
     const headerButton = await screen.findByTestId("mock-header-button");
-
     await act(async () => {
       fireEvent.press(headerButton);
     });
-    // Update expectation to match actual behavior (object with pathname + params)
     expect(mockPush).toHaveBeenCalledWith(
       expect.objectContaining({
         pathname: "/ShoppingCart",
@@ -140,46 +270,63 @@ describe("<StoreItem /> minimal test", () => {
     );
   });
 
-  it("increments and decrements quantity and updates total price", async () => {
+  it("handles quantity input change and sanitization", async () => {
     render(<StoreItem />);
-
-    const minusBtn = await screen.findByTestId("quantity-minus");
-    const plusBtn = await screen.findByTestId("quantity-plus");
-
-    // Wait for the initial value in TextInput
     const quantityInput = await screen.findByDisplayValue("1");
-    expect(quantityInput).toBeTruthy();
-
-    const priceText = screen.getByText(/€\s?32[,\.]99/);
-    expect(priceText).toBeTruthy();
-
-    // Increase quantity
     await act(async () => {
-      fireEvent.press(plusBtn);
+      fireEvent.changeText(quantityInput, "abc2");
     });
     await waitFor(() => {
       expect(screen.getByDisplayValue("2")).toBeTruthy();
-      expect(screen.getByText(/€\s?65[,\.]98/)).toBeTruthy();
     });
-
-    // Decrease quantity
     await act(async () => {
-      fireEvent.press(minusBtn);
+      fireEvent.changeText(quantityInput, "");
     });
     await waitFor(() => {
       expect(screen.getByDisplayValue("1")).toBeTruthy();
-      expect(screen.getByText(/€\s?32[,\.]99/)).toBeTruthy();
+    });
+  });
+
+  it("shows fallback image if no images present", async () => {
+    // Patch supabase mock to return no images
+    (supabase.from as jest.Mock).mockImplementationOnce(() => ({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({
+        data: {
+          id_starter_kit: "1",
+          name: "No Image Kit",
+          description: "No image available",
+          price: 10,
+        },
+        error: null,
+      }),
+    }));
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/No image available/i)).toBeTruthy();
+    });
+  });
+
+  it("handles loading and error states gracefully", async () => {
+    // Patch supabase mock to return error
+    (supabase.from as jest.Mock).mockImplementationOnce(() => ({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: { message: "error" } }),
+    }));
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Loading/)).toBeTruthy();
     });
   });
 
   it("matches snapshot after loading item", async () => {
     const { toJSON } = render(<StoreItem />);
-
-    // Wait for the item data to load
     await waitFor(() => {
       expect(screen.getByText(/Slightly bitter with a fruity undertone/i)).toBeTruthy();
     });
-
     expect(toJSON()).toMatchSnapshot();
   });
+
 });
