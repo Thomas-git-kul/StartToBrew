@@ -12,7 +12,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 // Mock Supabase completely
-jest.mock('../supabase', () => {
+jest.mock('../supabase/index', () => {
   return {
     supabase: {
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }) },
@@ -120,7 +120,7 @@ jest.mock("@/components/themed-text", () => {
 });
 
 // Mock Supabase
-import { supabase } from "../supabase";
+import { supabase } from "../supabase/index";
 (supabase.from as jest.Mock).mockImplementation((table: string) => {
   if (table === "starter_kits") {
     return {
