@@ -633,10 +633,19 @@ export default function Progress() {
     kind: string;
     amount: number | null;
     unit: string | null;
-  }[] =
-    (phase === 1 ? stepData.step1.ingredients : stepData.step2?.ingredients) ??
-    [];
-
+  }[] = (() => {
+    if (!stepData) return [];
+    if (stepData.mode === "two") {
+      // altijd beide stappen combineren
+      return [...(stepData.step1?.ingredients ?? []), ...(stepData.step2?.ingredients ?? [])];
+    } else {
+      // single mode
+      return phase === 1
+        ? stepData.step1.ingredients ?? []
+        : stepData.step2?.ingredients ?? [];
+    }
+  })();
+console.log("ingredients:", ingredients);
   const formatAmount = (amount: number | null, unit: string | null) => {
     if (amount == null) return null;
     const effectiveUnit = unit ?? "g";
@@ -851,10 +860,7 @@ export default function Progress() {
           </Card>
         )}
 
-        {(phase === 1
-          ? stepData.step1.ingredients
-          : stepData.step2?.ingredients
-        )?.length > 0 && (
+        {ingredients.length > 0 && (
           <View className="mb-4">
             <ThemedText type="subTitle">Ingredients:</ThemedText>
             {ingredients.map((ing, idx) => {
