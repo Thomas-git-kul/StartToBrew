@@ -80,9 +80,13 @@ export default function SpecificRecipe() {
       rating: number;
       review_text: string | null;
       created_at?: string | null;
+      account_id?: string;
+      username?: string | null;
+      level?: number;
     }>
   >([]);
   const [reviewCount, setReviewCount] = useState<number>(0);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasUserReviewed, setHasUserReviewed] = useState(false);
   const { favoriteSlugs, toggleFavorite } = useFavorites();
@@ -504,6 +508,54 @@ export default function SpecificRecipe() {
     }
   };
 
+  const handleDeleteReview = async (reviewAccountId: string) => {
+    if (!recipe_slug || !currentUserId || reviewAccountId !== currentUserId) {
+      Alert.alert("Error", "Je kunt alleen je eigen reviews verwijderen.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("recipe_reviews")
+        .delete()
+        .eq("recipe_slug", recipe_slug)
+        .eq("account_id", currentUserId);
+
+      if (error) throw error;
+
+      // Update recipe rating en review count
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", recipe_slug);
+
+      if (reviewsError) throw reviewsError;
+
+      const count = (reviewsData || []).length;
+      const avg = count
+        ? reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) / count
+        : null;
+
+      const updatePayload: any = {};
+      if (avg != null) updatePayload.rating = parseFloat(avg.toFixed(2));
+      updatePayload.review_count = count;
+
+      await supabase
+        .from("recipes")
+        .update(updatePayload)
+        .eq("recipe_slug", recipe_slug);
+
+      // Refresh data
+      await fetchRecipeBundle(recipe_slug);
+      await fetchReviews(recipe_slug);
+      setHasUserReviewed(false);
+
+      Alert.alert("Success", "Review verwijderd.");
+    } catch (e: any) {
+      Alert.alert("Error", e.message ?? "Kon review niet verwijderen.");
+    }
+  };
+
   const fetchReviews = async (slug: string) => {
     try {
       const { data, error } = await supabase
@@ -522,21 +574,25 @@ export default function SpecificRecipe() {
           try {
             const { data: profileData } = await supabase
               .from("profiles")
-              .select("username")
+              .select("username, level")
               .eq("id", r.account_id)
               .maybeSingle();
             return {
               rating: r.rating,
               review_text: r.review_text,
               created_at: r.created_at,
+              account_id: r.account_id,
               username: profileData?.username ?? null,
+              level: profileData?.level ?? null,
             };
           } catch {
             return {
               rating: r.rating,
               review_text: r.review_text,
               created_at: r.created_at,
+              account_id: r.account_id,
               username: null,
+              level: null,
             };
           }
         })
@@ -550,6 +606,17 @@ export default function SpecificRecipe() {
   };
 
   useEffect(() => {
+    const getCurrentUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUserId(user?.id ?? null);
+      } catch {
+        setCurrentUserId(null);
+      }
+    };
+
+    getCurrentUser();
+
     if (!recipe_slug) return;
     fetchRecipeBundle(recipe_slug);
     checkUserReviewed(recipe_slug);
@@ -798,7 +865,11 @@ export default function SpecificRecipe() {
             ) : (
               displayedReviews.map((r, idx) => (
                 <View key={idx}>
-                  <ReviewCard review={r as any} />
+                  <ReviewCard 
+                    review={r as any} 
+                    currentUserId={currentUserId ?? undefined}
+                    onDelete={r.account_id ? () => handleDeleteReview(r.account_id!) : undefined}
+                  />
                 </View>
               ))
             )}
