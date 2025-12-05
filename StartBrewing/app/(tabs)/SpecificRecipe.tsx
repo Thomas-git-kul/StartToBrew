@@ -886,7 +886,11 @@ export default function SpecificRecipe() {
                 placeholder="Custom volume in L"
                 keyboardType="numeric"
                 value={customBatchSize}
-                onChangeText={setCustomBatchSize}
+                onChangeText={(text) => {
+                  // Filter: alleen cijfers en decimaalteken (punt of komma)
+                  const filtered = text.replace(/[^0-9.,]/g, '');
+                  setCustomBatchSize(filtered);
+                }}
               />
             </View>
           )}
