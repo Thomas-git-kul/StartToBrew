@@ -839,93 +839,93 @@ export default function Recipes() {
           </ThemedText>
         </View>
       ) : (
-        <FlatList
-          showsVerticalScrollIndicator={false}
-          contentContainerClassName="mx-3"
-          data={otherRecipes}
-          keyExtractor={(item) => item.recipe_slug}
-          renderItem={({ item }) => (
-            <BeerCard
-              {...item}
-              isFavorite={favoriteSlugs.includes(item.recipe_slug)}
-              onToggleFavorite={() => toggleFavorite(item.recipe_slug)}
-              onPress={() =>
-                router.push({
-                  pathname: "/SpecificRecipe",
-                  params: {
-                    recipe_slug: item.recipe_slug,
-                    isFavorite: favoriteSlugs.includes(item.recipe_slug)
-                      ? "true"
-                      : "false"
-                  },
-                })
+        <View className="flex-1">
+          <View className="mx-3">
+            <Searchbar
+              placeholder="Search"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              inputStyle={{
+                color: BASE_COLORS.STONE700,
+                fontFamily: FontFamilies.BODY,
+              }}
+              icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+              clearIcon={
+                searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined
               }
+              onClearIconPress={() => setSearchQuery("")}
+              style={{
+                backgroundColor: BASE_COLORS.WHITE,
+                borderColor: BASE_COLORS.STONE300,
+                borderWidth: 1,
+                marginBottom: 15,
+              }}
             />
-          )}
-          ListHeaderComponent={() => (
-            <View>
-              <Searchbar
-                placeholder="Search"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                inputStyle={{
-                  color: BASE_COLORS.STONE700,
-                  fontFamily: FontFamilies.BODY,
-                }}
-                icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
-                clearIcon={
-                  searchQuery ? () => <X size={18} color={BASE_COLORS.STONE500} /> : undefined
+          </View>
+          <FlatList
+            showsVerticalScrollIndicator={false}
+            contentContainerClassName="mx-3"
+            data={otherRecipes}
+            keyExtractor={(item) => item.recipe_slug}
+            renderItem={({ item }) => (
+              <BeerCard
+                {...item}
+                isFavorite={favoriteSlugs.includes(item.recipe_slug)}
+                onToggleFavorite={() => toggleFavorite(item.recipe_slug)}
+                onPress={() =>
+                  router.push({
+                    pathname: "/SpecificRecipe",
+                    params: {
+                      recipe_slug: item.recipe_slug,
+                      isFavorite: favoriteSlugs.includes(item.recipe_slug)
+                        ? "true"
+                        : "false"
+                    },
+                  })
                 }
-                onClearIconPress={() => setSearchQuery("")}
-                style={{
-                  backgroundColor: BASE_COLORS.WHITE,
-                  borderColor: BASE_COLORS.STONE300,
-                  borderWidth: 1,
-                  marginBottom: 15,
-                }}
               />
-              {renderListHeader()}
-            </View>
-          )}
-          ListEmptyComponent={
-            <View className="items-center mt-6 px-6">
-              <ThemedText type="defaultText" className="text-center mb-2">
-                No recipes match this filter.
-              </ThemedText>
-              <Button
-                mode="contained"
-                onPress={() => {
-                  // Clear all filters
-                  setSelectedStyles([]);
-                  setAbvMin("");
-                  setAbvMax("");
-                  setIbuMin("");
-                  setIbuMax("");
-                  setSrmMin("");
-                  setSrmMax("");
-                  setRatingMin("");
-                  setRatingMax("");
-                  setSelectedDifficulties([]);
-                  setSelectedHazeLevels([]);
-                  setShowOnlyFavorites(false);
-                  setSearchQuery("");
-                }}
-                labelStyle={{
-                  fontSize: Math.min(14 * scale, 24),
-                  color: BASE_COLORS.WHITE,
-                  fontFamily: FontFamilies.BODY,
-                }}
-                style={{
-                  borderRadius: 20,
-                  backgroundColor: BASE_COLORS.TEXT_DARK,
-                }}
-              >
-                Clear Filters
-              </Button>
-            </View>
-          }
-          contentContainerStyle={{ paddingBottom: 20 }}
-        />
+            )}
+            ListHeaderComponent={renderListHeader}
+            ListEmptyComponent={
+              <View className="items-center mt-6 px-6">
+                <ThemedText type="defaultText" className="text-center mb-2">
+                  No recipes match this filter.
+                </ThemedText>
+                <Button
+                  mode="contained"
+                  onPress={() => {
+                    // Clear all filters
+                    setSelectedStyles([]);
+                    setAbvMin("");
+                    setAbvMax("");
+                    setIbuMin("");
+                    setIbuMax("");
+                    setSrmMin("");
+                    setSrmMax("");
+                    setRatingMin("");
+                    setRatingMax("");
+                    setSelectedDifficulties([]);
+                    setSelectedHazeLevels([]);
+                    setShowOnlyFavorites(false);
+                    setSearchQuery("");
+                  }}
+                  labelStyle={{
+                    fontSize: Math.min(14 * scale, 24),
+                    color: BASE_COLORS.WHITE,
+                    fontFamily: FontFamilies.BODY,
+                  }}
+                  style={{
+                    borderRadius: 20,
+                    backgroundColor: BASE_COLORS.TEXT_DARK,
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </View>
+            }
+            contentContainerStyle={{ paddingBottom: 20 }}
+          />
+        </View>
       )}
     </SafeAreaView>
   );

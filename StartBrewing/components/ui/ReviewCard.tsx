@@ -1,7 +1,7 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Card } from "react-native-paper";
-import { Star } from "lucide-react-native";
+import { Star, Trash2 } from "lucide-react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { ThemedText } from "../themed-text";
@@ -11,15 +11,20 @@ type Review = {
   review_text: string | null;
   created_at?: string | null;
   username?: string | null;
+  account_id?: string;
+  level?: number;
 };
 
 interface ReviewCardProps {
   review: Review;
+  currentUserId?: string;
+  onDelete?: () => void;
 }
 
-const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
+const ReviewCard: React.FC<ReviewCardProps> = ({ review, currentUserId, onDelete }) => {
   const d = review.created_at ? new Date(review.created_at) : null;
   const dateStr = d ? d.toLocaleDateString() : null;
+  const isOwnReview = currentUserId && review.account_id === currentUserId;
 
   const formatRating = (r: number) => {
     if (r == null || Number.isNaN(r)) return "";
@@ -39,7 +44,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
         }}
       >
         <View className="flex-row items-center justify-between mb-2">
-          <View className="flex-row items-center">
+          <View className="flex-row items-center flex-1">
             <Star
               size={16}
               color={BASE_COLORS.ACCENT_LIGHT}
@@ -61,15 +66,33 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
                 marginLeft: 8,
               }}>{`@${review.username}`}</Text>
             )}
+            {review.level != null && (
+              <Text style={{
+                fontFamily: FontFamilies.BODY_LIGHT,
+                color: BASE_COLORS.ACCENT_LIGHT,
+                fontSize: 12,
+                marginLeft: 8,
+              }}>{`Lvl ${review.level}`}</Text>
+            )}
           </View>
-          {dateStr && (
-            <Text style={{
-              fontFamily: FontFamilies.BODY_LIGHT,
-              color: BASE_COLORS.STONE500,
-              fontSize: 12,
-              marginLeft: 8,
-            }}>{dateStr}</Text>
-          )}
+          <View className="flex-row items-center">
+            {dateStr && (
+              <Text style={{
+                fontFamily: FontFamilies.BODY_LIGHT,
+                color: BASE_COLORS.STONE500,
+                fontSize: 12,
+                marginRight: 8,
+              }}>{dateStr}</Text>
+            )}
+            {isOwnReview && onDelete && (
+              <TouchableOpacity onPress={onDelete}>
+                <Trash2
+                  size={16}
+                  color={BASE_COLORS.STONE500}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {review.review_text ? (
