@@ -3,11 +3,13 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics, isSupported, logEvent, Analytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCmXZuQ6kcicrEnWGEWwu-HZXmdJRrsJjM",
+  authDomain: "starttobrew-e80e7.firebaseapp.com",
+  projectId: "starttobrew-e80e7",
+  storageBucket: "starttobrew-e80e7.firebasestorage.app",
+  messagingSenderId: "53479134584",
+  appId: "1:53479134584:web:46531676e29bcc79d9248d",
+  measurementId: "G-MV1WL2H58C"
 };
  
 // Initialize Firebase

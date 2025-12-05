@@ -1,3 +1,5 @@
+import React from "react";
+import { View, Text, TouchableOpacity } from "react-native";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import { NavigationContainer } from "@react-navigation/native";
 
@@ -6,18 +8,16 @@ jest.mock("@react-native-async-storage/async-storage", () =>
 );
 
 jest.mock("@/hooks/use-fonts", () => ({
-  useFonts: () => {},
+  // laat het component gewoon renderen in tests
+  useFonts: () => true,
 }));
 
-// Mock useFocusEffect so it doesn't repeatedly trigger fetches during tests.
-// Do not invoke the callback in tests; fetchProfile is run via the mount effect.
-jest.mock('@react-navigation/native', () => {
-  const actualNav = jest.requireActual('@react-navigation/native');
+// useFocusEffect no-op zodat er geen extra fetches gebeuren
+jest.mock("@react-navigation/native", () => {
+  const actualNav = jest.requireActual("@react-navigation/native");
   return {
     ...actualNav,
-    useFocusEffect: (_cb: any) => {
-      // no-op in tests to avoid focus-driven re-fetch loops
-    },
+    useFocusEffect: (_cb: any) => {},
   };
 });
 
@@ -31,6 +31,10 @@ jest.mock("@/constants/Colors", () => ({
     LIGHT_BG: "#fafafa",
     TEXT_DARK: "#000",
     ACCENT_PRIMARY: "#f00",
+    STONE200: "#eee",
+    STONE300: "#ddd",
+    STONE500: "#999",
+    STONE900: "#111",
   },
 }));
 
@@ -65,32 +69,48 @@ jest.mock("@/components/header", () => {
   );
 });
 
-// expo-image vervangen door simpele placeholder
+// expo-image -> simpele placeholder
 jest.mock("expo-image", () => {
   const { Text } = require("react-native");
   return { Image: () => <Text>image-placeholder</Text> };
 });
 
-// mock react-native-paper to avoid needing Provider in tests
+// react-native-paper licht mocken
 jest.mock("react-native-paper", () => {
   const React = require("react");
   const { View, Text, TouchableOpacity } = require("react-native");
 
   const Avatar = {
-    Image: (props: any) => React.createElement(View, props, React.createElement(Text, null, "avatar-image")),
-    Text: (props: any) => React.createElement(View, props, React.createElement(Text, null, props.label ?? "avatar-text")),
+    Image: (props: any) =>
+      React.createElement(
+        View,
+        props,
+        React.createElement(Text, null, "avatar-image")
+      ),
+    Text: (props: any) =>
+      React.createElement(
+        View,
+        props,
+        React.createElement(Text, null, props.label ?? "avatar-text")
+      ),
   };
 
-  const Dialog = (props: any) => React.createElement(View, props, props.children);
-  Dialog.Title = (props: any) => React.createElement(Text, props, props.children);
-  Dialog.Content = (props: any) => React.createElement(View, props, props.children);
-  Dialog.Actions = (props: any) => React.createElement(View, props, props.children);
+  const Dialog = (props: any) =>
+    React.createElement(View, props, props.children);
+  Dialog.Title = (props: any) =>
+    React.createElement(Text, props, props.children);
+  Dialog.Content = (props: any) =>
+    React.createElement(View, props, props.children);
+  Dialog.Actions = (props: any) =>
+    React.createElement(View, props, props.children);
 
   return {
     Portal: ({ children }: any) => <>{children}</>,
-    Modal: ({ visible, children }: any) => (visible ? <View>{children}</View> : null),
+    Modal: ({ visible, children }: any) =>
+      visible ? <View>{children}</View> : null,
     ActivityIndicator: () => <View />,
-    Card: ({ children, ...rest }: any) => React.createElement(View, rest, children),
+    Card: ({ children, ...rest }: any) =>
+      React.createElement(View, rest, children),
     Dialog,
     Button: ({ onPress, children }: any) => (
       <TouchableOpacity onPress={onPress}>
@@ -124,7 +144,7 @@ jest.mock("@/supabase", () => {
     error: null,
   });
 
-  // ACCOUNT BADGES
+  // ACCOUNT BADGES (koppelt user aan 1 earned badge)
   const accountBadgesSelect = {
     select: jest.fn().mockReturnValue({
       eq: jest.fn().mockReturnValue({
@@ -136,22 +156,20 @@ jest.mock("@/supabase", () => {
     }),
   };
 
-  // BADGE DEFINITIONS
+  // BADGE DEFINITIES – let op: .select() wordt direct awaited, geen .in()
   const badgesSelect = {
-    select: jest.fn().mockReturnValue({
-      in: jest.fn().mockResolvedValue({
-        data: [
-          {
-            id_badge: 1,
-            code: "FIRST_BREW",
-            name: "First Brew",
-            description: "Your first brew",
-            icon_url: null,
-            category: "progression",
-          },
-        ],
-        error: null,
-      }),
+    select: jest.fn().mockResolvedValue({
+      data: [
+        {
+          id_badge: 1,
+          code: "FIRST_BREW",
+          name: "First Brew",
+          description: "Your first brew",
+          icon_url: null,
+          category: "progression",
+        },
+      ],
+      error: null,
     }),
   };
 
@@ -226,7 +244,7 @@ jest.mock("@/supabase", () => {
       storage: {
         from: jest.fn(() => ({
           getPublicUrl: jest.fn().mockReturnValue({
-            data: { publicUrl: "https://example.com/avatar.png" },
+            data: { publicUrl: "https://example.com/public.png" },
           }),
         })),
       },
@@ -244,11 +262,10 @@ const renderWithNavigation = (ui: React.ReactElement) => {
 
 describe("<Account />", () => {
   beforeEach(() => {
-    // clear mocks between tests
     jest.clearAllMocks();
   });
 
-  test("renders profile data + badges section + completed brews", async () => {
+  test("rendered profiel, badges sectie en completed brews", async () => {
     const { getByText } = renderWithNavigation(<Account />);
 
     // profiel
@@ -257,10 +274,10 @@ describe("<Account />", () => {
       expect(getByText("testuser")).toBeTruthy();
     });
 
-    // badges sectie
+    // statistiek Badges + badges sectie
     await waitFor(() => {
-      expect(getByText("Badges")).toBeTruthy();
-      expect(getByText("Earned badges")).toBeTruthy();
+      expect(getByText("Badges")).toBeTruthy(); // StatisticsCard
+      expect(getByText("Earned badges")).toBeTruthy(); // sectietitel
     });
 
     // completed brews (op basis van RPC-mock)
@@ -270,9 +287,10 @@ describe("<Account />", () => {
     });
   });
 
-  test("navigates to account edit", async () => {
+  test("navigates to account edit via header", async () => {
     const { getByText } = renderWithNavigation(<Account />);
 
+    // wacht tot header er is
     await waitFor(() => getByText("Settings"));
 
     fireEvent.press(getByText("Settings"));
@@ -280,4 +298,3 @@ describe("<Account />", () => {
     expect(mockPush).toHaveBeenCalledWith("/AccountEdit");
   });
 });
-

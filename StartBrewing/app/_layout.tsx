@@ -16,8 +16,6 @@ import { FavoritesProvider } from "@/context/FavoritesContext";
 import { ClickCounterProvider } from "@/context/ClickCounterContext";
 import { AppRefreshProvider } from "@/context/AppRefreshContext";
 
-// Diagnostics
-import envDiagnostics from "@/utils/envDiagnostics";
 
 // React Native Paper (MD3)
 import {
@@ -58,10 +56,6 @@ function RootInner() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: "modal", title: "Modal" }}
-        />
       </Stack>
 
       {levelUp && (
@@ -80,14 +74,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? CombinedDarkTheme : CombinedLightTheme;
 
-  useEffect(() => {
-    try {
-      // eslint-disable-next-line no-console
-      console.log('Env diagnostics (runtime):', envDiagnostics);
-    } catch (e) {
-      // ignore
-    }
-  }, []);
+  
 
   return (
     <SafeAreaProvider>
