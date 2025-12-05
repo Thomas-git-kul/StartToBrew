@@ -256,6 +256,32 @@ export default function StorePage() {
         </ScrollView>
       </View>
 
+      {/* Search Bar */}
+      <View className="mx-3">
+        <Searchbar
+          placeholder="Search"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          inputStyle={{
+            color: BASE_COLORS.STONE700,
+            fontFamily: FontFamilies.BODY,
+          }}
+          icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
+          clearIcon={
+            searchQuery
+              ? () => <X size={18} color={BASE_COLORS.STONE500} />
+              : undefined
+          }
+          onClearIconPress={() => setSearchQuery("")}
+          style={{
+            backgroundColor: BASE_COLORS.WHITE,
+            borderColor: BASE_COLORS.STONE300,
+            borderWidth: 1,
+            marginBottom: 16,
+          }}
+        />
+      </View>
+
       {/* Items List */}
       <FlatList
         data={items.filter(filterMatches)}
@@ -267,30 +293,6 @@ export default function StorePage() {
         }}
         contentContainerClassName="mx-3"
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <Searchbar
-            placeholder="Search"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            inputStyle={{
-              color: BASE_COLORS.STONE700,
-              fontFamily: FontFamilies.BODY,
-            }}
-            icon={() => <Search size={20} color={BASE_COLORS.STONE300} />}
-            clearIcon={
-              searchQuery
-                ? () => <X size={18} color={BASE_COLORS.STONE500} />
-                : undefined
-            }
-            onClearIconPress={() => setSearchQuery("")}
-            style={{
-              backgroundColor: BASE_COLORS.WHITE,
-              borderColor: BASE_COLORS.STONE300,
-              borderWidth: 1,
-              marginBottom: 16,
-            }}
-          />
-        }
         renderItem={({ item }) => (
           <View style={{ width: "48%" }}>
             <StoreCard
