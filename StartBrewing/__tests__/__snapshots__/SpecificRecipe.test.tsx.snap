@@ -165,7 +165,6 @@ exports[`<SpecificRecipe /> snapshot 1`] = `
         className="mt-2 mb-4"
       >
         <Text
-          className=""
           type="defaultText"
         >
           Ingredients:

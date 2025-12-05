@@ -265,9 +265,8 @@ exports[`<Progress /> snapshot 1`] = `
             Malt
              (
             Hop
-            ): 
-            100
-             g
+            )
+            : 100 g
           </Text>
         </View>
       </View>
