@@ -146,20 +146,7 @@ export default function Auth() {
           >Log In</Button>
         </View>
 
-        <View className="mt-4">
-          <Button
-            mode="outlined"
-            onPress={() => router.push("/test")}
-            labelStyle={{
-              fontSize: Math.min(16 * scale, 24),
-              fontFamily: FontFamilies.BODY,
-              color: BASE_COLORS.TEXT_DARK,
-            }}
-            style={{
-              borderColor: BASE_COLORS.TEXT_DARK,
-            }}
-          >Test</Button>
-        </View>
+        
       </View>
     </SafeAreaView>
   );
