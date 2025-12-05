@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { View, Dimensions, Text, Alert, ScrollView } from "react-native";
-import { ActivityIndicator, Avatar, Button, Modal, Portal } from "react-native-paper";
+import {
+  ActivityIndicator,
+  Avatar,
+  Button,
+  Modal,
+  Portal,
+} from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -12,14 +18,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import Header from "@/components/header";
 import { getBeerImageSource } from "@/hooks/beer-image";
 import { useFonts } from "@/hooks/use-fonts";
-import StatisticsCard from "@/components/ui/StatisticsCard"
+import StatisticsCard from "@/components/ui/StatisticsCard";
 import Badge from "@/components/ui/Badge";
-import CompletedCard from '@/components/ui/CompletedCard';
+import CompletedCard from "@/components/ui/CompletedCard";
 import Dialog from "@/components/dialog";
 import Spinner from "@/components/spinner";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BASE_SCREEN_WIDTH = 375; 
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const BASE_SCREEN_WIDTH = 375;
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 type Profile = {
@@ -70,7 +76,8 @@ export default function Account() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isDialogVisible, setDialogVisible] = useState(false);
 
-  const [badges, setBadges] = useState<BadgeWithEarned[]>([]);
+  const [badges, setBadges] = useState<BadgeWithEarned[]>([]); // earned badges
+  const [allBadges, setAllBadges] = useState<BadgeWithEarned[]>([]); // alle mogelijke badges
   const [badgesLoading, setBadgesLoading] = useState(false);
   const [showAllBadges, setShowAllBadges] = useState(false);
 
@@ -80,7 +87,7 @@ export default function Account() {
   const [brewsLoading, setBrewsLoading] = useState(false);
   const [showAllBrews, setShowAllBrews] = useState(false);
 
-  // voor badge-modal
+  // badge-modal
   const [selectedBadge, setSelectedBadge] = useState<BadgeWithEarned | null>(
     null
   );
@@ -91,7 +98,6 @@ export default function Account() {
     const parts = src.trim().split(/\s+/).slice(0, 2);
     return parts.map((p) => p[0]?.toUpperCase() ?? "").join("");
   }, [fullName, username]);
-
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -150,6 +156,7 @@ export default function Account() {
   const fetchBadges = useCallback(async (accountId: string) => {
     setBadgesLoading(true);
 
+    // 1) welke badges zijn earned voor deze user?
     const { data: accountBadges, error: abErr } = await supabase
       .from("account_badges")
       .select("badge_id, earned_at")
@@ -157,44 +164,34 @@ export default function Account() {
       .order("earned_at", { ascending: false });
 
     if (abErr) {
-      setBadgesLoading(false);
       console.error("Error fetching account_badges", abErr);
-      return;
-    }
-
-    if (!accountBadges || accountBadges.length === 0) {
       setBadges([]);
-      setBadgesLoading(false);
-      return;
-    }
-
-    const badgeIds = accountBadges.map(
-      (row: { badge_id: any }) => row.badge_id
-    );
-
-    const { data: badgesData, error: bErr } = await supabase
-      .from("badges")
-      .select("id_badge, code, name, description, icon_url, category")
-      .in("id_badge", badgeIds);
-
-    if (bErr) {
-      setBadgesLoading(false);
-      console.error("Error fetching badges", bErr);
-      return;
-    }
-
-    if (!badgesData) {
-      setBadges([]);
+      setAllBadges([]);
       setBadgesLoading(false);
       return;
     }
 
     const earnedById = new Map<number, string>();
-    for (const row of accountBadges) {
-      earnedById.set(row.badge_id, row.earned_at);
+    (accountBadges || []).forEach(
+      (row: { badge_id: number; earned_at: string }) => {
+        earnedById.set(row.badge_id, row.earned_at);
+      }
+    );
+
+    // 2) alle badges ophalen
+    const { data: badgesData, error: bErr } = await supabase
+      .from("badges")
+      .select("id_badge, code, name, description, icon_url, category");
+
+    if (bErr || !badgesData) {
+      console.error("Error fetching badges", bErr);
+      setBadges([]);
+      setAllBadges([]);
+      setBadgesLoading(false);
+      return;
     }
 
-    const merged: BadgeWithEarned[] = badgesData.map((b: any) => {
+    const mergedAll: BadgeWithEarned[] = badgesData.map((b: any) => {
       let resolvedIconUrl: string | null = null;
 
       if (b.icon_url && typeof b.icon_url === "string") {
@@ -225,12 +222,17 @@ export default function Account() {
       };
     });
 
-    merged.sort((a, b) => {
-      if (!a.earned_at || !b.earned_at) return 0;
-      return new Date(b.earned_at).getTime() - new Date(a.earned_at).getTime();
-    });
+    const earnedBadges = mergedAll
+      .filter((b) => !!b.earned_at)
+      .sort((a, b) => {
+        if (!a.earned_at || !b.earned_at) return 0;
+        return (
+          new Date(b.earned_at).getTime() - new Date(b.earned_at).getTime()
+        );
+      });
 
-    setBadges(merged);
+    setBadges(earnedBadges);
+    setAllBadges(mergedAll);
     setBadgesLoading(false);
   }, []);
 
@@ -342,11 +344,7 @@ export default function Account() {
     }, [router]);
 
     if (loading) {
-      return (
-        <Spinner
-          title="Loading account information..."
-        />
-      );
+      return <Spinner title="Loading account information..." />;
     }
 
     const badgeCount = badges.length;
@@ -356,6 +354,13 @@ export default function Account() {
       setBadgeModalVisible(false);
       setSelectedBadge(null);
     };
+
+    const lockedBadges = allBadges.filter((b) => !b.earned_at);
+    const hasMoreBadges = allBadges.length > badges.length;
+
+    const badgesToDisplay = showAllBadges
+      ? [...badges, ...lockedBadges]
+      : badges.slice(0, 3);
 
     return (
       <SafeAreaView
@@ -377,40 +382,17 @@ export default function Account() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-            {/*
-            <View className="flex-row items-center justify-between">
-              <Button
-                mode="text"
-                onPress={onSignOut}
-                labelStyle={{
-                  fontSize: Math.min(16 * scale, 24),
-                  fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-              >Log Out</Button>
-              <Button
-                mode="text"
-                onPress={onEditProfile}
-                labelStyle={{
-                  fontSize: Math.min(16 * scale, 24),
-                  fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-              >Edit profile</Button>
-            </View>
-            */}
-
           <View className="flex-row items-start justify-between mt-2">
             <View>
               {avatarUrl ? (
                 <Avatar.Image
                   source={{ uri: avatarUrl || "" }}
                   size={Math.min(90 * scale, 300)}
-                  style={{ 
-                    backgroundColor: BASE_COLORS.LIGHT_BG, 
+                  style={{
+                    backgroundColor: BASE_COLORS.LIGHT_BG,
                     overflow: "hidden",
                     borderWidth: 1,
-                    borderColor: BASE_COLORS.STONE300 
+                    borderColor: BASE_COLORS.STONE300,
                   }}
                   onError={() => setAvatarUrl(null)}
                 />
@@ -421,9 +403,9 @@ export default function Account() {
                   color={BASE_COLORS.TEXT_DARK}
                   style={{ backgroundColor: BASE_COLORS.STONE200 }}
                   labelStyle={{
-                    padding: 4, 
-                    fontFamily: FontFamilies.BODY, 
-                    fontSize: Math.min(30 * scale, 40) 
+                    padding: 4,
+                    fontFamily: FontFamilies.BODY,
+                    fontSize: Math.min(30 * scale, 40),
                   }}
                 />
               )}
@@ -434,116 +416,35 @@ export default function Account() {
                   color: BASE_COLORS.STONE900,
                   marginBottom: 4,
                 }}
-              >{fullName || "Name not set"}</Text>
+              >
+                {fullName || "Name not set"}
+              </Text>
             </View>
-            
+
             <View>
-              {/*
-              <Text
+              <View
+                className="grid grid-cols-3 gap-2"
                 style={{
-                  fontSize: Math.min(18 * scale, 24),
-                  fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.STONE700,
-                  marginBottom: -6,
-                }}
-              >{fullName || "Name not set"}</Text>
-              */}
-              {/*
-              {!!username && (
-                <Text
-                  style={{
-                    fontSize: Math.min(16 * scale, 20),
-                    fontFamily: FontFamilies.BODY_THIN,
-                    color: BASE_COLORS.STONE700,
-                  }}
-                >@{username}</Text>
-              )}
-              */}
-              <View className="grid grid-cols-3 gap-2"
-                style={{
-                  marginBottom: 24
+                  marginBottom: 24,
                 }}
               >
-                <StatisticsCard
-                  title="Badges"
-                  value={badgeCount}
-                />
-                <StatisticsCard
-                  title="Brews"
-                  value={completedBrewsCount}
-                />
-                <StatisticsCard
-                  title="Level"
-                  value={level || 0}
-                />
+                <StatisticsCard title="Badges" value={badgeCount} />
+                <StatisticsCard title="Brews" value={completedBrewsCount} />
+                <StatisticsCard title="Level" value={level || 0} />
               </View>
             </View>
           </View>
           {!!bio && (
-            <ThemedText type="defaultText" style={{color: BASE_COLORS.STONE500}} className="mb-6">{bio}</ThemedText>
+            <ThemedText
+              type="defaultText"
+              style={{ color: BASE_COLORS.STONE500 }}
+              className="mb-6"
+            >
+              {bio}
+            </ThemedText>
           )}
 
-          {/* Statistieken 
-          <View className="grid grid-cols-3 gap-2"
-            style={{
-              marginBottom: 24
-            }}
-          >
-            <StatisticsCard
-              title="Badges"
-              value={badgeCount}
-            />
-            <StatisticsCard
-              title="Brews"
-              value={completedBrewsCount}
-            />
-            <StatisticsCard
-              title="Level"
-              value={level || 0}
-            />
-          </View>
-          */}
-
-          {/* Badges-overzicht (enkel foto) */}
-          <View className="flex-row justify-between">
-            <ThemedText type="title">Earned badges</ThemedText>
-            {badges.length > 3 && (
-              <Button
-                mode="text"
-                onPress={() => setShowAllBadges((s) => !s)}
-                labelStyle={{
-                  fontSize: Math.min(14 * scale, 18),
-                  fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-              >{showAllBadges ? "See less" : "See more"}</Button>
-            )}
-          </View>
-          {badgesLoading ? (
-            <Spinner 
-              title="Loading badges..."
-              size="small"
-            />
-          ) : badges.length === 0 ? (
-            <ThemedText type="defaultText" className="mb-8">Brew beers to earn badges.</ThemedText>
-          ) : (
-            <View className="grid grid-cols-3 gap-2 mb-8">
-              {(showAllBadges ? badges : badges.slice(0, 3)).map((badge) => (
-                <View key={badge.id_badge} style={{ alignItems: "center" }}>
-                  <Badge
-                    id_badge={badge.id_badge}
-                    icon_url={badge.icon_url}
-                    onPress={() => {
-                      setSelectedBadge(badge);
-                      setBadgeModalVisible(true);
-                    }}
-                  />
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Completed brews */}
+          {/* Completed brews eerst */}
           <View className="flex-row justify-between">
             <ThemedText type="title">Completed</ThemedText>
             {completedBrewsCount > 3 && (
@@ -555,30 +456,41 @@ export default function Account() {
                   fontFamily: FontFamilies.BODY,
                   color: BASE_COLORS.TEXT_DARK,
                 }}
-              >{showAllBrews ? "See less" : "See more"}</Button>
+              >
+                {showAllBrews ? "See less" : "See more"}
+              </Button>
             )}
           </View>
           <View>
             {brewsLoading ? (
-              <Spinner 
-                title="Loading brews..."
-                size="small"
-              />
+              <Spinner title="Loading brews..." size="small" />
             ) : completedBrewsCount === 0 ? (
-              <ThemedText type="defaultText">You have not completed any brews yet.</ThemedText>
+              <ThemedText type="defaultText">
+                You have not completed any brews yet.
+              </ThemedText>
             ) : (
               <View className="grid grid-cols-3 gap-2 mb-8">
-                {(showAllBrews ? completedBrews : completedBrews.slice(0, 3)).map((brew) => (
+                {(showAllBrews
+                  ? completedBrews
+                  : completedBrews.slice(0, 3)
+                ).map((brew) => (
                   <CompletedCard
                     key={brew.id_brew}
                     title={brew.name.trim()}
-                    date={brew.start_date ? new Date(brew.start_date).toLocaleDateString() : undefined}
+                    date={
+                      brew.start_date
+                        ? new Date(brew.start_date).toLocaleDateString()
+                        : undefined
+                    }
                     image={brew.image}
                     onPress={() => {
                       if (brew.recipe_slug) {
                         router.push({
                           pathname: "/SpecificRecipe",
-                          params: { recipe_slug: brew.recipe_slug, from: "account" },
+                          params: {
+                            recipe_slug: brew.recipe_slug,
+                            from: "account",
+                          },
                         });
                       }
                     }}
@@ -587,9 +499,58 @@ export default function Account() {
               </View>
             )}
           </View>
+
+          {/* Badges onder completed */}
+          <View className="flex-row justify-between">
+            <ThemedText type="title">Earned badges</ThemedText>
+            {hasMoreBadges && (
+              <Button
+                mode="text"
+                onPress={() => setShowAllBadges((s) => !s)}
+                labelStyle={{
+                  fontSize: Math.min(14 * scale, 18),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >
+                {showAllBadges ? "See less" : "See more"}
+              </Button>
+            )}
+          </View>
+          {badgesLoading ? (
+            <Spinner title="Loading badges..." size="small" />
+          ) : badgesToDisplay.length === 0 ? (
+            <ThemedText type="defaultText" className="mb-8">
+              Brew beers to earn badges.
+            </ThemedText>
+          ) : (
+            <View className="grid grid-cols-3 gap-2 mb-8">
+              {badgesToDisplay.map((badge) => {
+                const isEarned = !!badge.earned_at;
+                return (
+                  <View
+                    key={badge.id_badge}
+                    style={{
+                      alignItems: "center",
+                      opacity: isEarned ? 1 : 0.35, // greyed out voor locked badges
+                    }}
+                  >
+                    <Badge
+                      id_badge={badge.id_badge}
+                      icon_url={badge.icon_url}
+                      onPress={() => {
+                        setSelectedBadge(badge);
+                        setBadgeModalVisible(true);
+                      }}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </ScrollView>
 
-        {/* Badge detail modal (react-native-paper) */}
+        {/* Badge detail modal */}
         <Portal>
           <Modal
             visible={badgeModalVisible && !!selectedBadge}
@@ -610,14 +571,19 @@ export default function Account() {
                   width: 180,
                   height: 180,
                   alignSelf: "center",
+                  opacity: selectedBadge?.earned_at ? 1 : 0.35, // ook in modal gedesatureerd
                 }}
               />
             )}
             {!!selectedBadge?.earned_at && (
-              <ThemedText type="subTitle">{new Date(selectedBadge.earned_at).toLocaleDateString()}</ThemedText>
+              <ThemedText type="subTitle">
+                {new Date(selectedBadge.earned_at).toLocaleDateString()}
+              </ThemedText>
             )}
             {!!selectedBadge?.description && (
-              <ThemedText type="defaultText" className="mb-8">{selectedBadge.description}</ThemedText>
+              <ThemedText type="defaultText" className="mb-8">
+                {selectedBadge.description}
+              </ThemedText>
             )}
             <View className="flex-row justify-center">
               <Button
@@ -632,7 +598,9 @@ export default function Account() {
                   borderRadius: 30,
                   backgroundColor: BASE_COLORS.TEXT_DARK,
                 }}
-              >Close</Button>
+              >
+                Close
+              </Button>
             </View>
           </Modal>
         </Portal>
@@ -650,8 +618,7 @@ export default function Account() {
       </SafeAreaView>
     );
   };
-  // If fonts are still loading, don't render the component yet.
-  // Tests should mock `useFonts` to return `true` so this short-circuits there.
+
   if (fontsLoaded === false) {
     return null;
   }
