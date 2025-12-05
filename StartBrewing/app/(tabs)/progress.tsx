@@ -8,6 +8,9 @@ import {
   Thermometer,
   Play,
   Lightbulb,
+  ChevronRight,
+  CheckCheck,
+  CheckCheckIcon,
 } from "lucide-react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Header from "@/components/header";
@@ -474,7 +477,7 @@ export default function Progress() {
   const hasTimer = durationSec > 0;
   const hasTemp = stepData?.temp != null;
 
-  const goToNextStep = useCallback(async () => {
+  const goToNextStepComplete = useCallback(async () => {
     if (!brewId || !stepData?.current_step_id) {
       console.log("Aborted goToNextStep: missing brewId or current_step_id", {
         brewId,
@@ -603,6 +606,33 @@ export default function Progress() {
     loadStep(prevStep.step_id);
   }, [stepData, allSteps, loadStep]);
 
+  const goToNextStep = useCallback(() => {
+    if (!stepData || allSteps.length === 0) return;
+
+    // special case voor mode "two" en fase 2
+    if (stepData.mode === "two" && phaseRef.current === 2) {
+      setPhase(1);
+      setPhaseDone(false);
+      setTimerActive(false);
+      return;
+    }
+
+    const currentIndex = allSteps.findIndex(
+      (s) => s.step_id === currentStep.current?.step_id
+    );
+
+    if (currentIndex === -1 || currentIndex >= allSteps.length - 1) {
+      console.log("No next step available.");
+      return;
+    }
+
+    const nextStep = allSteps[currentIndex + 1];
+
+    // forward navigation is geen historische stap
+    setIsHistoricalStep(false);
+    loadStep(nextStep.step_id);
+  }, [stepData, allSteps, loadStep]);
+
   if (loading) {
     return <Spinner title="Loading progress..." />;
   }
@@ -645,7 +675,6 @@ export default function Progress() {
         : stepData.step2?.ingredients ?? [];
     }
   })();
-console.log("ingredients:", ingredients);
   const formatAmount = (amount: number | null, unit: string | null) => {
     if (amount == null) return null;
     const effectiveUnit = unit ?? "g";
@@ -683,12 +712,37 @@ console.log("ingredients:", ingredients);
                 }
                 total={allSteps.length}
                 isCompleted={isCompleted}
-                onNext={() => {
-                  if (!phaseDone && !isHistoricalStep) return;
-                  goToNextStep();
-                }}
+                onNext={goToNextStep}
                 onPrev={goToPreviousStep}
               />
+              <Button
+                mode="text"
+                onPress={() => {
+                  if (!phaseDone && !isHistoricalStep) return;
+                  goToNextStepComplete();
+                  console.log("Complete step pressed");
+                }}
+                disabled={!phaseDone || isHistoricalStep}
+                labelStyle={{
+                  fontSize: 16,
+                  fontFamily: FontFamilies.BODY,
+                  color: (!phaseDone || isHistoricalStep) ? BASE_COLORS.STONE300 : BASE_COLORS.STONE600,
+                }}
+                style={{
+                  alignSelf: "flex-end",
+                  marginRight: 0,
+                }}
+              >
+                <View className="flex-row items-center justify-content"
+                  style={{
+                    marginRight: 8,
+                    marginInline: 8,
+                  }}
+                >
+                  <CheckCheck/>
+                  <Text> Complete step</Text>
+                </View>
+              </Button>
 
               {isHistoricalStep && completedAt && (
                 <ThemedText type="subTitle" className="mt-2 ml-3">
