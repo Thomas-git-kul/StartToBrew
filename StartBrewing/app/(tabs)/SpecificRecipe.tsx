@@ -183,9 +183,17 @@ export default function SpecificRecipe() {
     }
   };
 
-  const handleStarPress = async (value: number) => {
-    if (!recipe_slug) return;
+  const handleStarPress = (value: number) => {
     setRating(value);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!recipe_slug) return;
+    if (rating === 0) {
+      Alert.alert("Rating required", "Please select a rating before submitting.");
+      return;
+    }
+
     try {
       const { data: sessionData, error: sessionError } =
         await supabase.auth.getSession();
@@ -214,7 +222,7 @@ export default function SpecificRecipe() {
         .from("recipe_reviews")
         .insert({
           recipe_slug: recipe_slug,
-          rating: value,
+          rating: rating,
           account_id: user.id,
           review_text: reviewText && reviewText.length > 0 ? reviewText : null,
         });
@@ -253,6 +261,7 @@ export default function SpecificRecipe() {
       }
       setHasUserReviewed(true);
       setReviewText("");
+      setRating(0);
       checkUserReviewed(recipe_slug);
 
       await refreshProgress();
@@ -952,7 +961,7 @@ export default function SpecificRecipe() {
             numberOfLines={4}
           />
 
-          <View className="flex-row justify-center gap-3">
+          <View className="flex-row justify-center gap-3 mb-4">
             {[1, 2, 3, 4, 5].map((value) => (
               <TouchableOpacity
                 key={value}
@@ -972,6 +981,38 @@ export default function SpecificRecipe() {
                 />
               </TouchableOpacity>
             ))}
+          </View>
+
+          <View className="flex-row justify-between gap-3">
+            <Button
+              onPress={() => {
+                setReviewVisible(false);
+                setRating(0);
+                setReviewText("");
+              }}
+              mode="text"
+              labelStyle={{
+                color: BASE_COLORS.STONE600,
+                fontFamily: FontFamilies.BODY,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleSubmitReview}
+              style={{
+                backgroundColor: BASE_COLORS.TEXT_DARK,
+                borderRadius: 24,
+                paddingHorizontal: 16,
+              }}
+              labelStyle={{
+                color: BASE_COLORS.WHITE,
+                fontFamily: FontFamilies.BODY,
+              }}
+            >
+              Submit
+            </Button>
           </View>
         </Modal>
       </Portal>
