@@ -166,6 +166,44 @@ describe("<Auth />", () => {
     });
   });
 
+  it("logs in when identifier is an email", async () => {
+    const { getByPlaceholderText, getByText } = render(<Auth />);
+    const identifierInput = getByPlaceholderText("Email or Username");
+    const passwordInput = getByPlaceholderText("Password");
+
+    // provide an email as identifier
+    fireEvent.changeText(identifierInput, "test@example.com");
+    fireEvent.changeText(passwordInput, "password123");
+    fireEvent.press(getByText("Log In"));
+
+    await waitFor(() => {
+      const { supabase } = require("@/supabase");
+      expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+        email: "test@example.com",
+        password: "password123",
+      });
+    });
+    await waitFor(() => {
+      expect(router.push).toHaveBeenCalledWith("/(tabs)/HomePage");
+    });
+  });
+
+  it("shows login error when profile lookup returns server error", async () => {
+    const { getByPlaceholderText, getByText, queryByText } = render(<Auth />);
+    const { supabase } = require("@/supabase");
+
+    // simulate server error when looking up username
+    supabase.from().single.mockResolvedValueOnce({ data: null, error: { message: 'server' } });
+
+    fireEvent.changeText(getByPlaceholderText("Email or Username"), "someuser");
+    fireEvent.changeText(getByPlaceholderText("Password"), "password123");
+    fireEvent.press(getByText("Log In"));
+
+    await waitFor(() => {
+      expect(queryByText("Username not linked to an account")).toBeTruthy();
+    });
+  });
+
   it("shows login error if email not linked to an account", async () => {
     const { getByPlaceholderText, getByText, queryByText } = render(<Auth />);
     const { supabase } = require("@/supabase");
