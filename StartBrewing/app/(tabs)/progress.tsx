@@ -47,9 +47,11 @@ export default function Progress() {
   const { refreshProgress } = useUserProgressContext();
   const [allSteps, setAllSteps] = useState<any[]>([]);
   const [isHistoricalStep, setIsHistoricalStep] = useState(false);
+  const [isForwardStep, setIsForwardStep] = useState(false);
   const [hasPreviousStep, setHasPreviousStep] = useState(false);
   const [completedAt, setCompletedAt] = useState<Date | null>(null);
   const { from } = useLocalSearchParams() as { from?: string };
+  const [brew, setBrew] = useState<any>(null);
 
   const currentStep = useRef<any>(null);
   let CompletedStep = useRef<boolean>(false);
@@ -77,6 +79,8 @@ export default function Progress() {
           setLoading(false);
           return;
         }
+
+        setBrew(brew);
 
         // schaalfactor obv batch_size_l t.o.v. 19 L
         const scaleFactor =
@@ -147,9 +151,20 @@ export default function Progress() {
 
         // Check of we een historische stap bekijken
         const isHistorical =
-          brew_steps.status === "completed" ||
-          currentStep.current.status === "in_progress";
+          brew_steps.status === "completed";
+          console.log("brew_steps.status", brew_steps.status);
         setIsHistoricalStep(isHistorical);
+
+        // Check of we een forward stap bekijken
+        const isForwardStep =
+          brew_steps.status === "pending" &&
+          brew.last_step_id != brew_steps.step_id;
+          console.log("brew.last_step_id:", brew.last_step_id, 
+            '\nbrew_steps.step_id:', brew_steps.step_id, 
+            '\nstatus:', brew_steps.status);
+
+        setIsForwardStep(isForwardStep);
+        console.log("isForwardStep:", isForwardStep);
 
         const { data: tips } = await supabase
           .from("step_tips")
@@ -342,6 +357,7 @@ export default function Progress() {
   useFocusEffect(
     useCallback(() => {
       setIsHistoricalStep(false);
+      setIsForwardStep(false);
       loadStep();
     }, [loadStep])
   );
@@ -497,10 +513,12 @@ export default function Progress() {
       return;
     }
 
+    /*
     if (isHistoricalStep) {
       loadStep(nextStep.step_id);
       return;
     }
+    */
 
     try {
       const updates: { step_id: string }[] = [];
@@ -603,6 +621,7 @@ export default function Progress() {
     const prevStep = allSteps[currentIndex - 1];
 
     setIsHistoricalStep(true);
+    setIsForwardStep(false);
     loadStep(prevStep.step_id);
   }, [stepData, allSteps, loadStep]);
 
@@ -630,6 +649,7 @@ export default function Progress() {
 
     // forward navigation is geen historische stap
     setIsHistoricalStep(false);
+    setIsForwardStep(true);
     loadStep(nextStep.step_id);
   }, [stepData, allSteps, loadStep]);
 
@@ -718,15 +738,15 @@ export default function Progress() {
               <Button
                 mode="text"
                 onPress={() => {
-                  if (!phaseDone && !isHistoricalStep) return;
+                  if (!phaseDone && !isHistoricalStep && !isForwardStep) return;
                   goToNextStepComplete();
                   console.log("Complete step pressed");
                 }}
-                disabled={!phaseDone || isHistoricalStep}
+                disabled={!phaseDone || isHistoricalStep || isForwardStep}
                 labelStyle={{
                   fontSize: 16,
                   fontFamily: FontFamilies.BODY,
-                  color: (!phaseDone || isHistoricalStep) ? BASE_COLORS.STONE300 : BASE_COLORS.STONE600,
+                  color: (!phaseDone || isHistoricalStep || isForwardStep) ? BASE_COLORS.STONE300 : BASE_COLORS.STONE600,
                 }}
                 style={{
                   alignSelf: "flex-end",
@@ -833,7 +853,7 @@ export default function Progress() {
               onComplete={handleComplete}
             >
               {({ remainingTime }) => {
-                const btnDisabled = phaseDone || isHistoricalStep;
+                const btnDisabled = phaseDone || isHistoricalStep || isForwardStep;
                 return (
                   <View style={{ alignItems: "center" }}>
                     <Text
@@ -854,6 +874,12 @@ export default function Progress() {
                         if (isHistoricalStep) {
                           console.debug(
                             "Historical step - timer controls disabled"
+                          );
+                          return;
+                        }
+                        if (isForwardStep) {
+                          console.debug(
+                            "Forward step - timer controls disabled"
                           );
                           return;
                         }
@@ -964,7 +990,14 @@ export default function Progress() {
           <BotMessageSquare size={props.size} color={BASE_COLORS.WHITE} />
         )}
         onPress={() => {
-          router.push(`/ChatBot?fromProgress=${brewId}`);
+          router.push({ 
+            pathname: `/ChatBot`, 
+            params: {
+                      recipe_slug: brew.recipe_slug,
+                      last_step_id: brew.last_step_id,
+                      from: "progress",
+                    },
+        })
         }}
         color={BASE_COLORS.WHITE}
         style={{

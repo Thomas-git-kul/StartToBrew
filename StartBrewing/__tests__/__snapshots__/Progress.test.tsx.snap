@@ -136,6 +136,59 @@ exports[`<Progress /> snapshot 1`] = `
         </Text>
       </View>
     </View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+        }
+      }
+    >
+      <Text>
+        <View
+          className="flex-row items-center justify-content"
+          style={
+            {
+              "marginInline": 8,
+              "marginRight": 8,
+            }
+          }
+        >
+          <Text>
+            CheckCheck
+          </Text>
+          <Text>
+             Complete step
+          </Text>
+        </View>
+      </Text>
+    </View>
   </View>,
   <RCTScrollView
     className="px-3"

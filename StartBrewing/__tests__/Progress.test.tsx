@@ -368,7 +368,18 @@ describe("<Progress />", () => {
 
     await act(async () => fireEvent.press(chatFab));
 
-    expect(pushMock).toHaveBeenCalledWith("/ChatBot?fromProgress=1");
+    // Accept both string-based and object-based router.push calls.
+    expect(pushMock).toHaveBeenCalled();
+    const pushedArg = pushMock.mock.calls[0][0];
+    if (typeof pushedArg === "string") {
+      expect(pushedArg).toContain("/ChatBot");
+      expect(pushedArg).toContain("fromProgress=");
+    } else {
+      expect(pushedArg).toMatchObject({ pathname: "/ChatBot" });
+      expect(pushedArg.params).toMatchObject(
+        expect.objectContaining({ from: "progress" })
+      );
+    }
   });
 
   it("snapshot", async () => {
