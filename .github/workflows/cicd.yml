@@ -96,7 +96,6 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
-          cd /dist
           URL=$(vercel deploy \
             $([ "$IS_PROD" = "true" ] && echo "--prod") \
             --token "$VERCEL_TOKEN")
