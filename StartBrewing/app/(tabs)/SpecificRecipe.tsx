@@ -707,9 +707,15 @@ export default function SpecificRecipe() {
         actionTestID="heart-button"
         iconNameLeft="ArrowLeft"
         actionTestIDLeft="back-button"
-        onIconPressLeft={() =>
-          router.push(from === "account" ? "/Account" : "/Recipes")
-        }
+        onIconPressLeft={() => {
+          if (from === "account") {
+            router.push("/Account")
+          } else if (from === "home") {
+            router.push("/HomePage")
+          } else {
+            router.push("/Recipes")
+          }
+        }}
       />
       {loading ? (
         <Spinner title="Loading recipe..." />
