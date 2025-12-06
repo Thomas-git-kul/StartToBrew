@@ -224,4 +224,222 @@ describe("<Registration />", () => {
     await waitFor(() => expect(mockUpsert).toHaveBeenCalled());
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/(tabs)/HomePage"));
   });
+
+  it("shows alert when email check fails with database error", async () => {
+    const { Alert } = require("react-native");
+    const alertSpy = jest.spyOn(Alert, "alert");
+
+    // Mock email check to return a database error (not PGRST116)
+    mockSingle.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'PGRST123', message: 'Database connection error' }
+    });
+
+    const { getByPlaceholderText, getByText, getByRole } = renderWithNavigation(<Registration />);
+
+    // Fill form
+    fireEvent.changeText(getByPlaceholderText("Firstname"), "Test");
+    fireEvent.changeText(getByPlaceholderText("Lastname"), "User");
+    fireEvent.changeText(getByPlaceholderText("DD"), "15");
+    fireEvent.changeText(getByPlaceholderText("MM"), "06");
+    fireEvent.changeText(getByPlaceholderText("YYYY"), "1995");
+    fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
+    fireEvent.changeText(getByPlaceholderText("Username"), "testuser");
+    fireEvent.changeText(getByPlaceholderText("Password"), "Password1!");
+    fireEvent.changeText(getByPlaceholderText("Confirm Password"), "Password1!");
+
+    // Agree to terms
+    const checkbox = getByRole("checkbox");
+    fireEvent.press(checkbox);
+
+    // Press create account
+    const button = getByText("Create account");
+    fireEvent.press(button);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("Error checking email: Database connection error");
+    });
+  });
+
+  it("shows error chip when email is already in use", async () => {
+    // Mock email check to return existing email
+    mockSingle.mockResolvedValueOnce({
+      data: { id: "existing-user-id" },
+      error: null
+    });
+
+    const { getByPlaceholderText, getByText, getByRole } = renderWithNavigation(<Registration />);
+
+    // Fill form
+    fireEvent.changeText(getByPlaceholderText("Firstname"), "Test");
+    fireEvent.changeText(getByPlaceholderText("Lastname"), "User");
+    fireEvent.changeText(getByPlaceholderText("DD"), "15");
+    fireEvent.changeText(getByPlaceholderText("MM"), "06");
+    fireEvent.changeText(getByPlaceholderText("YYYY"), "1995");
+    fireEvent.changeText(getByPlaceholderText("Email"), "existing@example.com");
+    fireEvent.changeText(getByPlaceholderText("Username"), "testuser");
+    fireEvent.changeText(getByPlaceholderText("Password"), "Password1!");
+    fireEvent.changeText(getByPlaceholderText("Confirm Password"), "Password1!");
+
+    // Agree to terms
+    const checkbox = getByRole("checkbox");
+    fireEvent.press(checkbox);
+
+    // Press create account
+    const button = getByText("Create account");
+    fireEvent.press(button);
+
+    await waitFor(() => {
+      expect(getByText("This email is already in use")).toBeTruthy();
+    });
+  });
+
+  it("shows alert when username check fails with database error", async () => {
+    const { Alert } = require("react-native");
+    const alertSpy = jest.spyOn(Alert, "alert");
+
+    // Mock email check to pass, but username check to fail with database error
+    mockSingle
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } }) // email check passes
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST456', message: 'Username query failed' } }); // username check fails
+
+    const { getByPlaceholderText, getByText, getByRole } = renderWithNavigation(<Registration />);
+
+    // Fill form
+    fireEvent.changeText(getByPlaceholderText("Firstname"), "Test");
+    fireEvent.changeText(getByPlaceholderText("Lastname"), "User");
+    fireEvent.changeText(getByPlaceholderText("DD"), "15");
+    fireEvent.changeText(getByPlaceholderText("MM"), "06");
+    fireEvent.changeText(getByPlaceholderText("YYYY"), "1995");
+    fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
+    fireEvent.changeText(getByPlaceholderText("Username"), "testuser");
+    fireEvent.changeText(getByPlaceholderText("Password"), "Password1!");
+    fireEvent.changeText(getByPlaceholderText("Confirm Password"), "Password1!");
+
+    // Agree to terms
+    const checkbox = getByRole("checkbox");
+    fireEvent.press(checkbox);
+
+    // Press create account
+    const button = getByText("Create account");
+    fireEvent.press(button);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("Error checking username: Username query failed");
+    });
+  });
+
+  it("shows error chip when username is already in use", async () => {
+    // Mock email check to pass, username check to return existing username
+    mockSingle
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } }) // email check passes
+      .mockResolvedValueOnce({ data: { id: "existing-user-id" }, error: null }); // username exists
+
+    const { getByPlaceholderText, getByText, getByRole } = renderWithNavigation(<Registration />);
+
+    // Fill form
+    fireEvent.changeText(getByPlaceholderText("Firstname"), "Test");
+    fireEvent.changeText(getByPlaceholderText("Lastname"), "User");
+    fireEvent.changeText(getByPlaceholderText("DD"), "15");
+    fireEvent.changeText(getByPlaceholderText("MM"), "06");
+    fireEvent.changeText(getByPlaceholderText("YYYY"), "1995");
+    fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
+    fireEvent.changeText(getByPlaceholderText("Username"), "existinguser");
+    fireEvent.changeText(getByPlaceholderText("Password"), "Password1!");
+    fireEvent.changeText(getByPlaceholderText("Confirm Password"), "Password1!");
+
+    // Agree to terms
+    const checkbox = getByRole("checkbox");
+    fireEvent.press(checkbox);
+
+    // Press create account
+    const button = getByText("Create account");
+    fireEvent.press(button);
+
+    await waitFor(() => {
+      expect(getByText("This username is already in use")).toBeTruthy();
+    });
+  });
+
+  it("shows alert when signUp fails", async () => {
+    const { Alert } = require("react-native");
+    const alertSpy = jest.spyOn(Alert, "alert");
+
+    // Mock email and username checks to pass
+    mockSingle
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } }) // email check passes
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } }); // username check passes
+
+    // Mock signUp to fail
+    mockSignUp.mockResolvedValueOnce({
+      data: { user: null, session: null },
+      error: { message: 'Sign up failed due to server error' }
+    });
+
+    const { getByPlaceholderText, getByText, getByRole } = renderWithNavigation(<Registration />);
+
+    // Fill form
+    fireEvent.changeText(getByPlaceholderText("Firstname"), "Test");
+    fireEvent.changeText(getByPlaceholderText("Lastname"), "User");
+    fireEvent.changeText(getByPlaceholderText("DD"), "15");
+    fireEvent.changeText(getByPlaceholderText("MM"), "06");
+    fireEvent.changeText(getByPlaceholderText("YYYY"), "1995");
+    fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
+    fireEvent.changeText(getByPlaceholderText("Username"), "testuser");
+    fireEvent.changeText(getByPlaceholderText("Password"), "Password1!");
+    fireEvent.changeText(getByPlaceholderText("Confirm Password"), "Password1!");
+
+    // Agree to terms
+    const checkbox = getByRole("checkbox");
+    fireEvent.press(checkbox);
+
+    // Press create account
+    const button = getByText("Create account");
+    fireEvent.press(button);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("Sign up failed due to server error");
+    });
+  });
+
+  it("shows alert when user could not be created", async () => {
+    const { Alert } = require("react-native");
+    const alertSpy = jest.spyOn(Alert, "alert");
+
+    // Mock email and username checks to pass
+    mockSingle
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } }) // email check passes
+      .mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } }); // username check passes
+
+    // Mock signUp to return no user (null user)
+    mockSignUp.mockResolvedValueOnce({
+      data: { user: null, session: null },
+      error: null
+    });
+
+    const { getByPlaceholderText, getByText, getByRole } = renderWithNavigation(<Registration />);
+
+    // Fill form
+    fireEvent.changeText(getByPlaceholderText("Firstname"), "Test");
+    fireEvent.changeText(getByPlaceholderText("Lastname"), "User");
+    fireEvent.changeText(getByPlaceholderText("DD"), "15");
+    fireEvent.changeText(getByPlaceholderText("MM"), "06");
+    fireEvent.changeText(getByPlaceholderText("YYYY"), "1995");
+    fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
+    fireEvent.changeText(getByPlaceholderText("Username"), "testuser");
+    fireEvent.changeText(getByPlaceholderText("Password"), "Password1!");
+    fireEvent.changeText(getByPlaceholderText("Confirm Password"), "Password1!");
+
+    // Agree to terms
+    const checkbox = getByRole("checkbox");
+    fireEvent.press(checkbox);
+
+    // Press create account
+    const button = getByText("Create account");
+    fireEvent.press(button);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith("User could not be created.");
+    });
+  });
 });
