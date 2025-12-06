@@ -12,7 +12,8 @@ import { ThemedText } from "@/components/themed-text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/supabase";
 import { useFocusEffect } from "@react-navigation/native";
-import Spinner from "../../components/spinner";
+import Spinner from "@/components/spinner";
+import PrimaryButton from "@/components/primaryButton"
 
 interface CartItem {
   store_item_id: number;
@@ -52,7 +53,7 @@ export default function ShoppingCart() {
 
   const [orders, setOrders] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { from, id, categoryId } = useLocalSearchParams() as { from?: string, id?: number, categoryId?: number };
+  const { from, beforeFrom, id, categoryId } = useLocalSearchParams() as { from?: string, beforeFrom?: string, id?: number, categoryId?: number };
   
 
   // Format Euro prices
@@ -250,6 +251,7 @@ export default function ShoppingCart() {
               params: {
                 id: id,
                 categoryNumber: categoryId,
+                from: beforeFrom,
               },
             });
           } else {
@@ -314,22 +316,15 @@ export default function ShoppingCart() {
 
           {/* Proceed */}
           <View className="items-end mb-4">
-            <Button
-              mode="contained"
+            <PrimaryButton
+              title="Proceed to payment"
               onPress={() => router.push({
                 pathname: "/Payment" as any,
                 params: { amount: Math.round(total * 100) } // convert to cents
               } as any)}
-              labelStyle={{
-                fontSize: 16,
-                color: BASE_COLORS.WHITE,
-                fontFamily: FontFamilies.BODY,
-              }}
-              style={{
-                borderRadius: 30,
-                backgroundColor: BASE_COLORS.TEXT_DARK,
-              }}
-            >Proceed to payment</Button>
+              testID="payment"
+              disabled={false}
+            />
           </View>
         </ScrollView>
       )}

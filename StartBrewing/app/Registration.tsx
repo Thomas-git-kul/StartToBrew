@@ -185,9 +185,9 @@ export default function Registration() {
     >
       <Header
         title="Sign Up to StartToBrew"
-        iconName="ArrowRight"
-        onIconPress={() => router.push("/Auth")}
-        actionTestID="registration-button"
+        iconNameLeft="ArrowLeft"
+        onIconPressLeft={() => router.back()}
+        actionTestIDLeft="registration-button"
       />
       <ScrollView
         className="px-3"

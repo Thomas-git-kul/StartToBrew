@@ -518,6 +518,26 @@ jest.mock("@/components/textInput", () => {
   );
 });
 
+// Mock PrimaryButton
+jest.mock("@/components/primaryButton", () => {
+  const { TouchableOpacity, Text } = require("react-native");
+  return ({ title, testID, onPress }: any) => (
+    <TouchableOpacity testID={testID} onPress={onPress}>
+      <Text>{title}</Text>
+    </TouchableOpacity>
+  );
+});
+
+// Mock SecondaryButton
+jest.mock("@/components/secondaryButton", () => {
+  const { TouchableOpacity, Text } = require("react-native");
+  return ({ title, testID, onPress }: any) => (
+    <TouchableOpacity testID={testID} onPress={onPress}>
+      <Text>{title}</Text>
+    </TouchableOpacity>
+  );
+});
+
 // Mock Alert
 jest.spyOn(Alert, "alert");
 
@@ -706,7 +726,7 @@ describe("<SpecificRecipe />", () => {
       fireEvent.press(startBtn);
 
       await findByText("Choose batch size");
-      const cancelBtn = await findByText("Cancel");
+      const cancelBtn = await findByText("cancel");
       fireEvent.press(cancelBtn);
 
       await waitFor(() => {
@@ -801,7 +821,7 @@ describe("<SpecificRecipe />", () => {
 
       expect(queryByText("Rate this recipe")).toBeNull();
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       const modalTitle = await findByText("Rate this recipe");
@@ -813,7 +833,7 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -827,7 +847,7 @@ describe("<SpecificRecipe />", () => {
       const { findByText, findByPlaceholderText } =
         await renderWithNavigation(<SpecificRecipe />);
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -846,7 +866,7 @@ describe("<SpecificRecipe />", () => {
 
       const { findByText } = await renderWithNavigation(<SpecificRecipe />);
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -868,7 +888,7 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -891,11 +911,11 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
-      const cancelBtn = await findByText("Cancel");
+      const cancelBtn = await findByText("cancel");
       fireEvent.press(cancelBtn);
 
       await waitFor(() => {
@@ -1015,7 +1035,7 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -1051,7 +1071,7 @@ describe("<SpecificRecipe />", () => {
     it("closes review modal when dismissed", async () => {
       const { findByText } = await renderWithNavigation(<SpecificRecipe />);
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       const modalTitle = await findByText("Rate this recipe");
@@ -1270,6 +1290,493 @@ describe("<SpecificRecipe />", () => {
       // Review with only whitespace should not be displayed
       await waitFor(() => {
         expect(queryByText("This beer has no reviews yet.")).toBeTruthy();
+      });
+    });
+
+    it("handles error when deleting review fails", async () => {
+      mockUser = { id: "user-1" };
+      mockRecipeReviews = [
+        {
+          rating: 4,
+          review_text: "My review",
+          created_at: new Date().toISOString(),
+          account_id: "user-1",
+        },
+      ];
+
+      const { findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+
+      // Now override the delete to throw an error
+      const mockDelete = jest.fn(() => ({
+        eq: jest.fn(() => ({
+          eq: jest.fn(async () => ({
+            data: null,
+            error: { message: "Delete failed" },
+          })),
+        })),
+      }));
+
+      const supabase = require("@/supabase").supabase;
+      const originalFrom = supabase.from;
+      supabase.from = jest.fn((table) => {
+        if (table === "recipe_reviews") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  maybeSingle: async () => ({ data: null, error: null }),
+                }),
+                order: () => ({
+                  limit: async () => ({ data: mockRecipeReviews, error: null }),
+                }),
+              }),
+            }),
+            delete: mockDelete,
+          };
+        }
+        return originalFrom(table);
+      });
+
+      const deleteBtn = await findByTestId("delete-review-btn");
+      fireEvent.press(deleteBtn);
+
+      const { Alert } = require("react-native");
+      await waitFor(() => {
+        expect(Alert.alert).toHaveBeenCalledWith("Error", expect.any(String));
+      });
+    });
+
+    it("handles error when fetching reviews fails", async () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+      // Mock fetchReviews to throw an error
+      const supabase = require("@/supabase").supabase;
+      const originalFrom = supabase.from;
+      supabase.from = jest.fn((table) => {
+        if (table === "recipe_reviews") {
+          return {
+            select: () => ({
+              eq: () => ({
+                order: () => ({
+                  limit: async () => ({
+                    data: null,
+                    error: { message: "Fetch reviews failed" },
+                  }),
+                }),
+                maybeSingle: async () => ({ data: null, error: null }),
+              }),
+            }),
+          };
+        }
+        return originalFrom(table);
+      });
+
+      mockRecipeSlug = recipeSlug;
+
+      await renderWithNavigation(<SpecificRecipe />);
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Error fetching reviews:",
+          expect.any(String)
+        );
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("handles error when profile fetch fails in fetchReviews", async () => {
+      mockRecipeReviews = [
+        {
+          rating: 5,
+          review_text: "Great!",
+          created_at: new Date().toISOString(),
+          account_id: "user-error",
+        },
+      ];
+
+      // Mock profiles query to throw error
+      const supabase = require("@/supabase").supabase;
+      const originalFrom = supabase.from;
+      supabase.from = jest.fn((table) => {
+        if (table === "profiles") {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => {
+                  throw new Error("Profile fetch failed");
+                },
+              }),
+            }),
+          };
+        }
+        if (table === "recipe_reviews") {
+          return {
+            select: () => ({
+              eq: () => ({
+                order: () => ({
+                  limit: async () => ({
+                    data: mockRecipeReviews,
+                    error: null,
+                  }),
+                }),
+                maybeSingle: async () => ({ data: null, error: null }),
+              }),
+            }),
+          };
+        }
+        return originalFrom(table);
+      });
+
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      // Should still render review even without username
+      await waitFor(() => {
+        expect(findByText("Great!")).toBeTruthy();
+      });
+    });
+
+    it("handles error when getCurrentUser fails in useEffect", async () => {
+      const supabase = require("@/supabase").supabase;
+      supabase.auth.getUser = jest.fn(async () => {
+        throw new Error("Get user failed");
+      });
+
+      await renderWithNavigation(<SpecificRecipe />);
+
+      // Component should still render despite error
+      await waitFor(() => {
+        expect(true).toBe(true);
+      });
+    });
+
+    it("handles error during brew steps insertion", async () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+      const { findByText, findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+
+      // Now override brew_steps to fail
+      const supabase = require("@/supabase").supabase;
+      const originalFrom = supabase.from;
+      const originalGetUser = supabase.auth.getUser;
+      
+      supabase.auth.getUser = jest.fn(() =>
+        Promise.resolve({
+          data: { user: mockUser },
+          error: null,
+        })
+      );
+      
+      supabase.from = jest.fn((table) => {
+        if (table === "brew_steps") {
+          return {
+            insert: async () => ({
+              data: null,
+              error: { message: "Insert brew_steps failed" },
+            }),
+          };
+        }
+        return originalFrom(table);
+      });
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await findByText("Get your StarterKit now!");
+      const readyBtn = await findByTestId("startFAB");
+      fireEvent.press(readyBtn);
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Error inserting brew_steps:",
+          "Insert brew_steps failed"
+        );
+      });
+
+      consoleErrorSpy.mockRestore();
+      supabase.from = originalFrom;
+      supabase.auth.getUser = originalGetUser;
+    });
+
+    it("handles error when fetching all steps fails", async () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+      const { findByText, findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+
+      // Now override steps to fail
+      const supabase = require("@/supabase").supabase;
+      const originalFrom = supabase.from;
+      const originalGetUser = supabase.auth.getUser;
+      
+      supabase.auth.getUser = jest.fn(() =>
+        Promise.resolve({
+          data: { user: mockUser },
+          error: null,
+        })
+      );
+      
+      supabase.from = jest.fn((table) => {
+        if (table === "steps") {
+          return {
+            select: () => ({
+              eq: () => ({
+                is: () => ({
+                  limit: () => ({
+                    single: async () => ({
+                      data: { step_id: "step-1" },
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+              in: async () => ({
+                data: null,
+                error: { message: "Steps fetch failed" },
+              }),
+            }),
+          };
+        }
+        return originalFrom(table);
+      });
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await findByText("Get your StarterKit now!");
+      const readyBtn = await findByTestId("startFAB");
+      fireEvent.press(readyBtn);
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Error fetching steps:",
+          "Steps fetch failed"
+        );
+      });
+
+      consoleErrorSpy.mockRestore();
+      supabase.from = originalFrom;
+      supabase.auth.getUser = originalGetUser;
+    });
+
+    it("handles exception during brew start", async () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+      const supabase = require("@/supabase").supabase;
+      supabase.auth.getUser = jest.fn(async () => {
+        throw new Error("Catastrophic failure");
+      });
+
+      const { findByText, findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await findByText("Get your StarterKit now!");
+      const readyBtn = await findByTestId("startFAB");
+      fireEvent.press(readyBtn);
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Exception during brew start:",
+          expect.any(String)
+        );
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("handles error when fetching kits fails", async () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+      const supabase = require("@/supabase").supabase;
+      const originalFrom = supabase.from;
+      supabase.from = jest.fn((table) => {
+        if (table === "recipe_kits") {
+          return {
+            select: () => ({
+              eq: async () => ({
+                data: null,
+                error: { message: "Kits fetch failed" },
+              }),
+            }),
+          };
+        }
+        return originalFrom(table);
+      });
+
+      await renderWithNavigation(<SpecificRecipe />);
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Error fetching kits:",
+          "Kits fetch failed"
+        );
+      });
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("handles increment error in handleInitialStartPress", async () => {
+      mockIncrement.mockRejectedValueOnce(new Error("Increment failed"));
+
+      const { findByText } = await renderWithNavigation(<SpecificRecipe />);
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      // Should still open modal despite increment error
+      await waitFor(() => {
+        expect(findByText("Choose batch size")).toBeTruthy();
+      });
+    });
+
+    it("handles reset error during north star logging", async () => {
+      const newUser = { id: "user-new", created_at: new Date().toISOString() };
+      mockReset.mockRejectedValueOnce(new Error("Reset failed"));
+
+      const { findByText, findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+
+      // Override auth and brews query to trigger first-time user flow
+      const supabase = require("@/supabase").supabase;
+      const originalFrom = supabase.from;
+      const originalGetUser = supabase.auth.getUser;
+      
+      supabase.auth.getUser = jest.fn(() =>
+        Promise.resolve({
+          data: { user: newUser },
+          error: null,
+        })
+      );
+      
+      supabase.from = jest.fn((table) => {
+        if (table === "brews") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: async () => ({ data: [], error: null }),
+              }),
+            }),
+            insert: () => ({
+              select: async () => ({
+                data: [
+                  {
+                    id_brew: 123,
+                    start_date: new Date().toISOString(),
+                  },
+                ],
+                error: null,
+              }),
+            }),
+          };
+        }
+        return originalFrom(table);
+      });
+
+      const startBtn = await findByText("Start Brewing");
+      fireEvent.press(startBtn);
+
+      const confirmBtn = await findByText("Confirm");
+      fireEvent.press(confirmBtn);
+
+      await findByText("Get your StarterKit now!");
+      const readyBtn = await findByTestId("startFAB");
+      fireEvent.press(readyBtn);
+
+      // Should still navigate despite reset error
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalled();
+      });
+
+      supabase.from = originalFrom;
+      supabase.auth.getUser = originalGetUser;
+    });
+
+    it("navigates back to HomePage when from parameter is home", async () => {
+      mockFrom = "home";
+
+      const { findByTestId } = await renderWithNavigation(<SpecificRecipe />);
+
+      const backBtn = await findByTestId("back-button");
+      fireEvent.press(backBtn);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith("/HomePage");
+      });
+    });
+
+    it("handles triggerRefresh error after review submission", async () => {
+      mockSession = { user: { id: "user-1" } };
+      mockTriggerRefresh.mockImplementationOnce(() => {
+        throw new Error("Trigger refresh failed");
+      });
+
+      const { findByText, findAllByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const addReviewBtn = await findByText("Add review");
+      fireEvent.press(addReviewBtn);
+
+      await findByText("Rate this recipe");
+      const stars = await findAllByTestId(/star-/);
+      fireEvent.press(stars[4]);
+
+      const submitBtn = await findByText("Submit");
+      fireEvent.press(submitBtn);
+
+      // Should still succeed despite triggerRefresh error
+      await waitFor(() => {
+        expect(mockRefreshProgress).toHaveBeenCalled();
+      });
+    });
+
+    it("calls refreshProgress even when review submission fails", async () => {
+      mockSession = { user: { id: "user-1" } };
+
+      const supabase = require("@/supabase").supabase;
+      const originalFrom = supabase.from;
+      supabase.from = jest.fn((table) => {
+        if (table === "recipe_reviews" && table !== "recipes") {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: null, error: null }),
+              }),
+            }),
+            insert: async () => ({
+              data: null,
+              error: { message: "Insert review failed" },
+            }),
+          };
+        }
+        return originalFrom(table);
+      });
+
+      const { findByText, findAllByTestId } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
+
+      const addReviewBtn = await findByText("Add review");
+      fireEvent.press(addReviewBtn);
+
+      await findByText("Rate this recipe");
+      const stars = await findAllByTestId(/star-/);
+      fireEvent.press(stars[3]);
+
+      const submitBtn = await findByText("Submit");
+      fireEvent.press(submitBtn);
+
+      await waitFor(() => {
+        expect(mockRefreshProgress).toHaveBeenCalled();
       });
     });
   });

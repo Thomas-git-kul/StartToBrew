@@ -12,6 +12,8 @@ import { CirclePlus, CircleMinus } from "lucide-react-native";
 import { supabase } from "@/supabase";
 import Spinner from "@/components/spinner";
 import { useAppRefresh } from "@/context/AppRefreshContext";
+import PrimaryButton from "@/components/primaryButton";
+import SecondaryButton from "@/components/secondaryButton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const IMAGE_WIDTH = SCREEN_WIDTH - 20;
@@ -247,8 +249,9 @@ export default function StoreItem() {
               pathname: "/ShoppingCart",
               params: {
                 from: "storeitem",
+                beforeFrom: from,
                 id: id,
-                categoryId: categoryNumber
+                categoryId: categoryNumber,
               },
             })
           }
@@ -369,29 +372,12 @@ export default function StoreItem() {
             </Pressable>
           </View>
 
-          <Button
-            mode="contained"
-            testID="fab-add-to-order"
+          <PrimaryButton
+            title="Add to order"
+            testID="add-to-order"
             onPress={handleAddToOrder}
-            labelStyle={{ 
-              fontSize: Math.min(18 * scale, 24),
-              color: BASE_COLORS.WHITE,
-              fontFamily: FontFamilies.BODY,            
-            }}
-            style={{
-              borderRadius: 30,
-              backgroundColor: BASE_COLORS.TEXT_DARK,
-              padding: 4,
-            }}
-            theme={{
-              fonts: {
-                labelLarge: {
-                  fontSize: 16,
-                  fontFamily: FontFamilies.BODY,
-                },
-              },
-            }}
-          >Add to order</Button>
+            size={18}
+          />
         </View>
 
         <Snackbar
@@ -414,19 +400,22 @@ export default function StoreItem() {
                   color: BASE_COLORS.STONE600,
                 }}
               >Item added to cart</Text>
-            <Button
+            <SecondaryButton
+              title="Back"
+              testID="added-back"
               onPress={() => {
-                router.push({ pathname: "/Store"});
+                if (from === "cart") {
+                  router.push("/ShoppingCart");
+                } else if (from === "specificrecipe") {
+                  router.push({
+                    pathname: "/SpecificRecipe",
+                    params: { recipe_slug: recipe_slug }
+                  });
+                } else {
+                  router.push("/Store");
+                }
               }}
-            >
-              <Text 
-                style={{ 
-                  fontSize: Math.min(16 * scale, 22),
-                  fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-              >Back to Store</Text>
-            </Button>
+            />
           </View>
         </Snackbar>
       </SafeAreaView>
