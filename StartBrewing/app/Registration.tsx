@@ -17,6 +17,8 @@ import Spinner from "@/components/spinner";
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
+const MIN_YEAR = 1900;
+const MAX_YEAR = 2025;
 
 export default function Registration() {
   useFonts();
@@ -53,6 +55,12 @@ export default function Registration() {
 
     if (!day || !month || !year) {
       Alert.alert("Please enter your full birth date.");
+      return;
+    }
+
+    const yrNum = parseInt(year, 10);
+    if (isNaN(yrNum) || yrNum < MIN_YEAR || yrNum > MAX_YEAR) {
+      Alert.alert(`Please enter a valid birth year between ${MIN_YEAR} and ${MAX_YEAR}.`);
       return;
     }
 
@@ -227,6 +235,9 @@ export default function Registration() {
           {year.length > 0 && (!/^\d{4}$/.test(year)) && (
             <ErrorChip text="Invalid year (e.g. 1990)"/>
           )}
+          {year.length > 0 && (/^\d{4}$/.test(year)) && (Number(year) < MIN_YEAR || Number(year) > MAX_YEAR) && (
+            <ErrorChip text={`Year must be between ${MIN_YEAR} and ${MAX_YEAR}`}/>
+          )}
         </View>
 
         <ThemedText type="subTitle" className="mt-2">
@@ -313,7 +324,7 @@ export default function Registration() {
               password !== confirmPassword ||
               !/^([0-2][0-9]|3[01])$/.test(day) ||
               !/^(0[1-9]|1[0-2])$/.test(month) ||
-              !/^\d{4}$/.test(year) ||
+              !/^\d{4}$/.test(year) || Number(year) < MIN_YEAR || Number(year) > MAX_YEAR ||
               !/^\S+@\S+\.\S+$/.test(email) ||
               password.length < 6 ||
               !/[A-Z]/.test(password) ||
