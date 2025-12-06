@@ -247,8 +247,9 @@ export default function StoreItem() {
               pathname: "/ShoppingCart",
               params: {
                 from: "storeitem",
+                beforeFrom: from,
                 id: id,
-                categoryId: categoryNumber
+                categoryId: categoryNumber,
               },
             })
           }

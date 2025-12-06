@@ -130,70 +130,68 @@ exports[`<SpecificRecipe /> Snapshot matches snapshot 1`] = `
         </View>
       </View>
       <View
-        className="flex-row mb-5 gap-2 items-center"
+        className="flex-row  mb-1 gap-2 items-start justify-between"
       >
-        <Text>
-          Star
-        </Text>
-        <Text
-          type="subTitle"
-        >
-          0.00
-           / 5
-        </Text>
-        <Text
-          type="subTitle"
-        >
-          (
-          0
-           reviews)
-        </Text>
         <View
-          accessibilityState={
-            {
-              "busy": undefined,
-              "checked": undefined,
-              "disabled": undefined,
-              "expanded": undefined,
-              "selected": undefined,
-            }
-          }
-          accessibilityValue={
-            {
-              "max": undefined,
-              "min": undefined,
-              "now": undefined,
-              "text": undefined,
-            }
-          }
-          accessible={true}
-          collapsable={false}
-          focusable={true}
-          onClick={[Function]}
-          onResponderGrant={[Function]}
-          onResponderMove={[Function]}
-          onResponderRelease={[Function]}
-          onResponderTerminate={[Function]}
-          onResponderTerminationRequest={[Function]}
-          onStartShouldSetResponder={[Function]}
-          style={
-            {
-              "opacity": 1,
-            }
-          }
+          className="flex-row gap-2"
         >
           <Text>
-            <Text
-              style={
-                {
-                  "color": "#000000",
-                }
-              }
-              type="subTitle"
-            >
-              Add Review
-            </Text>
+            Star
           </Text>
+          <Text
+            type="subTitle"
+          >
+            0.00
+             / 5
+          </Text>
+          <Text
+            type="subTitle"
+          >
+            (
+            0
+             reviews)
+          </Text>
+        </View>
+        <View>
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onClick={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              {
+                "opacity": 1,
+              }
+            }
+            testID="review-button"
+          >
+            <Text>
+              Add review
+            </Text>
+          </View>
         </View>
       </View>
       <View

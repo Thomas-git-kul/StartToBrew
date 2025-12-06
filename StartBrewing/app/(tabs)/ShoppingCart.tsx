@@ -52,7 +52,7 @@ export default function ShoppingCart() {
 
   const [orders, setOrders] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { from, id, categoryId } = useLocalSearchParams() as { from?: string, id?: number, categoryId?: number };
+  const { from, beforeFrom, id, categoryId } = useLocalSearchParams() as { from?: string, beforeFrom?: string, id?: number, categoryId?: number };
   
 
   // Format Euro prices
@@ -250,6 +250,7 @@ export default function ShoppingCart() {
               params: {
                 id: id,
                 categoryNumber: categoryId,
+                from: beforeFrom,
               },
             });
           } else {

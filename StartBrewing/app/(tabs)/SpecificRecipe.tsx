@@ -1,12 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  TouchableOpacity,
-  View,
-  Image,
-  ScrollView,
-  Alert,
-  Dimensions,
-} from "react-native";
+import { TouchableOpacity, View, Image, ScrollView, Alert, Dimensions } from "react-native";
 import { FAB, Modal, Portal, Chip, Button } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -27,6 +20,8 @@ import { useUserProgressContext } from "@/context/UserProgressContext";
 import { useAppRefresh } from "@/context/AppRefreshContext";
 import Spinner from "@/components/spinner";
 import TextInput from "@/components/textInput";
+import PrimaryButton from "@/components/primaryButton";
+import SecondaryButton from "@/components/secondaryButton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -759,50 +754,37 @@ export default function SpecificRecipe() {
           </View>
 
           {/* Rating */}
-          <View className="flex-row mb-5 gap-2 items-center">
-            <Star
-              size={Math.min(22 * scale, 35)}
-              color={BASE_COLORS.ACCENT_LIGHT}
-              fill={BASE_COLORS.ACCENT_LIGHT}
-            />
-            <ThemedText type="subTitle">{displayedRating} / 5</ThemedText>
-            <ThemedText type="subTitle">({reviewCount} reviews)</ThemedText>
-            {hasUserReviewed ? (
-              <ThemedText
-                type="subTitle"
-                testID="already-reviewed-label"
-                style={{
-                  position: "absolute",
-                  right: 0,
-                }}
-              >
-                You reviewed ✓
-              </ThemedText>
-            ) : (
-              <Button
-                testID="review-button"
-                onPress={() => {
-                  setRating(0);
-                  setReviewText("");
-                  setReviewVisible(true);
-                }}
-                style={{
-                  position: "absolute",
-                  right: 0,
-                }}
-                labelStyle={{
-                  color: BASE_COLORS.TEXT_DARK,
-                  fontFamily: FontFamilies.BODY,
-                }}
-              >
+          <View className="flex-row  mb-1 gap-2 items-start justify-between">
+            <View className="flex-row gap-2">
+              <Star
+                size={Math.min(22 * scale, 35)}
+                color={BASE_COLORS.ACCENT_LIGHT}
+                fill={BASE_COLORS.ACCENT_LIGHT}
+              />
+              <ThemedText type="subTitle">{displayedRating} / 5</ThemedText>
+              <ThemedText type="subTitle">({reviewCount} reviews)</ThemedText>
+            </View>
+            <View>
+              {hasUserReviewed ? (
                 <ThemedText
                   type="subTitle"
-                  style={{ color: BASE_COLORS.TEXT_DARK }}
+                  testID="already-reviewed-label"
                 >
-                  Add Review
+                  You reviewed ✓
                 </ThemedText>
-              </Button>
-            )}
+              ) : (
+                <SecondaryButton
+                  title="Add review"
+                  testID="review-button"
+                  onPress={() => {
+                    setRating(0);
+                    setReviewText("");
+                    setReviewVisible(true);
+                  }}
+                  size={14}
+                />
+              )}
+            </View>
           </View>
 
           {/* Specs chips */}
@@ -935,6 +917,7 @@ export default function SpecificRecipe() {
                 </Chip>
               );
             })}
+
             {/* Custom chip */}
             {(() => {
               const selected = selectedBatchSizeOption === "custom";
@@ -983,32 +966,19 @@ export default function SpecificRecipe() {
             </View>
           )}
 
-          <View className="flex-row justify-end gap-3 mt-2">
-            <Button
+          <View className="flex-row items-center justify-between mt-2">
+            <SecondaryButton
+              title="cancel"
               onPress={() => setBatchSizeModalVisible(false)}
-              mode="text"
-              labelStyle={{
-                color: BASE_COLORS.STONE600,
-                fontFamily: FontFamilies.BODY,
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              mode="contained"
+              testID="cencel-start"
+              size={14}
+            />
+            <PrimaryButton
+              title="Confirm"
               onPress={handleConfirmBatchSize}
-              style={{
-                backgroundColor: BASE_COLORS.TEXT_DARK,
-                borderRadius: 24,
-                paddingHorizontal: 16,
-              }}
-              labelStyle={{
-                color: BASE_COLORS.WHITE,
-                fontFamily: FontFamilies.BODY,
-              }}
-            >
-              Confirm
-            </Button>
+              testID="confirm-start"
+              size={14}
+            />
           </View>
         </Modal>
       </Portal>
@@ -1063,35 +1033,22 @@ export default function SpecificRecipe() {
           </View>
 
           <View className="flex-row justify-between gap-3">
-            <Button
+            <SecondaryButton
+              title="cancel"
+              testID="cancel-review"
               onPress={() => {
                 setReviewVisible(false);
                 setRating(0);
                 setReviewText("");
               }}
-              mode="text"
-              labelStyle={{
-                color: BASE_COLORS.STONE600,
-                fontFamily: FontFamilies.BODY,
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              mode="contained"
+              size={14}
+            />
+            <PrimaryButton
+              title="Submit"
               onPress={handleSubmitReview}
-              style={{
-                backgroundColor: BASE_COLORS.TEXT_DARK,
-                borderRadius: 24,
-                paddingHorizontal: 16,
-              }}
-              labelStyle={{
-                color: BASE_COLORS.WHITE,
-                fontFamily: FontFamilies.BODY,
-              }}
-            >
-              Submit
-            </Button>
+              testID="submit-review"
+              size={14}
+            />
           </View>
         </Modal>
       </Portal>

@@ -518,6 +518,26 @@ jest.mock("@/components/textInput", () => {
   );
 });
 
+// Mock PrimaryButton
+jest.mock("@/components/primaryButton", () => {
+  const { TouchableOpacity, Text } = require("react-native");
+  return ({ title, testID, onPress }: any) => (
+    <TouchableOpacity testID={testID} onPress={onPress}>
+      <Text>{title}</Text>
+    </TouchableOpacity>
+  );
+});
+
+// Mock SecondaryButton
+jest.mock("@/components/secondaryButton", () => {
+  const { TouchableOpacity, Text } = require("react-native");
+  return ({ title, testID, onPress }: any) => (
+    <TouchableOpacity testID={testID} onPress={onPress}>
+      <Text>{title}</Text>
+    </TouchableOpacity>
+  );
+});
+
 // Mock Alert
 jest.spyOn(Alert, "alert");
 
@@ -706,7 +726,7 @@ describe("<SpecificRecipe />", () => {
       fireEvent.press(startBtn);
 
       await findByText("Choose batch size");
-      const cancelBtn = await findByText("Cancel");
+      const cancelBtn = await findByText("cancel");
       fireEvent.press(cancelBtn);
 
       await waitFor(() => {
@@ -801,7 +821,7 @@ describe("<SpecificRecipe />", () => {
 
       expect(queryByText("Rate this recipe")).toBeNull();
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       const modalTitle = await findByText("Rate this recipe");
@@ -813,7 +833,7 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -827,7 +847,7 @@ describe("<SpecificRecipe />", () => {
       const { findByText, findByPlaceholderText } =
         await renderWithNavigation(<SpecificRecipe />);
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -846,7 +866,7 @@ describe("<SpecificRecipe />", () => {
 
       const { findByText } = await renderWithNavigation(<SpecificRecipe />);
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -868,7 +888,7 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -891,11 +911,11 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
-      const cancelBtn = await findByText("Cancel");
+      const cancelBtn = await findByText("cancel");
       fireEvent.press(cancelBtn);
 
       await waitFor(() => {
@@ -1015,7 +1035,7 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -1051,7 +1071,7 @@ describe("<SpecificRecipe />", () => {
     it("closes review modal when dismissed", async () => {
       const { findByText } = await renderWithNavigation(<SpecificRecipe />);
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       const modalTitle = await findByText("Rate this recipe");
@@ -1703,7 +1723,7 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
@@ -1745,7 +1765,7 @@ describe("<SpecificRecipe />", () => {
         <SpecificRecipe />
       );
 
-      const addReviewBtn = await findByText("Add Review");
+      const addReviewBtn = await findByText("Add review");
       fireEvent.press(addReviewBtn);
 
       await findByText("Rate this recipe");
