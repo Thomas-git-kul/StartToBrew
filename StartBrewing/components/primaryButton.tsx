@@ -12,6 +12,7 @@ interface ButtonProps {
   onPress: () => void;
   size?: number;
   testID: string;
+  disabled?: boolean
 }
 
 export default function DialogCustom({
@@ -19,12 +20,14 @@ export default function DialogCustom({
   onPress,
   size = 16,
   testID,
+  disabled = false,
 }: ButtonProps) {
   return (
     <Button
       mode="contained"
       onPress={onPress}
       testID={testID}
+      disabled={disabled}
       labelStyle={{
         fontSize: Math.min(size * scale, 24),
         color: BASE_COLORS.WHITE,
@@ -32,7 +35,7 @@ export default function DialogCustom({
       }}
       style={{
         borderRadius: 30,
-        backgroundColor: BASE_COLORS.TEXT_DARK,
+        backgroundColor: disabled? BASE_COLORS.STONE300 : BASE_COLORS.TEXT_DARK,
       }}
     >{title}</Button>
   );

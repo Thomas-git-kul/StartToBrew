@@ -22,6 +22,9 @@ jest.mock('../supabase/index', () => {
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
           maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+          insert: jest.fn().mockReturnThis(),
+          update: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
         };
         if (table === "starter_kits") {
           return {
@@ -49,18 +52,10 @@ jest.mock('../supabase/index', () => {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
             maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-            // For cart count
-            // Return array of items for count
-            // .select('id_cart_item', { count: 'exact' })
+            insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+            update: jest.fn().mockResolvedValue({ data: null, error: null }),
             single: jest.fn().mockResolvedValue({ data: null, error: null }),
-            // For count, return array
             then: (cb: any) => cb([{ id_cart_item: 'item-1', quantity: 1 }]),
-            // For .select(...).eq(...)
-            // .select('id_cart_item', { count: 'exact' })
-            // .eq('cart_id', ...)
-            // Should return array
-            // We'll just return array for .select().eq().then()
-            // But for .maybeSingle(), return null
           };
         }
         return chain;
@@ -76,19 +71,18 @@ import StoreItem from "../app/(tabs)/StoreItem";
 
 // --- MOCKS --- //
 const mockPush = jest.fn();
+let mockParams = { id: "1", categoryNumber: "4" };
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
-  useLocalSearchParams: () => {
-    // Dynamisch aanpassen voor SpecificRecipe test
-    if (global.__TEST_SPECIFICRECIPE__) {
-      return { id: "1", categoryNumber: "4", from: "specificrecipe", recipe_slug: "test-recipe" };
-    }
-    return { id: "1", categoryNumber: "4" };
-  },
+  useLocalSearchParams: () => mockParams,
 }));
 
 jest.mock("@/hooks/use-fonts", () => ({ useFonts: jest.fn() }));
+
+jest.mock("@/context/AppRefreshContext", () => ({
+  useAppRefresh: jest.fn(() => ({ triggerRefresh: jest.fn() })),
+}));
 
 jest.mock("react-native-safe-area-context", () => {
   const { View } = require("react-native");
@@ -100,15 +94,22 @@ jest.mock("react-native-safe-area-context", () => {
 // Mock Header and ThemedText
 jest.mock("@/components/header", () => {
   const React = require("react");
-  const { Pressable, Text } = require("react-native");
+  const { Pressable, Text, View } = require("react-native");
   const MockHeader = jest.fn();
 
   return (props: any) => {
     MockHeader(props);
     return (
-      <Pressable testID="mock-header-button" onPress={props.onIconPress}>
-        <Text>Header Button</Text>
-      </Pressable>
+      <View>
+        <Pressable testID="mock-header-button" onPress={props.onIconPress}>
+          <Text>Header Button</Text>
+        </Pressable>
+        {props.onIconPressLeft && (
+          <Pressable testID="back-button" onPress={props.onIconPressLeft}>
+            <Text>Back Button</Text>
+          </Pressable>
+        )}
+      </View>
     );
   };
 });
@@ -117,6 +118,20 @@ jest.mock("@/components/header", () => {
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
+});
+
+jest.mock("react-native-paper", () => {
+  const { View, Text, Pressable } = require("react-native");
+  return {
+    Button: ({ children, onPress, testID }: any) => (
+      <Pressable testID={testID} onPress={onPress}>
+        <Text>{children}</Text>
+      </Pressable>
+    ),
+    Snackbar: ({ children, visible, testID }: any) => 
+      visible ? <View testID={testID || "snackbar"}>{children}</View> : null,
+    ActivityIndicator: () => <Text>Loading...</Text>,
+  };
 });
 
 // Mock Supabase
@@ -237,7 +252,7 @@ describe("<StoreItem /> minimal test", () => {
         }),
       }));
       render(<StoreItem />);
-      const addBtn = await screen.findByTestId("fab-add-to-order");
+      const addBtn = await screen.findByTestId("add-to-order");
       await act(async () => {
         fireEvent.press(addBtn);
       });
@@ -245,6 +260,8 @@ describe("<StoreItem /> minimal test", () => {
     });
   beforeEach(() => {
     jest.clearAllMocks();
+    mockParams = { id: "1", categoryNumber: "4" };
+    global.__TEST_SPECIFICRECIPE__ = false;
   });
 
   it("renders without crashing and shows loading initially", async () => {
@@ -328,5 +345,97 @@ describe("<StoreItem /> minimal test", () => {
     });
     expect(toJSON()).toMatchSnapshot();
   });
+
+  it("fetches and renders a regular store item (non-starter kit)", async () => {
+    // Mock useLocalSearchParams to return categoryNumber != 4
+    mockParams = { id: "5", categoryNumber: "2" };
+
+    (supabase.from as jest.Mock).mockImplementationOnce((table: string) => {
+      if (table === "store_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_store_item: "5",
+              name: "Regular Item",
+              category_id: "2",
+              price: 15.5,
+            },
+            error: null,
+          }),
+        };
+      }
+      return { select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: null, error: null }) };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Regular Item/i)).toBeTruthy();
+    });
+  });
+
+  it("handles exception during fetch", async () => {
+    (supabase.from as jest.Mock).mockImplementationOnce(() => {
+      throw new Error("Network error");
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Loading/)).toBeTruthy();
+    });
+  });
+
+  it("handles back button press from cart", async () => {
+    mockParams = { id: "1", categoryNumber: "4", from: "cart" };
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Slightly bitter with a fruity undertone/i)).toBeTruthy();
+    });
+
+    const backButton = await screen.findByTestId("back-button");
+    await act(async () => {
+      fireEvent.press(backButton);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
+  });
+
+  it("handles back button press from specificrecipe", async () => {
+    mockParams = { id: "1", categoryNumber: "4", from: "specificrecipe", recipe_slug: "test-recipe" };
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Slightly bitter with a fruity undertone/i)).toBeTruthy();
+    });
+
+    const backButton = await screen.findByTestId("back-button");
+    await act(async () => {
+      fireEvent.press(backButton);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: "/SpecificRecipe",
+      params: { recipe_slug: "test-recipe" },
+    });
+  });
+
+  it("handles back button press from store (default)", async () => {
+    mockParams = { id: "1", categoryNumber: "4" };
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Slightly bitter with a fruity undertone/i)).toBeTruthy();
+    });
+
+    const backButton = await screen.findByTestId("back-button");
+    await act(async () => {
+      fireEvent.press(backButton);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith("/Store");
+  });
+
 
 });
