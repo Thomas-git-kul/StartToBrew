@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEY = "@app:click_count";
@@ -14,6 +14,7 @@ const ClickCounterContext = createContext<ClickContext | null>(null);
 
 export function ClickCounterProvider({ children }: { children: React.ReactNode }) {
   const [count, setCount] = useState<number>(0);
+  const countRef = useRef<number>(0);
 
   useEffect(() => {
     (async () => {
@@ -27,6 +28,10 @@ export function ClickCounterProvider({ children }: { children: React.ReactNode }
     })();
   }, []);
 
+  useEffect(() => {
+    countRef.current = count;
+  }, [count]);
+
   const persist = useCallback(async (n: number) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, String(n));
@@ -36,17 +41,20 @@ export function ClickCounterProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const increment = useCallback(async (reason?: string) => {
+    let next = 0;
     setCount((prev) => {
-      const next = prev + 1;
+      next = prev + 1;
       // persist but don't await here
       persist(next);
       return next;
     });
-    return count + 1;
-  }, [count, persist]);
+    // ensure we return the computed next value, using the ref as a fallback
+    return next || (countRef.current + 1);
+  }, [persist]);
 
   const reset = useCallback(async () => {
     setCount(0);
+    countRef.current = 0;
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
     } catch (e) {
@@ -54,7 +62,7 @@ export function ClickCounterProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  const get = useCallback(() => count, [count]);
+  const get = useCallback(() => countRef.current, []);
 
   return (
     <ClickCounterContext.Provider value={{ count, increment, reset, get }}>

@@ -71,13 +71,6 @@ function TabLayout() {
 
       const handlePress = async (event: any) => {
         try {
-          // increment global click counter for analytics
-          try {
-            await increment("tab_press");
-          } catch (e) {
-            // ignore
-          }
-
           if (analytics) {
             logEvent(analytics, eventName);
           }
