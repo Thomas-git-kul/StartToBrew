@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/themed-text";
 import { CirclePlus, CircleMinus } from "lucide-react-native";
 import { supabase } from "@/supabase";
 import Spinner from "@/components/spinner";
+import { useAppRefresh } from "@/context/AppRefreshContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const IMAGE_WIDTH = SCREEN_WIDTH - 20;
@@ -32,6 +33,7 @@ export default function StoreItem() {
   useFonts();
 
   const router = useRouter();
+  const { triggerRefresh } = useAppRefresh();
   const { id, categoryNumber, from, recipe_slug } = useLocalSearchParams() as { id?: string, categoryNumber?: number, from?: string, recipe_slug?: string };
   const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,6 @@ export default function StoreItem() {
   const [quantity, setQuantity] = useState("1");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
 
   // Format price in Euro
   const formatter = useMemo(
@@ -52,42 +53,6 @@ export default function StoreItem() {
     () => (item?.price ?? 0) * parseInt(quantity),
     [item?.price, quantity]
   );
-
-  const loadCartCount = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setCartCount(0);
-        return;
-      }
-
-      // Get the user's cart
-      const { data: cart, error: cartError } = await supabase
-        .from("shopping_carts")
-        .select("id_cart")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (cartError || !cart) {
-        setCartCount(0);
-        return;
-      }
-
-      const { data: items, error: countError } = await supabase
-        .from("shopping_cart_items")
-        .select("id_cart_item", { count: "exact" })
-        .eq("cart_id", cart.id_cart);
-
-      if (countError) {
-        console.warn("Cart count error:", countError.message);
-        return;
-      }
-
-      setCartCount(items?.length ?? 0);
-    } catch (e: any) {
-      console.warn("Cart count fetch exception:", e?.message ?? e);
-    }
-  };
 
   const handleAddToOrder = async () => {
     if (!item) return;
@@ -185,7 +150,7 @@ export default function StoreItem() {
       // UI updates
       setQuantity("1");
       setSnackbarVisible(true);
-      loadCartCount();
+      triggerRefresh();
 
     } catch (err: any) {
       console.error("Unexpected order creation error:", err.message ?? err);
@@ -259,7 +224,6 @@ export default function StoreItem() {
     };
 
     load();
-    loadCartCount();
 
     return () => { mounted = false; };
   }, [id, categoryNumber]);
@@ -289,7 +253,7 @@ export default function StoreItem() {
             })
           }
           actionTestID="cart-button"
-          cartCount={cartCount}
+          showCartCount={true}
           iconNameLeft="ArrowLeft"
           actionTestIDLeft="back-button"
           onIconPressLeft={() => {
