@@ -4,6 +4,10 @@ import type { LucideIcon } from "lucide-react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { View } from "react-native";
+import { useState, useEffect } from "react";
+import { useIsFocused } from "@react-navigation/native";
+import { supabase } from "@/supabase";
+import { useAppRefresh } from "@/context/AppRefreshContext";
 
 const iconMap: Record<string, LucideIcon> = {
   ShoppingCart: Icons.ShoppingCart,
@@ -25,7 +29,7 @@ interface HeaderBarProps {
   onIconPress?: () => void;
   actionTestID?: string;
   filled?: boolean;
-  cartCount?: number;
+  showCartCount?: boolean;
   iconNameLeft?: keyof typeof iconMap;
   onIconPressLeft?: () => void;
   actionTestIDLeft?: string;
@@ -37,13 +41,57 @@ export default function HeaderBar({
   onIconPress,
   actionTestID,
   filled=false,
-  cartCount = 0,
+  showCartCount = false,
   iconNameLeft,
   onIconPressLeft,
   actionTestIDLeft,
 }: HeaderBarProps) {
   const IconComponent = iconName ? iconMap[iconName] : undefined;
   const IconComponentLeft = iconNameLeft ? iconMap[iconNameLeft] : undefined;
+  const isFocused = useIsFocused();
+  const { refreshKey } = useAppRefresh();
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    if (isFocused && showCartCount) {
+      const loadCartCount = async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            setCartCount(0);
+            return;
+          }
+
+          const { data: cart, error: cartError } = await supabase
+            .from("shopping_carts")
+            .select("id_cart")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (cartError || !cart) {
+            setCartCount(0);
+            return;
+          }
+
+          const { data: items, error: countError } = await supabase
+            .from("shopping_cart_items")
+            .select("id_cart_item", { count: "exact" })
+            .eq("cart_id", cart.id_cart);
+
+          if (countError) {
+            console.warn("Cart count error:", countError.message);
+            return;
+          }
+
+          setCartCount(items?.length ?? 0);
+        } catch (e: any) {
+          console.warn("Cart count fetch exception:", e?.message ?? e);
+        }
+      };
+
+      loadCartCount();
+    }
+  }, [isFocused, showCartCount, refreshKey]);
 
   return (
     <Appbar.Header style={{ backgroundColor: BASE_COLORS.LIGHT_BG, }} mode="center-aligned">

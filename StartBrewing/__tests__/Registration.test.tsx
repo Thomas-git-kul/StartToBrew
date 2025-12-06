@@ -1,4 +1,5 @@
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { NavigationContainer } from "@react-navigation/native";
 
 // 1. AsyncStorage mock
 jest.mock("@react-native-async-storage/async-storage", () =>
@@ -102,6 +103,11 @@ jest.mock("react-native-safe-area-context", () => {
 // Component pas NA alle mocks importeren
 import Registration from "../app/Registration";
 
+// Helper to wrap component in NavigationContainer
+const renderWithNavigation = (ui: React.ReactElement) => {
+  return render(<NavigationContainer>{ui}</NavigationContainer>);
+};
+
 describe("<Registration />", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -114,12 +120,12 @@ describe("<Registration />", () => {
   });
 
   it("renders the main header correctly", () => {
-    const { getByText } = render(<Registration />);
+    const { getByText } = renderWithNavigation(<Registration />);
     expect(getByText("Sign Up to StartToBrew")).toBeTruthy();
   });
 
   it("renders all section labels", () => {
-    const { getByText } = render(<Registration />);
+    const { getByText } = renderWithNavigation(<Registration />);
     expect(getByText("Full Name")).toBeTruthy();
     expect(getByText("Birth Date")).toBeTruthy();
     expect(getByText("Contact information")).toBeTruthy();
@@ -127,19 +133,19 @@ describe("<Registration />", () => {
   });
 
   it("renders the checkbox and toggles it on press", () => {
-    const { getByRole } = render(<Registration />);
+    const { getByRole } = renderWithNavigation(<Registration />);
     const checkbox = getByRole("checkbox");
     fireEvent.press(checkbox);
     expect(checkbox.props.accessibilityState.checked).toBe(true);
   });
 
   it("renders the create account button", () => {
-    const { getByText } = render(<Registration />);
+    const { getByText } = renderWithNavigation(<Registration />);
     expect(getByText("Create account")).toBeTruthy();
   });
 
   it("prevents signup if terms not agreed", async () => {
-    const { getByText } = render(<Registration />);
+    const { getByText } = renderWithNavigation(<Registration />);
     const button = getByText("Create account");
 
     fireEvent.press(button);
@@ -149,7 +155,7 @@ describe("<Registration />", () => {
   });
 
   it("matches snapshot", () => {
-    const tree = render(<Registration />).toJSON();
+    const tree = renderWithNavigation(<Registration />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 
@@ -160,7 +166,7 @@ describe("<Registration />", () => {
       error: null,
     });
 
-    const { getByPlaceholderText, getByText, getByRole } = render(<Registration />);
+    const { getByPlaceholderText, getByText, getByRole } = renderWithNavigation(<Registration />);
 
     // fill form
     fireEvent.changeText(getByPlaceholderText("Firstname"), "John");
@@ -193,7 +199,7 @@ describe("<Registration />", () => {
       error: null,
     });
 
-    const { getByPlaceholderText, getByText, getByRole } = render(<Registration />);
+    const { getByPlaceholderText, getByText, getByRole } = renderWithNavigation(<Registration />);
 
     // fill form
     fireEvent.changeText(getByPlaceholderText("Firstname"), "Jane");
