@@ -54,13 +54,13 @@ jobs:
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
         run: |
-          cd StartBrewing
-          vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
+          # Run link from repo root but use the StartBrewing vercel.json so the
+          # CLI doesn't double-append the project root.
+          vercel link --local-config StartBrewing/vercel.json --project start-to-brew --yes --token "$VERCEL_TOKEN"
 
       - name: Deploy
         id: deploy
         run: |
-          cd StartBrewing
           # Build the env flags for Vercel so the correct variable names are set for prod vs dev
           VAR_PREFIX="$SUPABASE_VAR_PREFIX"
           URL_VAR_NAME="${VAR_PREFIX}_SUPABASE_URL"
@@ -77,7 +77,8 @@ jobs:
           fi
 
           set -o pipefail
-          URL=$(vercel deploy "${PROD_FLAG[@]}" "${ENV_FLAGS[@]}" --token "$VERCEL_TOKEN" | tail -n1)
+          # Deploy from repo root but use the StartBrewing vercel.json config
+          URL=$(vercel deploy "${PROD_FLAG[@]}" "${ENV_FLAGS[@]}" --local-config StartBrewing/vercel.json --token "$VERCEL_TOKEN" | tail -n1)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Deployed URL: $URL"
 
