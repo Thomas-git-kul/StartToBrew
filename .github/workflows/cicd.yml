@@ -22,9 +22,8 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-    defaults:
-      run:
-        working-directory: StartBrewing
+    # Run Vercel commands explicitly from the StartBrewing directory to avoid
+    # incorrect path concatenation by the Vercel CLI.
 
     steps:
       - name: Checkout Repository
@@ -54,11 +53,14 @@ jobs:
 
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
-        run: vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
+        run: |
+          cd StartBrewing
+          vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
 
       - name: Deploy
         id: deploy
         run: |
+          cd StartBrewing
           # Build the env flags for Vercel so the correct variable names are set for prod vs dev
           VAR_PREFIX="$SUPABASE_VAR_PREFIX"
           URL_VAR_NAME="${VAR_PREFIX}_SUPABASE_URL"
@@ -74,7 +76,6 @@ jobs:
             PROD_FLAG=()
           fi
 
-          # Run vercel deploy in the StartBrewing directory (defaults.run) so Vercel uses that project root
           set -o pipefail
           URL=$(vercel deploy "${PROD_FLAG[@]}" "${ENV_FLAGS[@]}" --token "$VERCEL_TOKEN" | tail -n1)
           echo "url=$URL" >> $GITHUB_OUTPUT
