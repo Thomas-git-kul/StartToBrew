@@ -40,15 +40,13 @@ jobs:
       - name: Choose Supabase env for deploy
         run: |
           if [ "${IS_PROD}" = "true" ]; then
-            echo "SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
-            echo "SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-            echo "SUPABASE_VAR_PREFIX=NEXT_PUBLIC" >> $GITHUB_ENV
-            echo "Using PROD Supabase variables (secrets hidden)"
+            echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
+            echo "Using PROD Supabase variables (NEXT_PUBLIC_*)"
           else
-            echo "SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
-            echo "SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-            echo "SUPABASE_VAR_PREFIX=EXPO_PUBLIC" >> $GITHUB_ENV
-            echo "Using DEV (EXPO) Supabase variables (secrets hidden)"
+            echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
+            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
+            echo "Using DEV Supabase variables (EXPO_PUBLIC_*)"
           fi
 
       # Explicitly link to the correct Vercel project
@@ -61,18 +59,12 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
-          # Build the env flags for Vercel so the correct variable names are set for prod vs dev
-          VAR_PREFIX="$SUPABASE_VAR_PREFIX"
-          URL_VAR_NAME="${VAR_PREFIX}_SUPABASE_URL"
-          KEY_VAR_NAME="${VAR_PREFIX}_SUPABASE_ANON_KEY"
-
-          # Compose --env flags
-          ENV_FLAGS=(--env "$URL_VAR_NAME=$SUPABASE_URL" --env "$KEY_VAR_NAME=$SUPABASE_ANON_KEY")
-
-          # Add --prod for main branch
-          if [ "$IS_PROD" = "true" ]; then
+          # Compose --env flags using a simple if/else for prod vs dev
+          if [ "${IS_PROD}" = "true" ]; then
+            ENV_FLAGS=(--env "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" --env "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY")
             PROD_FLAG=(--prod)
           else
+            ENV_FLAGS=(--env "EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL" --env "EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY")
             PROD_FLAG=()
           fi
 
