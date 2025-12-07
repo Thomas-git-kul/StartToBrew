@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFonts } from "@/hooks/use-fonts";
 import { Calendar } from "react-native-calendars";
-import { Card, Chip, Button, ActivityIndicator } from "react-native-paper";
+import { Card, Chip, Button } from "react-native-paper";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
@@ -12,6 +12,8 @@ import { ThemedText } from "@/components/themed-text";
 import { Clock, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { supabase } from "@/supabase";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Spinner from "@/components/spinner";
 
 const BASE_SCREEN_WIDTH = 375;
 const scale = Dimensions.get("window").width / BASE_SCREEN_WIDTH;
@@ -193,7 +195,6 @@ export default function Agenda() {
               stepDate = new Date(currentStepTime);
           }
 
-          // 🔥 HIER gebeurt de correctie
           const today = new Date();
           today.setHours(0, 0, 0, 0);
 
@@ -300,7 +301,7 @@ export default function Agenda() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
       <Header
         title="Agenda"
         iconName="Calendar1"
@@ -310,50 +311,47 @@ export default function Agenda() {
         }}
       />
 
-      {calendarVisible && (
-        <View
-          style={{
-            backgroundColor: BASE_COLORS.LIGHT_BG,
-            borderRadius: 20,
-            overflow: "hidden",
-            shadowColor: BASE_COLORS.STONE700,
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            marginBottom: 20
-          }}
-        >
-          <Calendar
-            key={currentDate}
-            current={currentDate}
-            markedDates={markedDates}
-            markingType="custom"
-            onDayPress={(day) => setCurrentDate(day.dateString)}
-            theme={{
-              todayTextColor: BASE_COLORS.ACCENT_PRIMARY,
-              textMonthFontFamily: FontFamilies.BODY,
-              textDayHeaderFontFamily: FontFamilies.BODY,
-            }}
-            renderArrow={(direction) => {
-              if (direction === "left") {
-                return <ChevronLeft color={BASE_COLORS.ACCENT_PRIMARY} size={24} />;
-              } else {
-                return <ChevronRight color={BASE_COLORS.ACCENT_PRIMARY} size={24} />;
-              }
-            }}
-          />
-        </View>
-      )}
-
       {loading ? (
-        <View className="items-center justify-center my-4">
-          <ActivityIndicator 
-            animating size="small" 
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="mt-2">Loading progress...</ThemedText>
-        </View>
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <Spinner
+          title="Loading progress..."
+        />
+      ) : calendarVisible && (
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerClassName="mx-3"
+        >
+          <View
+            style={{
+              backgroundColor: BASE_COLORS.LIGHT_BG,
+              borderRadius: 20,
+              overflow: "hidden",
+              shadowColor: BASE_COLORS.STONE700,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              marginBottom: 20
+            }}
+          >
+            <Calendar
+              key={currentDate}
+              current={currentDate}
+              markedDates={markedDates}
+              markingType="custom"
+              onDayPress={(day) => setCurrentDate(day.dateString)}
+              theme={{
+                todayTextColor: BASE_COLORS.ACCENT_PRIMARY,
+                textMonthFontFamily: FontFamilies.BODY,
+                textDayHeaderFontFamily: FontFamilies.BODY,
+              }}
+              renderArrow={(direction) => {
+                if (direction === "left") {
+                  return <ChevronLeft color={BASE_COLORS.ACCENT_PRIMARY} size={24} />;
+                } else {
+                  return <ChevronRight color={BASE_COLORS.ACCENT_PRIMARY} size={24} />;
+                }
+              }}
+            />
+          </View>
+
           {phasesForSelectedDate.length === 0 ? (
             <ThemedText>No tasks for this day.</ThemedText>
           ) : (
@@ -388,7 +386,7 @@ export default function Agenda() {
                   >{brew.beer}</Text>
                   {brew.showProgressButton && brew.progressDate === currentDate && (
                   <Button onPress={() => {
-                    router.push({ pathname: "/progress", params: { id: brew.id_brew } });
+                    router.push({ pathname: "/progress", params: { id: brew.id_brew, from: "agenda" } });
                     // console.log(`Brew ID: ${brew.id_brew}`);
                   }}>
                     <Text 
@@ -436,6 +434,6 @@ export default function Agenda() {
           )}
         </ScrollView>
       )}
-    </View>
+    </SafeAreaView>
   );
 }

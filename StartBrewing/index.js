@@ -3,4 +3,5 @@ import 'expo-sqlite/localStorage/install';
 import 'react-native-url-polyfill/auto';
 
 // Then hand control to Expo Router
+import './utils/envDiagnostics';
 import 'expo-router/entry';

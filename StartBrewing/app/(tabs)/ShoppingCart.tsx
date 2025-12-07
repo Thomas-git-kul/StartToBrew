@@ -3,7 +3,7 @@ import { View, ScrollView } from "react-native";
 import { Button, ActivityIndicator } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import OrderCard from "@/components/ui/OrderCard";
 import { useFonts } from "@/hooks/use-fonts";
 import Header from '@/components/header';
@@ -12,6 +12,8 @@ import { ThemedText } from "@/components/themed-text";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/supabase";
 import { useFocusEffect } from "@react-navigation/native";
+import Spinner from "@/components/spinner";
+import PrimaryButton from "@/components/primaryButton"
 
 interface CartItem {
   store_item_id: number;
@@ -20,6 +22,7 @@ interface CartItem {
   quantity: number;
   price: string;
   starterkit: boolean;
+  categoryId?: number | null;
 }
 interface StoreItem {
   id_store_item: number;
@@ -32,6 +35,7 @@ interface StarterKit {
   id_starter_kit: number;
   name: string;
   price: number;
+  category_id: number;
 }
 
 const exampleImages: Record<number, any> = {
@@ -49,6 +53,8 @@ export default function ShoppingCart() {
 
   const [orders, setOrders] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { from, beforeFrom, id, categoryId } = useLocalSearchParams() as { from?: string, beforeFrom?: string, id?: number, categoryId?: number };
+  
 
   // Format Euro prices
   const formatter = useMemo(
@@ -111,6 +117,8 @@ export default function ShoppingCart() {
             price: `€${kit?.price?.toFixed(2) ?? "0.00"}`,
             starterkit: true,
             image: exampleImages[4], // example image for starter kits
+            categoryId: 4,
+
           };
         } else {
           // Regular store item
@@ -122,6 +130,7 @@ export default function ShoppingCart() {
             price: `€${storeItem?.price?.toFixed(2) ?? "0.00"}`,
             starterkit: false,
             image: exampleImages[storeItem?.category_id ?? 1],
+            categoryId: storeItem?.category_id ?? null,
           };
         }
       });
@@ -208,6 +217,23 @@ export default function ShoppingCart() {
     loadCart();
   }, []));
 
+  const debounceTimers = React.useRef<Record<string, number>>({});
+
+  const debouncedUpdateQuantity = (
+    store_item_id: number,
+    newQty: number,
+    starterkit: boolean
+  ) => {
+    const key = `${store_item_id}-${starterkit}`;
+    if (debounceTimers.current[key]) {
+      clearTimeout(debounceTimers.current[key]);
+    }
+    debounceTimers.current[key] = setTimeout(() => {
+      updateCartQuantity(store_item_id, newQty, starterkit);
+    }, 800);
+  };
+
+
   return (
     <SafeAreaView 
       className="flex-1" 
@@ -216,17 +242,27 @@ export default function ShoppingCart() {
 
       <Header
         title='Shopping Cart'
+        actionTestID="back-button"
+        iconNameLeft="ArrowLeft"
+        onIconPressLeft={() => {
+          if (from === "storeitem") {
+            router.push({
+              pathname: "/StoreItem",
+              params: {
+                id: id,
+                categoryNumber: categoryId,
+                from: beforeFrom,
+              },
+            });
+          } else {
+            router.push("/Store");
+          }
+        }}
       />
       {loading ? (
-        <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
-          <ActivityIndicator 
-            animating size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY} 
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading progress...
-          </ThemedText>
-        </SafeAreaView>
+        <Spinner 
+          title="Loading shoppingcart..."
+        />
       ) : (
         <ScrollView 
           className="mx-3"
@@ -235,25 +271,30 @@ export default function ShoppingCart() {
           <ThemedText type="title">Order Summary</ThemedText>
 
         {/* Order cards */}
-        <View className="mx-1">
-          {orders.map((order, index) => (
-            <OrderCard
-              key={index}
-              {...order}
-              starterkit={order.starterkit}
-              onPress={() =>
-                router.push({
-                  pathname: "/StoreItem",
-                  params: { id: order.store_item_id, categoryNumber: order.starterkit ? 4 : 0 },
-                } as any)
-              }
-              onQuantityChange={(newQty, starterkit) => updateCartQuantity(order.store_item_id, newQty, starterkit)}
-            />
-          ))}
-        </View>
+          <View className="mx-1">
+            {orders.map((order, index) => (
+              <OrderCard
+                key={index}
+                {...order}
+                starterkit={order.starterkit}
+                onPress={() =>
+                  router.push({
+                    pathname: "/StoreItem",
+                    params: {
+                      id: order.store_item_id,
+                      categoryNumber: order.categoryId?.toString() ?? "",
+                      from: "cart",
+                    },
+                  } as any)
+                }
+                onQuantityChange={(newQty, starterkit) => 
+                  debouncedUpdateQuantity(order.store_item_id, newQty, starterkit)}
+              />
+            ))}
+          </View>
 
           {/* Subtotal */}
-          <View className='mt-3 mr-2 items-end'>
+          <View className='mt-1 mr-2 items-end'>
             <ThemedText type="accentDark">Subtotal: {formatter.format(total)}</ThemedText>
           </View>
 
@@ -274,25 +315,16 @@ export default function ShoppingCart() {
           </View>
 
           {/* Proceed */}
-          <View className="mt-5">
-            <Button
-              mode="contained"
+          <View className="items-end mb-4">
+            <PrimaryButton
+              title="Proceed to payment"
               onPress={() => router.push({
                 pathname: "/Payment" as any,
                 params: { amount: Math.round(total * 100) } // convert to cents
               } as any)}
-              style={{
-                backgroundColor: BASE_COLORS.TEXT_DARK,
-                alignSelf: "flex-start",
-                marginBottom: 10
-              }}
-              contentStyle={{ paddingHorizontal: 12, paddingVertical: 6 }}
-              labelStyle={{ 
-                fontSize: 15,
-                color: BASE_COLORS.WHITE,
-                fontFamily: FontFamilies.BODY
-              }}
-            >Proceed to payment</Button>
+              testID="payment"
+              disabled={false}
+            />
           </View>
         </ScrollView>
       )}

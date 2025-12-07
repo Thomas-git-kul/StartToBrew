@@ -2,41 +2,79 @@
 
 exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
 <View>
-  <View
-    accessibilityState={
-      {
-        "busy": undefined,
-        "checked": undefined,
-        "disabled": undefined,
-        "expanded": undefined,
-        "selected": undefined,
+  <View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
       }
-    }
-    accessibilityValue={
-      {
-        "max": undefined,
-        "min": undefined,
-        "now": undefined,
-        "text": undefined,
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
       }
-    }
-    accessible={true}
-    collapsable={false}
-    focusable={true}
-    onBlur={[Function]}
-    onClick={[Function]}
-    onFocus={[Function]}
-    onResponderGrant={[Function]}
-    onResponderMove={[Function]}
-    onResponderRelease={[Function]}
-    onResponderTerminate={[Function]}
-    onResponderTerminationRequest={[Function]}
-    onStartShouldSetResponder={[Function]}
-    testID="mock-header-button"
-  >
-    <Text>
-      Header Button
-    </Text>
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      testID="mock-header-button"
+    >
+      <Text>
+        Header Button
+      </Text>
+    </View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      testID="back-button"
+    >
+      <Text>
+        Back Button
+      </Text>
+    </View>
   </View>
   <RCTScrollView
     className="flex-1 mx-3"
@@ -46,92 +84,39 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
       <Text>
         Starter Brew Kit IPA
       </Text>
-      <RCTScrollView
-        data={
-          [
-            {
-              "id": "0",
-              "source": {
-                "testUri": "../../../assets/images/starterkit2.png",
-              },
-            },
-          ]
-        }
-        getItem={[Function]}
-        getItemCount={[Function]}
-        horizontal={true}
-        keyExtractor={[Function]}
-        onContentSizeChange={[Function]}
-        onLayout={[Function]}
-        onMomentumScrollBegin={[Function]}
-        onMomentumScrollEnd={[Function]}
-        onScroll={[Function]}
-        onScrollBeginDrag={[Function]}
-        onScrollEndDrag={[Function]}
-        pagingEnabled={true}
-        removeClippedSubviews={false}
-        renderItem={[Function]}
-        scrollEventThrottle={0.0001}
-        showsHorizontalScrollIndicator={false}
-        stickyHeaderIndices={[]}
-        viewabilityConfigCallbackPairs={[]}
-      >
-        <View>
-          <View
-            onFocusCapture={[Function]}
-            onLayout={[Function]}
-            style={
-              [
-                {
-                  "flexDirection": "row",
-                },
-                null,
-              ]
-            }
-          >
-            <View
-              style={
-                {
-                  "borderRadius": 20,
-                  "height": 547.5,
-                  "overflow": "hidden",
-                  "width": 730,
-                }
-              }
-            >
-              <Image
-                resizeMode="cover"
-                source={
-                  {
-                    "testUri": "../../../assets/images/starterkit2.png",
-                  }
-                }
-                style={
-                  {
-                    "height": "100%",
-                    "width": "100%",
-                  }
-                }
-              />
-            </View>
-          </View>
-        </View>
-      </RCTScrollView>
       <View
         style={
           {
-            "alignItems": "center",
-            "flexDirection": "row",
-            "justifyContent": "space-between",
-            "marginBottom": 16,
-            "marginTop": 12,
+            "borderRadius": 20,
+            "height": 547.5,
+            "overflow": "hidden",
+            "shadowColor": "#44403c",
+            "shadowOffset": {
+              "height": 1,
+              "width": 0,
+            },
+            "shadowOpacity": 0.05,
           }
         }
       >
-        <Text>
-          € 32,99
-        </Text>
+        <Image
+          resizeMode="cover"
+          source={
+            {
+              "testUri": "../../../assets/images/starterkit2.png",
+            }
+          }
+          style={
+            {
+              "height": "100%",
+              "width": "100%",
+            }
+          }
+        />
       </View>
+      <Text>
+        € 32,99
+      </Text>
       <Text>
         Slightly bitter with a fruity undertone
       </Text>
@@ -151,7 +136,7 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
     }
   >
     <View
-      className="flex-row gap-2"
+      className="flex-row justify-between"
     >
       <View
         accessibilityState={
@@ -478,157 +463,40 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
       </View>
     </View>
     <View
-      collapsable={false}
-      style={
+      accessibilityState={
         {
-          "backgroundColor": "#78350F",
-          "borderRadius": 30,
-          "shadowColor": "#000",
-          "shadowOffset": {
-            "height": 0,
-            "width": 0,
-          },
-          "shadowOpacity": 0,
-          "shadowRadius": 0,
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
         }
       }
-      testID="fab-add-to-order-container-outer-layer"
-    >
-      <View
-        collapsable={false}
-        style={
-          {
-            "backgroundColor": "#78350F",
-            "borderColor": "transparent",
-            "borderRadius": 30,
-            "borderStyle": "solid",
-            "borderWidth": 0,
-            "flex": undefined,
-            "minWidth": 64,
-            "padding": 4,
-            "shadowColor": "#000",
-            "shadowOffset": {
-              "height": 0,
-              "width": 0,
-            },
-            "shadowOpacity": 0,
-            "shadowRadius": 0,
-          }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
         }
-        testID="fab-add-to-order-container"
-      >
-        <View
-          accessibilityRole="button"
-          accessibilityState={
-            {
-              "busy": undefined,
-              "checked": undefined,
-              "disabled": false,
-              "expanded": undefined,
-              "selected": undefined,
-            }
-          }
-          accessibilityValue={
-            {
-              "max": undefined,
-              "min": undefined,
-              "now": undefined,
-              "text": undefined,
-            }
-          }
-          accessible={true}
-          collapsable={false}
-          focusable={true}
-          onBlur={[Function]}
-          onClick={[Function]}
-          onFocus={[Function]}
-          onResponderGrant={[Function]}
-          onResponderMove={[Function]}
-          onResponderRelease={[Function]}
-          onResponderTerminate={[Function]}
-          onResponderTerminationRequest={[Function]}
-          onStartShouldSetResponder={[Function]}
-          style={
-            [
-              {
-                "overflow": "hidden",
-              },
-              {
-                "borderRadius": 30,
-              },
-            ]
-          }
-          testID="fab-add-to-order"
-        >
-          <View
-            style={
-              [
-                {
-                  "alignItems": "center",
-                  "flexDirection": "row",
-                  "justifyContent": "center",
-                },
-                undefined,
-              ]
-            }
-          >
-            <Text
-              numberOfLines={1}
-              selectable={false}
-              style={
-                [
-                  {
-                    "textAlign": "left",
-                  },
-                  {
-                    "color": "rgba(28, 27, 31, 1)",
-                    "writingDirection": "ltr",
-                  },
-                  [
-                    {
-                      "fontFamily": "System",
-                      "fontSize": 14,
-                      "fontWeight": "500",
-                      "letterSpacing": 0.1,
-                      "lineHeight": 20,
-                    },
-                    [
-                      {
-                        "marginHorizontal": 16,
-                        "marginVertical": 9,
-                        "textAlign": "center",
-                      },
-                      false,
-                      {
-                        "marginHorizontal": 24,
-                        "marginVertical": 10,
-                      },
-                      undefined,
-                      false,
-                      {
-                        "color": "rgba(255, 255, 255, 1)",
-                        "fontFamily": "Battambang",
-                        "fontSize": 16,
-                        "fontWeight": "500",
-                        "letterSpacing": 0.1,
-                        "lineHeight": 20,
-                      },
-                      {
-                        "color": "#FFFFFF",
-                        "fontFamily": "Battambang",
-                        "fontSize": 24,
-                      },
-                    ],
-                  ],
-                ]
-              }
-              testID="fab-add-to-order-text"
-            >
-              Add to order
-            </Text>
-          </View>
-        </View>
-      </View>
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      testID="add-to-order"
+    >
+      <Text>
+        Add to order
+      </Text>
     </View>
   </View>
 </View>

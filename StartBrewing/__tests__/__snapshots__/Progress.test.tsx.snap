@@ -1,29 +1,396 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`<Progress /> snapshot 1`] = `
-<RNCSafeAreaView
-  className="flex-1 justify-center items-center"
-  edges={
-    {
-      "bottom": "additive",
-      "left": "additive",
-      "right": "additive",
-      "top": "additive",
+[
+  <View>
+    <Text>
+      black IPA Progress
+    </Text>
+  </View>,
+  <View
+    style={
+      {
+        "paddingBottom": 12,
+      }
     }
-  }
-  style={
-    {
-      "backgroundColor": "#FAFAF9",
+  >
+    <View
+      className="flex-row items-center justify-between"
+    >
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
+          }
+        }
+      >
+        <Text>
+          <View
+            className="flex-row items-center justify-content"
+            style={
+              {
+                "marginLeft": -8,
+              }
+            }
+          >
+            <Text>
+              ChevronLeft
+            </Text>
+            <Text>
+              Previous
+            </Text>
+          </View>
+        </Text>
+      </View>
+      <Text
+        style={
+          {
+            "color": "#57534e",
+            "fontFamily": "Battambang_Bold",
+            "fontSize": 16,
+          }
+        }
+      >
+        Step 
+        1
+         / 
+        1
+      </Text>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
+          }
+        }
+      >
+        <Text>
+          <View
+            className="flex-row items-center justify-content"
+            style={
+              {
+                "marginRight": -8,
+              }
+            }
+          >
+            <Text>
+              Next
+            </Text>
+            <Text>
+              ChevronRight
+            </Text>
+          </View>
+        </Text>
+      </View>
+    </View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+        }
+      }
+    >
+      <Text>
+        <View
+          className="flex-row items-center justify-content"
+          style={
+            {
+              "marginInline": 8,
+              "marginRight": 8,
+            }
+          }
+        >
+          <Text>
+            CheckCheck
+          </Text>
+          <Text>
+             Complete step
+          </Text>
+        </View>
+      </Text>
+    </View>
+  </View>,
+  <RCTScrollView
+    className="px-3"
+    contentContainerStyle={
+      {
+        "paddingBottom": 95,
+      }
     }
-  }
->
-  <ActivityIndicator
-    animating={true}
-    color="#B45309"
-    size="large"
-  />
-  <Text>
-    Loading progress...
-  </Text>
-</RNCSafeAreaView>
+    showsVerticalScrollIndicator={false}
+  >
+    <View>
+      <View
+        className="flex-row justify-between items-center"
+      >
+        <Text>
+          60-min Citra
+        </Text>
+        <View>
+          <Text>
+            <Text
+              style={
+                {
+                  "flexWrap": "wrap",
+                }
+              }
+            >
+              100°C
+            </Text>
+          </Text>
+        </View>
+      </View>
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": 8,
+            "marginBottom": 24,
+            "marginTop": 8,
+            "padding": 16,
+            "shadowColor": "#44403c",
+            "shadowOffset": {
+              "height": 1,
+              "width": 0,
+            },
+            "shadowOpacity": 0.07,
+          }
+        }
+      >
+        <View>
+          <View
+            style={
+              {
+                "alignItems": "center",
+              }
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#292524",
+                  "fontFamily": "Battambang",
+                  "fontSize": 28,
+                  "marginBottom": 8,
+                }
+              }
+            >
+              1
+              m 
+              0
+              s
+            </Text>
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "opacity": 1,
+                }
+              }
+            >
+              <Text>
+                <Text>
+                  Play
+                </Text>
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View
+        className="mb-4"
+      >
+        <Text>
+          Ingredients:
+        </Text>
+        <View
+          className="flex-row items-center"
+        >
+          <Text>
+            • 
+            Malt
+             (
+            Hop
+            )
+            : 100 g
+          </Text>
+        </View>
+      </View>
+      <View>
+        <Text>
+          Description:
+        </Text>
+        <View
+          className="mb-2"
+        >
+          <Text>
+            At T-60: briefly kill the flame to prevent foam, add hops, then resume boil
+            .
+          </Text>
+        </View>
+      </View>
+      <View
+        className="mt-2 flex-row items-start gap-4"
+      >
+        <View>
+          <Text>
+            Lightbulb
+          </Text>
+        </View>
+        <Text>
+          Use a spoon
+        </Text>
+      </View>
+    </View>
+  </RCTScrollView>,
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "backgroundColor": "#78350F",
+        "borderRadius": 45,
+        "bottom": 25,
+        "opacity": 1,
+        "position": "absolute",
+        "right": 10,
+      }
+    }
+    testID="chat-button"
+  >
+    <Text />
+  </View>,
+]
 `;

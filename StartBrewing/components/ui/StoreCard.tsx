@@ -41,6 +41,8 @@ export default function StoreCard({ image, title, price, onPress }: StoreCardPro
               borderTopLeftRadius: 12,
               borderTopRightRadius: 12,
               marginBottom: 3,
+              borderBottomWidth: 1,
+              borderColor: BASE_COLORS.STONE200
             }}
             resizeMode="cover"
           />

@@ -1,4 +1,5 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
@@ -12,7 +13,9 @@ import {
 } from "@react-navigation/native";
 
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { ClickCounterProvider } from "@/context/ClickCounterContext";
 import { AppRefreshProvider } from "@/context/AppRefreshContext";
+
 
 // React Native Paper (MD3)
 import {
@@ -53,10 +56,6 @@ function RootInner() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="modal"
-          options={{ presentation: "modal", title: "Modal" }}
-        />
       </Stack>
 
       {levelUp && (
@@ -75,6 +74,8 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? CombinedDarkTheme : CombinedLightTheme;
 
+  
+
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
@@ -82,7 +83,9 @@ export default function RootLayout() {
           <UserProgressProvider>
             <AppRefreshProvider>
               <FavoritesProvider>
-                <RootInner />
+                <ClickCounterProvider>
+                  <RootInner />
+                </ClickCounterProvider>
               </FavoritesProvider>
             </AppRefreshProvider>
           </UserProgressProvider>

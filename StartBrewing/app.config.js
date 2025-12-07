@@ -5,6 +5,7 @@ export default ({ config }) => ({
   web: {
     ...config.web,
     bundler: 'metro',
+    output: "static",
     favicon: config.web?.favicon || "./assets/favicon.png",
     manifest: config.web?.manifest || {
       name: process.env.APP_TITLE || config.name,

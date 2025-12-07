@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { View, ScrollView, Image, Pressable, FlatList, Dimensions, Text, TextInput } from "react-native";
+import { View, ScrollView, Image, Pressable, Dimensions, Text, TextInput } from "react-native";
 import { Button, Snackbar, ActivityIndicator } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,6 +10,10 @@ import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { CirclePlus, CircleMinus } from "lucide-react-native";
 import { supabase } from "@/supabase";
+import Spinner from "@/components/spinner";
+import { useAppRefresh } from "@/context/AppRefreshContext";
+import PrimaryButton from "@/components/primaryButton";
+import SecondaryButton from "@/components/secondaryButton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const IMAGE_WIDTH = SCREEN_WIDTH - 20;
@@ -23,7 +27,7 @@ const exampleImages: Record<number, any> = {
   2: require("@/assets/images/hop.png"),
   3: require("@/assets/images/yeast.png"),
   4: require("@/assets/images/starterkit2.png"),
-  5: require("@/assets/images/Airlock.png"),
+  5: require("@/assets/images/equipment.png"),
   6: require("@/assets/images/measurement.png"),
 };
 
@@ -31,25 +35,14 @@ export default function StoreItem() {
   useFonts();
 
   const router = useRouter();
-  const { id } = useLocalSearchParams() as { id?: number };
-  const { categoryNumber } = useLocalSearchParams() as { categoryNumber?: number };
-  // console.log("cartCount:", cartCount);
-
+  const { triggerRefresh } = useAppRefresh();
+  const { id, categoryNumber, from, recipe_slug } = useLocalSearchParams() as { id?: string, categoryNumber?: number, from?: string, recipe_slug?: string };
+  const [item, setItem] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [item, setItem] = useState<{
-    id: string;
-    name: string;
-    category: number;
-    description: string;
-    price: number;
-    images: { id: string; source: any }[];
-  } | null>(null);
 
   const [quantity, setQuantity] = useState("1");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-  
 
   // Format price in Euro
   const formatter = useMemo(
@@ -62,42 +55,6 @@ export default function StoreItem() {
     () => (item?.price ?? 0) * parseInt(quantity),
     [item?.price, quantity]
   );
-
-  const loadCartCount = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setCartCount(0);
-        return;
-      }
-
-      // Get the user's cart
-      const { data: cart, error: cartError } = await supabase
-        .from("shopping_carts")
-        .select("id_cart")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (cartError || !cart) {
-        setCartCount(0);
-        return;
-      }
-
-      const { data: items, error: countError } = await supabase
-        .from("shopping_cart_items")
-        .select("id_cart_item", { count: "exact" })
-        .eq("cart_id", cart.id_cart);
-
-      if (countError) {
-        console.warn("Cart count error:", countError.message);
-        return;
-      }
-
-      setCartCount(items?.length ?? 0);
-    } catch (e: any) {
-      console.warn("Cart count fetch exception:", e?.message ?? e);
-    }
-  };
 
   const handleAddToOrder = async () => {
     if (!item) return;
@@ -195,7 +152,7 @@ export default function StoreItem() {
       // UI updates
       setQuantity("1");
       setSnackbarVisible(true);
-      loadCartCount();
+      triggerRefresh();
 
     } catch (err: any) {
       console.error("Unexpected order creation error:", err.message ?? err);
@@ -206,6 +163,8 @@ export default function StoreItem() {
     let mounted = true;
 
     const load = async () => {
+      setLoading(true);
+      setItem(null);
       if (!id) {
         setLoading(false);
         return;
@@ -267,25 +226,15 @@ export default function StoreItem() {
     };
 
     load();
-    loadCartCount();
 
     return () => { mounted = false; };
   }, [id, categoryNumber]);
 
-  if (loading) {
+  if (loading || !item) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: BASE_COLORS.LIGHT_BG }}>
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator 
-            animating
-            size="large"
-            color={BASE_COLORS.ACCENT_PRIMARY}
-          />
-          <ThemedText type="defaultText" className="mt-3">
-            Loading item...
-          </ThemedText>
-        </View>
-      </SafeAreaView>
+      <Spinner 
+        title="Loading product..."
+      />
     );
   }
 
@@ -295,9 +244,33 @@ export default function StoreItem() {
         <Header
           title="Store"
           iconName="ShoppingCart"
-          onIconPress={() => router.push("/ShoppingCart")}
-          actionTestID="back-button"
-          cartCount={cartCount}
+          onIconPress={() =>
+            router.push({
+              pathname: "/ShoppingCart",
+              params: {
+                from: "storeitem",
+                beforeFrom: from,
+                id: id,
+                categoryId: categoryNumber,
+              },
+            })
+          }
+          actionTestID="cart-button"
+          showCartCount={true}
+          iconNameLeft="ArrowLeft"
+          actionTestIDLeft="back-button"
+          onIconPressLeft={() => {
+            if (from === "cart") {
+              router.push("/ShoppingCart");
+            } else if (from === "specificrecipe") {
+              router.push({
+                pathname: "/SpecificRecipe",
+                params: { recipe_slug: recipe_slug }
+              });
+            } else {
+              router.push("/Store");
+            }
+          }}
         />
 
         {/* Scrollable Content */}
@@ -306,60 +279,33 @@ export default function StoreItem() {
           showsVerticalScrollIndicator={false}
         >
           <ThemedText type="titleBlack">{item?.name ?? (loading ? "Loading…" : "Item")}</ThemedText>
-          {/* Image Carousel */}
-          <FlatList
-            data={item?.images ?? []} // Ensure fallback is an empty array
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(image, index) => `${image.id ?? index}`} // Use index as fallback
-            renderItem={({ item: image }) => {
-              return (
-                <View
-                  style={{
-                    width: IMAGE_WIDTH,
-                    height: IMAGE_HEIGHT,
-                    borderRadius: 20,
-                    overflow: "hidden",
-                  }}
-                >
-                  <Image
-                    source={image.source}
-                    style={{
-                      width: "100%",
-                      height:"100%"
-                    }}
-                    resizeMode="cover"
-                  />
-                </View>
-              );
-            }}
-            onMomentumScrollEnd={(ev) => {
-              const index = Math.round(
-                ev.nativeEvent.contentOffset.x / ev.nativeEvent.layoutMeasurement.width
-              );
-              setCurrentIndex(index);
-            }}
-          />
-          
-          {/* Product information */}
           <View
             style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 16,
-              marginTop: 12,
+              height: IMAGE_HEIGHT,
+              borderRadius: 20,
+              overflow: "hidden",
+              shadowColor: BASE_COLORS.STONE700,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
             }}
           >
-            <ThemedText
-              type="titleBlack"
-              style={{ color: BASE_COLORS.ACCENT_PRIMARY }}
-            >
-              {formatter.format(totalPrice)}
-            </ThemedText>
+            <Image
+              source={item?.images && item.images.length > 0 ? item.images[0].source : require("@/assets/images/Premiumkit.png")}
+              style={{ width: "100%", height: "100%" }}
+              resizeMode="cover"
+            />
           </View>
-
+          
+          {/* Product information */}
+          <ThemedText
+            type="titleBlack"
+            style={{ 
+              color: BASE_COLORS.ACCENT_PRIMARY, 
+              marginBottom: 8,
+            }}
+          >
+            {formatter.format(totalPrice)}
+          </ThemedText>
           <ThemedText type="defaultText" className="mb-3">
             {item?.description ?? (loading ? "Loading…" : "Item")}
           </ThemedText>
@@ -378,7 +324,7 @@ export default function StoreItem() {
           }}
         >
           {/* Quantity Selector */}
-          <View className="flex-row gap-2">
+          <View className="flex-row justify-between">
             <Pressable
               testID="quantity-minus"
               onPress={() => {
@@ -426,29 +372,12 @@ export default function StoreItem() {
             </Pressable>
           </View>
 
-          <Button
-            mode="contained"
-            testID="fab-add-to-order"
+          <PrimaryButton
+            title="Add to order"
+            testID="add-to-order"
             onPress={handleAddToOrder}
-            labelStyle={{ 
-              fontSize: Math.min(18 * scale, 24),
-              color: BASE_COLORS.WHITE,
-              fontFamily: FontFamilies.BODY,            
-            }}
-            style={{
-              borderRadius: 30,
-              backgroundColor: BASE_COLORS.TEXT_DARK,
-              padding: 4,
-            }}
-            theme={{
-              fonts: {
-                labelLarge: {
-                  fontSize: 16,
-                  fontFamily: FontFamilies.BODY,
-                },
-              },
-            }}
-          >Add to order</Button>
+            size={18}
+          />
         </View>
 
         <Snackbar
@@ -471,19 +400,22 @@ export default function StoreItem() {
                   color: BASE_COLORS.STONE600,
                 }}
               >Item added to cart</Text>
-            <Button
+            <SecondaryButton
+              title="Back"
+              testID="added-back"
               onPress={() => {
-                router.push({ pathname: "/Store"});
+                if (from === "cart") {
+                  router.push("/ShoppingCart");
+                } else if (from === "specificrecipe") {
+                  router.push({
+                    pathname: "/SpecificRecipe",
+                    params: { recipe_slug: recipe_slug }
+                  });
+                } else {
+                  router.push("/Store");
+                }
               }}
-            >
-              <Text 
-                style={{ 
-                  fontSize: Math.min(16 * scale, 22),
-                  fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-              >Back to Store</Text>
-            </Button>
+            />
           </View>
         </Snackbar>
       </SafeAreaView>

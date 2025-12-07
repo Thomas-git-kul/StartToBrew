@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { View, Dimensions, Text, Alert, ScrollView } from "react-native";
 import {
-  View,
-  TouchableOpacity,
-  Text,
-  StyleSheet,
   ActivityIndicator,
-  Alert,
-  ScrollView,
+  Avatar,
+  Button,
   Modal,
-} from "react-native";
+  Portal,
+} from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -16,8 +14,19 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "@/supabase";
 import { Image } from "expo-image";
 import { router, useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import Header from "@/components/header";
 import { getBeerImageSource } from "@/hooks/beer-image";
+import { useFonts } from "@/hooks/use-fonts";
+import StatisticsCard from "@/components/ui/StatisticsCard";
+import Badge from "@/components/ui/Badge";
+import CompletedCard from "@/components/ui/CompletedCard";
+import Dialog from "@/components/dialog";
+import Spinner from "@/components/spinner";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const BASE_SCREEN_WIDTH = 375;
+const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 type Profile = {
   id: string;
@@ -35,7 +44,7 @@ type BadgeWithEarned = {
   name: string;
   description: string | null;
   category: string;
-  icon_url: string | null; // resolved public URL
+  icon_url: string | null;
   earned_at: string;
 };
 
@@ -56,6 +65,8 @@ type CompletedBrewWithImage = Brew & {
 };
 
 export default function Account() {
+  const fontsLoaded = useFonts();
+
   const [loading, setLoading] = useState(true);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState("");
@@ -63,16 +74,20 @@ export default function Account() {
   const [level, setLevel] = useState("");
   const [bio, setBio] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [isDialogVisible, setDialogVisible] = useState(false);
 
-  const [badges, setBadges] = useState<BadgeWithEarned[]>([]);
+  const [badges, setBadges] = useState<BadgeWithEarned[]>([]); // earned badges
+  const [allBadges, setAllBadges] = useState<BadgeWithEarned[]>([]); // alle mogelijke badges
   const [badgesLoading, setBadgesLoading] = useState(false);
+  const [showAllBadges, setShowAllBadges] = useState(false);
 
   const [completedBrews, setCompletedBrews] = useState<
     CompletedBrewWithImage[]
   >([]);
   const [brewsLoading, setBrewsLoading] = useState(false);
+  const [showAllBrews, setShowAllBrews] = useState(false);
 
-  // voor badge-modal
+  // badge-modal
   const [selectedBadge, setSelectedBadge] = useState<BadgeWithEarned | null>(
     null
   );
@@ -141,6 +156,7 @@ export default function Account() {
   const fetchBadges = useCallback(async (accountId: string) => {
     setBadgesLoading(true);
 
+    // 1) welke badges zijn earned voor deze user?
     const { data: accountBadges, error: abErr } = await supabase
       .from("account_badges")
       .select("badge_id, earned_at")
@@ -148,44 +164,34 @@ export default function Account() {
       .order("earned_at", { ascending: false });
 
     if (abErr) {
-      setBadgesLoading(false);
       console.error("Error fetching account_badges", abErr);
-      return;
-    }
-
-    if (!accountBadges || accountBadges.length === 0) {
       setBadges([]);
-      setBadgesLoading(false);
-      return;
-    }
-
-    const badgeIds = accountBadges.map(
-      (row: { badge_id: any }) => row.badge_id
-    );
-
-    const { data: badgesData, error: bErr } = await supabase
-      .from("badges")
-      .select("id_badge, code, name, description, icon_url, category")
-      .in("id_badge", badgeIds);
-
-    if (bErr) {
-      setBadgesLoading(false);
-      console.error("Error fetching badges", bErr);
-      return;
-    }
-
-    if (!badgesData) {
-      setBadges([]);
+      setAllBadges([]);
       setBadgesLoading(false);
       return;
     }
 
     const earnedById = new Map<number, string>();
-    for (const row of accountBadges) {
-      earnedById.set(row.badge_id, row.earned_at);
+    (accountBadges || []).forEach(
+      (row: { badge_id: number; earned_at: string }) => {
+        earnedById.set(row.badge_id, row.earned_at);
+      }
+    );
+
+    // 2) alle badges ophalen
+    const { data: badgesData, error: bErr } = await supabase
+      .from("badges")
+      .select("id_badge, code, name, description, icon_url, category");
+
+    if (bErr || !badgesData) {
+      console.error("Error fetching badges", bErr);
+      setBadges([]);
+      setAllBadges([]);
+      setBadgesLoading(false);
+      return;
     }
 
-    const merged: BadgeWithEarned[] = badgesData.map((b: any) => {
+    const mergedAll: BadgeWithEarned[] = badgesData.map((b: any) => {
       let resolvedIconUrl: string | null = null;
 
       if (b.icon_url && typeof b.icon_url === "string") {
@@ -216,12 +222,17 @@ export default function Account() {
       };
     });
 
-    merged.sort((a, b) => {
-      if (!a.earned_at || !b.earned_at) return 0;
-      return new Date(b.earned_at).getTime() - new Date(a.earned_at).getTime();
-    });
+    const earnedBadges = mergedAll
+      .filter((b) => !!b.earned_at)
+      .sort((a, b) => {
+        if (!a.earned_at || !b.earned_at) return 0;
+        return (
+          new Date(b.earned_at).getTime() - new Date(b.earned_at).getTime()
+        );
+      });
 
-    setBadges(merged);
+    setBadges(earnedBadges);
+    setAllBadges(mergedAll);
     setBadgesLoading(false);
   }, []);
 
@@ -309,6 +320,16 @@ export default function Account() {
     }
   }, [userId, fetchBadges, fetchCompletedBrews]);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+      if (userId) {
+        fetchBadges(userId);
+        fetchCompletedBrews(userId);
+      }
+    }, [userId, fetchProfile, fetchBadges, fetchCompletedBrews])
+  );
+
   const onSignOut = useCallback(async () => {
     await supabase.auth.signOut();
     Alert.alert("Afgemeld");
@@ -323,11 +344,7 @@ export default function Account() {
     }, [router]);
 
     if (loading) {
-      return (
-        <SafeAreaView>
-          <ActivityIndicator />
-        </SafeAreaView>
-      );
+      return <Spinner title="Loading account information..." />;
     }
 
     const badgeCount = badges.length;
@@ -338,474 +355,273 @@ export default function Account() {
       setSelectedBadge(null);
     };
 
+    const lockedBadges = allBadges.filter((b) => !b.earned_at);
+    const hasMoreBadges = allBadges.length > badges.length;
+
+    const badgesToDisplay = showAllBadges
+      ? [...badges, ...lockedBadges]
+      : badges.slice(0, 3);
+
     return (
-      <>
+      <SafeAreaView
+        className="flex-1"
+        style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+      >
+        <Header
+          title={username}
+          actionTestID="log-out-icon"
+          iconName="LogOut"
+          onIconPress={() => setDialogVisible(true)}
+          actionTestIDLeft="settings-icon"
+          iconNameLeft="Settings"
+          onIconPressLeft={onEditProfile}
+        />
         <ScrollView
-          className="flex-1"
-          style={{
-            backgroundColor: BASE_COLORS.LIGHT_BG,
-            paddingHorizontal: 16,
-            paddingTop: 8,
-          }}
+          contentContainerClassName="mx-3"
+          style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <Header
-            title="Account"
-            iconName="ArrowRight"
-            onIconPress={() => router.push("/HomePage")}
-            actionTestID="account-button"
-          />
-
-          {/* Profiel header */}
-          <View style={styles.section}>
-            <View style={styles.avatarRow}>
-              <View style={styles.avatarTouch}>
-                {avatarUrl ? (
-                  <Image
-                    source={{ uri: avatarUrl }}
-                    style={styles.avatar}
-                    onError={() => setAvatarUrl(null)}
-                  />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarFallback]}>
-                    <Text style={styles.initials}>{initials || "?"}</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.profileTextBlock}>
-                <ThemedText style={styles.nameText}>
-                  {fullName || "Name not set"}
-                </ThemedText>
-                {!!username && (
-                  <ThemedText style={styles.usernameText}>
-                    @{username}
-                  </ThemedText>
-                )}
-                {!!bio && (
-                  <ThemedText style={styles.bioText} numberOfLines={3}>
-                    {bio}
-                  </ThemedText>
-                )}
-              </View>
-            </View>
-          </View>
-
-          {/* Statistieken */}
-          <View style={[styles.section, styles.cardsRow]}>
-            <View style={styles.infoCard}>
-              <ThemedText style={styles.cardLabel}>Badges</ThemedText>
-              <ThemedText style={styles.cardValue}>{badgeCount}</ThemedText>
-              <ThemedText style={styles.cardHint}>
-                {badgeCount === 1 ? "badge earned" : "badges earned"}
-              </ThemedText>
-            </View>
-
-            <View style={styles.infoCard}>
-              <ThemedText style={styles.cardLabel}>Brews</ThemedText>
-              <ThemedText style={styles.cardValue}>
-                {completedBrewsCount}
-              </ThemedText>
-              <ThemedText style={styles.cardHint}>
-                {completedBrewsCount === 1
-                  ? "brew completed"
-                  : "brews completed"}
-              </ThemedText>
-            </View>
-
-            <View style={styles.infoCard}>
-              <ThemedText style={styles.cardLabel}>Level</ThemedText>
-              <ThemedText style={styles.cardValue}>{level || "-"}</ThemedText>
-              <ThemedText style={styles.cardHint}>
-                Your brewing level
-              </ThemedText>
-            </View>
-          </View>
-
-          {/* Badges-overzicht (enkel foto) */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Your badges</ThemedText>
-
-            {badgesLoading ? (
-              <ActivityIndicator style={{ marginTop: 8 }} />
-            ) : badgeCount === 0 ? (
-              <ThemedText style={styles.emptyText}>
-                You have not earned any badges yet. Brew some beers to earn
-                badges!
-              </ThemedText>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.badgeScrollContent}
+          <View className="flex-row items-start justify-between mt-2">
+            <View>
+              {avatarUrl ? (
+                <Avatar.Image
+                  source={{ uri: avatarUrl || "" }}
+                  size={Math.min(90 * scale, 300)}
+                  style={{
+                    backgroundColor: BASE_COLORS.LIGHT_BG,
+                    overflow: "hidden",
+                    borderWidth: 1,
+                    borderColor: BASE_COLORS.STONE300,
+                  }}
+                  onError={() => setAvatarUrl(null)}
+                />
+              ) : (
+                <Avatar.Text
+                  size={Math.min(90 * scale, 120)}
+                  label={initials || "?"}
+                  color={BASE_COLORS.TEXT_DARK}
+                  style={{ backgroundColor: BASE_COLORS.STONE200 }}
+                  labelStyle={{
+                    padding: 4,
+                    fontFamily: FontFamilies.BODY,
+                    fontSize: Math.min(30 * scale, 40),
+                  }}
+                />
+              )}
+              <Text
+                style={{
+                  fontSize: Math.min(16 * scale, 24),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.STONE900,
+                  marginBottom: 4,
+                }}
               >
-                {badges.map((badge) => (
-                  <TouchableOpacity
-                    key={badge.id_badge}
-                    style={styles.badgeCard}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      setSelectedBadge(badge);
-                      setBadgeModalVisible(true);
-                    }}
-                  >
-                    <View style={styles.badgeIconContainer}>
-                      {badge.icon_url ? (
-                        <Image
-                          source={{ uri: badge.icon_url }}
-                          style={styles.badgeIconImage}
-                          contentFit="cover"
-                        />
-                      ) : (
-                        <View
-                          style={[
-                            styles.badgeIconImage,
-                            styles.badgeIconFallback,
-                          ]}
-                        >
-                          <Text style={styles.badgeIconText}>★</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                {fullName || "Name not set"}
+              </Text>
+            </View>
+
+            <View>
+              <View
+                className="grid grid-cols-3 gap-2"
+                style={{
+                  marginBottom: 24,
+                }}
+              >
+                <StatisticsCard title="Badges" value={badgeCount} />
+                <StatisticsCard title="Brews" value={completedBrewsCount} />
+                <StatisticsCard title="Level" value={level || 0} />
+              </View>
+            </View>
+          </View>
+          {!!bio && (
+            <ThemedText
+              type="defaultText"
+              style={{ color: BASE_COLORS.STONE500 }}
+              className="mb-6"
+            >
+              {bio}
+            </ThemedText>
+          )}
+
+          {/* Completed brews eerst */}
+          <View className="flex-row justify-between">
+            <ThemedText type="title">Completed</ThemedText>
+            {completedBrewsCount > 3 && (
+              <Button
+                mode="text"
+                onPress={() => setShowAllBrews((s) => !s)}
+                labelStyle={{
+                  fontSize: Math.min(14 * scale, 18),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >
+                {showAllBrews ? "See less" : "See more"}
+              </Button>
             )}
           </View>
-
-          {/* Completed brews */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Completed brews</ThemedText>
-
+          <View>
             {brewsLoading ? (
-              <ActivityIndicator style={{ marginTop: 8 }} />
+              <Spinner title="Loading brews..." size="small" />
             ) : completedBrewsCount === 0 ? (
-              <ThemedText style={styles.emptyText}>
+              <ThemedText type="defaultText">
                 You have not completed any brews yet.
               </ThemedText>
             ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{ marginTop: 8 }}
-              >
-                {completedBrews.map((brew) => (
-                  <TouchableOpacity
+              <View className="grid grid-cols-3 gap-2 mb-8">
+                {(showAllBrews
+                  ? completedBrews
+                  : completedBrews.slice(0, 3)
+                ).map((brew) => (
+                  <CompletedCard
                     key={brew.id_brew}
-                    style={styles.brewCard}
-                    activeOpacity={0.8}
-                    disabled={!brew.recipe_slug}
-                    onPress={() =>
-                      brew.recipe_slug &&
-                      router.push({
-                        pathname: "/SpecificRecipe",
-                        params: { recipe_slug: brew.recipe_slug },
-                      })
+                    title={brew.name.trim()}
+                    date={
+                      brew.start_date
+                        ? new Date(brew.start_date).toLocaleDateString()
+                        : undefined
                     }
-                  >
-                    {brew.image && (
-                      <Image
-                        source={brew.image}
-                        style={styles.brewImage}
-                        contentFit="cover"
-                      />
-                    )}
-                    <ThemedText style={styles.brewName} numberOfLines={1}>
-                      {brew.name.trim()}
-                    </ThemedText>
-                    {brew.start_date && (
-                      <ThemedText style={styles.brewMeta}>
-                        {new Date(brew.start_date).toLocaleDateString()}
-                      </ThemedText>
-                    )}
-                  </TouchableOpacity>
+                    image={brew.image}
+                    onPress={() => {
+                      if (brew.recipe_slug) {
+                        router.push({
+                          pathname: "/SpecificRecipe",
+                          params: {
+                            recipe_slug: brew.recipe_slug,
+                            from: "account",
+                          },
+                        });
+                      }
+                    }}
+                  />
                 ))}
-              </ScrollView>
+              </View>
             )}
           </View>
 
-          {/* Acties */}
-          <View style={styles.actionsColumn}>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonPrimary]}
-              onPress={onEditProfile}
-            >
-              <Text style={styles.buttonText}>Change profile</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.buttonSecondary]}
-              onPress={onSignOut}
-            >
-              <Text style={styles.buttonSecondaryText}>Sign off</Text>
-            </TouchableOpacity>
+          {/* Badges onder completed */}
+          <View className="flex-row justify-between">
+            <ThemedText type="title">Earned badges</ThemedText>
+            {hasMoreBadges && (
+              <Button
+                mode="text"
+                onPress={() => setShowAllBadges((s) => !s)}
+                labelStyle={{
+                  fontSize: Math.min(14 * scale, 18),
+                  fontFamily: FontFamilies.BODY,
+                  color: BASE_COLORS.TEXT_DARK,
+                }}
+              >
+                {showAllBadges ? "See less" : "See more"}
+              </Button>
+            )}
           </View>
+          {badgesLoading ? (
+            <Spinner title="Loading badges..." size="small" />
+          ) : badgesToDisplay.length === 0 ? (
+            <ThemedText type="defaultText" className="mb-8">
+              Brew beers to earn badges.
+            </ThemedText>
+          ) : (
+            <View className="grid grid-cols-3 gap-2 mb-8">
+              {badgesToDisplay.map((badge) => {
+                const isEarned = !!badge.earned_at;
+                return (
+                  <View
+                    key={badge.id_badge}
+                    style={{
+                      alignItems: "center",
+                      opacity: isEarned ? 1 : 0.35, // greyed out voor locked badges
+                    }}
+                  >
+                    <Badge
+                      id_badge={badge.id_badge}
+                      icon_url={badge.icon_url}
+                      onPress={() => {
+                        setSelectedBadge(badge);
+                        setBadgeModalVisible(true);
+                      }}
+                    />
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </ScrollView>
 
         {/* Badge detail modal */}
-        <Modal
-          visible={badgeModalVisible && !!selectedBadge}
-          animationType="fade"
-          transparent
-          onRequestClose={closeBadgeModal}
-        >
-          <View style={styles.modalBackdrop}>
-            <View style={styles.modalContent}>
-              {selectedBadge?.icon_url && (
-                <Image
-                  source={{ uri: selectedBadge.icon_url }}
-                  style={styles.modalBadgeImage}
-                  contentFit="contain"
-                />
-              )}
-
-              {!!selectedBadge?.description && (
-                <ThemedText style={styles.modalBadgeDescription}>
-                  {selectedBadge.description}
-                </ThemedText>
-              )}
-
-              {!!selectedBadge?.earned_at && (
-                <ThemedText style={styles.modalBadgeEarned}>
-                  Earned on{" "}
-                  {new Date(selectedBadge.earned_at).toLocaleDateString()}
-                </ThemedText>
-              )}
-
-              <TouchableOpacity
-                style={styles.modalCloseButton}
+        <Portal>
+          <Modal
+            visible={badgeModalVisible && !!selectedBadge}
+            onDismiss={closeBadgeModal}
+            contentContainerStyle={{
+              marginInline: 48,
+              paddingInline: 20,
+              paddingBottom: 24,
+              alignSelf: "center",
+              borderRadius: 16,
+              backgroundColor: BASE_COLORS.WHITE,
+            }}
+          >
+            {selectedBadge?.icon_url && (
+              <Image
+                source={{ uri: selectedBadge.icon_url }}
+                style={{
+                  width: 180,
+                  height: 180,
+                  alignSelf: "center",
+                  opacity: selectedBadge?.earned_at ? 1 : 0.35, // ook in modal gedesatureerd
+                }}
+              />
+            )}
+            {!!selectedBadge?.earned_at && (
+              <ThemedText type="subTitle">
+                {new Date(selectedBadge.earned_at).toLocaleDateString()}
+              </ThemedText>
+            )}
+            {!!selectedBadge?.description && (
+              <ThemedText type="defaultText" className="mb-8">
+                {selectedBadge.description}
+              </ThemedText>
+            )}
+            <View className="flex-row justify-center">
+              <Button
+                mode="contained"
                 onPress={closeBadgeModal}
+                labelStyle={{
+                  fontSize: Math.min(16 * scale, 24),
+                  color: BASE_COLORS.WHITE,
+                  fontFamily: FontFamilies.BODY,
+                }}
+                style={{
+                  borderRadius: 30,
+                  backgroundColor: BASE_COLORS.TEXT_DARK,
+                }}
               >
-                <Text style={styles.modalCloseButtonText}>Close</Text>
-              </TouchableOpacity>
+                Close
+              </Button>
             </View>
-          </View>
-        </Modal>
-      </>
+          </Modal>
+        </Portal>
+
+        <Dialog
+          title="Sign Out"
+          text="Are you sure you want to sign out?"
+          cancelBtn="Sign Out"
+          yesBtn="No, I want to stay"
+          visible={isDialogVisible}
+          onDismiss={() => setDialogVisible(false)}
+          onPressCancel={onSignOut}
+          onPressYes={() => setDialogVisible(false)}
+        />
+      </SafeAreaView>
     );
   };
 
-  const styles = StyleSheet.create({
-    section: {
-      marginTop: 16,
-    },
-    avatarRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 16,
-    },
-    avatar: {
-      width: 96,
-      height: 96,
-      borderRadius: 48,
-      backgroundColor: BASE_COLORS.LIGHT_BG || "#eee",
-    },
-    avatarTouch: {
-      borderRadius: 48,
-      overflow: "hidden",
-    },
-    avatarFallback: {
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    initials: {
-      fontSize: 32,
-      fontWeight: "bold",
-      color: BASE_COLORS.TEXT_DARK,
-    },
-    profileTextBlock: {
-      flex: 1,
-    },
-    nameText: {
-      fontSize: 20,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 4,
-    },
-    usernameText: {
-      fontSize: 14,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.8,
-      marginBottom: 8,
-    },
-    bioText: {
-      fontSize: 14,
-      color: BASE_COLORS.TEXT_DARK,
-    },
-    cardsRow: {
-      flexDirection: "row",
-      gap: 12,
-    },
-    infoCard: {
-      flex: 1,
-      backgroundColor: BASE_COLORS.WHITE,
-      borderRadius: 10,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-    },
-    cardLabel: {
-      fontSize: 14,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 4,
-    },
-    cardValue: {
-      fontSize: 22,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.ACCENT_PRIMARY,
-      marginBottom: 4,
-    },
-    cardHint: {
-      fontSize: 12,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.7,
-    },
-    sectionTitle: {
-      fontSize: 16,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 8,
-    },
-    emptyText: {
-      fontSize: 14,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.8,
-    },
-    badgeScrollContent: {
-      paddingVertical: 4,
-      paddingRight: 4,
-    },
-    badgeCard: {
-      width: 90,
-      height: 90,
-      marginRight: 12,
-      backgroundColor: BASE_COLORS.WHITE,
-      borderRadius: 45,
-      alignItems: "center",
-      justifyContent: "center",
-      borderWidth: 1,
-      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-    },
-    badgeIconContainer: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
-      overflow: "hidden",
-      backgroundColor: BASE_COLORS.WHITE,
-    },
-    badgeIconImage: {
-      width: "100%",
-      height: "100%",
-    },
-    badgeIconFallback: {
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    },
-    badgeIconText: {
-      fontSize: 28,
-      color: BASE_COLORS.WHITE,
-      fontWeight: "bold",
-    },
-    actionsColumn: {
-      marginTop: 32,
-      gap: 12,
-    },
-    button: {
-      height: 44,
-      paddingHorizontal: 16,
-      borderRadius: 8,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    buttonPrimary: {
-      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    },
-    buttonSecondary: {
-      backgroundColor: BASE_COLORS.WHITE,
-      borderWidth: 1,
-      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-    },
-    buttonText: { color: BASE_COLORS.WHITE, fontWeight: "bold" },
-    buttonSecondaryText: { color: BASE_COLORS.TEXT_DARK, fontWeight: "bold" },
-    brewCard: {
-      width: 140,
-      marginRight: 12,
-      backgroundColor: BASE_COLORS.WHITE,
-      borderRadius: 10,
-      padding: 8,
-      borderWidth: 1,
-      borderColor: BASE_COLORS.TEXT_DARK || "#ddd",
-    },
-    brewImage: {
-      width: "100%",
-      height: 110,
-      borderRadius: 8,
-      marginBottom: 6,
-    },
-    brewName: {
-      fontSize: 14,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 2,
-    },
-    brewMeta: {
-      fontSize: 12,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.8,
-    },
-    modalBackdrop: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 24,
-    },
-    modalContent: {
-      width: "100%",
-      borderRadius: 16,
-      padding: 16,
-      backgroundColor: BASE_COLORS.WHITE,
-      alignItems: "center",
-    },
-    modalBadgeImage: {
-      width: 180,
-      height: 180,
-      marginBottom: 16,
-    },
-    modalBadgeName: {
-      fontSize: 18,
-      fontFamily: FontFamilies.HEADING,
-      color: BASE_COLORS.TEXT_DARK,
-      marginBottom: 8,
-      textAlign: "center",
-    },
-    modalBadgeDescription: {
-      fontSize: 14,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.9,
-      textAlign: "center",
-      marginBottom: 8,
-    },
-    modalBadgeEarned: {
-      fontSize: 12,
-      color: BASE_COLORS.TEXT_DARK,
-      opacity: 0.8,
-      marginBottom: 16,
-    },
-    modalCloseButton: {
-      marginTop: 4,
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-      borderRadius: 8,
-      backgroundColor: BASE_COLORS.ACCENT_PRIMARY,
-    },
-    modalCloseButtonText: {
-      color: BASE_COLORS.WHITE,
-      fontWeight: "bold",
-      fontSize: 14,
-    },
-  });
+  if (fontsLoaded === false) {
+    return null;
+  }
 
   return <AccountInner />;
 }
