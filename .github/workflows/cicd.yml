@@ -66,7 +66,7 @@ jobs:
           else
             ENV_FLAGS=(--env "EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL" --env "EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY")
             PROD_FLAG=()
-
+          fi
 
           set -o pipefail
           # Deploy from repo root but use the StartBrewing vercel.json config
