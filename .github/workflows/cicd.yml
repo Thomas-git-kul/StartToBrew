@@ -9,62 +9,11 @@ jobs:
     uses: ./.github/workflows/test-reusable.yml
     with:
       node-version: "20"
-
-  build:
-    name: Build Expo Web App
-    runs-on: ubuntu-latest
-
-    env:
-      # Explicit flag to indicate production builds
-      IS_PROD: ${{ github.ref == 'refs/heads/main' }}
-      EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-      EXPO_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_SERVICE_ID }}
-      EXPO_PUBLIC_EMAILJS_TEMPLATE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID }}
-      EXPO_PUBLIC_EMAILJS_PUBLIC_KEY: ${{ secrets.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY }}
-
-    defaults:
-      run:
-        working-directory: StartBrewing
-
-    needs: [tests]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Choose Supabase env
-        run: |
-          if [ "${IS_PROD}" = "true" ]; then
-              echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
-              echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-            echo "Using PROD Supabase variables (secrets hidden)"
-          else
-            echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
-            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-            echo "Using DEV (EXPO) Supabase variables (secrets hidden)"
-          fi
-
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: StartBrewing/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - run: npm install
-
-      - name: Build web export
-        run: npm run build:web
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: StartBrewing/dist
-
+  # The explicit build job was removed per request; Vercel will build on deploy.
+  # Deploy job now receives the correct Supabase env vars for prod vs dev.
   deploy:
     name: Deploy to Vercel
-    needs: build
+    needs: tests
     runs-on: ubuntu-latest
 
     env:
@@ -72,6 +21,10 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    defaults:
+      run:
+        working-directory: StartBrewing
 
     steps:
       - name: Checkout Repository
@@ -82,14 +35,22 @@ jobs:
         with:
           node-version: 20
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: web-build
-          path: StartBrewing/dist
-
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
+
+      - name: Choose Supabase env for deploy
+        run: |
+          if [ "${IS_PROD}" = "true" ]; then
+            echo "SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
+            echo "SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
+            echo "SUPABASE_VAR_PREFIX=NEXT_PUBLIC" >> $GITHUB_ENV
+            echo "Using PROD Supabase variables (secrets hidden)"
+          else
+            echo "SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
+            echo "SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
+            echo "SUPABASE_VAR_PREFIX=EXPO_PUBLIC" >> $GITHUB_ENV
+            echo "Using DEV (EXPO) Supabase variables (secrets hidden)"
+          fi
 
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
@@ -98,10 +59,24 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
-          # Deploy the pre-built web artifact directory to avoid rebuilding on Vercel
-          URL=$(vercel deploy \
-            $([ "$IS_PROD" = "true" ] && echo "--prod") \
-            --token "$VERCEL_TOKEN")
+          # Build the env flags for Vercel so the correct variable names are set for prod vs dev
+          VAR_PREFIX="$SUPABASE_VAR_PREFIX"
+          URL_VAR_NAME="${VAR_PREFIX}_SUPABASE_URL"
+          KEY_VAR_NAME="${VAR_PREFIX}_SUPABASE_ANON_KEY"
+
+          # Compose --env flags
+          ENV_FLAGS=(--env "$URL_VAR_NAME=$SUPABASE_URL" --env "$KEY_VAR_NAME=$SUPABASE_ANON_KEY")
+
+          # Add --prod for main branch
+          if [ "$IS_PROD" = "true" ]; then
+            PROD_FLAG=(--prod)
+          else
+            PROD_FLAG=()
+          fi
+
+          # Run vercel deploy in the StartBrewing directory (defaults.run) so Vercel uses that project root
+          set -o pipefail
+          URL=$(vercel deploy "${PROD_FLAG[@]}" "${ENV_FLAGS[@]}" --token "$VERCEL_TOKEN" | tail -n1)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Deployed URL: $URL"
 
