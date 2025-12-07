@@ -253,7 +253,6 @@ function HomePageContent() {
                   (completedSteps || []).forEach((step: CompletedStepRow) => {
                       const dur = step.steps?.duration_min ?? null;
                       const fullDuration = dur && dur > 0 ? dur : avgDuration;
-                      console.log(`Brew ${brew.name}: time_left = ${step.time_left}`);
 
                       const lastUpdate = step.completed_at ? new Date(step.completed_at).getTime() : null;
                       const now = Date.now();
@@ -276,8 +275,6 @@ function HomePageContent() {
                         return;
                       }
 
-                      console.log(`Brew ${brew.name}`, 'dynamicRemaining:', dynamicRemaining);
-
                       // Step is in_progress → partial progress
                       if (step.time_left != null) {
                         const remaining = step.time_left;
@@ -292,8 +289,7 @@ function HomePageContent() {
                   // 3) Progress berekenen
                   const progress =
                     totalWorkload > 0 ? completedWorkload / totalWorkload : 0;
-
-                  console.log(`Brew ${brew.name} \nTotal: ${totalWorkload} \nCompleted: ${completedWorkload} \nAvg: ${avgDuration}, Progress: ${progress * 100}%`);
+                    
                   return { id: brew.id_brew, name: brew.name, progress };
                 })
               )
