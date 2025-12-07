@@ -60,7 +60,7 @@ interface BrewStep {
 
 interface PhaseEntry {
   title: string;
-  steps: { text: string; time?: number | null }[];
+  steps: { text: string; time?: number | null; stepNumber?: number; totalSteps?: number }[];
 }
 
 interface BrewEntry {
@@ -175,7 +175,7 @@ export default function Agenda() {
         currentStepTime.setHours(0, 0, 0, 0);
 
         // Nu elke stap datum geven
-        allSteps.forEach((step) => {
+        allSteps.forEach((step, globalStepIdx) => {
           let stepDate = new Date(currentStepTime);
 
           // Als completed → Overschrijf datum
@@ -237,6 +237,8 @@ export default function Agenda() {
           phaseEntry.steps.push({
             text: step.title,
             time: step.duration_min,
+            stepNumber: globalStepIdx + 1,
+            totalSteps: allSteps.length,
           });
 
           // Show progress button
@@ -402,12 +404,12 @@ export default function Agenda() {
                 {brew.phases.map((phase: PhaseEntry, phaseIndex: number) => (
                   <View key={phaseIndex} className="mb-4">
                     <ThemedText type="subTitle">{phase.title}</ThemedText>
-                    {phase.steps.map((step, stepIndex) => (
+                    {phase.steps.map((stepEntry, stepIndex) => (
                       <View key={stepIndex} className="flex-row items-center ml-4 mt-1">
                         <ThemedText>
-                          • {step.text}
+                          • {stepEntry.text}{stepEntry.stepNumber ? ` (${stepEntry.stepNumber}/${stepEntry.totalSteps})` : ""}
                         </ThemedText>
-                        {step.time != null && (
+                        {stepEntry.time != null && (
                           <Chip
                             style={{
                               marginLeft: 10,
@@ -422,7 +424,7 @@ export default function Agenda() {
                             }}
                             icon={() => <Clock size={Math.min( 12 * scale, 20)} color={BASE_COLORS.TEXT_DARK} />}
                           >
-                            {formatDuration(step.time)}
+                            {formatDuration(stepEntry.time)}
                           </Chip>
                         )}
                       </View>
