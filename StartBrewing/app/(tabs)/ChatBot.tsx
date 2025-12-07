@@ -11,6 +11,7 @@ import Header from '@/components/header';
 import { Button } from 'react-native-paper';
 import Spinner from '@/components/spinner';
 import { useLocalSearchParams } from "expo-router";
+import { supabase } from '@/supabase';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SendHorizonal, Plus, BotMessageSquare } from "lucide-react-native";
 
@@ -34,11 +35,128 @@ export default function ChatBot() {
   const scrollViewRef = useRef<ScrollView>(null);
   const router = useRouter();
 
-  const { fromProgress } = useLocalSearchParams();
+  const params = useLocalSearchParams() as any;
+  const recipe_slug = params?.recipe_slug as string | undefined;
+  const last_step_id = params?.last_step_id as string | undefined;
+  const fromParam = params?.from ?? params?.fromProgress ?? null;
+
+  const [contextData, setContextData] = useState<any | null>(null);
   
+  const buildPrompt = (userInput: string, context: any) => {
+    if (!context) return userInput;
+
+    const { brew, currentStep, steps, phases } = context;
+
+    let recipeInfo = "";
+    if (brew) {
+      recipeInfo += `Recipe: ${brew.name || brew.recipe_slug}\n`;
+      recipeInfo += `Batch size: ${brew.batch_size_l || 19}L\n\n`;
+    }
+
+    // Include all steps organized by phase
+    if (steps && steps.length > 0 && phases) {
+      recipeInfo += `Complete Recipe Steps:\n`;
+      phases.forEach((phase: any) => {
+        const phaseSteps = steps.filter((s: any) => s.phase_id === phase.phase_id);
+        if (phaseSteps.length > 0) {
+          recipeInfo += `\n${phase.name || phase.title || 'Phase'}:\n`;
+          phaseSteps.forEach((step: any, idx: number) => {
+            recipeInfo += `  ${idx + 1}. ${step.title}`;
+            if (step.duration_min) recipeInfo += ` (${step.duration_min} min)`;
+            if (step.temp_c_target) recipeInfo += ` [${step.temp_c_target}°C]`;
+            recipeInfo += `\n`;
+          });
+        }
+      });
+      recipeInfo += `\n`;
+    }
+
+    if (currentStep) {
+      const phase = phases?.find((p: any) => p.phase_id === currentStep.phase_id);
+      recipeInfo += `Current Phase: ${phase?.name || phase?.title || 'Unknown'}\n`;
+      recipeInfo += `Current Step: ${currentStep.title || currentStep.step_id}\n`;
+      if (currentStep.description_md) {
+        recipeInfo += `Step Description: ${currentStep.description_md}\n`;
+      }
+      if (currentStep.temp_c_target) {
+        recipeInfo += `Target Temperature: ${currentStep.temp_c_target}°C\n`;
+      }
+      if (currentStep.duration_min) {
+        recipeInfo += `Duration: ${currentStep.duration_min} minutes\n`;
+      }
+    }
+
+    const fullPrompt = `
+  You are a smart assistant that helps with brewing recipes. Here is the context:
+  ${recipeInfo}
+
+  Now answer the user's question based on this context:
+  ${userInput}
+  `;
+
+    return fullPrompt;
+  };
+
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
+
+  useEffect(() => {
+    const loadContext = async () => {
+      if (!recipe_slug) return;
+      try {
+        // Find the brew if possible (match recipe_slug + last_step_id if provided)
+        let brew: any = null;
+        if (last_step_id) {
+          const { data: brewRows } = await supabase
+            .from('brews')
+            .select('*')
+            .eq('recipe_slug', recipe_slug)
+            .eq('last_step_id', last_step_id)
+            .limit(1);
+          brew = (brewRows as any[])?.[0] ?? null;
+        }
+
+        // Load phases & steps for the recipe
+        const { data: phases } = await supabase
+          .from('phases')
+          .select('*')
+          .eq('recipe_slug', recipe_slug)
+          .order('position', { ascending: true });
+
+        let allStepsLocal: any[] = [];
+        for (const p of (phases ?? []) as any[]) {
+          const { data: steps } = await supabase
+            .from('steps')
+            .select('*')
+            .eq('phase_id', p.phase_id)
+            .order('step_id', { ascending: true });
+          allStepsLocal = [...allStepsLocal, ...(steps ?? [])];
+        }
+
+        const currentStep = allStepsLocal.find((s) => s.step_id === last_step_id) ?? null;
+
+        // Load brew_step row for the current step if we have a brew and step
+        let brewStep: any = null;
+        if (brew?.id_brew && currentStep?.step_id) {
+          const { data: brewSteps } = await supabase
+            .from('brew_steps')
+            .select('*')
+            .eq('id_brew', brew.id_brew)
+            .eq('step_id', currentStep.step_id)
+            .limit(1);
+          brewStep = (brewSteps as any[])?.[0] ?? null;
+        }
+
+        setContextData({ brew, phases, steps: allStepsLocal, currentStep, brewStep });
+      } catch (e) {
+        console.error('Failed to load chatbot context', e);
+        setContextData(null);
+      }
+    };
+
+    loadContext();
+  }, [recipe_slug, last_step_id]);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -47,7 +165,7 @@ export default function ChatBot() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      setImage(result.assets[0]); // assets[0] bevat uri en base64
+      setImage(result.assets[0]); // assets[0] contains uri and base64
     }
   };
 
@@ -58,7 +176,7 @@ export default function ChatBot() {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      setImage(result.assets[0]); // assets[0] bevat uri en base64
+      setImage(result.assets[0]); // assets[0] contains uri and base64
     }
   };
 
@@ -72,11 +190,19 @@ export default function ChatBot() {
     setLoading(true);
 
     try {
-      const promptText = input || "[image]";
+      const promptText = buildPrompt(input || "[image]", contextData);
       const body: { prompt: string; image?: string } = { prompt: promptText };
       if (image?.base64) {
         body.image = image.base64;
       }
+
+      // Attach hidden context when available (brew, recipe, steps, current step)
+      if (contextData) {
+        // Keep payload shape simple; backend can decide how to use it.
+        (body as any).context = contextData;
+      }
+
+      console.log("Sending to ChatBot function:", body);
 
       const res = await fetch("https://neeqemudecnuayqlvohk.supabase.co/functions/v1/ChatBot", {
         method: 'POST',
@@ -91,10 +217,10 @@ export default function ChatBot() {
       setMessages(prev => [...prev, { from: 'bot', text: data.text }]);
     } catch (err) {
       console.error(err);
-      setMessages(prev => [...prev, { from: 'bot', text: 'Sorry, er ging iets mis.' }]);
+      setMessages(prev => [...prev, { from: 'bot', text: 'Sorry, something went wrong.' }]);
     } finally {
       setLoading(false);
-      setImage(null); // reset image na verzenden
+      setImage(null); // reset image after sending
     }
   };
 
@@ -117,7 +243,7 @@ export default function ChatBot() {
           }
           setImage({ uri, base64 } as any);
         };
-        reader.readAsDataURL(file); // base64 voor web is dataURL
+        reader.readAsDataURL(file); // base64 for web is dataURL
       }
     };
     input.click();
@@ -128,12 +254,12 @@ export default function ChatBot() {
       pickImageWeb();
     } else {
       Alert.alert(
-        "Foto",
-        "Kies een optie",
+        "Photo",
+        "Choose an option",
         [
-          { text: "Upload foto", onPress: pickImage },
-          { text: "Neem foto", onPress: takePhoto },
-          { text: "Annuleer", style: "cancel" }
+          { text: "Upload photo", onPress: pickImage },
+          { text: "Take photo", onPress: takePhoto },
+          { text: "Cancel", style: "cancel" }
         ]
       );
     }
@@ -148,13 +274,8 @@ export default function ChatBot() {
       actionTestIDLeft='back-header'
       iconNameLeft='ArrowLeft'
       onIconPressLeft={() => {
-        if (fromProgress) {
-          router.push(`/progress?id=${fromProgress}`);
-        } else {
-          router.back();
-        }
+        router.back();
       }}
-
     />
 
     <KeyboardAvoidingView
@@ -228,7 +349,7 @@ export default function ChatBot() {
           }
         </ScrollView>
 
-        {/* INPUT ROW absoluut onderaan */}
+        {/* INPUT ROW at the bottom */}
         <View className="flex flex-row items-center justify-between gap-2 py-2">
           <Pressable
             onPress={pickOrTakePhoto}
