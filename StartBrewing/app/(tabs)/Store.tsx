@@ -40,7 +40,6 @@ export default function StorePage() {
   const [selectedCategories, setSelectedCategories] = React.useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Item[]>([]);
-  const [cartCount, setCartCount] = useState(0);
 
   const exampleImages: Record<number, any> = {
     1: require("@/assets/images/malt.png"),
@@ -144,47 +143,6 @@ export default function StorePage() {
     }, [])
   );
 
-  useEffect(() => {
-    if (isFocused) {
-      const loadCartCount = async () => {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            setCartCount(0);
-            return;
-          }
-
-          const { data: cart, error: cartError } = await supabase
-            .from("shopping_carts")
-            .select("id_cart")
-            .eq("user_id", user.id)
-            .maybeSingle();
-
-          if (cartError || !cart) {
-            setCartCount(0);
-            return;
-          }
-
-          const { data: items, error: countError } = await supabase
-            .from("shopping_cart_items")
-            .select("id_cart_item", { count: "exact" })
-            .eq("cart_id", cart.id_cart);
-
-          if (countError) {
-            console.warn("Cart count error:", countError.message);
-            return;
-          }
-
-          setCartCount(items?.length ?? 0);
-        } catch (e: any) {
-          console.warn("Cart count fetch exception:", e?.message ?? e);
-        }
-      };
-
-      loadCartCount();
-    }
-  }, [isFocused]);
-
   if (loading) {
     return (
       <Spinner
@@ -203,7 +161,7 @@ export default function StorePage() {
         iconName="ShoppingCart"
         onIconPress={() => router.push("/ShoppingCart" as any)}
         actionTestID="cart-button"
-        cartCount={cartCount}
+        showCartCount={true}
       />
 
       {/* Horizontal scrollable category chips */}
@@ -300,7 +258,7 @@ export default function StorePage() {
               onPress={() =>
                 router.push({
                   pathname: "/StoreItem",
-                  params: { id: item.id, categoryNumber: item.categoryId, cartCount: cartCount },
+                  params: { id: item.id, categoryNumber: item.categoryId },
                 } as any)
               }
             />

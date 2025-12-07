@@ -416,6 +416,7 @@ function HomePageContent() {
                       isFavorite: favoriteSlugs.includes(beer.recipe_slug)
                         ? "true"
                         : "false",
+                      from: "home"
                     },
                   })
                 )}

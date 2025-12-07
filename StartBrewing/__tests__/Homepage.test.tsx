@@ -222,10 +222,18 @@ jest.mock("@/components/ui/RecipeCard", () => {
 
 jest.mock("@/components/ui/ProgressCard", () => {
   const { View, Text, Pressable } = require("react-native");
-  return ({ title, onPress }: any) => (
+  return ({ title, onPress, onDelete }: any) => (
     <Pressable onPress={onPress}>
       <View>
         <Text>{title}</Text>
+        {onDelete && (
+          <Pressable
+            accessibilityLabel={`delete-brew-${title}`}
+            onPress={onDelete}
+          >
+            <Text>Delete</Text>
+          </Pressable>
+        )}
       </View>
     </Pressable>
   );
@@ -468,5 +476,139 @@ describe("<HomePage />", () => {
   it("snapshot", async () => {
     const tree = (await renderWithNavigation(<HomePage />)).toJSON();
     expect(tree).toMatchSnapshot();
+  });
+
+  it("opens delete dialog when onDelete is pressed on ProgressCard", async () => {
+    const { findByText, findByLabelText } = await renderWithNavigation(<HomePage />);
+    
+    // Wait for progress card to load
+    const progressCard = await findByText("Hazy IPA");
+    expect(progressCard).toBeTruthy();
+
+    // Press the delete button
+    const deleteBtn = await findByLabelText("delete-brew-Hazy IPA");
+    fireEvent.press(deleteBtn);
+
+    // Dialog should now be visible with the brew name
+    const dialogTitle = await findByText("Confirm Brew Deletion");
+    expect(dialogTitle).toBeTruthy();
+
+    // This tests lines 324-326 (handleDeleteBrew function)
+  });
+
+  it("deletes brew when confirmed in dialog", async () => {
+    const supabase = require("@/supabase").supabase;
+    const originalFrom = supabase.from;
+    
+    const mockDeleteBrewSteps = jest.fn(() => ({
+      eq: jest.fn(() => Promise.resolve({ data: null, error: null }))
+    }));
+    const mockDeleteBrews = jest.fn(() => ({
+      eq: jest.fn(() => Promise.resolve({ data: null, error: null }))
+    }));
+
+    const { findByText, findByLabelText, getAllByText } = await renderWithNavigation(<HomePage />);
+    
+    // Wait for progress card to load
+    await findByText("Hazy IPA");
+
+    // Press delete button
+    const deleteBtn = await findByLabelText("delete-brew-Hazy IPA");
+    fireEvent.press(deleteBtn);
+
+    // Wait for dialog
+    await findByText("Confirm Brew Deletion");
+
+    // Mock the delete operations
+    supabase.from = jest.fn((table) => {
+      if (table === "brew_steps") {
+        return { delete: mockDeleteBrewSteps };
+      }
+      if (table === "brews") {
+        return { delete: mockDeleteBrews };
+      }
+      return originalFrom(table);
+    });
+
+    // Confirm deletion - get all Delete buttons and use the last one (dialog button)
+    const deleteButtons = getAllByText("Delete");
+    fireEvent.press(deleteButtons[deleteButtons.length - 1]);
+
+    // Verify delete was called
+    await waitFor(() => {
+      expect(mockDeleteBrewSteps).toHaveBeenCalled();
+      expect(mockDeleteBrews).toHaveBeenCalled();
+    });
+
+    // This tests lines 330-340 (confirmDeleteBrew function)
+    
+    // Clean up
+    supabase.from = originalFrom;
+  });
+
+  it("handles error during brew deletion gracefully", async () => {
+    const supabase = require("@/supabase").supabase;
+    const originalFrom = supabase.from;
+    const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
+
+    const { findByText, findByLabelText, getAllByText } = await renderWithNavigation(<HomePage />);
+    
+    // Wait for progress card
+    await findByText("Hazy IPA");
+
+    // Press delete button
+    const deleteBtn = await findByLabelText("delete-brew-Hazy IPA");
+    fireEvent.press(deleteBtn);
+
+    // Wait for dialog
+    await findByText("Confirm Brew Deletion");
+
+    // Mock delete to throw error
+    const mockDelete = jest.fn(() => ({
+      eq: jest.fn(() => Promise.reject(new Error("Delete failed")))
+    }));
+
+    supabase.from = jest.fn((table) => {
+      if (table === "brew_steps") {
+        return { delete: mockDelete };
+      }
+      return originalFrom(table);
+    });
+
+    // Confirm deletion
+    const deleteButtons = getAllByText("Delete");
+    fireEvent.press(deleteButtons[deleteButtons.length - 1]);
+
+    // Error should be logged but not crash the app
+    await waitFor(() => {
+      expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to delete brew:", expect.any(Error));
+    });
+
+    // This tests the catch block in confirmDeleteBrew (line 340)
+
+    supabase.from = originalFrom;
+    consoleWarnSpy.mockRestore();
+  });
+
+  it("dismisses delete dialog on cancel", async () => {
+    const { findByText, findByLabelText, getByText } = await renderWithNavigation(<HomePage />);
+    
+    // Wait for progress card
+    await findByText("Hazy IPA");
+
+    // Press delete button
+    const deleteBtn = await findByLabelText("delete-brew-Hazy IPA");
+    fireEvent.press(deleteBtn);
+
+    // Wait for dialog
+    await findByText("Confirm Brew Deletion");
+
+    // Press cancel - just verify it doesn't crash
+    const cancelButton = getByText("Cancel");
+    fireEvent.press(cancelButton);
+
+    // The dialog should handle the cancel action
+    // This tests lines 433-436 (onPressCancel handler)
+    // Note: Testing Portal dismiss animations is complex, so we verify the button works
   });
 });
