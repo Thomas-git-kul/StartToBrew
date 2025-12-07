@@ -86,6 +86,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-build
+          path: web-build
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
@@ -97,8 +98,13 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
-          # Deploy the pre-built web artifact directory to avoid rebuilding on Vercel
-          URL=$(vercel deploy\
+          echo "Workspace contents:"; ls -la || true
+          echo "web-build contents:"; ls -la web-build || true
+
+          DEPLOY_DIR="web-build"
+
+          echo "Deploying from $DEPLOY_DIR"
+          URL=$(vercel deploy "$DEPLOY_DIR" \
             $([ "$IS_PROD" = "true" ] && echo "--prod") \
             --token "$VERCEL_TOKEN" --confirm)
           echo "url=$URL" >> $GITHUB_OUTPUT
