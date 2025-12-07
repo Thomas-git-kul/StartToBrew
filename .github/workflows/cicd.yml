@@ -111,7 +111,7 @@ jobs:
         id: deploy
         run: |
           # Deploy the pre-built web artifact directory to avoid rebuilding on Vercel
-          URL=$(vercel deploy StartBrewing/dist \
+          URL=$(vercel deploy \
             $([ "$IS_PROD" = "true" ] && echo "--prod") \
             --token "$VERCEL_TOKEN")
           echo "url=$URL" >> $GITHUB_OUTPUT
