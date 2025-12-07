@@ -44,10 +44,16 @@ jobs:
           if [ "${IS_PROD}" = "true" ]; then
             echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
+            # Ensure dev (EXPO_) vars are empty so they aren't available later
+            echo "EXPO_PUBLIC_SUPABASE_URL=" >> $GITHUB_ENV
+            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=" >> $GITHUB_ENV
             echo "Using PROD Supabase variables (NEXT_PUBLIC_*)"
           else
             echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
             echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
+            # Ensure prod (NEXT_PUBLIC_) vars are empty so they aren't available later
+            echo "NEXT_PUBLIC_SUPABASE_URL=" >> $GITHUB_ENV
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=" >> $GITHUB_ENV
             echo "Using DEV Supabase variables (EXPO_PUBLIC_*)"
           fi
 
@@ -58,12 +64,10 @@ jobs:
           echo "VERCEL_TOKEN set: $([ -n \"$VERCEL_TOKEN\" ] && echo \"true\" || echo \"false\")"
           echo "VERCEL_ORG_ID set: $([ -n \"$VERCEL_ORG_ID\" ] && echo \"true\" || echo \"false\")"
           echo "VERCEL_PROJECT_ID set: $([ -n \"$VERCEL_PROJECT_ID\" ] && echo \"true\" || echo \"false\")"
-            echo "NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}"
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY set: $([ -n \"$NEXT_PUBLIC_SUPABASE_ANON_KEY\" ] && echo \"true\" || echo \"false\")"
-            echo "EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL}"
-            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY set: $([ -n \"$EXPO_PUBLIC_SUPABASE_ANON_KEY\" ] && echo \"true\" || echo \"false\")"
-          echo "--- Environment variables matching SUPABASE/VERCEL/IS_PROD ---"
-          env | grep -E 'SUPABASE|VERCEL|IS_PROD' || true
+          echo "NEXT_PUBLIC_SUPABASE_URL set: $([ -n \"$NEXT_PUBLIC_SUPABASE_URL\" ] && echo \"true\" || echo \"false\")"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY set: $([ -n \"$NEXT_PUBLIC_SUPABASE_ANON_KEY\" ] && echo \"true\" || echo \"false\")"
+          echo "EXPO_PUBLIC_SUPABASE_URL set: $([ -n \"$EXPO_PUBLIC_SUPABASE_URL\" ] && echo \"true\" || echo \"false\")"
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY set: $([ -n \"$EXPO_PUBLIC_SUPABASE_ANON_KEY\" ] && echo \"true\" || echo \"false\")"
 
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
