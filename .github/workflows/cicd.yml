@@ -106,7 +106,7 @@ jobs:
           echo "Deploying from $DEPLOY_DIR"
           URL=$(vercel deploy "$DEPLOY_DIR" \
             $([ "$IS_PROD" = "true" ] && echo "--prod") \
-            --token "$VERCEL_TOKEN" --confirm)
+            --token "$VERCEL_TOKEN" --yes)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Deployed URL: $URL"
 
