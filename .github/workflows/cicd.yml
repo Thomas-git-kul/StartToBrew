@@ -54,7 +54,7 @@ jobs:
 
   deploy:
     name: Deploy to Vercel
-    needs: tests
+    needs: build
     runs-on: ubuntu-latest
 
     env:
@@ -76,6 +76,12 @@ jobs:
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: StartBrewing/dist
 
       - name: Choose Supabase env for deploy
         run: |
@@ -114,10 +120,6 @@ jobs:
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY (masked): $(mask_key \"$NEXT_PUBLIC_SUPABASE_ANON_KEY\")"
           echo "EXPO_PUBLIC_SUPABASE_ANON_KEY (masked): $(mask_key \"$EXPO_PUBLIC_SUPABASE_ANON_KEY\")"
 
-      - name: Install dependencies and build
-        run: |
-          npm run build:web
-
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
         run: |
@@ -138,8 +140,8 @@ jobs:
           fi
 
           set -o pipefail
-          # Deploy from repo root but use the StartBrewing vercel.json config
-          URL=$(vercel deploy "${PROD_FLAG[@]}" "${ENV_FLAGS[@]}" --local-config StartBrewing/vercel.json --token "$VERCEL_TOKEN" | tail -n1)
+          # Deploy the previously-built web export (StartBrewing/dist)
+          URL=$(vercel deploy "${PROD_FLAG[@]}" "${ENV_FLAGS[@]}" --local-config StartBrewing/vercel.json --token "$VERCEL_TOKEN" StartBrewing/dist | tail -n1)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Deployed URL: $URL"
 
