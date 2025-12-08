@@ -43,10 +43,14 @@ jobs:
             echo "✓ Using NEXT_PUBLIC Supabase credentials (production)"
             echo "  Source: NEXT_PUBLIC_SUPABASE_URL secret"
             echo "  Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
+            echo "  Source: NEXT_PUBLIC_SUPABASE_ANON_KEY secret"
+            echo "  Anon Key: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
           else
             echo "✓ Using EXPO_PUBLIC Supabase credentials (development)"
             echo "  Source: EXPO_PUBLIC_SUPABASE_URL secret"
             echo "  Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
+            echo "  Source: EXPO_PUBLIC_SUPABASE_ANON_KEY secret"
+            echo "  Anon Key: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}"
           fi
           echo "=========================================="
 
@@ -87,6 +91,7 @@ jobs:
           ls -lah dist/ || echo "dist directory not found!"
           echo ""
           echo "Build completed with Supabase URL: ${EXPO_PUBLIC_SUPABASE_URL:0:20}..."
+          echo "Build completed with Anon Key: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:20}..."
           echo "=========================================="
 
       - name: Upload build artifact
@@ -127,9 +132,11 @@ jobs:
           if [ "$IS_PROD" = "true" ]; then
             echo "✓ Using NEXT_PUBLIC Supabase credentials (production)"
             echo "  Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
+            echo "  Anon Key: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
           else
             echo "✓ Using EXPO_PUBLIC Supabase credentials (development)"
             echo "  Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
+            echo "  Anon Key: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}"
           fi
           echo "=========================================="
 
