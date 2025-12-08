@@ -25,7 +25,7 @@ export default function OrderCard({
   image, title, quantity, price, starterkit, onQuantityChange, onPress 
 }: OrderCardProps) {
   
-  const [localQuantity, setLocalQuantity] = useState<number>(quantity ?? 0);
+  const [localQuantity, setLocalQuantity] = useState<string>(quantity?.toString() ?? "0");
 
   const parsePrice = (priceStr: string) => {
     if (!priceStr) return 0;
@@ -44,11 +44,15 @@ export default function OrderCard({
   const formatter = useMemo(() => new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' }), []);
 
   useEffect(() => {
-    setLocalQuantity(quantity);
+    setLocalQuantity(quantity.toString());
   }, [quantity]);
 
   const handleQuantityChange = (newQty: number) => {
-    setLocalQuantity(newQty);
+    onQuantityChange(newQty, starterkit);
+  };
+
+  const handleButtonChange = (newQty: number) => {
+    setLocalQuantity(newQty.toString());
     onQuantityChange(newQty, starterkit);
   };
 
@@ -89,39 +93,45 @@ export default function OrderCard({
           </View>
 
           {/* Quantity Selector */}
-          <View className="flex-row items-center">
-            <Pressable onPress={() => handleQuantityChange(Math.max(0, localQuantity - 1))}>
-              <CircleMinus size={20} color={BASE_COLORS.STONE500} />
-            </Pressable>
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="flex-row items-center">
+              <Pressable onPress={() => handleButtonChange(Math.max(0, parseInt(localQuantity) - 1))}>
+                <CircleMinus size={20} color={BASE_COLORS.STONE500} />
+              </Pressable>
 
-            <TextInput
-              value={localQuantity.toString()}
-              readOnly={true}
-              inputMode="numeric"
-              enterKeyHint="done"
-              maxLength={2}
-              onChangeText={(text) => {
-                const sanitized = text.replace(/[^0-9]/g, "");
-                handleQuantityChange(localQuantity + 1);
-              }}
-              selectionColor={BASE_COLORS.ACCENT_PRIMARY}
-              style={{
-                width: 25,
-                textAlign: "center",
-                fontFamily: FontFamilies.BODY,
-                fontSize: Math.min(16 * scale, 22),
-                color: BASE_COLORS.STONE700,
-              }}
-            />
-            <Pressable onPress={() => handleQuantityChange(localQuantity + 1)}>
-              <CirclePlus size={20} color={BASE_COLORS.STONE500} />
-            </Pressable>
-          </View>
+              <TextInput
+                value={localQuantity}
+                inputMode="numeric"
+                enterKeyHint="done"
+                maxLength={2}
+                onChangeText={(text) => {
+                  const sanitized = text.replace(/[^0-9]/g, "");
+                  setLocalQuantity(sanitized);
+                }}
+                onBlur={() => {
+                  const finalValue = localQuantity === "" ? 0 : parseInt(localQuantity);
+                  setLocalQuantity(finalValue.toString());
+                  handleQuantityChange(finalValue);
+                }}
+                selectionColor={BASE_COLORS.ACCENT_PRIMARY}
+                style={{
+                  width: 25,
+                  textAlign: "center",
+                  fontFamily: FontFamilies.BODY,
+                  fontSize: Math.min(16 * scale, 22),
+                  color: BASE_COLORS.STONE700,
+                }}
+              />
+              <Pressable onPress={() => handleButtonChange(parseInt(localQuantity || "0") + 1)}>
+                <CirclePlus size={20} color={BASE_COLORS.STONE500} />
+              </Pressable>
+            </View>
+          </Pressable>
 
           {/* Price */}
           <View style={{ width: 60, alignItems: 'flex-end' }}>
             <Text style={{ fontFamily: FontFamilies.BODY, color: BASE_COLORS.STONE600 }}>
-              {formatter.format(unitPrice * localQuantity)}
+              {formatter.format(unitPrice * (parseInt(localQuantity) || 0))}
             </Text>
           </View>
         </View>
