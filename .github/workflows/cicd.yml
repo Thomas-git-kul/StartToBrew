@@ -49,6 +49,32 @@ jobs:
             echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
           fi
 
+      - name: Test show received environment variables
+        run: |
+          echo "IS_PROD=${IS_PROD}"
+          echo "GITHUB_REF=${GITHUB_REF}"
+          echo "VERCEL_TOKEN set: $([ -n \"$VERCEL_TOKEN\" ] && echo \"true\" || echo \"false\")"
+          echo "VERCEL_ORG_ID set: $([ -n \"$VERCEL_ORG_ID\" ] && echo \"true\" || echo \"false\")"
+          echo "VERCEL_PROJECT_ID set: $([ -n \"$VERCEL_PROJECT_ID\" ] && echo \"true\" || echo \"false\")"
+          echo "NEXT_PUBLIC_SUPABASE_URL set: $([ -n \"$NEXT_PUBLIC_SUPABASE_URL\" ] && echo \"true\" || echo \"false\")"
+          echo "EXPO_PUBLIC_SUPABASE_URL set: $([ -n \"$EXPO_PUBLIC_SUPABASE_URL\" ] && echo \"true\" || echo \"false\")"
+
+          # Mask anon keys before printing so logs don't expose full keys
+          mask_key() {
+            k="$1"
+            if [ -z "$k" ]; then
+              echo "<not set>"
+              return
+            fi
+            # print first 6 chars and last 4 chars, with ellipsis in middle
+            prefix=${k:0:6}
+            suffix=${k: -4}
+            echo "${prefix}...${suffix}"
+          }
+
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY (masked): $(mask_key \"$NEXT_PUBLIC_SUPABASE_ANON_KEY\")"
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY (masked): $(mask_key \"$EXPO_PUBLIC_SUPABASE_ANON_KEY\")"
+
       - name: Build web export
         run: npm run build:web
 
@@ -87,35 +113,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-build
-          path: StartBrewing/dist
-
-      # (Supabase env selection handled in the build job so the build embeds the correct values)
-
-      - name: Test show received environment variables
-        run: |
-          echo "IS_PROD=${IS_PROD}"
-          echo "GITHUB_REF=${GITHUB_REF}"
-          echo "VERCEL_TOKEN set: $([ -n \"$VERCEL_TOKEN\" ] && echo \"true\" || echo \"false\")"
-          echo "VERCEL_ORG_ID set: $([ -n \"$VERCEL_ORG_ID\" ] && echo \"true\" || echo \"false\")"
-          echo "VERCEL_PROJECT_ID set: $([ -n \"$VERCEL_PROJECT_ID\" ] && echo \"true\" || echo \"false\")"
-          echo "NEXT_PUBLIC_SUPABASE_URL set: $([ -n \"$NEXT_PUBLIC_SUPABASE_URL\" ] && echo \"true\" || echo \"false\")"
-          echo "EXPO_PUBLIC_SUPABASE_URL set: $([ -n \"$EXPO_PUBLIC_SUPABASE_URL\" ] && echo \"true\" || echo \"false\")"
-
-          # Mask anon keys before printing so logs don't expose full keys
-          mask_key() {
-            k="$1"
-            if [ -z "$k" ]; then
-              echo "<not set>"
-              return
-            fi
-            # print first 6 chars and last 4 chars, with ellipsis in middle
-            prefix=${k:0:6}
-            suffix=${k: -4}
-            echo "${prefix}...${suffix}"
-          }
-
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY (masked): $(mask_key \"$NEXT_PUBLIC_SUPABASE_ANON_KEY\")"
-          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY (masked): $(mask_key \"$EXPO_PUBLIC_SUPABASE_ANON_KEY\")"
 
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
