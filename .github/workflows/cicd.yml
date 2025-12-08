@@ -80,8 +80,6 @@ jobs:
       - name: Install dependencies and build
         run: |
           set -e
-          # Use CI install to ensure a reproducible install from package-lock.json
-          npm ci
           # Build web assets for Vercel; use the web-specific build script
           npm run build:web
 
