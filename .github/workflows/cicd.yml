@@ -84,6 +84,12 @@ jobs:
           name: web-build
           path: StartBrewing/dist
 
+      - name: Log build output directory
+        run: |
+          echo "Listing StartBrewing/dist (build output):"
+          ls -R .
+          ls -R dist || echo "⚠ dist folder does not exist"
+
   deploy:
     name: Deploy to Vercel
     needs: build
@@ -113,11 +119,25 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-build
-          path: StartBrewing
+          path: StartBrewing/dist/**
+
+      - name: Log downloaded artifact contents
+        run: |
+          echo "Listing StartBrewing folder after artifact download:"
+          ls -R StartBrewing || echo "⚠ StartBrewing folder missing"
+          
+          echo "Listing StartBrewing/dist after artifact download:"
+          ls -R StartBrewing/dist || echo "⚠ dist folder missing inside StartBrewing"
+
 
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
         run: vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
+
+      - name: Final pre-deploy folder check
+        run: |
+          echo "Full tree of StartBrewing before deploy:"
+          ls -R StartBrewing
 
       - name: Deploy
         id: deploy
