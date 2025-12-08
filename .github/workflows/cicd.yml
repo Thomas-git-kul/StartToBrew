@@ -15,8 +15,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Explicit flag to indicate production builds
-      IS_PROD: ${{ github.ref == 'refs/heads/main' }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
       EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
       EXPO_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_SERVICE_ID }}
       EXPO_PUBLIC_EMAILJS_TEMPLATE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID }}
@@ -30,22 +32,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Choose Supabase env
-        run: |
-          if [ "${IS_PROD}" = "true" ]; then
-              echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
-              echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-              echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
-              echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-            echo "Using PROD Supabase variables (secrets hidden)"
-          else
-            echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-            echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" >> $GITHUB_ENV
-            echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-            echo "Using DEV (EXPO) Supabase variables (secrets hidden)"
-          fi
 
       - name: Cache node_modules
         uses: actions/cache@v3
@@ -89,6 +75,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: StartBrewing/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -105,15 +99,14 @@ jobs:
 
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
-        run: vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
+        run: cd StartBrewing; vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
 
       - name: Deploy
         id: deploy
         run: |
-          # Deploy the pre-built web artifact directory to avoid rebuilding on Vercel
           URL=$(vercel deploy \
             $([ "$IS_PROD" = "true" ] && echo "--prod") \
-            --token "$VERCEL_TOKEN")
+            --token "$VERCEL_TOKEN" --confirm)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Deployed URL: $URL"
 
@@ -122,3 +115,25 @@ jobs:
           ALIAS=$([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")
           vercel alias set "${{ steps.deploy.outputs.url }}" "$ALIAS" --token "$VERCEL_TOKEN"
           echo "Aliased to: $ALIAS"
+
+      - name: Debug Workspace root
+        run: ls -R .
+
+      - name: Debug StartBrewing folder
+        run: ls -R StartBrewing
+
+      - name: Debug Artifact extraction result
+        run: ls -R StartBrewing/dist
+
+      - name: Debug Show current working dir
+        run: pwd
+
+      - name: Debug Check that deploy folder exists
+        run: |
+          if [ -d "StartBrewing/dist" ]; then
+            echo "Deploy directory OK:"
+            ls -R StartBrewing/dist
+          else
+            echo "Deploy directory MISSING!"
+          fi
+
