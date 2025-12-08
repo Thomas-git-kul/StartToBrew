@@ -734,7 +734,7 @@ export default function SpecificRecipe() {
           <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
 
           {/* Image */}
-          <View className="items-center mb-5">
+          <View className="items-center mb-2">
             <View
               style={{
                 width: "100%",
@@ -755,7 +755,7 @@ export default function SpecificRecipe() {
           </View>
 
           {/* Rating */}
-          <View className="flex-row  mb-1 gap-2 items-start justify-between">
+          <View className="flex-row  mb-3 gap-2 items-center justify-between">
             <View className="flex-row gap-2">
               <Star
                 size={Math.min(22 * scale, 35)}
@@ -774,16 +774,18 @@ export default function SpecificRecipe() {
                   You reviewed ✓
                 </ThemedText>
               ) : (
-                <SecondaryButton
-                  title="Add review"
-                  testID="review-button"
-                  onPress={() => {
-                    setRating(0);
-                    setReviewText("");
-                    setReviewVisible(true);
-                  }}
-                  size={14}
-                />
+                <View className="mt-1">
+                  <SecondaryButton
+                    title="Add review"
+                    testID="review-button"
+                    onPress={() => {
+                      setRating(0);
+                      setReviewText("");
+                      setReviewVisible(true);
+                    }}
+                    size={14}
+                  />
+                </View>
               )}
             </View>
           </View>
@@ -964,55 +966,54 @@ export default function SpecificRecipe() {
                 justifyContent: "space-between",
               }}
             >
-              {kits.length === 0 ? (
-                <ThemedText type="defaultText">
-                  No starter kits available for this recipe.
-                </ThemedText>
-              ) : (
-                kits.map((kit) => (
-                  <View
-                    key={kit.id}
-                    style={{
-                      width: "49%",
-                      marginBottom: 12,
-                    }}
-                  >
-                    <StoreCard
-                      image={require("@/assets/images/starterkit2.png")}
-                      title={`${kit.name} • ${kit.size_liters}L`}
-                      price={`€${kit.price.toFixed(2)}`}
-                      onPress={() => {
-                        setKitsVisible(false);
-                        router.push({
-                          pathname: "/StoreItem",
-                          params: {
-                            id: kit.id,
-                            categoryNumber: 4,
-                            from: "specificrecipe",
-                            recipe_slug: recipe_slug,
-                          },
-                        } as any);
+              {(() => {
+                let filteredKits = kits;
+                if (selectedBatchSizeOption !== "custom" && selectedBatchSize) {
+                  filteredKits = kits.filter(
+                    (kit) => kit.size_liters === selectedBatchSize
+                  );
+                }
+
+                return filteredKits.length === 0 ? (
+                  <ThemedText type="defaultText">
+                    No starter kits available for this recipe.
+                  </ThemedText>
+                ) : (
+                  filteredKits.map((kit) => (
+                    <View
+                      key={kit.id}
+                      style={{
+                        width: "49%",
+                        marginBottom: 12,
                       }}
-                    />
-                  </View>
-                ))
-              )}
+                    >
+                      <StoreCard
+                        image={require("@/assets/images/starterkit2.png")}
+                        title={`${kit.name} • ${kit.size_liters}L`}
+                        price={`€${kit.price.toFixed(2)}`}
+                        onPress={() => {
+                          setKitsVisible(false);
+                          router.push({
+                            pathname: "/StoreItem",
+                            params: {
+                              id: kit.id,
+                              categoryNumber: 4,
+                              from: "specificrecipe",
+                              recipe_slug: recipe_slug,
+                            },
+                          } as any);
+                        }}
+                      />
+                    </View>
+                  ))
+                );
+              })()}
             </View>
           </ScrollView>
-          <View
-            style={{
-              position: "absolute",
-              bottom: 15,
-              left: 0,
-              right: 0,
-              alignItems: "center",
-            }}
-          >
-            <FAB
-              testID="startFAB"
-              mode="flat"
-              label="Ready to Start"
-              color={BASE_COLORS.WHITE}
+          <View className="flex-row items-center justify-between">
+            <SecondaryButton
+              testID="skip-button"
+              title="Skip"
               onPress={async () => {
                 try {
                   await increment("modal_ready_start");
@@ -1024,19 +1025,35 @@ export default function SpecificRecipe() {
                   selectedBatchSize ?? recipe?.batch_size_l ?? 19;
                 await brewRecipe(undefined, sizeToUse);
               }}
-              style={{
-                backgroundColor: BASE_COLORS.TEXT_DARK,
-                borderRadius: 30,
-              }}
-              theme={{
-                fonts: {
-                  labelLarge: {
-                    fontSize: Math.min(16 * scale, 24),
-                    fontFamily: FontFamilies.BODY,
-                  },
-                },
-              }}
             />
+            {selectedBatchSizeOption !== "custom" && (() => {
+              let filteredKits = kits;
+              if (selectedBatchSize) {
+                filteredKits = kits.filter(
+                  (kit) => kit.size_liters === selectedBatchSize
+                );
+              }
+              const firstKit = filteredKits[0];
+
+              return firstKit ? (
+                <PrimaryButton
+                  testID="ordernow-button"
+                  title="Order now"
+                  onPress={() => {
+                    setKitsVisible(false);
+                    router.push({
+                      pathname: "/StoreItem",
+                      params: {
+                        id: firstKit.id,
+                        categoryNumber: 4,
+                        from: "specificrecipe",
+                        recipe_slug: recipe_slug,
+                      },
+                    } as any);
+                  }}
+                />
+              ) : null;
+            })()}
           </View>
         </Modal>
       </Portal>
