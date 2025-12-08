@@ -96,8 +96,7 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
-          cd StartBrewing/dist
-          URL=$(vercel deploy \
+          URL=$(vercel deploy  --cwd StartBrewing/dist \
             $([ "$IS_PROD" = "true" ] && echo "--prod") \
             --token "$VERCEL_TOKEN")
           echo "url=$URL" >> $GITHUB_OUTPUT
