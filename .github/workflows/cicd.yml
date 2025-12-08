@@ -85,6 +85,7 @@ jobs:
         with:
           name: web-build
           path: StartBrewing/dist
+          path: StartBrewing/dist
 
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
