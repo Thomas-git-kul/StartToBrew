@@ -107,3 +107,25 @@ jobs:
           ALIAS=$([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")
           vercel alias set "${{ steps.deploy.outputs.url }}" "$ALIAS" --token "$VERCEL_TOKEN"
           echo "Aliased to: $ALIAS"
+
+      - name: Debug: Workspace root
+        run: ls -R .
+
+      - name: Debug: StartBrewing folder
+        run: ls -R StartBrewing
+
+      - name: Debug: Artifact extraction result
+        run: ls -R StartBrewing/dist
+
+      - name: Debug: Show current working dir
+        run: pwd
+
+      - name: Debug: Check that deploy folder exists
+        run: |
+          if [ -d "StartBrewing/dist" ]; then
+            echo "Deploy directory OK:"
+            ls -R StartBrewing/dist
+          else
+            echo "Deploy directory MISSING!"
+          fi
+
