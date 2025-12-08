@@ -57,9 +57,8 @@ jobs:
           echo "VERCEL_TOKEN set: $([ -n \"$VERCEL_TOKEN\" ] && echo \"true\" || echo \"false\")"
           echo "VERCEL_ORG_ID set: $([ -n \"$VERCEL_ORG_ID\" ] && echo \"true\" || echo \"false\")"
           echo "VERCEL_PROJECT_ID set: $([ -n \"$VERCEL_PROJECT_ID\" ] && echo \"true\" || echo \"false\")"
-          # Show which Supabase URL variables are present (prints actual URLs)
-          echo "NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-<not set>}"
-          echo "EXPO_PUBLIC_SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:-<not set>}"
+          echo "NEXT_PUBLIC_SUPABASE_URL set: $([ -n \"$NEXT_PUBLIC_SUPABASE_URL\" ] && echo \"true\" || echo \"false\")"
+          echo "EXPO_PUBLIC_SUPABASE_URL set: $([ -n \"$EXPO_PUBLIC_SUPABASE_URL\" ] && echo \"true\" || echo \"false\")"
 
           # Mask anon keys before printing so logs don't expose full keys
           mask_key() {
@@ -79,8 +78,6 @@ jobs:
 
       - name: Install dependencies and build
         run: |
-          set -e
-          # Build web assets for Vercel; use the web-specific build script
           npm run build:web
 
       # Explicitly link to the correct Vercel project
