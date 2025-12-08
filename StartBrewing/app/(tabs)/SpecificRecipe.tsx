@@ -22,6 +22,7 @@ import Spinner from "@/components/spinner";
 import TextInput from "@/components/textInput";
 import PrimaryButton from "@/components/primaryButton";
 import SecondaryButton from "@/components/secondaryButton";
+import SelectionChip from "@/components/selectionChip";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -865,7 +866,7 @@ export default function SpecificRecipe() {
         </ScrollView>
       )}
 
-      {/* Modal voor batch size selectie */}
+      {/* Modal for batch size */}
       <Portal>
         <Modal
           visible={batchSizeModalVisible}
@@ -879,76 +880,28 @@ export default function SpecificRecipe() {
             borderColor: BASE_COLORS.STONE200,
           }}
         >
-          <ThemedText type="title" className="text-center mb-4">
-            Choose batch size
-          </ThemedText>
-
-          <View className="flex-row flex-wrap gap-2 mb-4">
+          <ThemedText type="title" className="text-center mb-4">Choose batch size</ThemedText>
+          <View className="flex-row flex-wrap gap-2">
             {["5", "10", "19"].map((val) => {
               const selected = selectedBatchSizeOption === val;
               return (
-                <Chip
+                <SelectionChip
                   key={val}
-                  testID={`batch-chip-${val}`}
-                  mode={selected ? "flat" : "outlined"}
-                  selected={selected}
+                  text={`${val} L`}
+                  testID="batch-chip"
+                  isActive={selected}
                   onPress={() =>
                     setSelectedBatchSizeOption(val as "5" | "10" | "19")
                   }
-                  style={{
-                    marginRight: 4,
-                    borderRadius: 20,
-                    borderWidth: selected ? 0 : 1,
-                    borderColor: selected
-                      ? "transparent"
-                      : BASE_COLORS.STONE300,
-                    backgroundColor: selected
-                      ? BASE_COLORS.TEXT_DARK
-                      : BASE_COLORS.STONE100,
-                    paddingHorizontal: 6,
-                  }}
-                  textStyle={{
-                    fontFamily: FontFamilies.BODY,
-                    fontSize: Math.min(14 * scale, 18),
-                    color: selected ? BASE_COLORS.WHITE : BASE_COLORS.TEXT_DARK,
-                  }}
-                >
-                  {val} L
-                </Chip>
+                />
               );
             })}
-
-            {/* Custom chip */}
-            {(() => {
-              const selected = selectedBatchSizeOption === "custom";
-              return (
-                <Chip
-                  testID="batch-chip-custom"
-                  mode={selected ? "flat" : "outlined"}
-                  selected={selected}
-                  onPress={() => setSelectedBatchSizeOption("custom")}
-                  style={{
-                    marginRight: 4,
-                    borderRadius: 20,
-                    borderWidth: selected ? 0 : 1,
-                    borderColor: selected
-                      ? "transparent"
-                      : BASE_COLORS.STONE300,
-                    backgroundColor: selected
-                      ? BASE_COLORS.TEXT_DARK
-                      : BASE_COLORS.STONE100,
-                    paddingHorizontal: 6,
-                  }}
-                  textStyle={{
-                    fontFamily: FontFamilies.BODY,
-                    fontSize: Math.min(14 * scale, 18),
-                    color: selected ? BASE_COLORS.WHITE : BASE_COLORS.TEXT_DARK,
-                  }}
-                >
-                  Custom
-                </Chip>
-              );
-            })()}
+            <SelectionChip
+              text="Custom"
+              testID="custom-batch-chip"
+              isActive={selectedBatchSizeOption === "custom"}
+              onPress={() => setSelectedBatchSizeOption("custom")}
+            />
           </View>
 
           {selectedBatchSizeOption === "custom" && (
@@ -958,14 +911,12 @@ export default function SpecificRecipe() {
                 keyboardType="numeric"
                 value={customBatchSize}
                 onChangeText={(text) => {
-                  // Filter: alleen cijfers en decimaalteken (punt of komma)
                   const filtered = text.replace(/[^0-9.,]/g, '');
                   setCustomBatchSize(filtered);
                 }}
               />
             </View>
           )}
-
           <View className="flex-row items-center justify-between mt-2">
             <SecondaryButton
               title="cancel"
@@ -977,76 +928,6 @@ export default function SpecificRecipe() {
               title="Confirm"
               onPress={handleConfirmBatchSize}
               testID="confirm-start"
-              size={14}
-            />
-          </View>
-        </Modal>
-      </Portal>
-
-      {/* Modal for reviews */}
-      <Portal>
-        <Modal
-          visible={reviewVisible}
-          onDismiss={() => {
-            setReviewVisible(false);
-            setRating(0);
-            setReviewText("");
-          }}
-          contentContainerStyle={{
-            backgroundColor: BASE_COLORS.LIGHT_BG,
-            padding: 20,
-            borderRadius: 12,
-            marginHorizontal: 30,
-          }}
-        >
-          <ThemedText type="title" className="text-center mb-4">
-            Rate this recipe
-          </ThemedText>
-          <TextInput
-            placeholder="(optional) Share your thoughts about this beer..."
-            value={reviewText}
-            onChangeText={setReviewText}
-            multiline
-            numberOfLines={4}
-          />
-
-          <View className="flex-row justify-center gap-3 mb-4">
-            {[1, 2, 3, 4, 5].map((value) => (
-              <TouchableOpacity
-                key={value}
-                onPress={() => handleStarPress(value)}
-                testID={`star-${value}`}
-              >
-                <Star
-                  size={36}
-                  stroke={
-                    value <= rating
-                      ? BASE_COLORS.ACCENT_LIGHT
-                      : BASE_COLORS.ACCENT_PRIMARY
-                  }
-                  fill={
-                    value <= rating ? BASE_COLORS.ACCENT_LIGHT : "transparent"
-                  }
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View className="flex-row justify-between gap-3">
-            <SecondaryButton
-              title="cancel"
-              testID="cancel-review"
-              onPress={() => {
-                setReviewVisible(false);
-                setRating(0);
-                setReviewText("");
-              }}
-              size={14}
-            />
-            <PrimaryButton
-              title="Submit"
-              onPress={handleSubmitReview}
-              testID="submit-review"
               size={14}
             />
           </View>
@@ -1160,6 +1041,76 @@ export default function SpecificRecipe() {
         </Modal>
       </Portal>
 
+      {/* Modal for reviews */}
+      <Portal>
+        <Modal
+          visible={reviewVisible}
+          onDismiss={() => {
+            setReviewVisible(false);
+            setRating(0);
+            setReviewText("");
+          }}
+          contentContainerStyle={{
+            backgroundColor: BASE_COLORS.LIGHT_BG,
+            padding: 20,
+            borderRadius: 12,
+            marginHorizontal: 30,
+          }}
+        >
+          <ThemedText type="title" className="text-center mb-4">
+            Rate this recipe
+          </ThemedText>
+          <TextInput
+            placeholder="(optional) Share your thoughts about this beer..."
+            value={reviewText}
+            onChangeText={setReviewText}
+            multiline
+            numberOfLines={4}
+          />
+
+          <View className="flex-row justify-center gap-3 mb-4">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <TouchableOpacity
+                key={value}
+                onPress={() => handleStarPress(value)}
+                testID={`star-${value}`}
+              >
+                <Star
+                  size={36}
+                  stroke={
+                    value <= rating
+                      ? BASE_COLORS.ACCENT_LIGHT
+                      : BASE_COLORS.ACCENT_PRIMARY
+                  }
+                  fill={
+                    value <= rating ? BASE_COLORS.ACCENT_LIGHT : "transparent"
+                  }
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View className="flex-row justify-between gap-3">
+            <SecondaryButton
+              title="cancel"
+              testID="cancel-review"
+              onPress={() => {
+                setReviewVisible(false);
+                setRating(0);
+                setReviewText("");
+              }}
+              size={14}
+            />
+            <PrimaryButton
+              title="Submit"
+              onPress={handleSubmitReview}
+              testID="submit-review"
+              size={14}
+            />
+          </View>
+        </Modal>
+      </Portal>
+
       <View
         style={{
           position: "absolute",
@@ -1169,26 +1120,24 @@ export default function SpecificRecipe() {
           alignItems: "center",
         }}
       >
-        {!kitsVisible && (
-          <FAB
-            mode="flat"
-            label="Start Brewing"
-            color={BASE_COLORS.WHITE}
-            onPress={handleInitialStartPress}
-            style={{
-              backgroundColor: BASE_COLORS.TEXT_DARK,
-              borderRadius: 30,
-            }}
-            theme={{
-              fonts: {
-                labelLarge: {
-                  fontSize: Math.min(16 * scale, 24),
-                  fontFamily: FontFamilies.BODY,
-                },
+        <FAB
+          mode="flat"
+          label="Start Brewing"
+          color={BASE_COLORS.WHITE}
+          onPress={handleInitialStartPress}
+          style={{
+            backgroundColor: BASE_COLORS.TEXT_DARK,
+            borderRadius: 30,
+          }}
+          theme={{
+            fonts: {
+              labelLarge: {
+                fontSize: Math.min(16 * scale, 24),
+                fontFamily: FontFamilies.BODY,
               },
-            }}
-          />
-        )}
+            },
+          }}
+        />
       </View>
     </SafeAreaView>
   );
