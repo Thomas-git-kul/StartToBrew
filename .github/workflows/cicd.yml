@@ -33,15 +33,22 @@ jobs:
 
       - name: Log branch and Supabase configuration
         run: |
+          echo "=========================================="
+          echo "BUILD JOB - Configuration Check"
+          echo "=========================================="
           echo "Branch: ${{ github.ref }}"
           echo "Is main branch: ${{ github.ref == 'refs/heads/main' }}"
+          echo ""
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "Using NEXT_PUBLIC Supabase credentials (production)"
-            echo "Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
+            echo "✓ Using NEXT_PUBLIC Supabase credentials (production)"
+            echo "  Source: NEXT_PUBLIC_SUPABASE_URL secret"
+            echo "  Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
           else
-            echo "Using EXPO_PUBLIC Supabase credentials (development)"
-            echo "Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
+            echo "✓ Using EXPO_PUBLIC Supabase credentials (development)"
+            echo "  Source: EXPO_PUBLIC_SUPABASE_URL secret"
+            echo "  Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
           fi
+          echo "=========================================="
 
       - name: Cache node_modules
         uses: actions/cache@v3
@@ -53,8 +60,34 @@ jobs:
 
       - run: npm install
 
+      - name: Verify environment variables before build
+        run: |
+          echo "=========================================="
+          echo "Environment Variables Check (Before Build)"
+          echo "=========================================="
+          echo "EXPO_PUBLIC_SUPABASE_URL is set: $([ -n "$EXPO_PUBLIC_SUPABASE_URL" ] && echo 'YES' || echo 'NO')"
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY is set: $([ -n "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ] && echo 'YES' || echo 'NO')"
+          echo ""
+          echo "First 20 chars of SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:20}..."
+          echo "First 20 chars of ANON_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:20}..."
+          echo "=========================================="
+
       - name: Build web export
-        run: npm run build:web
+        run: |
+          echo "Starting build process..."
+          npm run build:web
+          echo "Build completed!"
+
+      - name: Verify build output
+        run: |
+          echo "=========================================="
+          echo "Build Output Verification"
+          echo "=========================================="
+          echo "Checking dist directory..."
+          ls -lah dist/ || echo "dist directory not found!"
+          echo ""
+          echo "Build completed with Supabase URL: ${EXPO_PUBLIC_SUPABASE_URL:0:20}..."
+          echo "=========================================="
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -85,15 +118,20 @@ jobs:
 
       - name: Log deployment configuration
         run: |
+          echo "=========================================="
+          echo "DEPLOY JOB - Configuration Check"
+          echo "=========================================="
           echo "Deploying from branch: ${{ github.ref }}"
           echo "Is production deployment: $IS_PROD"
+          echo ""
           if [ "$IS_PROD" = "true" ]; then
-            echo "Using NEXT_PUBLIC Supabase credentials (production)"
-            echo "Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
+            echo "✓ Using NEXT_PUBLIC Supabase credentials (production)"
+            echo "  Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
           else
-            echo "Using EXPO_PUBLIC Supabase credentials (development)"
-            echo "Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
+            echo "✓ Using EXPO_PUBLIC Supabase credentials (development)"
+            echo "  Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
           fi
+          echo "=========================================="
 
       - name: Cache node_modules
         uses: actions/cache@v3
@@ -124,14 +162,15 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
+          echo "Starting Vercel deployment..."
           URL=$(vercel deploy \
             $([ "$IS_PROD" = "true" ] && echo "--prod") \
             --token "$VERCEL_TOKEN" --confirm)
           echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "Deployed URL: $URL"
+          echo "✓ Deployed URL: $URL"
 
       - name: Alias
         run: |
           ALIAS=$([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")
           vercel alias set "${{ steps.deploy.outputs.url }}" "$ALIAS" --token "$VERCEL_TOKEN"
-          echo "Aliased to: $ALIAS"
+          echo "✓ Aliased to: $ALIAS"
