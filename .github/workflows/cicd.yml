@@ -168,6 +168,7 @@ jobs:
             suffix=${k: -4}
             echo "${prefix}...${suffix}"
           }
+            
 
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY (masked): $(mask_key \"$NEXT_PUBLIC_SUPABASE_ANON_KEY\")"
           echo "EXPO_PUBLIC_SUPABASE_ANON_KEY (masked): $(mask_key \"$EXPO_PUBLIC_SUPABASE_ANON_KEY\")"
