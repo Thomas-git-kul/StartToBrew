@@ -374,12 +374,20 @@ export default function Progress() {
     phaseRef.current = phase;
   }, [phase]);
 
+  const getActiveStepId = useCallback(() => {
+    if (stepData?.mode === "two" && phase === 2) {
+      return stepData.next_step_id;
+    }
+    return stepData?.current_step_id ?? currentStep.current?.step_id;
+  }, [stepData, phase]);
+
   const handlePlay = useCallback(
     async (remainingSecs: number) => {
-      if (!brewId || !currentStep.current?.step_id) {
-        console.error("Missing brewId or current step when starting timer", {
+      const activeStepId = getActiveStepId();
+      if (!brewId || !activeStepId) {
+        console.error("Missing brewId or active step when starting timer", {
           brewId,
-          step: currentStep.current,
+          activeStepId,
         });
         return;
       }
@@ -393,7 +401,7 @@ export default function Progress() {
             status: "in_progress",
           })
           .eq("id_brew", brewId)
-          .eq("step_id", currentStep.current.step_id)
+          .eq("step_id", activeStepId)
           .select();
 
         if (upErr) {
@@ -410,15 +418,16 @@ export default function Progress() {
 
       setTimerActive(true);
     },
-    [brewId]
+    [brewId, getActiveStepId]
   );
 
   const handlePause = useCallback(
     async (remainingSecs: number) => {
-      if (!brewId || !currentStep.current?.step_id) {
-        console.error("Missing brewId or current step when pausing timer", {
+      const activeStepId = getActiveStepId();
+      if (!brewId || !activeStepId) {
+        console.error("Missing brewId or active step when pausing timer", {
           brewId,
-          step: currentStep.current,
+          activeStepId,
         });
         return;
       }
@@ -432,7 +441,7 @@ export default function Progress() {
             status: "in_progress",
           })
           .eq("id_brew", brewId)
-          .eq("step_id", currentStep.current.step_id)
+          .eq("step_id", activeStepId)
           .select();
 
         if (upErr) {
@@ -447,7 +456,7 @@ export default function Progress() {
 
       setTimerActive(false);
     },
-    [brewId]
+    [brewId, getActiveStepId]
   );
 
   const durationSec =
@@ -457,6 +466,7 @@ export default function Progress() {
 
   const handleComplete = useCallback(
     (totalElapsedTime: number) => {
+      const activeStepId = getActiveStepId();
       (async () => {
         try {
           await supabase
@@ -467,7 +477,7 @@ export default function Progress() {
               completed_at: new Date().toISOString(),
             })
             .eq("id_brew", brewId)
-            .eq("step_id", currentStep.current.step_id);
+            .eq("step_id", activeStepId);
         } catch (e) {
           console.error("Failed to persist completion", e);
         }
@@ -475,6 +485,9 @@ export default function Progress() {
 
       if (stepData?.mode === "two" && phase === 1) {
         setTimerActive(false);
+        setPhaseDone(false);
+        setIsHistoricalStep(false);
+        setIsForwardStep(false);
         setPhase(2);
         return { shouldRepeat: false };
       }
@@ -482,7 +495,7 @@ export default function Progress() {
       setTimerActive(false);
       return { shouldRepeat: false };
     },
-    [brewId, stepData, phase]
+    [brewId, stepData, phase, getActiveStepId]
   );
 
   const hasTimer = durationSec > 0;
@@ -497,25 +510,12 @@ export default function Progress() {
       return;
     }
 
-    const currentIndex = allSteps.findIndex(
-      (s) => s.step_id === currentStep.current?.step_id
-    );
-    const nextStep = allSteps[currentIndex + 1];
-
-    if (!nextStep) {
-      await refreshProgress();
-      router.push("/HomePage");
-      return;
-    }
-
-    /*
-    if (isHistoricalStep) {
-      loadStep(nextStep.step_id);
-      return;
-    }
-    */
-
     try {
+      const currentIndex = allSteps.findIndex(
+        (s) => s.step_id === currentStep.current?.step_id
+      );
+      const nextStep = allSteps[currentIndex + 1];
+
       const updates: { step_id: string }[] = [];
 
       const { data: brewStatus } = await supabase
@@ -580,6 +580,12 @@ export default function Progress() {
         return;
       }
 
+      if (!nextStep) {
+        await refreshProgress();
+        router.push("/HomePage");
+        return;
+      }
+
       await loadStep();
     } catch (error) {
       console.error("goToNextStep error:", error);
@@ -590,7 +596,6 @@ export default function Progress() {
     loadStep,
     router,
     allSteps,
-    isHistoricalStep,
     refreshProgress,
   ]);
 
@@ -733,7 +738,7 @@ export default function Progress() {
               <Button
                 mode="text"
                 onPress={() => {
-                  if (!phaseDone && !isHistoricalStep && !isForwardStep) return;
+                  if (!phaseDone && isHistoricalStep && isForwardStep) return;
                   goToNextStepComplete();
                   console.log("Complete step pressed");
                 }}
