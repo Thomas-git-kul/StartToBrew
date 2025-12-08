@@ -87,7 +87,6 @@ jobs:
       - name: Log build output directory
         run: |
           echo "Listing StartBrewing/dist (build output):"
-          ls -R .
           ls -R dist || echo "⚠ dist folder does not exist"
 
   deploy:
@@ -119,16 +118,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: web-build
-          path: StartBrewing/dist/**
+          path: dist
 
       - name: Log downloaded artifact contents
         run: |
-          echo "Listing StartBrewing folder after artifact download:"
-          ls -R StartBrewing || echo "⚠ StartBrewing folder missing"
-          
-          echo "Listing StartBrewing/dist after artifact download:"
-          ls -R StartBrewing/dist || echo "⚠ dist folder missing inside StartBrewing"
-
+          echo "Listing dist folder after artifact download:"
+          ls -R dist || echo "⚠ dist folder missing"
 
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
@@ -136,8 +131,8 @@ jobs:
 
       - name: Final pre-deploy folder check
         run: |
-          echo "Full tree of StartBrewing before deploy:"
-          ls -R StartBrewing
+          echo "Full tree of dist before deploy:"
+          ls -R dist
 
       - name: Deploy
         id: deploy
@@ -152,8 +147,8 @@ jobs:
           fi
 
           set -o pipefail
-          # Deploy the previously-built web export (StartBrewing/dist)
-          URL=$(vercel deploy StartBrewing/dist \
+          # Deploy the previously-built web export (dist folder)
+          URL=$(vercel deploy dist \
             $([ "$IS_PROD" = "true" ] && echo "--prod") \
             --token "$VERCEL_TOKEN")
           echo "url=$URL" >> $GITHUB_OUTPUT
