@@ -15,10 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_SUPABASE_URL || secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
       EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
       EXPO_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_SERVICE_ID }}
       EXPO_PUBLIC_EMAILJS_TEMPLATE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID }}
@@ -32,6 +30,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Log branch and Supabase configuration
+        run: |
+          echo "Branch: ${{ github.ref }}"
+          echo "Is main branch: ${{ github.ref == 'refs/heads/main' }}"
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "Using NEXT_PUBLIC Supabase credentials (production)"
+            echo "Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
+          else
+            echo "Using EXPO_PUBLIC Supabase credentials (development)"
+            echo "Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
+          fi
 
       - name: Cache node_modules
         uses: actions/cache@v3
@@ -62,10 +72,8 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_SUPABASE_URL || secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
       EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
       EXPO_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_SERVICE_ID }}
       EXPO_PUBLIC_EMAILJS_TEMPLATE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID }}
@@ -74,6 +82,18 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Log deployment configuration
+        run: |
+          echo "Deploying from branch: ${{ github.ref }}"
+          echo "Is production deployment: $IS_PROD"
+          if [ "$IS_PROD" = "true" ]; then
+            echo "Using NEXT_PUBLIC Supabase credentials (production)"
+            echo "Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
+          else
+            echo "Using EXPO_PUBLIC Supabase credentials (development)"
+            echo "Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
+          fi
 
       - name: Cache node_modules
         uses: actions/cache@v3
@@ -115,25 +135,3 @@ jobs:
           ALIAS=$([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")
           vercel alias set "${{ steps.deploy.outputs.url }}" "$ALIAS" --token "$VERCEL_TOKEN"
           echo "Aliased to: $ALIAS"
-
-      - name: Debug Workspace root
-        run: ls -R .
-
-      - name: Debug StartBrewing folder
-        run: ls -R StartBrewing
-
-      - name: Debug Artifact extraction result
-        run: ls -R StartBrewing/dist
-
-      - name: Debug Show current working dir
-        run: pwd
-
-      - name: Debug Check that deploy folder exists
-        run: |
-          if [ -d "StartBrewing/dist" ]; then
-            echo "Deploy directory OK:"
-            ls -R StartBrewing/dist
-          else
-            echo "Deploy directory MISSING!"
-          fi
-
