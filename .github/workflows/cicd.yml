@@ -9,8 +9,49 @@ jobs:
     uses: ./.github/workflows/test-reusable.yml
     with:
       node-version: "20"
-  # The explicit build job was removed per request; Vercel will build on deploy.
-  # Deploy job now receives the correct Supabase env vars for prod vs dev.
+
+  build:
+    name: Build Expo Web App
+    runs-on: ubuntu-latest
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_SERVICE_ID }}
+      EXPO_PUBLIC_EMAILJS_TEMPLATE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID }}
+      EXPO_PUBLIC_EMAILJS_PUBLIC_KEY: ${{ secrets.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY }}
+
+    defaults:
+      run:
+        working-directory: StartBrewing
+
+    needs: [tests]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache node_modules
+        uses: actions/cache@v3
+        with:
+          path: StartBrewing/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - run: npm install
+
+      - name: Build web export
+        run: npm run build:web
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: StartBrewing/dist
+
   deploy:
     name: Deploy to Vercel
     needs: tests
@@ -21,9 +62,6 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-    # Run Vercel commands explicitly from the StartBrewing directory to avoid
-    # incorrect path concatenation by the Vercel CLI.
 
     steps:
       - name: Checkout Repository
