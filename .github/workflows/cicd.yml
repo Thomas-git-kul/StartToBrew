@@ -135,7 +135,7 @@ jobs:
 
           set -o pipefail
           # Deploy the previously-built web export (StartBrewing/dist)
-          URL=$(vercel deploy "${PROD_FLAG[@]}" "${ENV_FLAGS[@]}" --local-config StartBrewing/vercel.json --token "$VERCEL_TOKEN" StartBrewing/dist | tail -n1)
+          URL=$(vercel deploy "${PROD_FLAG[@]}" "${ENV_FLAGS[@]}" --local-config StartBrewing/vercel.json --token "$VERCEL_TOKEN" | tail -n1)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Deployed URL: $URL"
 
