@@ -890,7 +890,7 @@ export default function SpecificRecipe() {
                 <SelectionChip
                   key={val}
                   text={`${val} L`}
-                  testID="batch-chip"
+                  testID={`batch-chip-${val}`}
                   isActive={selected}
                   onPress={() =>
                     setSelectedBatchSizeOption(val as "5" | "10" | "19")
@@ -900,7 +900,7 @@ export default function SpecificRecipe() {
             })}
             <SelectionChip
               text="Custom"
-              testID="custom-batch-chip"
+              testID="batch-chip-custom"
               isActive={selectedBatchSizeOption === "custom"}
               onPress={() => setSelectedBatchSizeOption("custom")}
             />

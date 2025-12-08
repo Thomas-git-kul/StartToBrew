@@ -88,7 +88,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review, currentUserId, onDelete
               <TouchableOpacity onPress={onDelete}>
                 <Trash2
                   size={16}
-                  color={BASE_COLORS.STONE500}
+                  color={BASE_COLORS.STONE300}
                 />
               </TouchableOpacity>
             )}
