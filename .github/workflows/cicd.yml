@@ -91,14 +91,15 @@ jobs:
 
       # Explicitly link to the correct Vercel project
       - name: Link Vercel project
-        run: vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
+        run: cd StartBrewing; vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
 
       - name: Deploy
         id: deploy
         run: |
-          URL=$(vercel deploy  --cwd StartBrewing/dist \
+          cd StartBrewing
+          URL=$(vercel deploy dist \
             $([ "$IS_PROD" = "true" ] && echo "--prod") \
-            --token "$VERCEL_TOKEN")
+            --token "$VERCEL_TOKEN" --confirm)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Deployed URL: $URL"
 
