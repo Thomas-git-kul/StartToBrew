@@ -340,12 +340,16 @@ export default function StoreItem() {
             <TextInput
               value={quantity.toString()}
               inputMode="numeric"
-              // autoFocus={true}
               enterKeyHint="done"
               maxLength={2}
               onChangeText={(text) => {
                 const sanitized = text.replace(/[^0-9]/g, "");
-                setQuantity(sanitized === "" ? "1" : sanitized);
+                setQuantity(sanitized);
+              }}
+              onBlur={() => {
+                if (quantity === "" || quantity === "0") {
+                  setQuantity("1");
+                }
               }}
               selectionColor={BASE_COLORS.ACCENT_PRIMARY}
               style={{

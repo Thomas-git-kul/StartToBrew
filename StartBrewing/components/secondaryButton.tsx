@@ -9,7 +9,7 @@ const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 interface ButtonProps {
   title: string;
-  onPress: () => void;
+  onPress: () => void | Promise<void>;
   size?: number;
   testID: string;
 }

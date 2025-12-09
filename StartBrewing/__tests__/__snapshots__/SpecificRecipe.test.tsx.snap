@@ -101,7 +101,7 @@ exports[`<SpecificRecipe /> Snapshot matches snapshot 1`] = `
         Den Ballaste Point Sculpin IPA 60
       </Text>
       <View
-        className="items-center mb-5"
+        className="items-center mb-2"
       >
         <View
           style={
@@ -130,7 +130,7 @@ exports[`<SpecificRecipe /> Snapshot matches snapshot 1`] = `
         </View>
       </View>
       <View
-        className="flex-row  mb-1 gap-2 items-start justify-between"
+        className="flex-row  mb-3 gap-2 items-center justify-between"
       >
         <View
           className="flex-row gap-2"
@@ -154,43 +154,47 @@ exports[`<SpecificRecipe /> Snapshot matches snapshot 1`] = `
         </View>
         <View>
           <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onClick={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              {
-                "opacity": 1,
-              }
-            }
-            testID="review-button"
+            className="mt-1"
           >
-            <Text>
-              Add review
-            </Text>
+            <View
+              accessibilityState={
+                {
+                  "busy": undefined,
+                  "checked": undefined,
+                  "disabled": undefined,
+                  "expanded": undefined,
+                  "selected": undefined,
+                }
+              }
+              accessibilityValue={
+                {
+                  "max": undefined,
+                  "min": undefined,
+                  "now": undefined,
+                  "text": undefined,
+                }
+              }
+              accessible={true}
+              collapsable={false}
+              focusable={true}
+              onClick={[Function]}
+              onResponderGrant={[Function]}
+              onResponderMove={[Function]}
+              onResponderRelease={[Function]}
+              onResponderTerminate={[Function]}
+              onResponderTerminationRequest={[Function]}
+              onStartShouldSetResponder={[Function]}
+              style={
+                {
+                  "opacity": 1,
+                }
+              }
+              testID="review-button"
+            >
+              <Text>
+                Add review
+              </Text>
+            </View>
           </View>
         </View>
       </View>

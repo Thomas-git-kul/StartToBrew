@@ -50,7 +50,10 @@ jest.mock('../supabase/index', () => {
           return {
             ...chain,
             select: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
+            eq: jest.fn(function(this: any) {
+              // Return this to allow chaining multiple eq calls
+              return this;
+            }).mockReturnThis(),
             maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
             insert: jest.fn().mockResolvedValue({ data: null, error: null }),
             update: jest.fn().mockResolvedValue({ data: null, error: null }),
@@ -299,10 +302,18 @@ describe("<StoreItem /> minimal test", () => {
     await act(async () => {
       fireEvent.changeText(quantityInput, "");
     });
+    // After clearing, the input should be empty
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("")).toBeTruthy();
+    });
+    // Now blur the input to trigger the reset to "1"
+    await act(async () => {
+      fireEvent(quantityInput, 'blur');
+    });
     await waitFor(() => {
       expect(screen.getByDisplayValue("1")).toBeTruthy();
     });
-  });
+  })
 
   it("shows fallback image if no images present", async () => {
     // Patch supabase mock to return no images
@@ -437,5 +448,832 @@ describe("<StoreItem /> minimal test", () => {
     expect(mockPush).toHaveBeenCalledWith("/Store");
   });
 
+  it("handles error fetching shopping cart", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    let callNumber = 0;
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      callNumber++;
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test desc",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: "Cart fetch error" },
+          }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error fetching shopping cart:",
+        "Cart fetch error"
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("creates new cart when none exists", async () => {
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    let fromCallCount = 0;
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      fromCallCount++;
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test desc",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id_cart: 'new-cart-123' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockResolvedValue({ error: null }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("snackbar")).toBeTruthy();
+    });
+  });
+
+  it("handles error creating shopping cart", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    let callCount = 0;
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      callCount++;
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { message: "Failed to create cart" },
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error creating shopping cart:",
+        "Failed to create cart"
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("handles error checking existing cart item", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: "Item check error", code: "PGRST500" },
+          }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error checking existing cart item:",
+        "Item check error"
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("updates existing cart item quantity", async () => {
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    const mockUpdate = jest.fn().mockResolvedValue({ error: null });
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({
+            data: { id_cart_item: 'item-1', quantity: 2 },
+            error: null,
+          }),
+          update: jest.fn().mockReturnValue({
+            eq: mockUpdate,
+          }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(mockUpdate).toHaveBeenCalled();
+      expect(screen.queryByTestId("snackbar")).toBeTruthy();
+    });
+  });
+
+  it("handles error updating cart item quantity", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({
+            data: { id_cart_item: 'item-1', quantity: 2 },
+            error: null,
+          }),
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockResolvedValue({ error: { message: "Update failed" } }),
+          }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error updating cart quantity:",
+        "Update failed"
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("inserts new cart item when not existing", async () => {
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    const mockInsert = jest.fn().mockResolvedValue({ error: null });
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: mockInsert,
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(mockInsert).toHaveBeenCalledWith({
+        cart_id: 'cart-1',
+        store_item_id: "1",
+        quantity: 1,
+        starter_kit: true,
+      });
+      expect(screen.queryByTestId("snackbar")).toBeTruthy();
+    });
+  });
+
+  it("handles error inserting cart item", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockResolvedValue({ error: { message: "Insert failed" } }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error inserting cart item:",
+        "Insert failed"
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("renders when id is not provided", async () => {
+    mockParams = { id: undefined, categoryNumber: "4" };
+
+    render(<StoreItem />);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/Loading product/i)).toBeTruthy();
+    });
+  });
+
+  it("shows snackbar and resets quantity after successful add to cart", async () => {
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockResolvedValue({ error: null }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    // Change quantity to 3
+    const quantityInput = await screen.findByDisplayValue("1");
+    await act(async () => {
+      fireEvent.changeText(quantityInput, "3");
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("3")).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    // Verify snackbar is shown and quantity resets to 1
+    await waitFor(() => {
+      expect(screen.queryByTestId("snackbar")).toBeTruthy();
+      expect(screen.getByText("Item added to cart")).toBeTruthy();
+      expect(screen.getByDisplayValue("1")).toBeTruthy();
+    });
+  });
+
+  it("navigates back from snackbar button to cart", async () => {
+    mockParams = { id: "1", categoryNumber: "4", from: "cart" };
+
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockResolvedValue({ error: null }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("snackbar")).toBeTruthy();
+    });
+
+    const backBtn = await screen.findByTestId("added-back");
+    await act(async () => {
+      fireEvent.press(backBtn);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
+  });
+
+  it("navigates back from snackbar button to specificrecipe", async () => {
+    mockParams = { id: "1", categoryNumber: "4", from: "specificrecipe", recipe_slug: "test-recipe" };
+
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockResolvedValue({ error: null }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("snackbar")).toBeTruthy();
+    });
+
+    const backBtn = await screen.findByTestId("added-back");
+    await act(async () => {
+      fireEvent.press(backBtn);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: "/SpecificRecipe",
+      params: { recipe_slug: "test-recipe" },
+    });
+  });
+
+  it("navigates back from snackbar button to store (default)", async () => {
+    mockParams = { id: "1", categoryNumber: "4" };
+
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: { id: 'test-user' } },
+      error: null,
+    });
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "starter_kits") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id_starter_kit: "1",
+              name: "Test Kit",
+              description: "Test",
+              price: 10,
+            },
+            error: null,
+          }),
+        };
+      }
+      if (table === "shopping_carts") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: { id_cart: 'cart-1' }, error: null }),
+        };
+      }
+      if (table === "shopping_cart_items") {
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockResolvedValue({ error: null }),
+        };
+      }
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    });
+
+    render(<StoreItem />);
+    await waitFor(() => {
+      expect(screen.getByText(/Test Kit/i)).toBeTruthy();
+    });
+
+    const addBtn = await screen.findByTestId("add-to-order");
+    await act(async () => {
+      fireEvent.press(addBtn);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("snackbar")).toBeTruthy();
+    });
+
+    const backBtn = await screen.findByTestId("added-back");
+    await act(async () => {
+      fireEvent.press(backBtn);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith("/Store");
+  });
 
 });

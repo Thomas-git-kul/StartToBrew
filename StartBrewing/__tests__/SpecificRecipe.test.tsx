@@ -789,7 +789,7 @@ describe("<SpecificRecipe />", () => {
       }, { timeout: 2000 });
     });
 
-    it("starts brewing when Ready to Start is pressed", async () => {
+    it("starts brewing when Skip is pressed in kits modal", async () => {
       const { findByText, findByTestId } = await renderWithNavigation(
         <SpecificRecipe />
       );
@@ -801,8 +801,8 @@ describe("<SpecificRecipe />", () => {
       fireEvent.press(confirmBtn);
 
       await findByText("Get your StarterKit now!");
-      const readyBtn = await findByTestId("startFAB");
-      fireEvent.press(readyBtn);
+      const skipBtn = await findByTestId("skip-button");
+      fireEvent.press(skipBtn);
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith({
@@ -1486,8 +1486,8 @@ describe("<SpecificRecipe />", () => {
       fireEvent.press(confirmBtn);
 
       await findByText("Get your StarterKit now!");
-      const readyBtn = await findByTestId("startFAB");
-      fireEvent.press(readyBtn);
+      const skipBtn = await findByTestId("skip-button");
+      fireEvent.press(skipBtn);
 
       await waitFor(() => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -1549,8 +1549,8 @@ describe("<SpecificRecipe />", () => {
       fireEvent.press(confirmBtn);
 
       await findByText("Get your StarterKit now!");
-      const readyBtn = await findByTestId("startFAB");
-      fireEvent.press(readyBtn);
+      const skipBtn = await findByTestId("skip-button");
+      fireEvent.press(skipBtn);
 
       await waitFor(() => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -1581,8 +1581,8 @@ describe("<SpecificRecipe />", () => {
       fireEvent.press(confirmBtn);
 
       await findByText("Get your StarterKit now!");
-      const readyBtn = await findByTestId("startFAB");
-      fireEvent.press(readyBtn);
+      const skipBtn = await findByTestId("skip-button");
+      fireEvent.press(skipBtn);
 
       await waitFor(() => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -1688,8 +1688,8 @@ describe("<SpecificRecipe />", () => {
       fireEvent.press(confirmBtn);
 
       await findByText("Get your StarterKit now!");
-      const readyBtn = await findByTestId("startFAB");
-      fireEvent.press(readyBtn);
+      const skipBtn = await findByTestId("skip-button");
+      fireEvent.press(skipBtn);
 
       // Should still navigate despite reset error
       await waitFor(() => {
