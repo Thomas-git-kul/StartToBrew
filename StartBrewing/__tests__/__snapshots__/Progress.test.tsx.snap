@@ -81,7 +81,7 @@ exports[`<Progress /> snapshot 1`] = `
         Step 
         1
          / 
-        1
+        2
       </Text>
       <View
         accessibilityState={
