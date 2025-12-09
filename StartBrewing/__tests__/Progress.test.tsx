@@ -557,6 +557,83 @@ it("stepper next/prev call navigation callbacks without completing brews", async
   await findByText(/60-min Citra|S1/);
 });
 
+it("restores a running timer when autoStartRemaining > 0 (shows Pause)", async () => {
+  const sb = jest.requireMock("@/supabase").supabase;
+  const originalFrom = sb.from;
+
+  // Make brew_steps indicate a recent completed_at with time_left to simulate autoStartRemaining
+  sb.from = jest.fn((table: string) => {
+    if (table === "brew_steps") {
+      return {
+        select: () => ({
+          eq: function () {
+            return {
+              eq: function () {
+                return {
+                  single: async () => ({
+                    data: {
+                      brew_step_id: 10,
+                      id_brew: 1,
+                      step_id: 1,
+                      status: "in_progress",
+                      completed_at: new Date().toISOString(),
+                      time_left: 120,
+                    },
+                    error: null,
+                  }),
+                };
+              },
+            };
+          },
+        }),
+      };
+    }
+    return originalFrom(table);
+  });
+
+  const { findByText } = renderWithNavigation(<Progress />);
+  await findByText("black IPA Progress");
+
+  // Because autoStartRemaining > 0 the component should set timerActive=true and render Pause
+  expect(await findByText("Pause")).toBeTruthy();
+
+  sb.from = originalFrom;
+});
+
+it("shows no Ingredients section when there are no ingredient refs", async () => {
+  const sb = jest.requireMock("@/supabase").supabase;
+  const originalFrom = sb.from;
+
+  sb.from = jest.fn((table: string) => {
+    if (table === "step_ingredient_refs") {
+      return { select: () => ({ eq: () => ({ data: [], error: null }) }) };
+    }
+    return originalFrom(table);
+  });
+
+  const { queryByText, findByText } = renderWithNavigation(<Progress />);
+  await findByText("black IPA Progress");
+
+  expect(queryByText("Ingredients:")).toBeNull();
+
+  sb.from = originalFrom;
+});
+
+it("pressing Play with missing brewId does not call Supabase update", async () => {
+  // Simulate missing id param -> brewId undefined
+  (useLocalSearchParams as jest.Mock).mockReturnValue({});
+  const { findByText } = renderWithNavigation(<Progress />);
+  await findByText("black IPA Progress");
+
+  const play = await findByText("Play");
+  await act(async () => fireEvent.press(play));
+
+  // No update should be called because brewId is missing
+  expect(mockBrewStepsUpdate).not.toHaveBeenCalled();
+  // restore id for other tests
+  (useLocalSearchParams as jest.Mock).mockReturnValue({ id: "1" });
+});
+
 it("navigates naar volgende stap via Complete button and updates Supabase", async () => {
   const { findByText } = renderWithNavigation(<Progress />);
 
