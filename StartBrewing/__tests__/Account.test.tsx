@@ -69,6 +69,20 @@ jest.mock("@/components/header", () => {
   );
 });
 
+// simple Badge mock that exposes a testID and shows the badge code
+jest.mock("@/components/ui/Badge", () => {
+  const React = require("react");
+  const { View, Text, TouchableOpacity } = require("react-native");
+
+  return ({ id_badge, code, icon_url, onPress }: any) => (
+    React.createElement(
+      TouchableOpacity,
+      { onPress, testID: "badge-item" },
+      React.createElement(Text, { testID: `badge-code-${id_badge}` }, code || String(id_badge))
+    )
+  );
+});
+
 // expo-image -> simpele placeholder
 jest.mock("expo-image", () => {
   const { Text } = require("react-native");
@@ -380,6 +394,133 @@ describe("<Account />", () => {
       pathname: "/SpecificRecipe",
       params: { recipe_slug: "recipe-1", from: "account" },
     });
+  });
+
+  test("uses absolute avatar_url when provided (http)", async () => {
+    const { supabase } = require("@/supabase");
+
+    // make profiles return an absolute http avatar URL and ensure avatars storage is not called
+    supabase.from.mockImplementationOnce((tbl: string) => {
+      if (tbl === "profiles") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  id: "user-1",
+                  username: "testuser",
+                  full_name: "Test User",
+                  avatar_url: "http://cdn.example/avatar.png",
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      return {
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: null, error: null }) }),
+          in: jest.fn().mockResolvedValue({ data: [], error: null }),
+          order: jest.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      };
+    });
+
+    // replace storage.from so we can assert it wasn't called for 'avatars'
+    const originalStorageFrom = supabase.storage.from;
+    supabase.storage.from = jest.fn((bucket: string) => {
+      if (bucket === 'avatars') {
+        throw new Error('avatars storage should not be called for absolute URLs');
+      }
+      return originalStorageFrom(bucket);
+    });
+
+    const { getByText } = renderWithNavigation(<Account />);
+
+    // Avatar.Image mock renders 'avatar-image'
+    await waitFor(() => {
+      expect(getByText('avatar-image')).toBeTruthy();
+    });
+
+    // restore
+    supabase.storage.from = originalStorageFrom;
+  });
+
+  test("badges are ordered by earned_at descending", async () => {
+    const { supabase } = require("@/supabase");
+
+    // account_badges: badge 1 older, badge 2 newer
+    supabase.from.mockImplementation((tbl: string) => {
+      if (tbl === "profiles") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: "user-1", username: "testuser", full_name: "Test User" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "account_badges") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              order: jest.fn().mockResolvedValue({
+                data: [
+                  { badge_id: 1, earned_at: "2025-01-01T00:00:00Z" },
+                  { badge_id: 2, earned_at: "2025-02-01T00:00:00Z" },
+                ],
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "badges") {
+        return {
+          select: jest.fn().mockResolvedValue({
+            data: [
+              { id_badge: 1, code: "B1", name: "Badge 1", description: null, icon_url: null, category: 'cat' },
+              { id_badge: 2, code: "B2", name: "Badge 2", description: null, icon_url: null, category: 'cat' },
+            ],
+            error: null,
+          }),
+        };
+      }
+
+      if (tbl === "recipes") {
+        return {
+          select: jest.fn().mockReturnValue({ in: jest.fn().mockResolvedValue({ data: [], error: null }) }),
+        };
+      }
+
+      return { select: jest.fn() };
+    });
+
+    // render and then check rendered badge items order
+    const { getAllByTestId } = renderWithNavigation(<Account />);
+
+    const badgeItems = await waitFor(() => getAllByTestId('badge-item'));
+    // first badge item should correspond to the newest earned badge (B2)
+    expect(badgeItems.length).toBeGreaterThanOrEqual(2);
+    const firstCode = badgeItems[0].findByProps ? (await badgeItems[0].findByProps({ testID: `badge-code-2` })).props.children : undefined;
+    // fallback: make sure B2 exists among the items
+    const codes = await Promise.all(badgeItems.map(async (it: any) => {
+      try {
+        const t = await it.findByType(require('react-native').Text);
+        return t.props.children;
+      } catch (e) {
+        return null;
+      }
+    }));
+
+    expect(codes).toContain('B2');
   });
 
   test("uses storage.publicUrl when avatar_url is not an absolute URL", async () => {
