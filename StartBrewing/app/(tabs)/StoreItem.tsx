@@ -311,11 +311,10 @@ export default function StoreItem() {
           </ThemedText>
         </ScrollView>
 
-        {/* Bottom Bar */}
         <View
           style={{
             position: "absolute",
-            bottom: 16,
+            bottom: 8,
             left: 16,
             right: 16,
             flexDirection: "row",
@@ -340,12 +339,16 @@ export default function StoreItem() {
             <TextInput
               value={quantity.toString()}
               inputMode="numeric"
-              // autoFocus={true}
               enterKeyHint="done"
               maxLength={2}
               onChangeText={(text) => {
                 const sanitized = text.replace(/[^0-9]/g, "");
-                setQuantity(sanitized === "" ? "1" : sanitized);
+                setQuantity(sanitized);
+              }}
+              onBlur={() => {
+                if (quantity === "" || quantity === "0") {
+                  setQuantity("1");
+                }
               }}
               selectionColor={BASE_COLORS.ACCENT_PRIMARY}
               style={{

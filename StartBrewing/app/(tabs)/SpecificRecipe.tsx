@@ -22,6 +22,7 @@ import Spinner from "@/components/spinner";
 import TextInput from "@/components/textInput";
 import PrimaryButton from "@/components/primaryButton";
 import SecondaryButton from "@/components/secondaryButton";
+import SelectionChip from "@/components/selectionChip";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -733,7 +734,7 @@ export default function SpecificRecipe() {
           <ThemedText type="titleBlack">{recipe?.name}</ThemedText>
 
           {/* Image */}
-          <View className="items-center mb-5">
+          <View className="items-center mb-2">
             <View
               style={{
                 width: "100%",
@@ -754,7 +755,7 @@ export default function SpecificRecipe() {
           </View>
 
           {/* Rating */}
-          <View className="flex-row  mb-1 gap-2 items-start justify-between">
+          <View className="flex-row  mb-3 gap-2 items-center justify-between">
             <View className="flex-row gap-2">
               <Star
                 size={Math.min(22 * scale, 35)}
@@ -773,16 +774,18 @@ export default function SpecificRecipe() {
                   You reviewed ✓
                 </ThemedText>
               ) : (
-                <SecondaryButton
-                  title="Add review"
-                  testID="review-button"
-                  onPress={() => {
-                    setRating(0);
-                    setReviewText("");
-                    setReviewVisible(true);
-                  }}
-                  size={14}
-                />
+                <View className="mt-1">
+                  <SecondaryButton
+                    title="Add review"
+                    testID="review-button"
+                    onPress={() => {
+                      setRating(0);
+                      setReviewText("");
+                      setReviewVisible(true);
+                    }}
+                    size={14}
+                  />
+                </View>
               )}
             </View>
           </View>
@@ -865,7 +868,7 @@ export default function SpecificRecipe() {
         </ScrollView>
       )}
 
-      {/* Modal voor batch size selectie */}
+      {/* Modal for batch size */}
       <Portal>
         <Modal
           visible={batchSizeModalVisible}
@@ -879,76 +882,28 @@ export default function SpecificRecipe() {
             borderColor: BASE_COLORS.STONE200,
           }}
         >
-          <ThemedText type="title" className="text-center mb-4">
-            Choose batch size
-          </ThemedText>
-
-          <View className="flex-row flex-wrap gap-2 mb-4">
+          <ThemedText type="title" className="text-center mb-4">Choose batch size</ThemedText>
+          <View className="flex-row flex-wrap gap-2">
             {["5", "10", "19"].map((val) => {
               const selected = selectedBatchSizeOption === val;
               return (
-                <Chip
+                <SelectionChip
                   key={val}
+                  text={`${val} L`}
                   testID={`batch-chip-${val}`}
-                  mode={selected ? "flat" : "outlined"}
-                  selected={selected}
+                  isActive={selected}
                   onPress={() =>
                     setSelectedBatchSizeOption(val as "5" | "10" | "19")
                   }
-                  style={{
-                    marginRight: 4,
-                    borderRadius: 20,
-                    borderWidth: selected ? 0 : 1,
-                    borderColor: selected
-                      ? "transparent"
-                      : BASE_COLORS.STONE300,
-                    backgroundColor: selected
-                      ? BASE_COLORS.TEXT_DARK
-                      : BASE_COLORS.STONE100,
-                    paddingHorizontal: 6,
-                  }}
-                  textStyle={{
-                    fontFamily: FontFamilies.BODY,
-                    fontSize: Math.min(14 * scale, 18),
-                    color: selected ? BASE_COLORS.WHITE : BASE_COLORS.TEXT_DARK,
-                  }}
-                >
-                  {val} L
-                </Chip>
+                />
               );
             })}
-
-            {/* Custom chip */}
-            {(() => {
-              const selected = selectedBatchSizeOption === "custom";
-              return (
-                <Chip
-                  testID="batch-chip-custom"
-                  mode={selected ? "flat" : "outlined"}
-                  selected={selected}
-                  onPress={() => setSelectedBatchSizeOption("custom")}
-                  style={{
-                    marginRight: 4,
-                    borderRadius: 20,
-                    borderWidth: selected ? 0 : 1,
-                    borderColor: selected
-                      ? "transparent"
-                      : BASE_COLORS.STONE300,
-                    backgroundColor: selected
-                      ? BASE_COLORS.TEXT_DARK
-                      : BASE_COLORS.STONE100,
-                    paddingHorizontal: 6,
-                  }}
-                  textStyle={{
-                    fontFamily: FontFamilies.BODY,
-                    fontSize: Math.min(14 * scale, 18),
-                    color: selected ? BASE_COLORS.WHITE : BASE_COLORS.TEXT_DARK,
-                  }}
-                >
-                  Custom
-                </Chip>
-              );
-            })()}
+            <SelectionChip
+              text="Custom"
+              testID="batch-chip-custom"
+              isActive={selectedBatchSizeOption === "custom"}
+              onPress={() => setSelectedBatchSizeOption("custom")}
+            />
           </View>
 
           {selectedBatchSizeOption === "custom" && (
@@ -958,14 +913,12 @@ export default function SpecificRecipe() {
                 keyboardType="numeric"
                 value={customBatchSize}
                 onChangeText={(text) => {
-                  // Filter: alleen cijfers en decimaalteken (punt of komma)
                   const filtered = text.replace(/[^0-9.,]/g, '');
                   setCustomBatchSize(filtered);
                 }}
               />
             </View>
           )}
-
           <View className="flex-row items-center justify-between mt-2">
             <SecondaryButton
               title="cancel"
@@ -979,6 +932,128 @@ export default function SpecificRecipe() {
               testID="confirm-start"
               size={14}
             />
+          </View>
+        </Modal>
+      </Portal>
+
+      {/* Modal for Starterkits */}
+      <Portal>
+        <Modal
+          visible={kitsVisible}
+          onDismiss={() => setKitsVisible(false)}
+          contentContainerStyle={{
+            backgroundColor: BASE_COLORS.LIGHT_BG,
+            padding: 20,
+            borderRadius: 12,
+            marginHorizontal: 12,
+            maxHeight: "85%",
+          }}
+        >
+          <ThemedText type="title" className="text-center mb-4">
+            Get your StarterKit now!
+          </ThemedText>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: 55,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+              }}
+            >
+              {(() => {
+                let filteredKits = kits;
+                if (selectedBatchSizeOption !== "custom" && selectedBatchSize) {
+                  filteredKits = kits.filter(
+                    (kit) => kit.size_liters === selectedBatchSize
+                  );
+                }
+
+                return filteredKits.length === 0 ? (
+                  <ThemedText type="defaultText">
+                    No starter kits available for this recipe.
+                  </ThemedText>
+                ) : (
+                  filteredKits.map((kit) => (
+                    <View
+                      key={kit.id}
+                      style={{
+                        width: "49%",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <StoreCard
+                        image={require("@/assets/images/starterkit2.png")}
+                        title={`${kit.name} • ${kit.size_liters}L`}
+                        price={`€${kit.price.toFixed(2)}`}
+                        onPress={() => {
+                          setKitsVisible(false);
+                          router.push({
+                            pathname: "/StoreItem",
+                            params: {
+                              id: kit.id,
+                              categoryNumber: 4,
+                              from: "specificrecipe",
+                              recipe_slug: recipe_slug,
+                            },
+                          } as any);
+                        }}
+                      />
+                    </View>
+                  ))
+                );
+              })()}
+            </View>
+          </ScrollView>
+          <View className="flex-row items-center justify-between">
+            <SecondaryButton
+              testID="skip-button"
+              title="Skip"
+              onPress={async () => {
+                try {
+                  await increment("modal_ready_start");
+                } catch {
+                  // ignore
+                }
+                setKitsVisible(false);
+                const sizeToUse =
+                  selectedBatchSize ?? recipe?.batch_size_l ?? 19;
+                await brewRecipe(undefined, sizeToUse);
+              }}
+            />
+            {selectedBatchSizeOption !== "custom" && (() => {
+              let filteredKits = kits;
+              if (selectedBatchSize) {
+                filteredKits = kits.filter(
+                  (kit) => kit.size_liters === selectedBatchSize
+                );
+              }
+              const firstKit = filteredKits[0];
+
+              return firstKit ? (
+                <PrimaryButton
+                  testID="ordernow-button"
+                  title="Order now"
+                  onPress={() => {
+                    setKitsVisible(false);
+                    router.push({
+                      pathname: "/StoreItem",
+                      params: {
+                        id: firstKit.id,
+                        categoryNumber: 4,
+                        from: "specificrecipe",
+                        recipe_slug: recipe_slug,
+                      },
+                    } as any);
+                  }}
+                />
+              ) : null;
+            })()}
           </View>
         </Modal>
       </Portal>
@@ -1053,113 +1128,6 @@ export default function SpecificRecipe() {
         </Modal>
       </Portal>
 
-      {/* Modal for Starterkits */}
-      <Portal>
-        <Modal
-          visible={kitsVisible}
-          onDismiss={() => setKitsVisible(false)}
-          contentContainerStyle={{
-            backgroundColor: BASE_COLORS.LIGHT_BG,
-            padding: 20,
-            borderRadius: 12,
-            marginHorizontal: 12,
-            maxHeight: "85%",
-          }}
-        >
-          <ThemedText type="title" className="text-center mb-4">
-            Get your StarterKit now!
-          </ThemedText>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingBottom: 55,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-              }}
-            >
-              {kits.length === 0 ? (
-                <ThemedText type="defaultText">
-                  No starter kits available for this recipe.
-                </ThemedText>
-              ) : (
-                kits.map((kit) => (
-                  <View
-                    key={kit.id}
-                    style={{
-                      width: "49%",
-                      marginBottom: 12,
-                    }}
-                  >
-                    <StoreCard
-                      image={require("@/assets/images/starterkit2.png")}
-                      title={`${kit.name} • ${kit.size_liters}L`}
-                      price={`€${kit.price.toFixed(2)}`}
-                      onPress={() => {
-                        setKitsVisible(false);
-                        router.push({
-                          pathname: "/StoreItem",
-                          params: {
-                            id: kit.id,
-                            categoryNumber: 4,
-                            from: "specificrecipe",
-                            recipe_slug: recipe_slug,
-                          },
-                        } as any);
-                      }}
-                    />
-                  </View>
-                ))
-              )}
-            </View>
-          </ScrollView>
-          <View
-            style={{
-              position: "absolute",
-              bottom: 15,
-              left: 0,
-              right: 0,
-              alignItems: "center",
-            }}
-          >
-            <FAB
-              testID="startFAB"
-              mode="flat"
-              label="Ready to Start"
-              color={BASE_COLORS.WHITE}
-              onPress={async () => {
-                try {
-                  await increment("modal_ready_start");
-                } catch {
-                  // ignore
-                }
-                setKitsVisible(false);
-                const sizeToUse =
-                  selectedBatchSize ?? recipe?.batch_size_l ?? 19;
-                await brewRecipe(undefined, sizeToUse);
-              }}
-              style={{
-                backgroundColor: BASE_COLORS.TEXT_DARK,
-                borderRadius: 30,
-              }}
-              theme={{
-                fonts: {
-                  labelLarge: {
-                    fontSize: Math.min(16 * scale, 24),
-                    fontFamily: FontFamilies.BODY,
-                  },
-                },
-              }}
-            />
-          </View>
-        </Modal>
-      </Portal>
-
       <View
         style={{
           position: "absolute",
@@ -1169,26 +1137,24 @@ export default function SpecificRecipe() {
           alignItems: "center",
         }}
       >
-        {!kitsVisible && (
-          <FAB
-            mode="flat"
-            label="Start Brewing"
-            color={BASE_COLORS.WHITE}
-            onPress={handleInitialStartPress}
-            style={{
-              backgroundColor: BASE_COLORS.TEXT_DARK,
-              borderRadius: 30,
-            }}
-            theme={{
-              fonts: {
-                labelLarge: {
-                  fontSize: Math.min(16 * scale, 24),
-                  fontFamily: FontFamilies.BODY,
-                },
+        <FAB
+          mode="flat"
+          label="Start Brewing"
+          color={BASE_COLORS.WHITE}
+          onPress={handleInitialStartPress}
+          style={{
+            backgroundColor: BASE_COLORS.TEXT_DARK,
+            borderRadius: 30,
+          }}
+          theme={{
+            fonts: {
+              labelLarge: {
+                fontSize: Math.min(16 * scale, 24),
+                fontFamily: FontFamilies.BODY,
               },
-            }}
-          />
-        )}
+            },
+          }}
+        />
       </View>
     </SafeAreaView>
   );

@@ -295,6 +295,7 @@ const saveShippingInfo = async () => {
     //loadShippingInfo();
   }, []));
 
+  /*
   const debounceTimers = React.useRef<Record<string, number>>({});
 
   const debouncedUpdateQuantity = (
@@ -310,6 +311,7 @@ const saveShippingInfo = async () => {
       updateCartQuantity(store_item_id, newQty, starterkit);
     }, 800);
   };
+  */
 
 
 
@@ -367,7 +369,8 @@ const saveShippingInfo = async () => {
                   } as any)
                 }
                 onQuantityChange={(newQty, starterkit) => 
-                  debouncedUpdateQuantity(order.store_item_id, newQty, starterkit)}
+                  /*debouncedUpdateQuantity(order.store_item_id, newQty, starterkit)}*/
+                  updateCartQuantity(order.store_item_id, newQty, starterkit)}
               />
             ))}
           </View>
