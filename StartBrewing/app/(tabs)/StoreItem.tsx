@@ -311,11 +311,10 @@ export default function StoreItem() {
           </ThemedText>
         </ScrollView>
 
-        {/* Bottom Bar */}
         <View
           style={{
             position: "absolute",
-            bottom: 16,
+            bottom: 8,
             left: 16,
             right: 16,
             flexDirection: "row",
