@@ -74,8 +74,14 @@ interface StoreCardProps {
 }
 const MockStoreCard = jest.fn((props: StoreCardProps) => null);
 jest.mock("@/components/ui/StoreCard", () => (props: StoreCardProps) => {
+  const React = require("react");
+  const { Pressable, Text } = require("react-native");
   MockStoreCard(props);
-  return null;
+  return (
+    React.createElement(Pressable, { testID: `store-card-${props.id}`, onPress: props.onPress },
+      React.createElement(Text, null, props.title)
+    )
+  );
 });
 
 jest.mock("react-native-paper", () => {
@@ -100,8 +106,11 @@ jest.mock("react-native-paper", () => {
         testID="searchbar"
       />
     ),
-    Chip: ({ children, onPress }: any) => (
-      <Pressable onPress={onPress}><Text>{children}</Text></Pressable>
+    Chip: ({ children, onPress, icon }: any) => (
+      <Pressable onPress={onPress}>
+        {typeof icon === "function" ? icon() : null}
+        <Text>{children}</Text>
+      </Pressable>
     ),
     Badge: ({ children }: any) => <Text>{children}</Text>,
     Button: ({ children, onPress }: any) => (
@@ -225,6 +234,20 @@ describe("<StorePage />", () => {
     });
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
+    });
+  });
+
+  it("pressing a store item navigates to StoreItem", async () => {
+    const { findByTestId } = renderWithNavigation(<StorePage />);
+
+    // wait for the first store card to render and then press it
+    const card = await findByTestId("store-card-1");
+    await act(async () => {
+      fireEvent.press(card);
+    });
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({ pathname: "/StoreItem" }));
     });
   });
 
