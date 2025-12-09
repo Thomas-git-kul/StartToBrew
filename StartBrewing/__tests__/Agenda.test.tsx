@@ -157,6 +157,60 @@ describe('Agenda Component', () => {
     });
   });
 
+  it('handles supabase brews error without crashing', async () => {
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      const chain: any = {};
+      chain.select = (..._args: any[]) => chain;
+      chain.eq = (..._args: any[]) => chain;
+      chain.in = (..._args: any[]) => chain;
+      chain.order = (..._args: any[]) => chain;
+      if (table === 'brews') {
+        chain.then = (cb: any) => cb({ data: null, error: 'err' });
+      } else {
+        chain.then = (cb: any) => cb({ data: [], error: null });
+      }
+      chain.catch = () => {};
+      return chain;
+    });
+
+    const { getByText } = renderWithNavigation(<Agenda />);
+
+    await waitFor(() => {
+      expect(getByText('Loading progress...')).toBeTruthy();
+    });
+
+    await waitFor(() => {
+      expect(getByText('No tasks for this day.')).toBeTruthy();
+    });
+  });
+
+  it('handles phases error without crashing', async () => {
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      const chain: any = {};
+      chain.select = (..._args: any[]) => chain;
+      chain.eq = (..._args: any[]) => chain;
+      chain.in = (..._args: any[]) => chain;
+      chain.order = (..._args: any[]) => chain;
+      if (table === 'phases') {
+        chain.then = (cb: any) => cb({ data: null, error: 'err' });
+      } else {
+        chain.then = (cb: any) => cb({ data: [], error: null });
+      }
+      chain.catch = () => {};
+      return chain;
+    });
+
+    const { getByText } = renderWithNavigation(<Agenda />);
+
+    await waitFor(() => {
+      expect(getByText('Loading progress...')).toBeTruthy();
+    });
+
+    await waitFor(() => {
+      expect(getByText('No tasks for this day.')).toBeTruthy();
+    });
+  });
+
   it('fetches data and displays brew entries', async () => {
     // Set up per-table responses
     (supabase.from as jest.Mock).mockImplementation((table: string) => {
@@ -242,6 +296,43 @@ describe('Agenda Component', () => {
     const progressBtn = getByText('Progress');
     fireEvent.press(progressBtn);
 
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/progress', params: { id: 1, from: 'agenda' } });
+  });
+
+  it('shows progress button when last_step_id matches and date equals currentDate', async () => {
+    const today = new Date().toISOString().split('T')[0];
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      const makeChain = (data: any[]) => {
+        const chain: any = {};
+        chain.select = (..._args: any[]) => chain;
+        chain.eq = (..._args: any[]) => chain;
+        chain.in = (..._args: any[]) => chain;
+        chain.order = (..._args: any[]) => chain;
+        chain.then = (cb: any) => cb({ data, error: null });
+        chain.catch = () => {};
+        return chain;
+      };
+
+      if (table === 'brews') {
+        return makeChain([{ id_brew: 1, name: 'Test Beer', start_date: today, recipe_slug: 'r1', last_step_id: '1' }]);
+      }
+      if (table === 'phases') return makeChain([{ phase_id: 1, recipe_slug: 'r1', name: 'Phase 1', position: 1 }]);
+      if (table === 'steps') return makeChain([{ step_id: '1', phase_id: 1, title: 'Step 1', start_offset_min: null, duration_min: null }]);
+      if (table === 'brew_steps') return makeChain([{ step_id: '1', id_brew: 1, status: 'completed', completed_at: new Date().toISOString() }]);
+      return makeChain([]);
+    });
+
+    const { getByText } = renderWithNavigation(<Agenda />);
+
+    await waitFor(() => {
+      expect(getByText('Test Beer')).toBeTruthy();
+    });
+
+    const progressBtn = getByText('Progress');
+    expect(progressBtn).toBeTruthy();
+
+    fireEvent.press(progressBtn);
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/progress', params: { id: 1, from: 'agenda' } });
   });
 
