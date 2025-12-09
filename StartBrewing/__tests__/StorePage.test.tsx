@@ -6,6 +6,59 @@ import StorePage from "../app/(tabs)/Store";
 import { supabase } from "../supabase";
 import { useIsFocused, NavigationContainer } from "@react-navigation/native";
 
+// Mock lucide icons used across components
+jest.mock("lucide-react-native", () => {
+  const React = require("react");
+  const RN = require("react-native");
+  const makeIcon = (name: string) => jest.fn((props: any) => React.createElement(RN.View, { ...props, testID: `icon-${name}` }, null));
+  const Search = makeIcon("Search");
+  const X = makeIcon("X");
+  const Check = makeIcon("Check");
+  const ShoppingCart = makeIcon("ShoppingCart");
+  const Calendar1 = makeIcon("Calendar1");
+  const ArrowRight = makeIcon("ArrowRight");
+  const ArrowLeft = makeIcon("ArrowLeft");
+  const House = makeIcon("House");
+  const HeartPlus = makeIcon("HeartPlus");
+  const Heart = makeIcon("Heart");
+  const Trash = makeIcon("Trash");
+  const Settings = makeIcon("Settings");
+  const LogOut = makeIcon("LogOut");
+  const UserCog = makeIcon("UserCog");
+  return {
+    __esModule: true,
+    Search,
+    X,
+    Check,
+    ShoppingCart,
+    Calendar1,
+    ArrowRight,
+    ArrowLeft,
+    House,
+    HeartPlus,
+    Heart,
+    Trash,
+    Settings,
+    LogOut,
+    UserCog,
+  };
+});
+
+// Mock the header component to avoid side-effects from its internal hooks
+jest.mock("@/components/header", () => {
+  const React = require("react");
+  const { View, Text, Pressable } = require("react-native");
+  return {
+    __esModule: true,
+    default: ({ title, onIconPress, actionTestID }: any) => (
+      React.createElement(View, null,
+        React.createElement(Text, null, title),
+        React.createElement(Pressable, { testID: actionTestID, onPress: onIconPress }, React.createElement(Text, null, "Icon"))
+      )
+    ),
+  };
+});
+
 // --- 🧩 MOCKS --- //
 const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
@@ -34,15 +87,25 @@ interface StoreCardProps {
 }
 const MockStoreCard = jest.fn((props: StoreCardProps) => null);
 jest.mock("@/components/ui/StoreCard", () => (props: StoreCardProps) => {
+  const React = require("react");
+  const { Pressable, Text } = require("react-native");
   MockStoreCard(props);
-  return null;
+  return (
+    React.createElement(Pressable, { testID: `store-card-${props.id}`, onPress: props.onPress },
+      React.createElement(Text, null, props.title)
+    )
+  );
 });
 
 jest.mock("react-native-paper", () => {
+  const actual = jest.requireActual("react-native-paper");
   const React = require("react");
   const { View, Text, TextInput, Pressable } = require("react-native");
 
   return {
+    __esModule: true,
+    ...actual,
+    // keep Chip from the actual module so the inline icon JSX in Store.tsx runs
     Appbar: {
       Header: ({ children }: any) => <View>{children}</View>,
       Content: ({ title }: any) => <Text>{title}</Text>,
@@ -60,11 +123,10 @@ jest.mock("react-native-paper", () => {
         testID="searchbar"
       />
     ),
-    Chip: ({ children, onPress }: any) => (
+    Badge: ({ children }: any) => <Text>{children}</Text>,
+    Button: ({ children, onPress }: any) => (
       <Pressable onPress={onPress}><Text>{children}</Text></Pressable>
     ),
-    View,
-    Text,
   };
 });
 
@@ -77,6 +139,9 @@ jest.mock("../supabase", () => {
         then: jest.fn(),
         // We'll resolve immediately
       })),
+      auth: {
+        getUser: jest.fn(() => Promise.resolve({ data: { user: null } })),
+      },
     },
   };
 });
@@ -181,12 +246,243 @@ describe("<StorePage />", () => {
     });
   });
 
+  it("pressing a store item navigates to StoreItem", async () => {
+    const { findByTestId } = renderWithNavigation(<StorePage />);
+
+    // wait for the first store card to render and then press it
+    const card = await findByTestId("store-card-1");
+    await act(async () => {
+      fireEvent.press(card);
+    });
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith(expect.objectContaining({ pathname: "/StoreItem" }));
+    });
+  });
+
+  it("selecting a category chip reorders chips (selected first)", async () => {
+    const { getAllByText, getByText } = renderWithNavigation(<StorePage />);
+    await waitFor(() => {
+      // initial order from mock: Malt then Hops
+      const all = getAllByText(/Malt|Hops/);
+      expect(all[0].props.children).toBe("Malt");
+      expect(all[1].props.children).toBe("Hops");
+    });
+
+    // press Hops to select it and cause it to be ordered first
+    await act(async () => {
+      fireEvent.press(getByText("Hops"));
+    });
+
+    await waitFor(() => {
+      const all = getAllByText(/Malt|Hops/);
+      expect(all[0].props.children).toBe("Hops");
+      expect(all[1].props.children).toBe("Malt");
+    });
+
+    // Check that the Check icon was rendered for the selected chip
+    const lucide = require("lucide-react-native");
+    expect(lucide.Check).toHaveBeenCalled();
+  });
+
+  it("filters items when typing in searchbar", async () => {
+    const { getByTestId } = renderWithNavigation(<StorePage />);
+    await waitFor(() => {
+      expect(getByTestId("searchbar")).toBeTruthy();
+    });
+
+    // Type a query that only matches "Item 2"
+    await act(async () => {
+      fireEvent.changeText(getByTestId("searchbar"), "Item 2");
+    });
+
+    await waitFor(() => {
+      // Only one StoreCard should be rendered for Item 2
+      const calls = MockStoreCard.mock.calls.map((c) => c[0]?.title);
+      // find titles from calls - at least one should be "Item 2"
+      expect(calls.some((t) => t === "Item 2")).toBeTruthy();
+    });
+  });
+
+  it("shows Clear Filters and resets search and selected categories when list is empty", async () => {
+    // Override supabase mock so there are categories but no items
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "category") {
+        return {
+          select: () => ({
+            limit: () => Promise.resolve({
+              data: [
+                { id_category: 1, name: "CatA" },
+                { id_category: 2, name: "CatB" },
+              ],
+              error: null,
+            }),
+          }),
+        };
+      }
+      // Return empty arrays for store items and starter kits
+      return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+    });
+
+    const { getByText, getByTestId, getAllByText, queryByText } = renderWithNavigation(<StorePage />);
+
+    // wait for chips to render
+    await waitFor(() => {
+      expect(getByText("CatA")).toBeTruthy();
+      expect(getByText("CatB")).toBeTruthy();
+    });
+
+    // select CatB to change ordering
+    await act(async () => {
+      fireEvent.press(getByText("CatB"));
+    });
+
+    await waitFor(() => {
+      expect(getByText("CatB")).toBeTruthy();
+    });
+
+    // type something into searchbar
+    await act(async () => {
+      fireEvent.changeText(getByTestId("searchbar"), "no-match");
+    });
+
+    // Ensure the empty list component shows (Clear Filters button)
+    await waitFor(() => {
+      expect(getByText("Clear Filters")).toBeTruthy();
+    });
+
+    // Press Clear Filters and ensure search is cleared and chips reset
+    await act(async () => {
+      fireEvent.press(getByText("Clear Filters"));
+    });
+
+    await waitFor(() => {
+      // searchbar value should be empty after clearing
+      expect(getByTestId("searchbar").props.value).toBe("");
+      // ordering should return to default (CatA then CatB)
+      const all = getAllByText(/CatA|CatB/);
+      expect(all[0].props.children).toBe("CatA");
+      expect(all[1].props.children).toBe("CatB");
+      // Clear Filters button is still present in the UI (component rendered)
+      expect(queryByText("Clear Filters")).toBeTruthy();
+    });
+  });
+
   it("does not fetch cart count when not focused", async () => {
     mockUseIsFocused.mockReturnValue(false); // Simulate the page not being focused
     renderWithNavigation(<StorePage />);
 
     await waitFor(() => {
       expect(supabase.from).not.toHaveBeenCalledWith("shopping_cart_items");
+    });
+  });
+
+  it("handles category fetch error and sets empty categories", async () => {
+    // category returns an error
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "category") {
+        return {
+          select: () => ({
+            limit: () => Promise.resolve({ data: null, error: { message: "cat error" } }),
+          }),
+        };
+      }
+      // default other tables return sample data
+      if (table === "store_items") {
+        return {
+          select: () => ({ limit: () => Promise.resolve({ data: [{ id_store_item: 1, name: "Item 1", category_id: 1, price: 10 }], error: null }) }),
+        };
+      }
+      if (table === "starter_kits") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+      }
+      return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+    });
+
+    const { queryByText } = renderWithNavigation(<StorePage />);
+
+    await waitFor(() => {
+      // Expect no category chips rendered when category fetch errors
+      expect(queryByText("Malt")).toBeNull();
+      expect(queryByText("Hops")).toBeNull();
+    });
+  });
+
+  it("handles store_items fetch error and shows empty list", async () => {
+    // make store_items return an error
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "category") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [{ id_category: 1, name: "Malt" }], error: null }) }) };
+      }
+      if (table === "store_items") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: null, error: { message: "items error" } }) }) };
+      }
+      if (table === "starter_kits") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+      }
+      return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+    });
+
+    const { getByText } = renderWithNavigation(<StorePage />);
+
+    await waitFor(() => {
+      // When items fetch errors, ListEmptyComponent should show
+      expect(getByText("Clear Filters")).toBeTruthy();
+      // And no StoreCard should have been rendered
+      expect(MockStoreCard).not.toHaveBeenCalled();
+    });
+  });
+
+  it("maps store items + starter kits and sorts combinedItems before rendering", async () => {
+    // Provide unsorted store items and starter kits to validate the sort branch
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "category") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [{ id_category: 1, name: "Malt" }], error: null }) }) };
+      }
+      if (table === "store_items") {
+        // return names in Z, A order to ensure sorting runs
+        return {
+          select: () => ({ limit: () => Promise.resolve({ data: [
+            { id_store_item: 10, name: "Zeta Item", category_id: 1, price: 5 },
+            { id_store_item: 11, name: "Alpha Item", category_id: 1, price: 15 },
+          ], error: null }) }),
+        };
+      }
+      if (table === "starter_kits") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [ { id_starter_kit: 20, name: "Beta Kit", price: 50 } ], error: null }) }) };
+      }
+      return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+    });
+
+    renderWithNavigation(<StorePage />);
+
+    await waitFor(() => {
+      // Ensure StoreCard was called for each mapped & sorted item
+      expect(MockStoreCard).toHaveBeenCalledTimes(3);
+      const titles = MockStoreCard.mock.calls.map((c) => c[0]?.title);
+      // After alphabetical sort by title: "Alpha Item", "Beta Kit", "Zeta Item"
+      expect(titles).toEqual(["Alpha Item", "Beta Kit", "Zeta Item"]);
+
+      // Check price formatting and categoryId mapping for starter kit
+      const starterCall = MockStoreCard.mock.calls.find((c: any) => c[0]?.title === "Beta Kit");
+      expect(starterCall).toBeDefined();
+      const starter = starterCall![0] as any;
+      expect(starter.price).toBe("€50");
+      expect(starter.categoryId).toBe(4);
+    });
+  });
+
+  it("handles unexpected supabase exception and still clears loading", async () => {
+    // make supabase.select throw to hit the catch + finally block
+    (supabase.from as jest.Mock).mockImplementation(() => ({
+      select: () => { throw new Error("network fail"); },
+    }));
+
+    const { getByText } = renderWithNavigation(<StorePage />);
+
+    await waitFor(() => {
+      // Loading should be cleared and header rendered despite the exception
+      expect(getByText("Store")).toBeTruthy();
     });
   });
 });

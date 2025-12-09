@@ -104,10 +104,9 @@ export default function Account() {
   const fetchProfile = useCallback(async () => {
     setLoading(true);
 
-    const {
-      data: { user },
-      error: uErr,
-    } = await supabase.auth.getUser();
+    const authRes: any = await supabase.auth.getUser();
+    const user = authRes?.data?.user;
+    const uErr = authRes?.error ?? null;
 
     if (uErr || !user) {
       setLoading(false);
@@ -229,7 +228,7 @@ export default function Account() {
       .sort((a, b) => {
         if (!a.earned_at || !b.earned_at) return 0;
         return (
-          new Date(b.earned_at).getTime() - new Date(b.earned_at).getTime()
+          new Date(b.earned_at).getTime() - new Date(a.earned_at).getTime()
         );
       });
 
@@ -548,6 +547,7 @@ export default function Account() {
                     <Badge
                       id_badge={badge.id_badge}
                       icon_url={badge.icon_url}
+                      code={badge.code}
                       onPress={() => {
                         setSelectedBadge(badge);
                         setBadgeModalVisible(true);

@@ -3,6 +3,45 @@
 exports[`<Progress /> snapshot 1`] = `
 [
   <View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+        }
+      }
+      testID="back-header"
+    >
+      <Text>
+        back
+      </Text>
+    </View>
     <Text>
       black IPA Progress
     </Text>
@@ -14,74 +53,9 @@ exports[`<Progress /> snapshot 1`] = `
       }
     }
   >
-    <View
-      className="flex-row items-center justify-between"
-    >
-      <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onClick={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        style={
-          {
-            "opacity": 1,
-          }
-        }
-      >
-        <Text>
-          <View
-            className="flex-row items-center justify-content"
-            style={
-              {
-                "marginLeft": -8,
-              }
-            }
-          >
-            <Text>
-              ChevronLeft
-            </Text>
-            <Text>
-              Previous
-            </Text>
-          </View>
-        </Text>
-      </View>
-      <Text
-        style={
-          {
-            "color": "#57534e",
-            "fontFamily": "Battambang_Bold",
-            "fontSize": 16,
-          }
-        }
-      >
-        Step 
-        1
-         / 
-        1
+    <View>
+      <Text>
+        step:1/2
       </Text>
       <View
         accessibilityState={
@@ -116,23 +90,49 @@ exports[`<Progress /> snapshot 1`] = `
             "opacity": 1,
           }
         }
+        testID="stepper-next"
       >
         <Text>
-          <View
-            className="flex-row items-center justify-content"
-            style={
-              {
-                "marginRight": -8,
-              }
-            }
-          >
-            <Text>
-              Next
-            </Text>
-            <Text>
-              ChevronRight
-            </Text>
-          </View>
+          next
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onClick={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          {
+            "opacity": 1,
+          }
+        }
+        testID="stepper-prev"
+      >
+        <Text>
+          prev
         </Text>
       </View>
     </View>

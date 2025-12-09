@@ -477,7 +477,8 @@ export default function Progress() {
               completed_at: new Date().toISOString(),
             })
             .eq("id_brew", brewId)
-            .eq("step_id", activeStepId);
+            .eq("step_id", activeStepId)
+            .select();
         } catch (e) {
           console.error("Failed to persist completion", e);
         }
@@ -531,7 +532,8 @@ export default function Progress() {
             status_id: 2,
             start_date: new Date().toISOString(),
           })
-          .eq("id_brew", brewId);
+          .eq("id_brew", brewId)
+          .select();
       }
 
       updates.push({
@@ -552,7 +554,8 @@ export default function Progress() {
             completed_at: new Date().toISOString(),
           })
           .eq("id_brew", brewId)
-          .eq("step_id", u.step_id);
+          .eq("step_id", u.step_id)
+          .select();
       }
 
       let newLastStepId;
@@ -572,7 +575,8 @@ export default function Progress() {
           last_step_id: newLastStepId,
           ...(isLastStep ? { status_id: 3 } : {}),
         })
-        .eq("id_brew", brewId);
+        .eq("id_brew", brewId)
+        .select();
 
       if (isLastStep) {
         await refreshProgress();

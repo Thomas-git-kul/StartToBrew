@@ -10,94 +10,9 @@ jobs:
     with:
       node-version: "20"
 
-  build:
-    name: Build Expo Web App
-    runs-on: ubuntu-latest
-
-    env:
-      EXPO_PUBLIC_SUPABASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_SUPABASE_URL || secrets.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-      EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-      EXPO_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_SERVICE_ID }}
-      EXPO_PUBLIC_EMAILJS_TEMPLATE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID }}
-      EXPO_PUBLIC_EMAILJS_PUBLIC_KEY: ${{ secrets.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY }}
-
-    defaults:
-      run:
-        working-directory: StartBrewing
-
-    needs: [tests]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Log branch and Supabase configuration
-        run: |
-          echo "=========================================="
-          echo "BUILD JOB - Configuration Check"
-          echo "=========================================="
-          echo "Branch: ${{ github.ref }}"
-          echo "Is main branch: ${{ github.ref == 'refs/heads/main' }}"
-          echo ""
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "✓ Using NEXT_PUBLIC Supabase credentials (production)"
-            echo "  Source: NEXT_PUBLIC_SUPABASE_URL secret"
-            echo "  Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
-          else
-            echo "✓ Using EXPO_PUBLIC Supabase credentials (development)"
-            echo "  Source: EXPO_PUBLIC_SUPABASE_URL secret"
-            echo "  Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
-          fi
-          echo "=========================================="
-
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: StartBrewing/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - run: npm install
-
-      - name: Verify environment variables before build
-        run: |
-          echo "=========================================="
-          echo "Environment Variables Check (Before Build)"
-          echo "=========================================="
-          echo "EXPO_PUBLIC_SUPABASE_URL is set: $([ -n "$EXPO_PUBLIC_SUPABASE_URL" ] && echo 'YES' || echo 'NO')"
-          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY is set: $([ -n "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ] && echo 'YES' || echo 'NO')"
-          echo ""
-          echo "First 20 chars of SUPABASE_URL: ${EXPO_PUBLIC_SUPABASE_URL:0:20}..."
-          echo "First 20 chars of ANON_KEY: ${EXPO_PUBLIC_SUPABASE_ANON_KEY:0:20}..."
-          echo "=========================================="
-
-      - name: Build web export
-        run: |
-          echo "Starting build process..."
-          npm run build:web
-          echo "Build completed!"
-
-      - name: Verify build output
-        run: |
-          echo "=========================================="
-          echo "Build Output Verification"
-          echo "=========================================="
-          echo "Checking dist directory..."
-          ls -lah dist/ || echo "dist directory not found!"
-          echo ""
-          echo "Build completed with Supabase URL: ${EXPO_PUBLIC_SUPABASE_URL:0:20}..."
-          echo "=========================================="
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: StartBrewing/dist
-
   deploy:
     name: Deploy to Vercel
-    needs: build
+    needs: tests
     runs-on: ubuntu-latest
 
     env:
@@ -105,12 +20,6 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      EXPO_PUBLIC_SUPABASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_SUPABASE_URL || secrets.EXPO_PUBLIC_SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-      EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-      EXPO_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_SERVICE_ID }}
-      EXPO_PUBLIC_EMAILJS_TEMPLATE_ID: ${{ secrets.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID }}
-      EXPO_PUBLIC_EMAILJS_PUBLIC_KEY: ${{ secrets.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY }}
 
     steps:
       - name: Checkout Repository
@@ -125,52 +34,61 @@ jobs:
           echo "Is production deployment: $IS_PROD"
           echo ""
           if [ "$IS_PROD" = "true" ]; then
-            echo "✓ Using NEXT_PUBLIC Supabase credentials (production)"
-            echo "  Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
+            echo "✓ Deploying to Production environment"
+            echo "  - Vercel will use EXPO_PUBLIC_* variables"
           else
-            echo "✓ Using EXPO_PUBLIC Supabase credentials (development)"
-            echo "  Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
+            echo "✓ Deploying to Preview environment"
+            echo "  - Vercel will use EXPO_PUBLIC_* variables"
           fi
           echo "=========================================="
-
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: StartBrewing/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          echo "DEPLOY JOB - Configuration Check"
+          echo "=========================================="
+          echo "=========================================="
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: web-build
-          path: StartBrewing/dist
-
       - name: Install Vercel CLI
         run: npm i -g vercel@latest
 
-      # Explicitly link to the correct Vercel project
-      - name: Link Vercel project
-        run: cd StartBrewing; vercel link --project start-to-brew --yes --token "$VERCEL_TOKEN"
+      - name: Pull Vercel Environment Information
+        run: |
+          ENVIRONMENT=$([ "$IS_PROD" = "true" ] && echo "production" || echo "preview")
+          echo "Pulling Vercel environment: $ENVIRONMENT"
+          vercel pull --yes --environment=$ENVIRONMENT --token "$VERCEL_TOKEN"
 
-      - name: Deploy
+      - name: Deploy to Vercel
         id: deploy
         run: |
-          echo "Starting Vercel deployment..."
-          URL=$(vercel deploy \
-            $([ "$IS_PROD" = "true" ] && echo "--prod") \
-            --token "$VERCEL_TOKEN" --confirm)
+          echo "Starting Bob the Bouwer... 🚧"
+
+          if [ "$IS_PROD" = "true" ]; then
+            echo "Deploying to PRODUCTION..."
+            URL=$(vercel deploy --prod --token "$VERCEL_TOKEN" --yes)
+          else
+            echo "Deploying to PREVIEW..."
+            URL=$(vercel deploy --token "$VERCEL_TOKEN" --yes)
+          fi
+
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "✓ Deployed URL: $URL"
 
-      - name: Alias
+      - name: Set Alias
         run: |
           ALIAS=$([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")
+          echo "Setting alias: $ALIAS"
           vercel alias set "${{ steps.deploy.outputs.url }}" "$ALIAS" --token "$VERCEL_TOKEN"
           echo "✓ Aliased to: $ALIAS"
+
+      - name: Deployment Summary
+        run: |
+          echo "=========================================="
+          echo "DEPLOYMENT COMPLETE"
+          echo "=========================================="
+          echo "Environment: $([ "$IS_PROD" = "true" ] && echo "Production" || echo "Preview")"
+          echo "URL: ${{ steps.deploy.outputs.url }}"
+          echo "Alias: $([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")"
+          echo "Variables used: EXPO_PUBLIC_* (from Vercel)"
+          echo "=========================================="

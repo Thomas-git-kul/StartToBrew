@@ -19,7 +19,7 @@ const BASE_SCREEN_WIDTH = 375;
 const scale = Dimensions.get("window").width / BASE_SCREEN_WIDTH;
 const isJest = typeof jest !== "undefined";
 
-function formatDuration(minutes: number) {
+export function formatDuration(minutes: number) {
   if (minutes >= 10080) return `${Math.floor(minutes / 10080)} week(s)`;
   if (minutes >= 1440) return `${Math.floor(minutes / 1440)} day(s)`;
   if (minutes >= 60) return `${Math.floor(minutes / 60)} h`;
@@ -261,7 +261,7 @@ export default function Agenda() {
   // refresh when screen focuses
   useFocusEffect(
     useCallback(() => {
-      if (!isJest && fetchAgendaData) {
+      if (fetchAgendaData) {
         fetchAgendaData();
       }
     }, [])
