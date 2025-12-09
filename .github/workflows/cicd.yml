@@ -35,11 +35,14 @@ jobs:
           echo ""
           if [ "$IS_PROD" = "true" ]; then
             echo "✓ Deploying to Production environment"
-            echo "  - Vercel will use NEXT_PUBLIC_* variables"
+            echo "  - Vercel will use EXPO_PUBLIC_* variables"
           else
             echo "✓ Deploying to Preview environment"
             echo "  - Vercel will use EXPO_PUBLIC_* variables"
           fi
+          echo "=========================================="
+          echo "DEPLOY JOB - Configuration Check"
+          echo "=========================================="
           echo "=========================================="
 
       - name: Set up Node.js
@@ -87,5 +90,5 @@ jobs:
           echo "Environment: $([ "$IS_PROD" = "true" ] && echo "Production" || echo "Preview")"
           echo "URL: ${{ steps.deploy.outputs.url }}"
           echo "Alias: $([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")"
-          echo "Variables used: $([ "$IS_PROD" = "true" ] && echo "NEXT_PUBLIC_* (from Vercel Production)" || echo "EXPO_PUBLIC_* (from Vercel Preview)")"
+          echo "Variables used: EXPO_PUBLIC_* (from Vercel)"
           echo "=========================================="
