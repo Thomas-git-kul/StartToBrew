@@ -522,6 +522,136 @@ it("starts and pauses the timer and calls Supabase updates", async () => {
   });
 });
 
+it("when brew status is 1 it sets start_date (brews.update path)", async () => {
+  // Override supabase.from to return status_id:1 for the brews.select().single() call
+  const sb = jest.requireMock("@/supabase").supabase;
+  const originalFrom = sb.from;
+
+  sb.from = jest.fn((table: string) => {
+    if (table === "brews") {
+      return {
+        select: () => ({
+          eq: () => ({
+            single: async () => ({
+              data: {
+                id_brew: 1,
+                recipe_slug: "black-ipa",
+                name: "black IPA Progress",
+                last_step_id: "1",
+                status_id: 1,
+              },
+              error: null,
+            }),
+          }),
+        }),
+        update: (payload: any) => ({
+          eq: (_f?: any, _v?: any) => ({
+            select: async () => {
+              mockBrewsUpdate(payload);
+              return { data: {}, error: null };
+            },
+          }),
+        }),
+      };
+    }
+    return originalFrom(table);
+  });
+
+  const { findByText } = renderWithNavigation(<Progress />);
+  await findByText("black IPA Progress");
+  const completeBtn = await findByText(/Complete step/i);
+
+  await act(async () => fireEvent.press(completeBtn));
+
+  await waitFor(() => {
+    expect(mockBrewsUpdate).toHaveBeenCalled(); // start_date/status update was invoked
+  });
+
+  // restore original
+  sb.from = originalFrom;
+});
+
+it("handles two-mode and switches to phase 2 on complete", async () => {
+  const sb = jest.requireMock("@/supabase").supabase;
+  const originalFrom = sb.from;
+
+  // Provide steps with next.start_offset_min > 0 to force mode: "two"
+  sb.from = jest.fn((table: string) => {
+    if (table === "steps") {
+      return {
+        select: () => ({
+          eq: () => ({
+            order: async () => ({
+              data: [
+                { step_id: "1", title: "S1", description_md: "a", start_offset_min: 0, duration_min: 10, next_step_id: "2", temp_c_target: 100 },
+                { step_id: "2", title: "S2", description_md: "b", start_offset_min: 5, duration_min: 0, next_step_id: null, temp_c_target: 100 },
+              ],
+              error: null,
+            }),
+            maybeSingle: async () => ({ data: [], error: null}),
+          }),
+        }),
+      };
+    }
+    // keep other tables' behavior
+    return originalFrom(table);
+  });
+
+  const { findByText } = renderWithNavigation(<Progress />);
+  await findByText("black IPA Progress");
+
+  // Trigger completion (Button ignores disabled in test env)
+  const completeBtn = await findByText(/Complete step/i);
+  await act(async () => fireEvent.press(completeBtn));
+
+  // After first complete in two-mode the component should switch to phase 2 (internal state).
+  // We can't directly inspect private state but we can assert that code paths that call brew_steps.update were invoked:
+  await waitFor(() => {
+    expect(mockBrewStepsUpdate).toHaveBeenCalled();
+  });
+
+  // restore original
+  sb.from = originalFrom;
+});
+
+it("shows completed date for historical step", async () => {
+  const sb = jest.requireMock("@/supabase").supabase;
+  const originalFrom = sb.from;
+  sb.from = jest.fn((table: string) => {
+    if (table === "brew_steps") {
+      return {
+        select: () => ({
+          eq: function (idField: string, idValue: any) {
+            return {
+              eq: function (stepField: string, stepValue: any) {
+                return {
+                  single: async () => ({
+                    data: {
+                      brew_step_id: 10,
+                      id_brew: 1,
+                      step_id: 1,
+                      status: "completed",
+                      completed_at: new Date().toISOString(),
+                    },
+                    error: null,
+                  }),
+                };
+              },
+            };
+          },
+        }),
+      };
+    }
+    return originalFrom(table);
+  });
+
+  const { findByText } = renderWithNavigation(<Progress />);
+  await findByText("black IPA Progress");
+  await findByText(/Completed on:/);
+
+  sb.from = originalFrom;
+});
+
 /*
 it("completing the final step updates brews and navigates HomePage", async () => {
   // Override route params to load the last step (id = "2")
