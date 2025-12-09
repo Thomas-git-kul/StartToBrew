@@ -18,7 +18,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 const MIN_YEAR = 1900;
-const MAX_YEAR = 2025;
+const MAX_YEAR = 2007;
 
 export default function Registration() {
   useFonts();
