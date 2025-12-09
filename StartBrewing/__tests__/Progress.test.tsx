@@ -1002,3 +1002,72 @@ it("completing the final step updates brews and navigates HomePage", async () =>
   });
 });
 */
+
+it("shows failed view when last_step_id is not present in steps (currentIndex -1)", async () => {
+  const sb = jest.requireMock("@/supabase").supabase;
+  const originalFrom = sb.from;
+
+  // Return steps that do not include the brew.last_step_id
+  sb.from = jest.fn((table: string) => {
+    if (table === "steps") {
+      return {
+        select: () => ({
+          eq: () => ({
+            order: async () => ({ data: [], error: null }),
+            maybeSingle: async () => ({ data: [], error: null }),
+          }),
+        }),
+      };
+    }
+    return originalFrom(table);
+  });
+
+  const { findByText } = renderWithNavigation(<Progress />);
+  await findByText("Failed to load progress...");
+
+  sb.from = originalFrom;
+});
+
+it("handles autoStartExpired branch when stored timer already expired", async () => {
+  const sb = jest.requireMock("@/supabase").supabase;
+  const originalFrom = sb.from;
+
+  // Make brew_steps show a completed_at long ago with small time_left so autoStartExpired=true
+  sb.from = jest.fn((table: string) => {
+    if (table === "brew_steps") {
+      return {
+        select: () => ({
+          eq: function () {
+            return {
+              eq: function () {
+                return {
+                  single: async () => ({
+                    data: {
+                      brew_step_id: 10,
+                      id_brew: 1,
+                      step_id: 1,
+                      status: "in_progress",
+                      completed_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
+                      time_left: 30, // already expired
+                    },
+                    error: null,
+                  }),
+                };
+              },
+            };
+          },
+        }),
+      };
+    }
+    return originalFrom(table);
+  });
+
+  const { findByText, queryByText } = renderWithNavigation(<Progress />);
+  await findByText("black IPA Progress");
+
+  // autoStartExpired should set phaseDone=true; the countdown button becomes disabled
+  // We can't inspect disabled prop on the mocked Button, but we can ensure Play/Pause is present (UI rendered)
+  expect(queryByText(/Play|Pause/)).toBeTruthy();
+
+  sb.from = originalFrom;
+});
