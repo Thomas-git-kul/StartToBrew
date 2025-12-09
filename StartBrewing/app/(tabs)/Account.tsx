@@ -430,7 +430,14 @@ export default function Account() {
               <PrimaryButton
                 title="Complete account"
                 testID="complete-button"
-                onPress={() => router.push("/AccountEdit")}
+                onPress={() => {
+                  router.push({
+                    pathname: "/AccountEdit",
+                    params: {
+                      fromComplete: true,
+                    },
+                  } as any);
+                }}
                 size={10}
                 height={28}
               />
