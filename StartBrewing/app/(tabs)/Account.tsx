@@ -102,10 +102,9 @@ export default function Account() {
   const fetchProfile = useCallback(async () => {
     setLoading(true);
 
-    const {
-      data: { user },
-      error: uErr,
-    } = await supabase.auth.getUser();
+    const authRes: any = await supabase.auth.getUser();
+    const user = authRes?.data?.user;
+    const uErr = authRes?.error ?? null;
 
     if (uErr || !user) {
       setLoading(false);

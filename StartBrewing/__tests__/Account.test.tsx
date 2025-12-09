@@ -13,11 +13,17 @@ jest.mock("@/hooks/use-fonts", () => ({
 }));
 
 // useFocusEffect no-op zodat er geen extra fetches gebeuren
+// capture the callback passed to useFocusEffect so tests can invoke it
 jest.mock("@react-navigation/native", () => {
   const actualNav = jest.requireActual("@react-navigation/native");
+  let __savedFocusCb: any = null;
   return {
     ...actualNav,
-    useFocusEffect: (_cb: any) => {},
+    useFocusEffect: (cb: any) => {
+      __savedFocusCb = cb;
+    },
+    // expose helper for tests
+    __getSavedFocusCb: () => __savedFocusCb,
   };
 });
 
@@ -268,6 +274,17 @@ jest.mock("@/supabase", () => {
 });
 
 // component NA de mocks importeren
+
+// capture the default supabase mock implementations so tests can restore them
+const { supabase: _supabaseDefault } = require("@/supabase");
+const _defaultSupabase = {
+  from: _supabaseDefault.from,
+  rpc: _supabaseDefault.rpc,
+  storageFrom: _supabaseDefault.storage.from,
+  authGetUser: _supabaseDefault.auth.getUser,
+  authSignOut: _supabaseDefault.auth.signOut,
+};
+
 import Account from "@/app/(tabs)/Account";
 
 const renderWithNavigation = (ui: React.ReactElement) => {
@@ -277,6 +294,13 @@ const renderWithNavigation = (ui: React.ReactElement) => {
 describe("<Account />", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // restore default implementations to avoid leakage between tests
+    const { supabase } = require("@/supabase");
+    supabase.from = _defaultSupabase.from;
+    supabase.rpc = _defaultSupabase.rpc;
+    supabase.storage.from = _defaultSupabase.storageFrom;
+    supabase.auth.getUser = _defaultSupabase.authGetUser;
+    supabase.auth.signOut = _defaultSupabase.authSignOut;
   });
 
   test("rendered profiel, badges sectie en completed brews", async () => {
@@ -817,8 +841,152 @@ describe("<Account />", () => {
     expect(supabase.storage.from).toHaveBeenCalledWith("badges");
   });
 
+  test("logs and shows message when account_badges query errors", async () => {
+    const { supabase } = require("@/supabase");
+
+    // account_badges returns an error
+    supabase.from.mockImplementation((tbl: string) => {
+      if (tbl === "profiles") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: { id: "user-1", username: "testuser", full_name: "Test User" }, error: null }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "account_badges") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              order: jest.fn().mockResolvedValue({ data: null, error: { message: "oh no" } }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "badges") {
+        return {
+          select: jest.fn().mockResolvedValue({ data: [], error: null }),
+        };
+      }
+
+      if (tbl === "recipes") {
+        return {
+          select: jest.fn().mockReturnValue({ in: jest.fn().mockResolvedValue({ data: [], error: null }) }),
+        };
+      }
+
+      return { select: jest.fn() };
+    });
+
+    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const { getByText } = renderWithNavigation(<Account />);
+
+    await waitFor(() => {
+      expect(getByText("Brew beers to earn badges.")).toBeTruthy();
+    });
+
+    expect(spy).toHaveBeenCalledWith("Error fetching account_badges", expect.anything());
+
+    spy.mockRestore();
+  });
+
+  test("get_completed_brews rpc error falls back and logs", async () => {
+    const { supabase } = require("@/supabase");
+
+    // make rpc return an error
+    supabase.rpc.mockResolvedValueOnce({ data: null, error: { message: "rpc fail" } });
+
+    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const { getByText } = renderWithNavigation(<Account />);
+
+    await waitFor(() => {
+      expect(getByText("You have not completed any brews yet.")).toBeTruthy();
+    });
+
+    expect(spy).toHaveBeenCalledWith("Error fetching completed brews", expect.anything());
+
+    spy.mockRestore();
+  });
+
+  test("does not call storage.from for badges when icon_url is absolute http", async () => {
+    const { supabase } = require("@/supabase");
+
+    supabase.from.mockImplementation((tbl: string) => {
+      if (tbl === "profiles") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: { id: "user-1", username: "testuser", full_name: "Test User" }, error: null }) }),
+          }),
+        };
+      }
+
+      if (tbl === "account_badges") {
+        return {
+          select: jest.fn().mockReturnValue({ eq: jest.fn().mockReturnValue({ order: jest.fn().mockResolvedValue({ data: [{ badge_id: 20, earned_at: "2025-06-01T00:00:00Z" }], error: null }) }) }),
+        };
+      }
+
+      if (tbl === "badges") {
+        return {
+          select: jest.fn().mockResolvedValue({ data: [{ id_badge: 20, code: "X20", name: "Badge 20", description: null, icon_url: "http://cdn.example/x20.png", category: 'cat' }], error: null }),
+        };
+      }
+
+      if (tbl === "recipes") {
+        return { select: jest.fn().mockReturnValue({ in: jest.fn().mockResolvedValue({ data: [], error: null }) }) };
+      }
+
+      return { select: jest.fn() };
+    });
+
+    // spy storage.from
+    const storageSpy = jest.fn(() => ({ getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'https://should-not.be.called' } }) }));
+    supabase.storage.from = storageSpy;
+
+    const { getByText, getAllByText } = renderWithNavigation(<Account />);
+
+    // badge rendered, no exceptions — ensure storage.from not called for 'badges'
+    await waitFor(() => {
+      expect(getAllByText(/2025/).length).toBeGreaterThan(0);
+    });
+
+    expect(storageSpy).not.toHaveBeenCalledWith("badges");
+  });
+
+  test("useFocusEffect callback can be invoked and triggers profile fetch", async () => {
+    const nav = require("@react-navigation/native");
+    const { supabase } = require("@/supabase");
+
+    // make sure auth.getUser is a spy we can observe
+    const getUserSpy = jest.spyOn(supabase.auth, "getUser");
+
+    const { getByText } = renderWithNavigation(<Account />);
+
+    // call the saved focus callback (if present)
+    const saved = nav.__getSavedFocusCb && nav.__getSavedFocusCb();
+    if (saved) {
+      // call it to simulate focus
+      saved();
+    }
+
+    await waitFor(() => {
+      expect(getUserSpy).toHaveBeenCalled();
+      expect(getByText("Test User")).toBeTruthy();
+    });
+
+    getUserSpy.mockRestore();
+  });
+
   test("recipes error falls back to placeholder images and logs error", async () => {
     const { supabase } = require("@/supabase");
+
+    // ensure auth.getUser returns expected user for this test
+    supabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: "user-1" } }, error: null });
 
     // rpc returns a brew with a recipe_slug
     supabase.rpc.mockResolvedValueOnce({
@@ -886,10 +1054,9 @@ describe("<Account />", () => {
   });
 
   test("badge modal can be closed with Close button", async () => {
-    const { getAllByTestId, queryByText, getByText, getByTestId } = renderWithNavigation(<Account />);
-
     // Ensure supabase.from returns the default set of badges (in case a previous test overrode it)
     const { supabase } = require("@/supabase");
+    supabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: "user-1" } }, error: null });
     supabase.from.mockImplementation((tbl: string) => {
       if (tbl === "profiles") {
         return {
@@ -909,7 +1076,7 @@ describe("<Account />", () => {
           select: jest.fn().mockReturnValue({
             eq: jest.fn().mockReturnValue({
               order: jest.fn().mockResolvedValue({ data: [{ badge_id: 1, earned_at: "2025-01-01T00:00:00Z" }], error: null }),
-              }),
+            }),
           }),
         };
       }
@@ -934,6 +1101,8 @@ describe("<Account />", () => {
       return { select: jest.fn() };
     });
 
+    const { getAllByTestId, queryByText, getByText, getByTestId } = renderWithNavigation(<Account />);
+
     // press the badge (by its code text) to open modal
     const badgeCode1 = await waitFor(() => getByTestId("badge-code-1"));
     fireEvent.press(badgeCode1);
@@ -951,6 +1120,9 @@ describe("<Account />", () => {
   });
 
   test("shows initials when no avatar URL is set", async () => {
+    const { supabase } = require("@/supabase");
+    supabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: "user-1" } }, error: null });
+
     const { getByText } = renderWithNavigation(<Account />);
 
     // initials for 'Test User' should be 'TU'
