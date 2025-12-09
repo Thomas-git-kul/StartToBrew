@@ -123,6 +123,32 @@ describe("<PaymentFail />", () => {
     expect(replaceMock).toHaveBeenCalledWith("/ShoppingCart");
   });
 
+  it("does not send email when params are missing", () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValueOnce({});
+
+    render(<PaymentFail />);
+
+    expect(emailjs.send).not.toHaveBeenCalled();
+  });
+
+  it("handles emailjs.send error", async () => {
+    const mockError = new Error("Email service unavailable");
+    (emailjs.send as jest.Mock).mockRejectedValueOnce(mockError);
+
+    render(<PaymentFail />);
+
+    await waitFor(() => {
+      expect(emailjs.send).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(console.error).toHaveBeenCalledWith(
+        "Failed to send failure email:",
+        mockError
+      );
+    });
+  });
+
   it("snapshot", () => {
     const tree = render(<PaymentFail />).toJSON();
     expect(tree).toMatchSnapshot();
