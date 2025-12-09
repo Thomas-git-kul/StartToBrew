@@ -83,8 +83,8 @@ jest.mock("@/components/spinner", () => {
 // Mock TextInput
 jest.mock("@/components/textInput", () => {
   const { TextInput: RNTextInput } = require("react-native");
-  return ({ placeholder }: any) => (
-    <RNTextInput placeholder={placeholder} testID={`input-${placeholder}`} />
+  return ({ placeholder, value, onChangeText }: any) => (
+    <RNTextInput placeholder={placeholder} testID={`input-${placeholder}`} value={value} onChangeText={onChangeText} />
   );
 });
 
@@ -362,6 +362,13 @@ describe("<ShoppingCart />", () => {
           return {
             select: jest.fn().mockResolvedValue({ data: [], error: null }),
           };
+        } else if (table === "shipping_info") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+            upsert: jest.fn().mockResolvedValue({ data: null, error: null }),
+          };
         }
         return {
           select: jest.fn().mockReturnThis(),
@@ -383,12 +390,20 @@ describe("<ShoppingCart />", () => {
       expect(getByTestId("payment")).toBeTruthy();
     });
 
+    // Fill in shipping info first
+    fireEvent.changeText(getByTestId("input-Full Name"), "John Doe");
+    fireEvent.changeText(getByTestId("input-Street name and number"), "Main St 1");
+    fireEvent.changeText(getByTestId("input-City"), "Amsterdam");
+    fireEvent.changeText(getByTestId("input-Zip code"), "1012");
+
     const paymentButton = getByTestId("payment");
     fireEvent.press(paymentButton);
 
-    expect(mockPush).toHaveBeenCalledWith({
-      pathname: "/Payment",
-      params: { amount: 2000 }, // 2 * 10.00 * 100 cents
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith({
+        pathname: "/Payment",
+        params: { amount: 2000 }, // 2 * 10.00 * 100 cents
+      });
     });
   });
 
@@ -581,16 +596,28 @@ describe("<ShoppingCart />", () => {
   });
 
   it("handles cart loading error in catch block", async () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     
     mockSupabaseImpl = {
       auth: {
-        getUser: jest.fn().mockRejectedValue(new Error("Network error")),
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
       },
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      from: jest.fn((table: string) => {
+        if (table === "shopping_carts") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockRejectedValue(new Error("Network error")),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        };
       }),
     };
 
@@ -615,7 +642,7 @@ describe("<ShoppingCart />", () => {
   it("updates cart item quantity when onQuantityChange is called", async () => {
     const mockCart = { id_cart: 1, user_id: "test-user-id" };
     const mockCartItems = [
-      { store_item_id: 1, quantity: 2, starter_kit: false },
+      { store_item_id: 1, quantity: 2, starter_kit: false, id_cart_item: 100 },
     ];
     const mockStoreItems = [
       { id_store_item: 1, name: "Malt", price: 5.99, category_id: 1 },
@@ -626,6 +653,7 @@ describe("<ShoppingCart />", () => {
       eq: jest.fn().mockResolvedValue({ error: null }),
     });
 
+    let callCount = 0;
     mockSupabaseImpl = {
       auth: {
         getUser: jest.fn().mockResolvedValue({
@@ -634,14 +662,15 @@ describe("<ShoppingCart />", () => {
         }),
       },
       from: jest.fn((table: string) => {
+        callCount++;
         if (table === "shopping_carts") {
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
             single: jest.fn().mockResolvedValue({ data: mockCart, error: null }),
           };
-        } else if (table === "shopping_cart_items" && mockSupabaseImpl.from.mock.calls.length > 3) {
-          // For the update call
+        } else if (table === "shopping_cart_items" && callCount > 5) {
+          // Update/delete call
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnValue({
@@ -651,8 +680,12 @@ describe("<ShoppingCart />", () => {
               }),
             }),
             update: mockUpdate,
+            delete: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ error: null }),
+            }),
           };
         } else if (table === "shopping_cart_items") {
+          // Initial load
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockResolvedValue({ data: mockCartItems, error: null }),
@@ -684,7 +717,7 @@ describe("<ShoppingCart />", () => {
 
     await waitFor(() => {
       expect(getByTestId("quantity-increase-Malt")).toBeTruthy();
-    });
+    }, { timeout: 2000 });
 
     const quantityChangeButton = getByTestId("quantity-increase-Malt");
     
@@ -954,21 +987,538 @@ describe("<ShoppingCart />", () => {
   });
 
   it("handles catch block error in updateCartQuantity", async () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
     
     mockSupabaseImpl = {
       auth: {
-        getUser: jest.fn().mockRejectedValue(new Error("Auth failed")),
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
       },
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      from: jest.fn((table: string) => {
+        if (table === "shopping_carts") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: { id_cart: 1 }, error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        };
       }),
     };
 
     renderWithNavigation(<ShoppingCart />);
     
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("loads shipping info from database and auto-fills form", async () => {
+    const mockShippingInfo = {
+      user_id: "test-user-id",
+      full_name: "Jane Doe",
+      street: "Oak Ave 42",
+      city: "Rotterdam",
+      zip: "3011",
+    };
+
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        if (table === "shipping_info") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockShippingInfo, error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockReturnThis(),
+          update: jest.fn().mockReturnThis(),
+          delete: jest.fn().mockReturnThis(),
+        };
+      }),
+    };
+
+    const { getByTestId } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("input-Full Name").props.value).toBe("Jane Doe");
+      expect(getByTestId("input-Street name and number").props.value).toBe("Oak Ave 42");
+      expect(getByTestId("input-City").props.value).toBe("Rotterdam");
+      expect(getByTestId("input-Zip code").props.value).toBe("3011");
+    });
+  });
+
+  it("loads profile name when shipping info does not exist", async () => {
+    const mockProfile = { full_name: "John Smith" };
+
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        if (table === "shipping_info") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: null, error: { message: "No rows found" } }),
+          };
+        }
+        if (table === "profiles") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockProfile, error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockReturnThis(),
+          update: jest.fn().mockReturnThis(),
+          delete: jest.fn().mockReturnThis(),
+        };
+      }),
+    };
+
+    const { getByTestId } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("input-Full Name").props.value).toBe("John Smith");
+    });
+  });
+
+  it("saves shipping info when payment button is pressed", async () => {
+    const mockCart = { id_cart: 1, user_id: "test-user-id" };
+    const mockCartItems = [
+      { store_item_id: 1, quantity: 1, starter_kit: false },
+    ];
+    const mockStoreItems = [
+      { id_store_item: 1, name: "Malt", price: 10.0, category_id: 1 },
+    ];
+
+    const mockUpsert = jest.fn().mockResolvedValue({ data: null, error: null });
+
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        if (table === "shopping_carts") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockCart, error: null }),
+          };
+        }
+        if (table === "shopping_cart_items") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockResolvedValue({ data: mockCartItems, error: null }),
+          };
+        }
+        if (table === "store_items") {
+          return {
+            select: jest.fn().mockResolvedValue({ data: mockStoreItems, error: null }),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockStoreItems[0], error: null }),
+          };
+        }
+        if (table === "shipping_info") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            upsert: mockUpsert,
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockReturnThis(),
+          update: jest.fn().mockReturnThis(),
+          delete: jest.fn().mockReturnThis(),
+        };
+      }),
+    };
+
+    const { getByTestId } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("payment")).toBeTruthy();
+    });
+
+    // Fill shipping info
+    fireEvent.changeText(getByTestId("input-Full Name"), "John Doe");
+    fireEvent.changeText(getByTestId("input-Street name and number"), "Main St 1");
+    fireEvent.changeText(getByTestId("input-City"), "Amsterdam");
+    fireEvent.changeText(getByTestId("input-Zip code"), "1012");
+
+    const paymentButton = getByTestId("payment");
+    await act(async () => {
+      fireEvent.press(paymentButton);
+    });
+
+    await waitFor(() => {
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: "test-user-id",
+          full_name: "John Doe",
+          street: "Main St 1",
+          city: "Amsterdam",
+          zip: "1012",
+        }),
+        expect.any(Object)
+      );
+    });
+  });
+
+  it("disables payment button when cart is empty", async () => {
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        if (table === "shopping_carts") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: { id_cart: 1 }, error: null }),
+          };
+        }
+        if (table === "shopping_cart_items") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockReturnThis(),
+          update: jest.fn().mockReturnThis(),
+          delete: jest.fn().mockReturnThis(),
+        };
+      }),
+    };
+
+    const { getByTestId, getByText } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByText("Your cart is empty.")).toBeTruthy();
+    });
+  });
+
+  it("disables payment button when shipping fields are empty", async () => {
+    const mockCart = { id_cart: 1, user_id: "test-user-id" };
+    const mockCartItems = [
+      { store_item_id: 1, quantity: 1, starter_kit: false },
+    ];
+    const mockStoreItems = [
+      { id_store_item: 1, name: "Malt", price: 10.0, category_id: 1 },
+    ];
+
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        if (table === "shopping_carts") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockCart, error: null }),
+          };
+        }
+        if (table === "shopping_cart_items") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockResolvedValue({ data: mockCartItems, error: null }),
+          };
+        }
+        if (table === "store_items") {
+          return {
+            select: jest.fn().mockResolvedValue({ data: mockStoreItems, error: null }),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockStoreItems[0], error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockReturnThis(),
+          update: jest.fn().mockReturnThis(),
+          delete: jest.fn().mockReturnThis(),
+        };
+      }),
+    };
+
+    const { getByText } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByText(/Please fill in:/)).toBeTruthy();
+    });
+  });
+
+  it("enables payment button when all shipping fields are filled", async () => {
+    const mockCart = { id_cart: 1, user_id: "test-user-id" };
+    const mockCartItems = [
+      { store_item_id: 1, quantity: 1, starter_kit: false },
+    ];
+    const mockStoreItems = [
+      { id_store_item: 1, name: "Malt", price: 10.0, category_id: 1 },
+    ];
+
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        if (table === "shopping_carts") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockCart, error: null }),
+          };
+        }
+        if (table === "shopping_cart_items") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }
+        if (table === "store_items") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockStoreItems[0], error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockReturnThis(),
+          update: jest.fn().mockReturnThis(),
+          delete: jest.fn().mockReturnThis(),
+        };
+      }),
+    };
+
+    const { getByTestId, queryByText } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("payment")).toBeTruthy();
+    });
+
+    // Fill all shipping fields
+    fireEvent.changeText(getByTestId("input-Full Name"), "John Doe");
+    fireEvent.changeText(getByTestId("input-Street name and number"), "Main St 1");
+    fireEvent.changeText(getByTestId("input-City"), "Amsterdam");
+    fireEvent.changeText(getByTestId("input-Zip code"), "1012");
+
+    await waitFor(() => {
+      expect(queryByText(/Please fill in:/)).toBeNull();
+    });
+  });
+
+  it("updates full name input value on text change", async () => {
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        insert: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        delete: jest.fn().mockReturnThis(),
+      }),
+    };
+
+    const { getByTestId } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("input-Full Name")).toBeTruthy();
+    });
+
+    fireEvent.changeText(getByTestId("input-Full Name"), "Jane Smith");
+
+    expect(getByTestId("input-Full Name").props.value).toBe("Jane Smith");
+  });
+
+  it("handles error when saving shipping info fails", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const mockCart = { id_cart: 1, user_id: "test-user-id" };
+    const mockCartItems = [
+      { store_item_id: 1, quantity: 1, starter_kit: false },
+    ];
+    const mockStoreItems = [
+      { id_store_item: 1, name: "Malt", price: 10.0, category_id: 1 },
+    ];
+
+    const mockUpsert = jest.fn().mockResolvedValue({
+      data: null,
+      error: { message: "Upsert failed" },
+    });
+
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        if (table === "shopping_carts") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockCart, error: null }),
+          };
+        }
+        if (table === "shopping_cart_items") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockResolvedValue({ data: mockCartItems, error: null }),
+          };
+        }
+        if (table === "store_items") {
+          return {
+            select: jest.fn().mockResolvedValue({ data: mockStoreItems, error: null }),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockStoreItems[0], error: null }),
+          };
+        }
+        if (table === "shipping_info") {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            upsert: mockUpsert,
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+          insert: jest.fn().mockReturnThis(),
+          update: jest.fn().mockReturnThis(),
+          delete: jest.fn().mockReturnThis(),
+        };
+      }),
+    };
+
+    const { getByTestId } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("payment")).toBeTruthy();
+    });
+
+    fireEvent.changeText(getByTestId("input-Full Name"), "John Doe");
+    fireEvent.changeText(getByTestId("input-Street name and number"), "Main St 1");
+    fireEvent.changeText(getByTestId("input-City"), "Amsterdam");
+    fireEvent.changeText(getByTestId("input-Zip code"), "1012");
+
+    const paymentButton = getByTestId("payment");
+    await act(async () => {
+      fireEvent.press(paymentButton);
+    });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error saving shipping info:",
+        expect.any(Object)
+      );
+    });
+
     consoleErrorSpy.mockRestore();
   });
 });
