@@ -677,4 +677,285 @@ describe("<Account />", () => {
       }
     });
   });
+
+  test("opens badge modal and shows image, date and description", async () => {
+    const { getAllByTestId, getByText, getAllByText, getByTestId } = renderWithNavigation(<Account />);
+
+    // restore default supabase.from behavior to ensure badge 1 has the expected description
+    const { supabase } = require("@/supabase");
+    supabase.from.mockImplementation((tbl: string) => {
+      if (tbl === "profiles") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: "user-1", username: "testuser", full_name: "Test User", avatar_url: null, bio: "Test bio" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "account_badges") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              order: jest.fn().mockResolvedValue({ data: [{ badge_id: 1, earned_at: "2025-01-01T00:00:00Z" }], error: null }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "badges") {
+        return {
+          select: jest.fn().mockResolvedValue({
+            data: [
+              { id_badge: 1, code: "FIRST_BREW", name: "First Brew", description: "Your first brew", icon_url: null, category: 'progression' },
+            ],
+            error: null,
+          }),
+        };
+      }
+
+      if (tbl === "recipes") {
+        return {
+          select: jest.fn().mockReturnValue({ in: jest.fn().mockResolvedValue({ data: [], error: null }) }),
+        };
+      }
+
+      return { select: jest.fn() };
+    });
+
+    // wait for the specific badge with description to render, then press it
+    const badgeCode1 = await waitFor(() => getByTestId("badge-code-1"));
+    fireEvent.press(badgeCode1);
+
+    // expect modal to show description, image placeholder and a date containing 2025
+    await waitFor(() => {
+      expect(getAllByText(/2025/).length).toBeGreaterThan(0);
+      expect(getByText("Your first brew")).toBeTruthy();
+      expect(getAllByText("image-placeholder").length).toBeGreaterThan(0);
+    });
+  });
+
+  test("resolves badge icon_url from storage when icon_url is non-http and uses code fallback", async () => {
+    const { supabase } = require("@/supabase");
+
+    // Provide custom data: one badge with a non-http icon_url and one with only a code
+    supabase.from.mockImplementation((tbl: string) => {
+      if (tbl === "profiles") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: "user-1", username: "testuser", full_name: "Test User" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "account_badges") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              order: jest.fn().mockResolvedValue({
+                data: [
+                  { badge_id: 10, earned_at: "2025-03-01T00:00:00Z" },
+                  { badge_id: 11, earned_at: "2025-02-01T00:00:00Z" },
+                ],
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "badges") {
+        return {
+          select: jest.fn().mockResolvedValue({
+            data: [
+              { id_badge: 10, code: "CODE10", name: "Badge 10", description: "Desc10", icon_url: "icons/icon10.png", category: 'cat' },
+              { id_badge: 11, code: "CODE11", name: "Badge 11", description: "Desc11", icon_url: null, category: 'cat' },
+            ],
+            error: null,
+          }),
+        };
+      }
+
+      if (tbl === "recipes") {
+        return {
+          select: jest.fn().mockReturnValue({ in: jest.fn().mockResolvedValue({ data: [], error: null }) }),
+        };
+      }
+
+      return { select: jest.fn() };
+    });
+
+    // spy on storage.from to ensure it's used for 'badges'
+    supabase.storage.from = jest.fn((bucket: string) => ({
+      getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: `https://storage.example/${bucket}/file.png` } }),
+    }));
+
+    const { getAllByTestId, getByText, getAllByText } = renderWithNavigation(<Account />);
+
+    // wait for badges to render
+    const badgeItems = await waitFor(() => getAllByTestId("badge-item"));
+
+    // press the first (newest) badge (id 10)
+    fireEvent.press(badgeItems[0]);
+
+    // modal should display the description and image placeholder
+    await waitFor(() => {
+      expect(getByText("Desc10")).toBeTruthy();
+      expect(getAllByText("image-placeholder").length).toBeGreaterThan(0);
+    });
+
+    // storage.from should have been called with 'badges' at least once
+    expect(supabase.storage.from).toHaveBeenCalledWith("badges");
+  });
+
+  test("recipes error falls back to placeholder images and logs error", async () => {
+    const { supabase } = require("@/supabase");
+
+    // rpc returns a brew with a recipe_slug
+    supabase.rpc.mockResolvedValueOnce({
+      data: [
+        { id_brew: 200, name: "Brew X", recipe_slug: "rx", start_date: "2025-05-01" },
+      ],
+      error: null,
+    });
+
+    // profiles normal
+    supabase.from.mockImplementation((tbl: string) => {
+      if (tbl === "profiles") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: "user-1", username: "testuser", full_name: "Test User" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "account_badges") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              order: jest.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "recipes") {
+        return {
+          select: jest.fn().mockReturnValue({ in: jest.fn().mockResolvedValue({ data: null, error: { message: 'boom' } }) }),
+        };
+      }
+
+      if (tbl === "badges") {
+        return {
+          select: jest.fn().mockResolvedValue({ data: [], error: null }),
+        };
+      }
+
+      return { select: jest.fn() };
+    });
+
+    const spy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    const { getByText, getAllByText } = renderWithNavigation(<Account />);
+
+    await waitFor(() => {
+      expect(getByText("Brew X")).toBeTruthy();
+    });
+
+    // recipes error should have been logged
+    expect(spy).toHaveBeenCalledWith("Error fetching recipes for brews", expect.anything());
+
+    // image placeholder should still render for completed card
+    expect(getAllByText("image-placeholder").length).toBeGreaterThan(0);
+
+    spy.mockRestore();
+  });
+
+  test("badge modal can be closed with Close button", async () => {
+    const { getAllByTestId, queryByText, getByText, getByTestId } = renderWithNavigation(<Account />);
+
+    // Ensure supabase.from returns the default set of badges (in case a previous test overrode it)
+    const { supabase } = require("@/supabase");
+    supabase.from.mockImplementation((tbl: string) => {
+      if (tbl === "profiles") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({
+                data: { id: "user-1", username: "testuser", full_name: "Test User" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+
+      if (tbl === "account_badges") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              order: jest.fn().mockResolvedValue({ data: [{ badge_id: 1, earned_at: "2025-01-01T00:00:00Z" }], error: null }),
+              }),
+          }),
+        };
+      }
+
+      if (tbl === "badges") {
+        return {
+          select: jest.fn().mockResolvedValue({
+            data: [
+              { id_badge: 1, code: "FIRST_BREW", name: "First Brew", description: "Your first brew", icon_url: null, category: 'progression' },
+            ],
+            error: null,
+          }),
+        };
+      }
+
+      if (tbl === "recipes") {
+        return {
+          select: jest.fn().mockReturnValue({ in: jest.fn().mockResolvedValue({ data: [], error: null }) }),
+        };
+      }
+
+      return { select: jest.fn() };
+    });
+
+    // press the badge (by its code text) to open modal
+    const badgeCode1 = await waitFor(() => getByTestId("badge-code-1"));
+    fireEvent.press(badgeCode1);
+
+    // modal opened
+    await waitFor(() => expect(getByText("Your first brew")).toBeTruthy());
+
+    // press Close
+    fireEvent.press(getByText("Close"));
+
+    // description should no longer be present
+    await waitFor(() => {
+      expect(queryByText("Your first brew")).toBeNull();
+    });
+  });
+
+  test("shows initials when no avatar URL is set", async () => {
+    const { getByText } = renderWithNavigation(<Account />);
+
+    // initials for 'Test User' should be 'TU'
+    await waitFor(() => {
+      expect(getByText("TU")).toBeTruthy();
+    });
+  });
 });
