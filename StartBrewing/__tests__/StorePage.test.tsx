@@ -10,24 +10,37 @@ import { useIsFocused, NavigationContainer } from "@react-navigation/native";
 jest.mock("lucide-react-native", () => {
   const React = require("react");
   const RN = require("react-native");
-  const SimpleIcon = (props: any) => React.createElement(RN.View, props, null);
+  const makeIcon = (name: string) => jest.fn((props: any) => React.createElement(RN.View, { ...props, testID: `icon-${name}` }, null));
+  const Search = makeIcon("Search");
+  const X = makeIcon("X");
+  const Check = makeIcon("Check");
+  const ShoppingCart = makeIcon("ShoppingCart");
+  const Calendar1 = makeIcon("Calendar1");
+  const ArrowRight = makeIcon("ArrowRight");
+  const ArrowLeft = makeIcon("ArrowLeft");
+  const House = makeIcon("House");
+  const HeartPlus = makeIcon("HeartPlus");
+  const Heart = makeIcon("Heart");
+  const Trash = makeIcon("Trash");
+  const Settings = makeIcon("Settings");
+  const LogOut = makeIcon("LogOut");
+  const UserCog = makeIcon("UserCog");
   return {
     __esModule: true,
-    // export common icons used in tests
-    Search: SimpleIcon,
-    X: SimpleIcon,
-    Check: SimpleIcon,
-    ShoppingCart: SimpleIcon,
-    Calendar1: SimpleIcon,
-    ArrowRight: SimpleIcon,
-    ArrowLeft: SimpleIcon,
-    House: SimpleIcon,
-    HeartPlus: SimpleIcon,
-    Heart: SimpleIcon,
-    Trash: SimpleIcon,
-    Settings: SimpleIcon,
-    LogOut: SimpleIcon,
-    UserCog: SimpleIcon,
+    Search,
+    X,
+    Check,
+    ShoppingCart,
+    Calendar1,
+    ArrowRight,
+    ArrowLeft,
+    House,
+    HeartPlus,
+    Heart,
+    Trash,
+    Settings,
+    LogOut,
+    UserCog,
   };
 });
 
@@ -85,10 +98,14 @@ jest.mock("@/components/ui/StoreCard", () => (props: StoreCardProps) => {
 });
 
 jest.mock("react-native-paper", () => {
+  const actual = jest.requireActual("react-native-paper");
   const React = require("react");
   const { View, Text, TextInput, Pressable } = require("react-native");
 
   return {
+    __esModule: true,
+    ...actual,
+    // keep Chip from the actual module so the inline icon JSX in Store.tsx runs
     Appbar: {
       Header: ({ children }: any) => <View>{children}</View>,
       Content: ({ title }: any) => <Text>{title}</Text>,
@@ -106,18 +123,10 @@ jest.mock("react-native-paper", () => {
         testID="searchbar"
       />
     ),
-    Chip: ({ children, onPress, icon }: any) => (
-      <Pressable onPress={onPress}>
-        {typeof icon === "function" ? icon() : null}
-        <Text>{children}</Text>
-      </Pressable>
-    ),
     Badge: ({ children }: any) => <Text>{children}</Text>,
     Button: ({ children, onPress }: any) => (
       <Pressable onPress={onPress}><Text>{children}</Text></Pressable>
     ),
-    View,
-    Text,
   };
 });
 
@@ -270,6 +279,10 @@ describe("<StorePage />", () => {
       expect(all[0].props.children).toBe("Hops");
       expect(all[1].props.children).toBe("Malt");
     });
+
+    // Check that the Check icon was rendered for the selected chip
+    const lucide = require("lucide-react-native");
+    expect(lucide.Check).toHaveBeenCalled();
   });
 
   it("filters items when typing in searchbar", async () => {
