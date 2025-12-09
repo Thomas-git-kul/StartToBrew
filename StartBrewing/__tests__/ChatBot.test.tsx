@@ -687,4 +687,102 @@ describe('ChatBot', () => {
     document.createElement = originalCreateElement;
     (RN.Platform as any).OS = originalOS;
   });
+
+  it('loadContext does nothing when no recipe_slug provided', async () => {
+    // Ensure no router params -> loadContext returns early and supabase.from is not called
+    (global as any).__mockRouterParams = {};
+    (global as any).__mockSupabaseData = { phases: [], steps: [], brews: [], brew_steps: [] };
+
+    const { supabase } = require('@/supabase');
+    // reset mock history
+    (supabase.from as jest.Mock).mockClear();
+
+    renderWithNavigation(<ChatBot />);
+
+    // allow effects to run briefly
+    await waitFor(() => {
+      expect((supabase.from as jest.Mock).mock.calls.length).toBe(0);
+    });
+  });
+
+  it('pickImageWeb handles non-data URI FileReader results (no base64)', async () => {
+    const RN = require('react-native');
+    const originalOS = RN.Platform.OS;
+    (RN.Platform as any).OS = 'web';
+
+    // Provide a FileReader that produces a non-data URI
+    // @ts-ignore
+    const OriginalFileReader = global.FileReader;
+    // @ts-ignore
+    class MockFileReader2 {
+      onload: any = null;
+      result: any = null;
+      readAsDataURL(_file: any) {
+        this.result = 'blob://some-blob-uri';
+        if (typeof this.onload === 'function') this.onload({} as any);
+      }
+    }
+    // @ts-ignore
+    global.FileReader = MockFileReader2 as any;
+
+    // stub document.createElement
+    const originalCreateElement = document.createElement.bind(document);
+    let clicked = false;
+    // @ts-ignore
+    document.createElement = (tagName: string) => {
+      if (tagName === 'input') {
+        const el: any = {
+          type: 'file',
+          accept: '',
+          onchange: null,
+          files: undefined,
+          click() {
+            try {
+              this.files = [{ name: 'img.png' }];
+              if (typeof this.onchange === 'function') this.onchange({ target: this });
+              clicked = true;
+            } catch (e) {}
+          },
+        };
+        return el as any;
+      }
+      return originalCreateElement(tagName as any);
+    };
+
+    (global as any).__mockRouterParams = {};
+    (global as any).__mockSupabaseData = { phases: [], steps: [], brews: [], brew_steps: [] };
+
+    const { getByText, findByTestId } = renderWithNavigation(<ChatBot />);
+
+    fetchMock.mockResponseOnce(JSON.stringify({ text: 'Web blob response' }));
+
+    const plus = getByText('Plus');
+    fireEvent.press(plus);
+
+    await waitFor(() => expect(clicked).toBe(true));
+
+    const sendButton = await findByTestId('send-button');
+    fireEvent.press(sendButton);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+      const callArgs = fetchMock.mock.calls[0];
+      if (callArgs && callArgs[1]) {
+        const body = callArgs[1].body;
+        if (typeof body === 'string') {
+          const parsed = JSON.parse(body);
+          // since FileReader result wasn't a data: URI, no base64 should be attached
+          expect(parsed.image).toBeUndefined();
+          // prompt should indicate an image was sent (uses [image])
+          expect(parsed.prompt).toContain('[image]');
+        }
+      }
+    });
+
+    // restore
+    // @ts-ignore
+    global.FileReader = OriginalFileReader;
+    document.createElement = originalCreateElement;
+    (RN.Platform as any).OS = originalOS;
+  });
 });
