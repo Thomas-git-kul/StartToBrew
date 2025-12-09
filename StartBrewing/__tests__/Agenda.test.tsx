@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { supabase } from '@/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
 
@@ -271,6 +272,27 @@ describe('Agenda Component', () => {
     expect(mockOnDayPress).toHaveBeenCalledWith({ dateString: '2025-11-23' });
   });
 
+  it('renders calendar arrows via renderArrow', async () => {
+    // ensure supabase returns empty data so component finishes loading
+    (supabase.from as jest.Mock).mockImplementation(() => {
+      const chain: any = {};
+      chain.select = (..._args: any[]) => chain;
+      chain.eq = (..._args: any[]) => chain;
+      chain.in = (..._args: any[]) => chain;
+      chain.order = (..._args: any[]) => chain;
+      chain.then = (cb: any) => cb({ data: [], error: null });
+      chain.catch = () => {};
+      return chain;
+    });
+
+    const { getByText } = renderWithNavigation(<Agenda />);
+
+    await waitFor(() => {
+      expect(getByText('<')).toBeTruthy();
+      expect(getByText('>')).toBeTruthy();
+    });
+  });
+
   it('navigates to progress page when progress button pressed', async () => {
     // Return one brew with a last_step_id that will set showProgressButton
     (supabase.from as jest.Mock).mockImplementation((table: string) => {
@@ -348,5 +370,50 @@ describe('Agenda Component', () => {
   it('matches snapshot', () => {
     const tree = renderWithNavigation(<Agenda />);
     expect(tree.toJSON()).toMatchSnapshot();
+  });
+
+  it('formatDuration returns correct strings for ranges', () => {
+    // import the helper directly to avoid rendering the whole component
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { formatDuration } = require('../app/(tabs)/Agenda');
+
+    expect(formatDuration(10080)).toBe('1 week(s)');
+    expect(formatDuration(1440)).toBe('1 day(s)');
+    expect(formatDuration(60)).toBe('1 h');
+    expect(formatDuration(30)).toBe('30 min');
+  });
+
+  it('saves phasesByDate to AsyncStorage', async () => {
+    jest.spyOn(AsyncStorage, 'setItem');
+
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      const makeChain = (data: any[]) => {
+        const chain: any = {};
+        chain.select = (..._args: any[]) => chain;
+        chain.eq = (..._args: any[]) => chain;
+        chain.in = (..._args: any[]) => chain;
+        chain.order = (..._args: any[]) => chain;
+        chain.then = (cb: any) => cb({ data, error: null });
+        chain.catch = () => {};
+        return chain;
+      };
+
+      if (table === 'brews') return makeChain([{ id_brew: 1, name: 'SaveTest', start_date: new Date().toISOString().split('T')[0], recipe_slug: 'r1', last_step_id: null }]);
+      if (table === 'phases') return makeChain([{ phase_id: 1, recipe_slug: 'r1', name: 'Phase 1', position: 1 }]);
+      if (table === 'steps') return makeChain([{ step_id: '1', phase_id: 1, title: 'Step 1', start_offset_min: null, duration_min: null }]);
+      if (table === 'brew_steps') return makeChain([]);
+      return makeChain([]);
+    });
+
+    const { getByText } = renderWithNavigation(<Agenda />);
+
+    await waitFor(() => {
+      expect(getByText('SaveTest')).toBeTruthy();
+    });
+
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      'phasesByDate',
+      expect.stringContaining('SaveTest')
+    );
   });
 });
