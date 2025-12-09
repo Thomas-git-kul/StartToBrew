@@ -33,15 +33,16 @@ jobs:
           echo "Deploying from branch: ${{ github.ref }}"
           echo "Is production deployment: $IS_PROD"
           echo ""
-           if [ "$IS_PROD" = "true" ]; then
-            echo "✓ Using NEXT_PUBLIC Supabase credentials (production)"
-            echo "  Supabase URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}"
-            echo "  Anon Key: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
+          if [ "$IS_PROD" = "true" ]; then
+            echo "✓ Deploying to Production environment"
+            echo "  - Vercel will use EXPO_PUBLIC_* variables"
           else
-            echo "✓ Using EXPO_PUBLIC Supabase credentials (development)"
-            echo "  Supabase URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
-            echo "  Anon Key: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}"
+            echo "✓ Deploying to Preview environment"
+            echo "  - Vercel will use EXPO_PUBLIC_* variables"
           fi
+          echo "=========================================="
+          echo "DEPLOY JOB - Configuration Check"
+          echo "=========================================="
           echo "=========================================="
 
       - name: Set up Node.js
@@ -53,18 +54,23 @@ jobs:
         run: npm i -g vercel@latest
 
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=$([ "$IS_PROD" = "true" ] && echo "production" || echo "preview") --token "$VERCEL_TOKEN"
+        run: |
+          ENVIRONMENT=$([ "$IS_PROD" = "true" ] && echo "production" || echo "preview")
+          echo "Pulling Vercel environment: $ENVIRONMENT"
+          vercel pull --yes --environment=$ENVIRONMENT --token "$VERCEL_TOKEN"
 
       - name: Deploy to Vercel
         id: deploy
         run: |
-          echo "Starting Vercel deployment..."
-          echo "Vercel will build the project with the environment-specific variables..."
+          echo "Starting Bob the Bouwer... 🚧"
 
-          URL=$(vercel deploy \
-            $([ "$IS_PROD" = "true" ] && echo "--prod") \
-            --token "$VERCEL_TOKEN" \
-            --yes)
+          if [ "$IS_PROD" = "true" ]; then
+            echo "Deploying to PRODUCTION..."
+            URL=$(vercel deploy --prod --token "$VERCEL_TOKEN" --yes)
+          else
+            echo "Deploying to PREVIEW..."
+            URL=$(vercel deploy --token "$VERCEL_TOKEN" --yes)
+          fi
 
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "✓ Deployed URL: $URL"
@@ -72,6 +78,7 @@ jobs:
       - name: Set Alias
         run: |
           ALIAS=$([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")
+          echo "Setting alias: $ALIAS"
           vercel alias set "${{ steps.deploy.outputs.url }}" "$ALIAS" --token "$VERCEL_TOKEN"
           echo "✓ Aliased to: $ALIAS"
 
@@ -83,5 +90,5 @@ jobs:
           echo "Environment: $([ "$IS_PROD" = "true" ] && echo "Production" || echo "Preview")"
           echo "URL: ${{ steps.deploy.outputs.url }}"
           echo "Alias: $([ "$IS_PROD" = "true" ] && echo "start-to-brew.vercel.app" || echo "start-to-brew-dev.vercel.app")"
-          echo "Database: $([ "$IS_PROD" = "true" ] && echo "Production (NEXT_PUBLIC_*)" || echo "Development (EXPO_PUBLIC_*)")"
+          echo "Variables used: EXPO_PUBLIC_* (from Vercel)"
           echo "=========================================="
