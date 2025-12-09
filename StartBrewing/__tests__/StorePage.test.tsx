@@ -396,4 +396,57 @@ describe("<StorePage />", () => {
       expect(MockStoreCard).not.toHaveBeenCalled();
     });
   });
+
+  it("maps store items + starter kits and sorts combinedItems before rendering", async () => {
+    // Provide unsorted store items and starter kits to validate the sort branch
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "category") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [{ id_category: 1, name: "Malt" }], error: null }) }) };
+      }
+      if (table === "store_items") {
+        // return names in Z, A order to ensure sorting runs
+        return {
+          select: () => ({ limit: () => Promise.resolve({ data: [
+            { id_store_item: 10, name: "Zeta Item", category_id: 1, price: 5 },
+            { id_store_item: 11, name: "Alpha Item", category_id: 1, price: 15 },
+          ], error: null }) }),
+        };
+      }
+      if (table === "starter_kits") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [ { id_starter_kit: 20, name: "Beta Kit", price: 50 } ], error: null }) }) };
+      }
+      return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+    });
+
+    renderWithNavigation(<StorePage />);
+
+    await waitFor(() => {
+      // Ensure StoreCard was called for each mapped & sorted item
+      expect(MockStoreCard).toHaveBeenCalledTimes(3);
+      const titles = MockStoreCard.mock.calls.map((c) => c[0]?.title);
+      // After alphabetical sort by title: "Alpha Item", "Beta Kit", "Zeta Item"
+      expect(titles).toEqual(["Alpha Item", "Beta Kit", "Zeta Item"]);
+
+      // Check price formatting and categoryId mapping for starter kit
+      const starterCall = MockStoreCard.mock.calls.find((c: any) => c[0]?.title === "Beta Kit");
+      expect(starterCall).toBeDefined();
+      const starter = starterCall![0] as any;
+      expect(starter.price).toBe("€50");
+      expect(starter.categoryId).toBe(4);
+    });
+  });
+
+  it("handles unexpected supabase exception and still clears loading", async () => {
+    // make supabase.select throw to hit the catch + finally block
+    (supabase.from as jest.Mock).mockImplementation(() => ({
+      select: () => { throw new Error("network fail"); },
+    }));
+
+    const { getByText } = renderWithNavigation(<StorePage />);
+
+    await waitFor(() => {
+      // Loading should be cleared and header rendered despite the exception
+      expect(getByText("Store")).toBeTruthy();
+    });
+  });
 });
