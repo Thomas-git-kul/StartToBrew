@@ -126,7 +126,7 @@ exports[`<StoreItem /> minimal test matches snapshot after loading item 1`] = `
     style={
       {
         "alignItems": "center",
-        "bottom": 16,
+        "bottom": 8,
         "flexDirection": "row",
         "justifyContent": "space-between",
         "left": 16,

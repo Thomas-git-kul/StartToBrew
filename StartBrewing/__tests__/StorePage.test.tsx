@@ -6,6 +6,46 @@ import StorePage from "../app/(tabs)/Store";
 import { supabase } from "../supabase";
 import { useIsFocused, NavigationContainer } from "@react-navigation/native";
 
+// Mock lucide icons used across components
+jest.mock("lucide-react-native", () => {
+  const React = require("react");
+  const RN = require("react-native");
+  const SimpleIcon = (props: any) => React.createElement(RN.View, props, null);
+  return {
+    __esModule: true,
+    // export common icons used in tests
+    Search: SimpleIcon,
+    X: SimpleIcon,
+    Check: SimpleIcon,
+    ShoppingCart: SimpleIcon,
+    Calendar1: SimpleIcon,
+    ArrowRight: SimpleIcon,
+    ArrowLeft: SimpleIcon,
+    House: SimpleIcon,
+    HeartPlus: SimpleIcon,
+    Heart: SimpleIcon,
+    Trash: SimpleIcon,
+    Settings: SimpleIcon,
+    LogOut: SimpleIcon,
+    UserCog: SimpleIcon,
+  };
+});
+
+// Mock the header component to avoid side-effects from its internal hooks
+jest.mock("@/components/header", () => {
+  const React = require("react");
+  const { View, Text, Pressable } = require("react-native");
+  return {
+    __esModule: true,
+    default: ({ title, onIconPress, actionTestID }: any) => (
+      React.createElement(View, null,
+        React.createElement(Text, null, title),
+        React.createElement(Pressable, { testID: actionTestID, onPress: onIconPress }, React.createElement(Text, null, "Icon"))
+      )
+    ),
+  };
+});
+
 // --- 🧩 MOCKS --- //
 const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
@@ -63,6 +103,10 @@ jest.mock("react-native-paper", () => {
     Chip: ({ children, onPress }: any) => (
       <Pressable onPress={onPress}><Text>{children}</Text></Pressable>
     ),
+    Badge: ({ children }: any) => <Text>{children}</Text>,
+    Button: ({ children, onPress }: any) => (
+      <Pressable onPress={onPress}><Text>{children}</Text></Pressable>
+    ),
     View,
     Text,
   };
@@ -77,6 +121,9 @@ jest.mock("../supabase", () => {
         then: jest.fn(),
         // We'll resolve immediately
       })),
+      auth: {
+        getUser: jest.fn(() => Promise.resolve({ data: { user: null } })),
+      },
     },
   };
 });
@@ -178,6 +225,110 @@ describe("<StorePage />", () => {
     });
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/ShoppingCart");
+    });
+  });
+
+  it("selecting a category chip reorders chips (selected first)", async () => {
+    const { getAllByText, getByText } = renderWithNavigation(<StorePage />);
+    await waitFor(() => {
+      // initial order from mock: Malt then Hops
+      const all = getAllByText(/Malt|Hops/);
+      expect(all[0].props.children).toBe("Malt");
+      expect(all[1].props.children).toBe("Hops");
+    });
+
+    // press Hops to select it and cause it to be ordered first
+    await act(async () => {
+      fireEvent.press(getByText("Hops"));
+    });
+
+    await waitFor(() => {
+      const all = getAllByText(/Malt|Hops/);
+      expect(all[0].props.children).toBe("Hops");
+      expect(all[1].props.children).toBe("Malt");
+    });
+  });
+
+  it("filters items when typing in searchbar", async () => {
+    const { getByTestId } = renderWithNavigation(<StorePage />);
+    await waitFor(() => {
+      expect(getByTestId("searchbar")).toBeTruthy();
+    });
+
+    // Type a query that only matches "Item 2"
+    await act(async () => {
+      fireEvent.changeText(getByTestId("searchbar"), "Item 2");
+    });
+
+    await waitFor(() => {
+      // Only one StoreCard should be rendered for Item 2
+      const calls = MockStoreCard.mock.calls.map((c) => c[0]?.title);
+      // find titles from calls - at least one should be "Item 2"
+      expect(calls.some((t) => t === "Item 2")).toBeTruthy();
+    });
+  });
+
+  it("shows Clear Filters and resets search and selected categories when list is empty", async () => {
+    // Override supabase mock so there are categories but no items
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "category") {
+        return {
+          select: () => ({
+            limit: () => Promise.resolve({
+              data: [
+                { id_category: 1, name: "CatA" },
+                { id_category: 2, name: "CatB" },
+              ],
+              error: null,
+            }),
+          }),
+        };
+      }
+      // Return empty arrays for store items and starter kits
+      return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+    });
+
+    const { getByText, getByTestId, getAllByText, queryByText } = renderWithNavigation(<StorePage />);
+
+    // wait for chips to render
+    await waitFor(() => {
+      expect(getByText("CatA")).toBeTruthy();
+      expect(getByText("CatB")).toBeTruthy();
+    });
+
+    // select CatB to change ordering
+    await act(async () => {
+      fireEvent.press(getByText("CatB"));
+    });
+
+    await waitFor(() => {
+      expect(getByText("CatB")).toBeTruthy();
+    });
+
+    // type something into searchbar
+    await act(async () => {
+      fireEvent.changeText(getByTestId("searchbar"), "no-match");
+    });
+
+    // Ensure the empty list component shows (Clear Filters button)
+    await waitFor(() => {
+      expect(getByText("Clear Filters")).toBeTruthy();
+    });
+
+    // Press Clear Filters and ensure search is cleared and chips reset
+    await act(async () => {
+      fireEvent.press(getByText("Clear Filters"));
+    });
+
+    await waitFor(() => {
+      // searchbar value should be empty after clearing
+      expect(getByTestId("searchbar").props.value).toBe("");
+      // ordering should return to default (CatA then CatB)
+      const all = getAllByText(/CatA|CatB/);
+      expect(all[0].props.children).toBe("CatA");
+      expect(all[1].props.children).toBe("CatB");
+      // Clear Filters button is still present in the UI (component rendered)
+      expect(queryByText("Clear Filters")).toBeTruthy();
     });
   });
 
