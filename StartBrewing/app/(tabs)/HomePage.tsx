@@ -424,7 +424,7 @@ function HomePageContent() {
 
       <Dialog
         title="Confirm Brew Deletion"
-        text={`Are you sure you want to delete "${deleteTarget?.name ?? "this"}" brew?`}
+        text={`Are you sure you want to delete this brew?`}
         visible={deleteDialogVisible}
         onDismiss={() => setDeleteDialogVisible(false)}
         cancelBtn="Cancel"

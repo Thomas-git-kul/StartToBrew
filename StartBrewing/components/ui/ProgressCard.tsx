@@ -2,7 +2,7 @@ import { Dimensions, Text, Pressable, View } from "react-native";
 import { ProgressBar, TouchableRipple, Card } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { Trash, Trash2 } from "lucide-react-native";
+import { Trash2 } from "lucide-react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
