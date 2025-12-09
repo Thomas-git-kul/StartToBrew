@@ -12,7 +12,8 @@ interface ButtonProps {
   onPress: () => void | Promise<void>;
   size?: number;
   testID: string;
-  disabled?: boolean
+  disabled?: boolean;
+  height?: number;
 }
 
 export default function DialogCustom({
@@ -21,6 +22,7 @@ export default function DialogCustom({
   size = 16,
   testID,
   disabled = false,
+  height,
 }: ButtonProps) {
   return (
     <Button
@@ -37,6 +39,7 @@ export default function DialogCustom({
         borderRadius: 30,
         backgroundColor: disabled? BASE_COLORS.STONE300 : BASE_COLORS.TEXT_DARK,
       }}
+      contentStyle={height ? { height } : undefined}
     >{title}</Button>
   );
 }

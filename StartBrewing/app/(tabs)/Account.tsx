@@ -426,16 +426,15 @@ export default function Account() {
                 marginBottom: 4,
               }}
             >{fullName || "Name not set"}</Text>
-            <View
-
-            >
+            {(!avatarUrl || !bio) && (
               <PrimaryButton
-                title="Finish account"
-                testID="finish-button"
+                title="Complete account"
+                testID="complete-button"
                 onPress={() => router.push("/AccountEdit")}
                 size={10}
+                height={28}
               />
-            </View>
+            )}
           </View>
 
           {!!bio && (
