@@ -212,6 +212,172 @@ describe("<PaymentSuccess />", () => {
     expect(replaceMock).toHaveBeenCalledWith("/HomePage");
   });
 
+  it("creates a new order when orderId is missing and skips email", async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValueOnce({
+      email: "test@example.com",
+      amount: "500",
+    });
+
+    render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(orderItemsInsertMock).toHaveBeenCalled();
+    });
+
+    expect(orderItemsInsertMock).toHaveBeenCalledWith([
+      {
+        order_id: 123,
+        store_item_id: 99,
+        quantity: 2,
+        starter_kit: true,
+      },
+    ]);
+
+    expect(emailjs.send).not.toHaveBeenCalled();
+  });
+
+  it("defaults starter_kit to false when missing", async () => {
+    mockFrom.mockImplementation((table: string) => {
+      switch (table) {
+        case "shopping_carts":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: { id_cart: 55 },
+                  error: null,
+                }),
+              }),
+            }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "shopping_cart_items":
+          return {
+            select: () => ({
+              eq: () => ({
+                data: [
+                  {
+                    store_item_id: 77,
+                    quantity: 1,
+                  },
+                ],
+                error: null,
+              }),
+            }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "orders":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { message: "not found" },
+                }),
+              }),
+            }),
+            insert: () => ({
+              select: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: { id_order: 123 },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+
+        case "order_items":
+          return {
+            insert: orderItemsInsertMock,
+          };
+
+        default:
+          return {};
+      }
+    });
+
+    render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(orderItemsInsertMock).toHaveBeenCalled();
+    });
+
+    expect(orderItemsInsertMock).toHaveBeenCalledWith([
+      {
+        order_id: 123,
+        store_item_id: 77,
+        quantity: 1,
+        starter_kit: false,
+      },
+    ]);
+  });
+
+  it("stops processing when no shopping cart is found", async () => {
+    mockFrom.mockImplementation((table: string) => {
+      switch (table) {
+        case "shopping_carts":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { message: "not found" },
+                }),
+              }),
+            }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "shopping_cart_items":
+          return {
+            select: () => ({
+              eq: () => ({ data: [], error: null }),
+            }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "orders":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { message: "not found" },
+                }),
+              }),
+            }),
+            insert: () => ({
+              select: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: { id_order: 456 },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+
+        case "order_items":
+          return {
+            insert: orderItemsInsertMock,
+          };
+
+        default:
+          return {};
+      }
+    });
+
+    render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(console.warn).toHaveBeenCalledWith("No shopping cart found for user.");
+    });
+
+    expect(orderItemsInsertMock).not.toHaveBeenCalled();
+    expect(emailjs.send).not.toHaveBeenCalled();
+  });
+
   it("matches snapshot", () => {
     const tree = render(<PaymentSuccess />).toJSON();
     expect(tree).toMatchSnapshot();
