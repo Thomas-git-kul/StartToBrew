@@ -416,4 +416,76 @@ describe('Agenda Component', () => {
       expect.stringContaining('SaveTest')
     );
   });
+
+  it('loads module with jest present (covers isJest true branch)', () => {
+    const modulePath = require.resolve('../app/(tabs)/Agenda');
+    // preserve current cache
+    const cached = require.cache[modulePath];
+    try {
+      // ensure jest global is present
+      (global as any).jest = (global as any).jest || {};
+      // clear module so it will re-evaluate with jest present
+      delete require.cache[modulePath];
+      // require the module fresh
+      const mod = require('../app/(tabs)/Agenda');
+      expect(mod).toBeDefined();
+    } finally {
+      // restore cache
+      if (cached) require.cache[modulePath] = cached;
+    }
+  });
+
+  it('handles brew_steps error without crashing', async () => {
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      const chain: any = {};
+      chain.select = (..._args: any[]) => chain;
+      chain.eq = (..._args: any[]) => chain;
+      chain.in = (..._args: any[]) => chain;
+      chain.order = (..._args: any[]) => chain;
+      if (table === 'brew_steps') {
+        chain.then = (cb: any) => cb({ data: null, error: 'err' });
+      } else {
+        chain.then = (cb: any) => cb({ data: [], error: null });
+      }
+      chain.catch = () => {};
+      return chain;
+    });
+
+    const { getByText } = renderWithNavigation(<Agenda />);
+
+    await waitFor(() => {
+      expect(getByText('Loading progress...')).toBeTruthy();
+    });
+
+    await waitFor(() => {
+      expect(getByText('No tasks for this day.')).toBeTruthy();
+    });
+  });
+
+  it('handles steps error without crashing', async () => {
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      const chain: any = {};
+      chain.select = (..._args: any[]) => chain;
+      chain.eq = (..._args: any[]) => chain;
+      chain.in = (..._args: any[]) => chain;
+      chain.order = (..._args: any[]) => chain;
+      if (table === 'steps') {
+        chain.then = (cb: any) => cb({ data: null, error: 'err' });
+      } else {
+        chain.then = (cb: any) => cb({ data: [], error: null });
+      }
+      chain.catch = () => {};
+      return chain;
+    });
+
+    const { getByText } = renderWithNavigation(<Agenda />);
+
+    await waitFor(() => {
+      expect(getByText('Loading progress...')).toBeTruthy();
+    });
+
+    await waitFor(() => {
+      expect(getByText('No tasks for this day.')).toBeTruthy();
+    });
+  });
 });
