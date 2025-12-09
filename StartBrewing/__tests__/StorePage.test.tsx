@@ -340,4 +340,60 @@ describe("<StorePage />", () => {
       expect(supabase.from).not.toHaveBeenCalledWith("shopping_cart_items");
     });
   });
+
+  it("handles category fetch error and sets empty categories", async () => {
+    // category returns an error
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "category") {
+        return {
+          select: () => ({
+            limit: () => Promise.resolve({ data: null, error: { message: "cat error" } }),
+          }),
+        };
+      }
+      // default other tables return sample data
+      if (table === "store_items") {
+        return {
+          select: () => ({ limit: () => Promise.resolve({ data: [{ id_store_item: 1, name: "Item 1", category_id: 1, price: 10 }], error: null }) }),
+        };
+      }
+      if (table === "starter_kits") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+      }
+      return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+    });
+
+    const { queryByText } = renderWithNavigation(<StorePage />);
+
+    await waitFor(() => {
+      // Expect no category chips rendered when category fetch errors
+      expect(queryByText("Malt")).toBeNull();
+      expect(queryByText("Hops")).toBeNull();
+    });
+  });
+
+  it("handles store_items fetch error and shows empty list", async () => {
+    // make store_items return an error
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === "category") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [{ id_category: 1, name: "Malt" }], error: null }) }) };
+      }
+      if (table === "store_items") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: null, error: { message: "items error" } }) }) };
+      }
+      if (table === "starter_kits") {
+        return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+      }
+      return { select: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) };
+    });
+
+    const { getByText } = renderWithNavigation(<StorePage />);
+
+    await waitFor(() => {
+      // When items fetch errors, ListEmptyComponent should show
+      expect(getByText("Clear Filters")).toBeTruthy();
+      // And no StoreCard should have been rendered
+      expect(MockStoreCard).not.toHaveBeenCalled();
+    });
+  });
 });
