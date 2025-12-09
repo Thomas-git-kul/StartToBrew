@@ -7,6 +7,7 @@ import { BASE_COLORS } from "@/constants/Colors";
 type BadgeProps = {
   id_badge: number;
   icon_url?: string | null;
+  code?: string;
   onPress: () => void;
 };
 
