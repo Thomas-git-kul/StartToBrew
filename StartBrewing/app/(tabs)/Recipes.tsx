@@ -16,6 +16,7 @@ import { FontFamilies } from "@/constants/Fonts";
 import TextInput from "@/components/textInput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Spinner from "@/components/spinner";
+import SelectionChip from "@/components/selectionChip";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -722,9 +723,10 @@ export default function Recipes() {
 
               return (
                 <View key={cat.id} style={{ marginRight: 8 }}>
-                  <Chip
-                    mode="flat"
-                    selected={isActive}
+                  <SelectionChip
+                    testID="filter-chip"
+                    text={cat.name}
+                    isActive={isActive}
                     onPress={() => {
                       if (cat.id === "favorites") {
                         setShowOnlyFavorites((prev) => !prev);
@@ -735,39 +737,7 @@ export default function Recipes() {
                         prev === cat.id ? null : (cat.id as any)
                       );
                     }}
-                    icon={
-                      isActive
-                        ? () => (
-                            <Check
-                              size={Math.min(14 * scale, 20)}
-                              color={BASE_COLORS.WHITE}
-                            />
-                          )
-                        : undefined
-                    }
-                    textStyle={{
-                      color: isActive
-                        ? BASE_COLORS.WHITE
-                        : BASE_COLORS.STONE500,
-                      fontFamily: FontFamilies.BODY,
-                      fontSize: Math.min(14 * scale, 16),
-                    }}
-                    style={{
-                      backgroundColor: isActive
-                        ? BASE_COLORS.ACCENT_PRIMARY
-                        : BASE_COLORS.WHITE,
-                      borderColor: isActive
-                        ? BASE_COLORS.WHITE
-                        : BASE_COLORS.STONE300,
-                      borderWidth: 1,
-                      height: Math.min(40 * scale, 50),
-                      paddingVertical: 0,
-                      marginVertical: 5,
-                      alignItems: "center",
-                    }}
-                  >
-                    {cat.name}
-                  </Chip>
+                  />
                 </View>
               );
             })}
