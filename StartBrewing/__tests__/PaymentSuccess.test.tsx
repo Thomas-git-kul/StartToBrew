@@ -1,4 +1,3 @@
-// __tests__/PaymentSuccess.test.tsx
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import PaymentSuccess from "../app/PaymentSuccess";
@@ -215,5 +214,150 @@ describe("<PaymentSuccess />", () => {
   it("matches snapshot", () => {
     const tree = render(<PaymentSuccess />).toJSON();
     expect(tree).toMatchSnapshot();
+  });
+
+  it("does not create a new order when order already exists", async () => {
+    // override orders behavior: existing order found, and spy on insert
+    const ordersInsertSpy = jest.fn(() => ({
+      select: () => ({
+        single: jest.fn().mockResolvedValue({ data: { id_order: 123 }, error: null }),
+      }),
+    }));
+
+    mockFrom.mockImplementation((table: string) => {
+      switch (table) {
+        case "shopping_carts":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({ data: { id_cart: 55 }, error: null }),
+              }),
+            }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "shopping_cart_items":
+          return {
+            select: () => ({
+              eq: () => ({
+                data: [
+                  {
+                    store_item_id: 99,
+                    quantity: 2,
+                    starter_kit: true,
+                  },
+                ],
+                error: null,
+              }),
+            }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "orders":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({ data: { id_order: 123 }, error: null }),
+              }),
+            }),
+            insert: ordersInsertSpy,
+          };
+
+        case "order_items":
+          return {
+            insert: orderItemsInsertMock,
+          };
+
+        default:
+          return {};
+      }
+    });
+
+    render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(orderItemsInsertMock).toHaveBeenCalled();
+    });
+
+    expect(ordersInsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("skips inserting order items when the cart is empty", async () => {
+    // shopping_cart_items returns empty array
+    mockFrom.mockImplementation((table: string) => {
+      switch (table) {
+        case "shopping_carts":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({ data: { id_cart: 55 }, error: null }),
+              }),
+            }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "shopping_cart_items":
+          return {
+            select: () => ({
+              eq: () => ({
+                data: [],
+                error: null,
+              }),
+            }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "orders":
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({ data: null, error: { message: "not found" } }),
+              }),
+            }),
+            insert: () => ({
+              select: () => ({
+                single: jest.fn().mockResolvedValue({ data: { id_order: 123 }, error: null }),
+              }),
+            }),
+          };
+
+        case "order_items":
+          return {
+            insert: orderItemsInsertMock,
+          };
+
+        default:
+          return {};
+      }
+    });
+
+    render(<PaymentSuccess />);
+
+    // order items should not be inserted for empty cart
+    await new Promise((r) => setTimeout(r, 50));
+    expect(orderItemsInsertMock).not.toHaveBeenCalled();
+  });
+
+  it("does not send email when params are missing", async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({});
+
+    render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(emailjs.send).not.toHaveBeenCalled();
+    });
+  });
+
+  it("logs an error when email sending fails", async () => {
+    (emailjs.send as jest.Mock).mockImplementationOnce(() => Promise.reject({ text: "failed" }));
+
+    render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(emailjs.send).toHaveBeenCalled();
+    });
+
+    // ensure error was logged at least once
+    expect(console.error).toHaveBeenCalled();
   });
 });
