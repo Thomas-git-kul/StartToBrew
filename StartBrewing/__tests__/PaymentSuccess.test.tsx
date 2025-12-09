@@ -506,4 +506,86 @@ describe("<PaymentSuccess />", () => {
       expect(console.error).toHaveBeenCalledWith("Unexpected error:", "boom");
     });
   });
+
+  it("logs error when inserting order_items fails (orderItemsErr branch)", async () => {
+    mockFrom.mockImplementation((table: string) => {
+      switch (table) {
+        case "shopping_carts":
+          return {
+            select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: { id_cart: 55 }, error: null }) }) }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "shopping_cart_items":
+          return {
+            select: () => ({ eq: () => ({ data: [ { store_item_id: 99, quantity: 2, starter_kit: true } ], error: null }) }),
+            delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }),
+          };
+
+        case "orders":
+          return {
+            select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: null, error: { message: "not found" } }) }) }),
+            insert: () => ({ select: () => ({ single: jest.fn().mockResolvedValue({ data: { id_order: 123 }, error: null }) }) }),
+          };
+
+        case "order_items":
+          return {
+            insert: jest.fn().mockResolvedValue({ error: { message: "order items failed" } }),
+          };
+
+        default:
+          return {};
+      }
+    });
+
+    render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(console.error).toHaveBeenCalledWith("Error inserting order items:", { message: "order items failed" });
+    });
+  });
+
+  it("logs errors when deleting cart items or cart fails and calls eq with correct ids", async () => {
+    const deleteItemsEq = jest.fn().mockResolvedValue({ error: { message: "delete items failed" } });
+    const deleteCartEq = jest.fn().mockResolvedValue({ error: { message: "delete cart failed" } });
+
+    mockFrom.mockImplementation((table: string) => {
+      switch (table) {
+        case "shopping_carts":
+          return {
+            select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: { id_cart: 55 }, error: null }) }) }),
+            delete: () => ({ eq: deleteCartEq }),
+          };
+
+        case "shopping_cart_items":
+          return {
+            select: () => ({ eq: () => ({ data: [ { store_item_id: 99, quantity: 2, starter_kit: true } ], error: null }) }),
+            delete: () => ({ eq: deleteItemsEq }),
+          };
+
+        case "orders":
+          return {
+            select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: null, error: { message: "not found" } }) }) }),
+            insert: () => ({ select: () => ({ single: jest.fn().mockResolvedValue({ data: { id_order: 123 }, error: null }) }) }),
+          };
+
+        case "order_items":
+          return {
+            insert: orderItemsInsertMock,
+          };
+
+        default:
+          return {};
+      }
+    });
+
+    render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(deleteItemsEq).toHaveBeenCalledWith("cart_id", 55);
+      expect(deleteCartEq).toHaveBeenCalledWith("id_cart", 55);
+      expect(console.error).toHaveBeenCalledWith("Error deleting cart items:", { message: "delete items failed" });
+      expect(console.error).toHaveBeenCalledWith("Error deleting shopping cart:", { message: "delete cart failed" });
+    });
+  });
 });
