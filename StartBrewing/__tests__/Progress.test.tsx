@@ -866,6 +866,123 @@ it("shows completed date for historical step", async () => {
   sb.from = originalFrom;
 });
 
+it("pressing Play when step is historical does not call Supabase update", async () => {
+  const sb = jest.requireMock("@/supabase").supabase;
+  const originalFrom = sb.from;
+
+  // Make brew_steps return a completed status to set isHistoricalStep
+  sb.from = jest.fn((table: string) => {
+    if (table === "brew_steps") {
+      return {
+        select: () => ({
+          eq: function () {
+            return {
+              eq: function () {
+                return {
+                  single: async () => ({
+                    data: {
+                      brew_step_id: 10,
+                      id_brew: 1,
+                      step_id: 1,
+                      status: "completed",
+                      completed_at: new Date().toISOString(),
+                      time_left: null,
+                    },
+                    error: null,
+                  }),
+                };
+              },
+            };
+          },
+        }),
+      };
+    }
+    return originalFrom(table);
+  });
+
+  const { findByText } = renderWithNavigation(<Progress />);
+  await findByText("black IPA Progress");
+
+  // Play button in the countdown area should be present but pressing it must not call updates
+  const play = await findByText("Play");
+  const beforeCalls = mockBrewStepsUpdate.mock.calls.length;
+  await act(async () => fireEvent.press(play));
+
+  // Ensure this interaction did not trigger additional supabase updates
+  expect(mockBrewStepsUpdate.mock.calls.length).toBe(beforeCalls);
+
+  sb.from = originalFrom;
+});
+
+it("pressing Play when step is forward does not call Supabase update", async () => {
+  const sb = jest.requireMock("@/supabase").supabase;
+  const originalFrom = sb.from;
+
+  // Return a brew and brew_steps such that `isForwardStep` becomes true
+  // Keep `last_step_id` = "1" and respond with a brew_steps row for step_id 2 (pending)
+  // so the UI still renders a step with a timer (Play visible) while marking forward=true.
+  sb.from = jest.fn((table: string) => {
+    if (table === "brews") {
+      return {
+        select: () => ({
+          eq: () => ({
+            single: async () => ({
+              data: {
+                id_brew: 1,
+                recipe_slug: "black-ipa",
+                name: "black IPA Progress",
+                last_step_id: "1",
+                status_id: 2,
+              },
+              error: null,
+            }),
+          }),
+        }),
+      };
+    }
+
+    if (table === "brew_steps") {
+      return {
+        select: () => ({
+          eq: function () {
+            return {
+              eq: function () {
+                return {
+                  single: async () => ({
+                    data: {
+                      brew_step_id: 10,
+                      id_brew: 1,
+                      step_id: 2,
+                      status: "pending",
+                      completed_at: null,
+                      time_left: null,
+                    },
+                    error: null,
+                  }),
+                };
+              },
+            };
+          },
+        }),
+      };
+    }
+
+    return originalFrom(table);
+  });
+
+  const { findByText } = renderWithNavigation(<Progress />);
+  await findByText("black IPA Progress");
+
+  const play = await findByText("Play");
+  const beforeCallsForward = mockBrewStepsUpdate.mock.calls.length;
+  await act(async () => fireEvent.press(play));
+
+  // Ensure no additional supabase updates were triggered by pressing Play here
+  expect(mockBrewStepsUpdate.mock.calls.length).toBe(beforeCallsForward);
+
+  sb.from = originalFrom;
+});
+
 /*
 it("completing the final step updates brews and navigates HomePage", async () => {
   // Override route params to load the last step (id = "2")
