@@ -261,7 +261,7 @@ export default function Agenda() {
   // refresh when screen focuses
   useFocusEffect(
     useCallback(() => {
-      if (!isJest && fetchAgendaData) {
+      if (fetchAgendaData) {
         fetchAgendaData();
       }
     }, [])

@@ -2,7 +2,6 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { supabase } from '@/supabase';
 import { NavigationContainer } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
 import { Calendar } from 'react-native-calendars';
 
 // ----- Mocks ----- //
@@ -10,30 +9,22 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
-// Mock Supabase
+// Minimal Supabase mock; individual tests will override `supabase.from`
 jest.mock('@/supabase', () => ({
   supabase: {
     auth: { getUser: jest.fn(() => Promise.resolve({ data: { user: { id: '123' } }, error: null })) },
-    from: jest.fn(() => {
-      // return a chainable query object where select/eq/in/order can be chained
-      const chain: any = {};
-      chain.select = (..._args: any[]) => chain;
-      chain.eq = (..._args: any[]) => chain;
-      chain.in = (..._args: any[]) => chain;
-      chain.order = (..._args: any[]) => chain;
-      chain.then = (cb: any) => cb({ data: [], error: null });
-      chain.catch = () => {};
-      return chain;
-    }),
+    from: jest.fn(),
   },
 }));
 
 // Mock useFocusEffect so it doesn't try to execute navigation
 jest.mock('@react-navigation/native', () => {
   const actualNav = jest.requireActual('@react-navigation/native');
+  const React = require('react');
   return {
     ...actualNav,
-    useFocusEffect: (cb: any) => cb(),
+    // run the focus callback inside a useEffect so it runs after render
+    useFocusEffect: (cb: any) => React.useEffect(cb, []),
   };
 });
 
@@ -50,7 +41,7 @@ jest.mock('react-native-paper', () => {
     __esModule: true,
     Card: ({ children, ...props }: any) => React.createElement('View', props, children),
     Chip: ({ children, ...props }: any) => React.createElement('Text', props, children),
-    Button: ({ children, ...props }: any) => React.createElement('Text', props, children),
+    Button: ({ children, onPress, ...props }: any) => React.createElement('Text', { onPress, ...props }, children),
     ActivityIndicator: ({ ...props }: any) => React.createElement('Text', props, 'Loading...'),
   };
 });
@@ -73,7 +64,7 @@ jest.mock('@/components/header', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true, // this ensures correct default import
-    default: (props: any) => <Text>{props.title}</Text>,
+    default: (props: any) => React.createElement(Text, null, props.title),
   };
 });
 
@@ -82,7 +73,7 @@ jest.mock('@/components/themed-text', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true, // ensures named exports work correctly
-    ThemedText: (props: any) => <Text>{props.children}</Text>,
+    ThemedText: (props: any) => React.createElement(Text, null, props.children),
   };
 });
 
@@ -106,7 +97,24 @@ const renderWithNavigation = (ui: React.ReactElement) =>
     </NavigationContainer>
   );
 
-import Agenda from '../app/(tabs)/Agenda';
+// Require `Agenda` after temporarily removing `global.jest` so the
+// component's `isJest` check evaluates to false and `fetchAgendaData` runs.
+let Agenda: any;
+beforeAll(() => {
+  const oldJest = (global as any).jest;
+  try {
+    // remove jest global during module load
+    try {
+      delete (global as any).jest;
+    } catch (e) {
+      (global as any).jest = undefined;
+    }
+    Agenda = require('../app/(tabs)/Agenda').default;
+  } finally {
+    // restore original jest global
+    (global as any).jest = oldJest;
+  }
+});
 
 // ----- Tests ----- //
 
@@ -123,16 +131,34 @@ describe('Agenda Component', () => {
     });
   });
 
-  it('shows "No tasks for this day" when no data', async () => {
+  it('shows "No tasks for this day." after loading when no data', async () => {
+    // Make supabase.from return empty arrays for all tables
+    (supabase.from as jest.Mock).mockImplementation(() => {
+      const chain: any = {};
+      chain.select = (..._args: any[]) => chain;
+      chain.eq = (..._args: any[]) => chain;
+      chain.in = (..._args: any[]) => chain;
+      chain.order = (..._args: any[]) => chain;
+      chain.then = (cb: any) => cb({ data: [], error: null });
+      chain.catch = () => {};
+      return chain;
+    });
+
     const { getByText } = renderWithNavigation(<Agenda />);
+
+    // first the spinner appears
     await waitFor(() => {
       expect(getByText('Loading progress...')).toBeTruthy();
     });
+
+    // then, after fetch finishes, no tasks message is shown
+    await waitFor(() => {
+      expect(getByText('No tasks for this day.')).toBeTruthy();
+    });
   });
 
-  it('fetches data and updates phasesByDate', async () => {
-    // Mock Supabase response: return a chainable query object so the
-    // component can call `.select().eq().in().order()` and `await` the chain.
+  it('fetches data and displays brew entries', async () => {
+    // Set up per-table responses
     (supabase.from as jest.Mock).mockImplementation((table: string) => {
       const makeChain = (data: any[]) => {
         const chain: any = {};
@@ -147,7 +173,7 @@ describe('Agenda Component', () => {
 
       if (table === 'brews') {
         return makeChain([
-          { id_brew: 1, name: 'Test Beer', start_date: new Date().toISOString().split('T')[0], recipe_slug: 'r1' },
+          { id_brew: 1, name: 'Test Beer', start_date: new Date().toISOString().split('T')[0], recipe_slug: 'r1', last_step_id: '1' },
         ]);
       }
       if (table === 'phases') {
@@ -158,13 +184,16 @@ describe('Agenda Component', () => {
           { step_id: '1', phase_id: 1, title: 'Step 1', start_offset_min: null, duration_min: 60 },
         ]);
       }
+      if (table === 'brew_steps') {
+        return makeChain([]);
+      }
       return makeChain([]);
     });
 
-    const { getByText } = render(<Agenda />);
+    const { getByText } = renderWithNavigation(<Agenda />);
 
     await waitFor(() => {
-      expect(getByText('Loading progress...')).toBeTruthy();
+      expect(getByText('Test Beer')).toBeTruthy();
     });
   });
 
@@ -180,28 +209,44 @@ describe('Agenda Component', () => {
   });
 
   it('navigates to progress page when progress button pressed', async () => {
-    const { getByText } = render(<Agenda />);
-    // simulate brew cards by mocking Supabase to return a brew
+    // Return one brew with a last_step_id that will set showProgressButton
     (supabase.from as jest.Mock).mockImplementation((table: string) => {
-      const chain: any = {};
-      chain.select = (..._args: any[]) => chain;
-      chain.eq = (..._args: any[]) => chain;
-      chain.in = (..._args: any[]) => chain;
-      chain.order = (..._args: any[]) => chain;
-      chain.then = (cb: any) => cb({ data: [{ id_brew: 1, name: 'Test Beer', start_date: '2025-11-22', recipe_slug: 'r1' }], error: null });
-      chain.catch = () => {};
-      return chain;
+      const makeChain = (data: any[]) => {
+        const chain: any = {};
+        chain.select = (..._args: any[]) => chain;
+        chain.eq = (..._args: any[]) => chain;
+        chain.in = (..._args: any[]) => chain;
+        chain.order = (..._args: any[]) => chain;
+        chain.then = (cb: any) => cb({ data, error: null });
+        chain.catch = () => {};
+        return chain;
+      };
+
+      if (table === 'brews') {
+        return makeChain([{ id_brew: 1, name: 'Test Beer', start_date: '2025-11-22', recipe_slug: 'r1', last_step_id: '1' }]);
+      }
+      if (table === 'phases') return makeChain([{ phase_id: 1, recipe_slug: 'r1', name: 'Phase 1', position: 1 }]);
+      if (table === 'steps') return makeChain([{ step_id: '1', phase_id: 1, title: 'Step 1', start_offset_min: null, duration_min: 60 }]);
+      if (table === 'brew_steps') return makeChain([]);
+      return makeChain([]);
     });
 
+    const { getByText } = renderWithNavigation(<Agenda />);
+
+    // wait for card to render
     await waitFor(() => {
-      // call router.push manually
-      mockPush('/progress');
-      expect(mockPush).toHaveBeenCalledWith('/progress');
+      expect(getByText('Test Beer')).toBeTruthy();
     });
+
+    // find and press the Progress button (mocked as Text)
+    const progressBtn = getByText('Progress');
+    fireEvent.press(progressBtn);
+
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/progress', params: { id: 1, from: 'agenda' } });
   });
 
   it('matches snapshot', () => {
-    const tree = render(<Agenda />);
+    const tree = renderWithNavigation(<Agenda />);
     expect(tree.toJSON()).toMatchSnapshot();
   });
 });
