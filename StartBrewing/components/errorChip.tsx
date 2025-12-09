@@ -1,10 +1,8 @@
-import React from "react";
 import { View, Dimensions } from "react-native";
 import { Chip } from "react-native-paper";
 import { CircleAlert } from "lucide-react-native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import StoreCard from "@/components/ui/StoreCard";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BASE_SCREEN_WIDTH = 375; 
@@ -14,7 +12,7 @@ interface ErrorProps {
   text: string;
 }
 
-export default function HeaderBar({ text }: ErrorProps) {
+export default function ErrorChip({ text }: ErrorProps) {
   return (
     <Chip
       mode="flat"

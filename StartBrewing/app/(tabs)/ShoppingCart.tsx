@@ -217,6 +217,7 @@ export default function ShoppingCart() {
     loadCart();
   }, []));
 
+  /*
   const debounceTimers = React.useRef<Record<string, number>>({});
 
   const debouncedUpdateQuantity = (
@@ -232,6 +233,7 @@ export default function ShoppingCart() {
       updateCartQuantity(store_item_id, newQty, starterkit);
     }, 800);
   };
+  */
 
 
   return (
@@ -288,7 +290,8 @@ export default function ShoppingCart() {
                   } as any)
                 }
                 onQuantityChange={(newQty, starterkit) => 
-                  debouncedUpdateQuantity(order.store_item_id, newQty, starterkit)}
+                  /*debouncedUpdateQuantity(order.store_item_id, newQty, starterkit)}*/
+                  updateCartQuantity(order.store_item_id, newQty, starterkit)}
               />
             ))}
           </View>
