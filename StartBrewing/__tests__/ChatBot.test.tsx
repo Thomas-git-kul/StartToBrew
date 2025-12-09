@@ -574,4 +574,109 @@ describe('ChatBot', () => {
     const tree = renderWithNavigation(<ChatBot />).toJSON();
     expect(tree).toMatchSnapshot();
   });
+
+  it('handles supabase loadContext failure and logs error', async () => {
+    // Force supabase.from to throw during loadContext
+    const { supabase } = require('@/supabase');
+    (supabase.from as jest.Mock).mockImplementation(() => { throw new Error('boom'); });
+
+    (global as any).__mockRouterParams = { recipe_slug: 'will-error' };
+
+    const consoleErrSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { findByText } = renderWithNavigation(<ChatBot />);
+
+    // Wait for the component to mount and the effect to run
+    await waitFor(() => {
+      expect(consoleErrSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to load chatbot context'), expect.any(Error));
+    });
+
+    consoleErrSpy.mockRestore();
+  });
+
+  it('pickImageWeb flow when Platform.OS=web includes base64 in request', async () => {
+    // Make Platform report 'web' at call time so pickOrTakePhoto calls pickImageWeb
+    const RN = require('react-native');
+    const originalOS = RN.Platform.OS;
+    (RN.Platform as any).OS = 'web';
+
+    // Provide a FileReader that immediately produces a data URL
+    // @ts-ignore
+    const OriginalFileReader = global.FileReader;
+    // @ts-ignore
+    class MockFileReader {
+      onload: any = null;
+      result: any = null;
+      readAsDataURL(_file: any) {
+        this.result = 'data:image/png;base64,WEB123';
+        if (typeof this.onload === 'function') this.onload({} as any);
+      }
+    }
+    // @ts-ignore
+    global.FileReader = MockFileReader as any;
+
+    // Intercept creation of the input element to simulate file selection.
+    // Overriding document.createElement is more reliable in the jest/jsdom environment.
+    const originalCreateElement = document.createElement.bind(document);
+    // Use a local flag so tests can wait until the simulated click ran
+    let clicked = false;
+    // @ts-ignore
+    document.createElement = (tagName: string) => {
+      if (tagName === 'input') {
+        const el: any = {
+          type: 'file',
+          accept: '',
+          onchange: null,
+          files: undefined,
+          click() {
+            try {
+              this.files = [{ name: 'img.png' }];
+              if (typeof this.onchange === 'function') this.onchange({ target: this });
+              clicked = true;
+            } catch (e) {}
+          },
+        };
+        return el as any;
+      }
+      return originalCreateElement(tagName as any);
+    };
+
+    // Ensure router params are empty and reset supabase mock data
+    (global as any).__mockRouterParams = {};
+    (global as any).__mockSupabaseData = { phases: [], steps: [], brews: [], brew_steps: [] };
+
+    // Render and trigger the plus -> pickImageWeb -> send flow
+    const { getByText, findByTestId } = renderWithNavigation(<ChatBot />);
+
+    fetchMock.mockResponseOnce(JSON.stringify({ text: 'Web image response' }));
+
+    const plus = getByText('Plus');
+    fireEvent.press(plus);
+
+    // Wait until our simulated input click executed and onchange ran
+    await waitFor(() => {
+      expect(clicked).toBe(true);
+    });
+
+    const sendButton = await findByTestId('send-button');
+    fireEvent.press(sendButton);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+      const callArgs = fetchMock.mock.calls[0];
+      if (callArgs && callArgs[1]) {
+        const body = callArgs[1].body;
+        if (typeof body === 'string') {
+          const parsed = JSON.parse(body);
+          expect(parsed.image).toBe('WEB123');
+        }
+      }
+    });
+
+    // restore globals
+    // @ts-ignore
+    global.FileReader = OriginalFileReader;
+    document.createElement = originalCreateElement;
+    (RN.Platform as any).OS = originalOS;
+  });
 });
