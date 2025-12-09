@@ -51,8 +51,17 @@ jest.mock('react-native-calendars', () => {
   const React = require('react');
   return {
     __esModule: true,
-    Calendar: ({ onDayPress }: any) =>
-      React.createElement('Text', { testID: 'calendar', onPress: () => onDayPress({ dateString: '2025-11-23' }) }, 'Calendar'),
+    Calendar: ({ onDayPress, renderArrow }: any) => {
+      const left = renderArrow ? renderArrow('left') : React.createElement('Text', null, '<');
+      const right = renderArrow ? renderArrow('right') : React.createElement('Text', null, '>');
+      return React.createElement(
+        'View',
+        null,
+        left,
+        React.createElement('Text', { testID: 'calendar', onPress: () => onDayPress({ dateString: '2025-11-23' }) }, 'Calendar'),
+        right
+      );
+    },
   };
 });
 // Mock Fonts hook
