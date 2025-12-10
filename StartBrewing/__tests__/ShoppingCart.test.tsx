@@ -1521,4 +1521,433 @@ describe("<ShoppingCart />", () => {
 
     consoleErrorSpy.mockRestore();
   });
+
+  it("handles catch block error in updateCartQuantity with message", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    
+    const mockCart = { id_cart: 1, user_id: "test-user-id" };
+    const mockCartItems = [
+      { store_item_id: 1, quantity: 1, starter_kit: false },
+    ];
+    const mockStoreItems = [
+      { id_store_item: 1, name: "Malt", price: 10.0, category_id: 1 },
+    ];
+    const mockCartItem = { id_cart_item: 100, cart_id: 1, store_item_id: 1, quantity: 1, starter_kit: false };
+
+    let callCount = 0;
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        callCount++;
+        if (table === "shopping_carts" && callCount <= 4) {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: mockCart,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (table === "shopping_carts" && callCount > 4) {
+          // Trigger catch block by throwing error
+          throw new Error("Database connection failed");
+        } else if (table === "shopping_cart_items" && callCount <= 4) {
+          return {
+            select: () => ({
+              eq: () => ({
+                data: mockCartItems,
+                error: null,
+              }),
+            }),
+          };
+        } else if (table === "store_items") {
+          return {
+            select: () => ({
+              data: mockStoreItems,
+              error: null,
+            }),
+          };
+        } else if (table === "starter_kits") {
+          return {
+            select: () => ({
+              data: [],
+              error: null,
+            }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        };
+      }),
+    };
+
+    const { getByTestId } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+        await new Promise((r) => setTimeout(r, 50));
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("quantity-decrease-Malt")).toBeTruthy();
+    });
+
+    const decreaseButton = getByTestId("quantity-decrease-Malt");
+    
+    await act(async () => {
+      fireEvent.press(decreaseButton);
+    });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error updating shopping cart:",
+        "Database connection failed"
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("loads shipping info with empty full_name and fetches from profile", async () => {
+    const mockShippingInfo = {
+      user_id: "test-user-id",
+      full_name: "",
+      street: "Oak Ave 42",
+      city: "Rotterdam",
+      zip: "3011",
+    };
+    const mockProfile = { full_name: "Auto Filled Name" };
+
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        if (table === "shopping_carts") {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: { id_cart: 1, user_id: "test-user-id" },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (table === "shopping_cart_items") {
+          return {
+            select: () => ({
+              eq: () => ({
+                data: [],
+                error: null,
+              }),
+            }),
+          };
+        } else if (table === "store_items") {
+          return {
+            select: () => ({
+              data: [],
+              error: null,
+            }),
+          };
+        } else if (table === "starter_kits") {
+          return {
+            select: () => ({
+              data: [],
+              error: null,
+            }),
+          };
+        } else if (table === "shipping_info") {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: mockShippingInfo,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (table === "profiles") {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: mockProfile,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        };
+      }),
+    };
+
+    const { getByTestId } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+        await new Promise((r) => setTimeout(r, 50));
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("input-Full Name").props.value).toBe("Auto Filled Name");
+      expect(getByTestId("input-Street name and number").props.value).toBe("Oak Ave 42");
+      expect(getByTestId("input-City").props.value).toBe("Rotterdam");
+      expect(getByTestId("input-Zip code").props.value).toBe("3011");
+    });
+  });
+
+  it("handles error when updating quantity in supabase", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    
+    const mockCart = { id_cart: 1, user_id: "test-user-id" };
+    const mockCartItems = [
+      { store_item_id: 1, quantity: 2, starter_kit: false },
+    ];
+    const mockStoreItems = [
+      { id_store_item: 1, name: "Malt", price: 5.99, category_id: 1 },
+    ];
+    const mockCartItem = { id_cart_item: 100, cart_id: 1, store_item_id: 1, quantity: 2, starter_kit: false };
+
+    const mockUpdate = jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({ 
+        error: { message: "Update operation failed" }
+      }),
+    });
+
+    let callCount = 0;
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        callCount++;
+        if (table === "shopping_carts") {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: mockCart,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (table === "shopping_cart_items" && callCount > 5) {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    single: jest.fn().mockResolvedValue({
+                      data: mockCartItem,
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+            }),
+            update: mockUpdate,
+          };
+        } else if (table === "shopping_cart_items") {
+          return {
+            select: () => ({
+              eq: () => ({
+                data: mockCartItems,
+                error: null,
+              }),
+            }),
+          };
+        } else if (table === "store_items") {
+          return {
+            select: () => ({
+              data: mockStoreItems,
+              error: null,
+            }),
+          };
+        } else if (table === "starter_kits") {
+          return {
+            select: () => ({
+              data: [],
+              error: null,
+            }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        };
+      }),
+    };
+
+    const { getByTestId } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+        await new Promise((r) => setTimeout(r, 50));
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("quantity-increase-Malt")).toBeTruthy();
+    });
+
+    const quantityChangeButton = getByTestId("quantity-increase-Malt");
+    
+    await act(async () => {
+      fireEvent.press(quantityChangeButton);
+    });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error updating quantity:",
+        "Update operation failed"
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("handles error when deleting item in supabase", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    
+    const mockCart = { id_cart: 1, user_id: "test-user-id" };
+    const mockCartItems = [
+      { store_item_id: 1, quantity: 1, starter_kit: false },
+    ];
+    const mockStoreItems = [
+      { id_store_item: 1, name: "Malt", price: 5.99, category_id: 1 },
+    ];
+    const mockCartItem = { id_cart_item: 100, cart_id: 1, store_item_id: 1, quantity: 1, starter_kit: false };
+
+    const mockDelete = jest.fn().mockReturnValue({
+      eq: jest.fn().mockResolvedValue({ 
+        error: { message: "Delete operation failed" }
+      }),
+    });
+
+    let fromCallCount = 0;
+    mockSupabaseImpl = {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "test-user-id" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        fromCallCount++;
+        if (table === "shopping_carts") {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: jest.fn().mockResolvedValue({
+                  data: mockCart,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (table === "shopping_cart_items" && fromCallCount > 4) {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    single: jest.fn().mockResolvedValue({
+                      data: mockCartItem,
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+            }),
+            delete: mockDelete,
+          };
+        } else if (table === "shopping_cart_items") {
+          return {
+            select: () => ({
+              eq: () => ({
+                data: mockCartItems,
+                error: null,
+              }),
+            }),
+          };
+        } else if (table === "store_items") {
+          return {
+            select: () => ({
+              data: mockStoreItems,
+              error: null,
+            }),
+          };
+        } else if (table === "starter_kits") {
+          return {
+            select: () => ({
+              data: [],
+              error: null,
+            }),
+          };
+        }
+        return {
+          select: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockReturnThis(),
+          single: jest.fn().mockResolvedValue({ data: null, error: null }),
+        };
+      }),
+    };
+
+    const { getByTestId } = renderWithNavigation(<ShoppingCart />);
+
+    await act(async () => {
+      if (mockFocusEffectCallback) {
+        mockFocusEffectCallback();
+        await new Promise((r) => setTimeout(r, 50));
+      }
+    });
+
+    await waitFor(() => {
+      expect(getByTestId("quantity-decrease-Malt")).toBeTruthy();
+    });
+
+    const decreaseButton = getByTestId("quantity-decrease-Malt");
+    
+    await act(async () => {
+      fireEvent.press(decreaseButton);
+    });
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Error deleting item:",
+        "Delete operation failed"
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
 });
