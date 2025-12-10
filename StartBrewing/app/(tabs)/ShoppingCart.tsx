@@ -387,23 +387,27 @@ const saveShippingInfo = async () => {
               placeholder="Full Name"
               value={fullName}
               onChangeText={setFullName}
+              maxLength={50}
             />
             <TextInput 
               placeholder="Street name and number"
               value={street}
               onChangeText={setStreet}
+              maxLength={60}
             />
             <View className="flex-row">
               <TextInput 
                 placeholder="City" 
                 value={city}
                 onChangeText={setCity}
+                maxLength={40}
               />
               <View className="flex-1 ml-3">
                 <TextInput 
                   placeholder="Zip code"
                   value={zip}
                   onChangeText={setZip}
+                  maxLength={5}
                 />
               </View>
             </View>

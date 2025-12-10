@@ -201,6 +201,7 @@ export default function Registration() {
                 value={firstname}
                 onChangeText={setFirstname}
                 placeholder="Firstname"
+                maxLength={30}
               />
             </View>
           </View>
@@ -209,6 +210,8 @@ export default function Registration() {
               value={lastname}
               onChangeText={setLastname}
               placeholder="Lastname"
+              maxLength={30}
+
             />
           </View>
         </View>
@@ -243,7 +246,7 @@ export default function Registration() {
         <ThemedText type="subTitle" className="mt-2">
           Contact information
         </ThemedText>
-        <TextInput value={email} onChangeText={text => { setEmail(text); setEmailInUseError(false); }} placeholder="Email" keyboardType="email-address"/>
+        <TextInput value={email} onChangeText={text => { setEmail(text); setEmailInUseError(false); }} placeholder="Email" keyboardType="email-address" maxLength={50} />
         {email.length > 0 && (!/^\S+@\S+\.\S+$/.test(email)) && (
           <ErrorChip text="Invalid email address"/>
         )}
@@ -258,6 +261,8 @@ export default function Registration() {
           value={username}
           onChangeText={text => { setUsername(text); setUsernameInUseError(false); }}
           placeholder="Username"
+          maxLength={30}
+         
         />
         {usernameInUseError && (
           <View className="mb-5">
@@ -269,6 +274,8 @@ export default function Registration() {
           onChangeText={setPassword}
           placeholder="Password"
           secureTextEntry
+          maxLength={30}
+
         />
         {password.length > 0 && (password.length < 6 || !/[A-Z]/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) && (
           <View className="mb-5">
@@ -288,6 +295,7 @@ export default function Registration() {
           onChangeText={setConfirmPassword}
           placeholder="Confirm Password"
           secureTextEntry
+          maxLength={30}
         />
         {confirmPassword.length > 0 && password !== confirmPassword && (
           <View className="mb-5">
