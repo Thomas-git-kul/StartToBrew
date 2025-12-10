@@ -407,23 +407,45 @@ export default function SpecificRecipe() {
               )
             : null;
 
-          const params: any = {
+          const baseParams: any = {
             user_id: user.id,
             brew_id: brewId,
             recipe_slug: effectiveSlug,
           };
-          if (timeToFirstBrewSeconds != null)
-            params.time_to_first_brew_seconds = timeToFirstBrewSeconds;
 
-          const finalClicks =
-            clicksToFirstBrew != null ? clicksToFirstBrew : get();
-          if (finalClicks != null) params.clicks_to_first_brew = finalClicks;
+          const finalClicks = clicksToFirstBrew != null ? clicksToFirstBrew : get();
 
+          // Log two separate analytics events:
+          // - `northstar_time_in_sec` for the time in seconds until first northstar
+          // - `northstar_amount_of_clicks` for the number of clicks until first northstar
           if (analytics) {
-            logEvent(analytics, "north_star_first_brew", params);
+            if (timeToFirstBrewSeconds != null) {
+              logEvent(analytics, "northstar_time_in_sec", {
+                ...baseParams,
+                time_in_sec: timeToFirstBrewSeconds,
+              });
+            }
+            if (finalClicks != null) {
+              logEvent(analytics, "northstar_amount_of_clicks", {
+                ...baseParams,
+                clicks: finalClicks,
+              });
+            }
           } else {
-            console.log("north_star_first_brew", params);
+            if (timeToFirstBrewSeconds != null) {
+              console.log("northstar_time_in_sec", {
+                ...baseParams,
+                time_in_sec: timeToFirstBrewSeconds,
+              });
+            }
+            if (finalClicks != null) {
+              console.log("northstar_amount_of_clicks", {
+                ...baseParams,
+                clicks: finalClicks,
+              });
+            }
           }
+
           setNorthStarLogged(true);
           try {
             await reset();
@@ -431,7 +453,7 @@ export default function SpecificRecipe() {
             // ignore
           }
         } catch (e: any) {
-          console.error("Failed to log north-star event:", e?.message ?? e);
+          console.error("Failed to log north-star events:", e?.message ?? e);
         }
       }
 
