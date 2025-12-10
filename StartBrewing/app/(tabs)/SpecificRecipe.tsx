@@ -1130,6 +1130,7 @@ export default function SpecificRecipe() {
             onChangeText={setReviewText}
             multiline
             numberOfLines={4}
+            maxLength={200}
           />
 
           <View className="flex-row justify-center gap-3 mb-4">
