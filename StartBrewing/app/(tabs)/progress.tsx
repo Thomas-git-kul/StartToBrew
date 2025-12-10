@@ -1,17 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, ScrollView, Dimensions, Text } from "react-native";
-import { Card, FAB, Chip, Button } from "react-native-paper";
-import {
-  Pause,
-  BotMessageSquare,
-  Thermometer,
-  Play,
-  Lightbulb,
-  ChevronRight,
-  CheckCheck,
-  CheckCheckIcon,
-} from "lucide-react-native";
+import { View, ScrollView, Dimensions, Text, TouchableOpacity } from "react-native";
+import { Card, FAB, Button, Snackbar } from "react-native-paper";
+import { Pause, BotMessageSquare, Thermometer, Play, Lightbulb, CheckCheck } from "lucide-react-native";
 import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Header from "@/components/header";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -23,6 +14,8 @@ import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 import { useUserProgressContext } from "@/context/UserProgressContext";
 import Spinner from "@/components/spinner";
 import Stepper from "@/components/Stepper";
+import PrimaryButton from "@/components/primaryButton";
+import { ReviewModal } from "@/components/reviewModal";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -52,6 +45,8 @@ export default function Progress() {
   const [completedAt, setCompletedAt] = useState<Date | null>(null);
   const { from } = useLocalSearchParams() as { from?: string };
   const [brew, setBrew] = useState<any>(null);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
 
   const currentStep = useRef<any>(null);
   let CompletedStep = useRef<boolean>(false);
@@ -129,6 +124,24 @@ export default function Progress() {
           .eq("step_id", currentStep.current.step_id)
           .single();
 
+        if (!stepId && brew_steps?.status === "completed") {
+          let nextIncompleteIndex = currentIndex + 1;
+          while (nextIncompleteIndex < allStepsLocal.length) {
+            const { data: nextStepStatus } = await supabase
+              .from("brew_steps")
+              .select("status")
+              .eq("id_brew", brewId)
+              .eq("step_id", allStepsLocal[nextIncompleteIndex].step_id)
+              .single();
+            
+            if (nextStepStatus?.status !== "completed") {
+              await loadStep(allStepsLocal[nextIncompleteIndex].step_id);
+              return;
+            }
+            nextIncompleteIndex++;
+          }
+        }
+
         setCompletedAt(
           brew_steps?.completed_at ? new Date(brew_steps.completed_at) : null
         );
@@ -136,7 +149,9 @@ export default function Progress() {
         // Prepare auto-start restore values if there is a stored timer
         let autoStartRemaining: number | null = null;
         let autoStartExpired = false;
-        if (brew_steps?.completed_at && brew_steps?.time_left != null) {
+        
+        // Only restore timer state if the step is in progress (not pending, not completed)
+        if (brew_steps?.status === "in_progress" && brew_steps?.completed_at && brew_steps?.time_left != null) {
           const lastStart = new Date(brew_steps.completed_at).getTime();
           const now = Date.now();
           const elapsedSec = Math.floor((now - lastStart) / 1000);
@@ -154,12 +169,24 @@ export default function Progress() {
           brew_steps.status === "completed";
         setIsHistoricalStep(isHistorical);
 
-        // Check of we een forward stap bekijken
-        const isForwardStep =
-          brew_steps.status === "pending" &&
-          brew.last_step_id != brew_steps.step_id;
-
-        setIsForwardStep(isForwardStep);
+        let isForward = false;
+        if (brew_steps.status === "pending" && brew.last_step_id != brew_steps.step_id) {
+          // Check if there are any incomplete steps before this one
+          for (let i = 0; i < currentIndex; i++) {
+            const { data: prevStepStatus } = await supabase
+              .from("brew_steps")
+              .select("status")
+              .eq("id_brew", brewId)
+              .eq("step_id", allStepsLocal[i].step_id)
+              .single();
+            
+            if (prevStepStatus?.status !== "completed") {
+              isForward = true;
+              break;
+            }
+          }
+        }
+        setIsForwardStep(isForward);
 
         const { data: tips } = await supabase
           .from("step_tips")
@@ -270,7 +297,6 @@ export default function Progress() {
           }
         }
 
-        // Determine if there is multiple steps
         const nextHasOffset =
           nextStep &&
           nextStep.start_offset_min &&
@@ -459,44 +485,15 @@ export default function Progress() {
     [brewId, getActiveStepId]
   );
 
-  const durationSec =
-    phase === 1
-      ? (stepData?.step1?.duration_sec ?? 0)
-      : (stepData?.step2?.duration_sec ?? 0);
+  const durationSec = stepData?.step1?.duration_sec ?? 0;
 
   const handleComplete = useCallback(
     (totalElapsedTime: number) => {
-      const activeStepId = getActiveStepId();
-      (async () => {
-        try {
-          await supabase
-            .from("brew_steps")
-            .update({
-              time_left: null,
-              status: "completed",
-              completed_at: new Date().toISOString(),
-            })
-            .eq("id_brew", brewId)
-            .eq("step_id", activeStepId)
-            .select();
-        } catch (e) {
-          console.error("Failed to persist completion", e);
-        }
-      })();
-
-      if (stepData?.mode === "two" && phase === 1) {
-        setTimerActive(false);
-        setPhaseDone(false);
-        setIsHistoricalStep(false);
-        setIsForwardStep(false);
-        setPhase(2);
-        return { shouldRepeat: false };
-      }
       setPhaseDone(true);
       setTimerActive(false);
       return { shouldRepeat: false };
     },
-    [brewId, stepData, phase, getActiveStepId]
+    []
   );
 
   const hasTimer = durationSec > 0;
@@ -539,19 +536,14 @@ export default function Progress() {
       updates.push({
         step_id: stepData.current_step_id,
       });
-
-      if (stepData.mode === "two" && stepData.next_step_id) {
-        updates.push({
-          step_id: stepData.next_step_id,
-        });
-      }
-
+      
       for (const u of updates) {
         await supabase
           .from("brew_steps")
           .update({
             status: "completed",
             completed_at: new Date().toISOString(),
+            time_left: null,
           })
           .eq("id_brew", brewId)
           .eq("step_id", u.step_id)
@@ -561,8 +553,7 @@ export default function Progress() {
       let newLastStepId;
 
       if (stepData.mode === "two") {
-        const afterMergedStep = stepData.after_next_step_id ?? null;
-        newLastStepId = afterMergedStep;
+        newLastStepId = stepData.next_step_id;
       } else {
         newLastStepId = stepData.next_step_id;
       }
@@ -580,7 +571,7 @@ export default function Progress() {
 
       if (isLastStep) {
         await refreshProgress();
-        router.push("/HomePage");
+        setReviewModalVisible(true);
         return;
       }
 
@@ -606,13 +597,6 @@ export default function Progress() {
   const goToPreviousStep = useCallback(() => {
     if (!stepData || allSteps.length === 0) return;
 
-    if (stepData.mode === "two" && phaseRef.current === 2) {
-      setPhase(1);
-      setPhaseDone(false);
-      setTimerActive(false);
-      return;
-    }
-
     const currentIndex = allSteps.findIndex(
       (s) => s.step_id === currentStep.current?.step_id
     );
@@ -631,14 +615,6 @@ export default function Progress() {
 
   const goToNextStep = useCallback(() => {
     if (!stepData || allSteps.length === 0) return;
-
-    // special case voor mode "two" en fase 2
-    if (stepData.mode === "two" && phaseRef.current === 2) {
-      setPhase(1);
-      setPhaseDone(false);
-      setTimerActive(false);
-      return;
-    }
 
     const currentIndex = allSteps.findIndex(
       (s) => s.step_id === currentStep.current?.step_id
@@ -673,15 +649,9 @@ export default function Progress() {
     );
   }
 
-  const title =
-    phase === 1
-      ? stepData.step1.title
-      : (stepData.step2?.title ?? stepData.step1.title);
-  const desc =
-    phase === 1
-      ? stepData.step1.desc
-      : (stepData.step2?.desc ?? stepData.step1.desc);
-  const tips = phase === 1 ? stepData.step1.tips : stepData.step2?.tips;
+  const title = stepData.step1.title;
+  const desc = stepData.step1.desc;
+  const tips = stepData.step1.tips;
   const ingredients: {
     name: string;
     kind: string;
@@ -689,14 +659,10 @@ export default function Progress() {
     unit: string | null;
   }[] = (() => {
     if (!stepData) return [];
-    if (stepData.mode === "two") {
-      // altijd beide stappen combineren
+    if (stepData.mode === "two" && stepData.step2) {
       return [...(stepData.step1?.ingredients ?? []), ...(stepData.step2?.ingredients ?? [])];
     } else {
-      // single mode
-      return phase === 1
-        ? stepData.step1.ingredients ?? []
-        : stepData.step2?.ingredients ?? [];
+      return stepData.step1?.ingredients ?? [];
     }
   })();
   const formatAmount = (amount: number | null, unit: string | null) => {
@@ -709,6 +675,10 @@ export default function Progress() {
     const rounded = Math.round(amount);
     return `${rounded} ${effectiveUnit}`;
   };
+
+  //const isCompleted = isHistoricalStep || phaseDone;
+  const isButtonDisabled = !phaseDone || isHistoricalStep || isForwardStep;
+  const isActiveStep = !isHistoricalStep && !isForwardStep;
 
   return (
     <SafeAreaView
@@ -723,224 +693,201 @@ export default function Progress() {
           router.push(from === "agenda" ? "/Agenda" : "/HomePage")
         }
       />
-      <View style={{ paddingBottom: 12 }}>
-        {(() => {
-          const isCompleted = isHistoricalStep || phaseDone;
-          return (
-            <>
-              <Stepper
-                step={
-                  allSteps.findIndex(
-                    (s) => s.step_id === currentStep.current?.step_id
-                  ) + 1
-                }
-                total={allSteps.length}
-                isCompleted={isCompleted}
-                onNext={goToNextStep}
-                onPrev={goToPreviousStep}
-              />
-              <Button
-                mode="text"
-                onPress={() => {
-                  if (!phaseDone && isHistoricalStep && isForwardStep) return;
-                  goToNextStepComplete();
-                  console.log("Complete step pressed");
-                }}
-                disabled={!phaseDone || isHistoricalStep || isForwardStep}
-                labelStyle={{
-                  fontSize: 16,
-                  fontFamily: FontFamilies.BODY,
-                  color: (!phaseDone || isHistoricalStep || isForwardStep) ? BASE_COLORS.STONE300 : BASE_COLORS.STONE600,
-                }}
-                style={{
-                  alignSelf: "flex-end",
-                  marginRight: 0,
-                }}
-              >
-                <View className="flex-row items-center justify-content"
-                  style={{
-                    marginRight: 8,
-                    marginInline: 8,
-                  }}
-                >
-                  <CheckCheck/>
-                  <Text> Complete step</Text>
-                </View>
-              </Button>
-
-              {isHistoricalStep && completedAt && (
-                <ThemedText type="subTitle" className="mt-2 ml-3">
-                  Completed on: {completedAt.toLocaleDateString()} at{" "}
-                  {completedAt.toLocaleTimeString()}
-                </ThemedText>
-              )}
-            </>
-          );
-        })()}
-      </View>
+      <Stepper
+        step={
+          allSteps.findIndex(
+            (s) => s.step_id === currentStep.current?.step_id
+          ) + 1
+        }
+        total={allSteps.length}
+        isCompleted={!isActiveStep}
+        onNext={goToNextStep}
+        onPrev={goToPreviousStep}
+      />
+      {isHistoricalStep && completedAt && (
+        <ThemedText type="subTitle" className="ml-3 mb-2">
+          Completed on: {completedAt.toLocaleDateString()} at{" "}
+          {completedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </ThemedText>
+      )}
       <ScrollView
         className="px-3"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 95 }}
       >
-        <View className="flex-row justify-between items-center">
+        <View className="flex-row justify-between items-start">
           <ThemedText type="title">{title}</ThemedText>
-          {hasTemp && (
-            <Chip
-              style={{
-                alignItems: "flex-start",
-                backgroundColor: BASE_COLORS.WHITE,
-                shadowColor: BASE_COLORS.STONE700,
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.07,
-                paddingVertical: 4,
-                paddingHorizontal: 8,
+          {!isHistoricalStep && (
+            <TouchableOpacity
+              onPress={() => {
+                if (isButtonDisabled) {
+                  setSnackbarVisible(true);
+                }
               }}
-              textStyle={{
-                fontSize: Math.min(17 * scale, 26),
-                color: BASE_COLORS.STONE500,
-                fontFamily: FontFamilies.BODY,
-                flexWrap: "wrap",
-              }}
-              icon={(props) => (
-                <Thermometer
-                  size={props.size}
-                  color={BASE_COLORS.STONE500}
-                  strokeWidth={0.5}
-                  fill={BASE_COLORS.AMBER600}
-                />
-              )}
+              activeOpacity={1}
             >
-              <Text style={{ flexWrap: "wrap" }}>{`${stepData.temp}°C`}</Text>
-            </Chip>
+              <View className="mb-2">
+                <PrimaryButton
+                  title="Step completed"
+                  testID="completed-button"
+                  onPress={() => {
+                    if (!phaseDone && isHistoricalStep && isForwardStep) return;
+                    goToNextStepComplete();
+                  }}
+                  disabled={isButtonDisabled}
+                  size={14}
+                  height={34}
+                />
+              </View>
+            </TouchableOpacity>
           )}
         </View>
-        {stepData.mode === "two" && phase === 1 && (
+        {stepData.mode === "two" && stepData.step2 && (
           <Text
             style={{
               fontSize: Math.min(15 * scale, 22),
               fontFamily: FontFamilies.BODY,
               color: BASE_COLORS.STONE600,
-              marginTop: -4,
+              marginTop: -12,
             }}
           >
             (+ {stepData.step2.title})
           </Text>
         )}
 
-        {hasTimer && !CompletedStep.current && (
+        {(hasTemp || hasTimer) && (
           <Card
             style={{
-              marginTop: 8,
-              marginBottom: 24,
-              padding: 16,
+              marginBottom: 18,
+              padding: hasTimer ? 16 : 8,
               borderRadius: 8,
               backgroundColor: BASE_COLORS.WHITE,
               shadowColor: BASE_COLORS.STONE700,
               shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.07,
+              shadowOpacity: 0.03,
               alignItems: "center",
             }}
           >
-            <CountdownCircleTimer
-              key={`${phase}`}
-              isPlaying={timerActive}
-              isGrowing={true}
-              rotation="counterclockwise"
-              duration={Math.max(1, durationSec)}
-              colors={[BASE_COLORS.STONE300, BASE_COLORS.STONE200]}
-              colorsTime={[0, Math.max(1, durationSec)]}
-              trailColor={
-                !phaseDone ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200
-              }
-              strokeWidth={10}
-              onComplete={handleComplete}
-            >
-              {({ remainingTime }) => {
-                const btnDisabled = phaseDone || isHistoricalStep || isForwardStep;
-                return (
-                  <View style={{ alignItems: "center" }}>
-                    <Text
-                      style={{
-                        fontSize: Math.min(22 * scale, 28),
-                        color: BASE_COLORS.STONE800,
-                        fontFamily: FontFamilies.BODY,
-                        marginBottom: 8,
-                      }}
-                    >
-                      {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
-                    </Text>
-                    <Button
-                      mode="contained"
-                      compact
-                      disabled={btnDisabled}
-                      onPress={async () => {
-                        if (isHistoricalStep) {
-                          console.debug(
-                            "Historical step - timer controls disabled"
-                          );
-                          return;
-                        }
-                        if (isForwardStep) {
-                          console.debug(
-                            "Forward step - timer controls disabled"
-                          );
-                          return;
-                        }
+            {hasTemp && (
+              <View className="flex-row items-center justify-center">
+                <Thermometer
+                  size={28}
+                  color={BASE_COLORS.STONE500}
+                  strokeWidth={0.5}
+                  fill={BASE_COLORS.AMBER600}
+                />
+                <Text
+                  style={{
+                    fontSize: Math.min(22 * scale, 32),
+                    color: BASE_COLORS.STONE500,
+                    fontFamily: FontFamilies.BODY,
+                  }}
+                >{`${stepData.temp}°C`}</Text>
+              </View>
+            )}
+            {hasTimer && !CompletedStep.current && (
+              <View className="mt-4">
+                <CountdownCircleTimer
+                  key={stepData.current_step_id}
+                  isPlaying={timerActive}
+                  isGrowing={true}
+                  rotation="counterclockwise"
+                  duration={Math.max(1, durationSec)}
+                  colors={[BASE_COLORS.STONE300, BASE_COLORS.STONE200]}
+                  colorsTime={[0, Math.max(1, durationSec)]}
+                  trailColor={
+                    !phaseDone ? BASE_COLORS.TEXT_DARK : BASE_COLORS.STONE200
+                  }
+                  strokeWidth={10}
+                  onComplete={handleComplete}
+                >
+                  {({ remainingTime }) => {
+                    const btnDisabled = phaseDone || isHistoricalStep || isForwardStep;
+                    return (
+                      <View className="items-center">
+                        <Text
+                          style={{
+                            fontSize: Math.min(22 * scale, 28),
+                            color: BASE_COLORS.STONE800,
+                            fontFamily: FontFamilies.BODY,
+                            marginBottom: 8,
+                          }}
+                        >
+                          {Math.floor(remainingTime / 60)}m {remainingTime % 60}s
+                        </Text>
+                        <Button
+                          mode="contained"
+                          compact
+                          disabled={btnDisabled}
+                          onPress={async () => {
+                            if (isHistoricalStep) {
+                              console.debug(
+                                "Historical step - timer controls disabled"
+                              );
+                              return;
+                            }
+                            if (isForwardStep) {
+                              console.debug(
+                                "Forward step - timer controls disabled"
+                              );
+                              return;
+                            }
 
-                        const remainingSecs = remainingTime;
-                        const newActive = !timerActive;
+                            const remainingSecs = remainingTime;
+                            const newActive = !timerActive;
 
-                        if (newActive) {
-                          await handlePlay(remainingSecs);
-                        } else {
-                          await handlePause(remainingSecs);
-                        }
-                      }}
-                      style={{
-                        borderRadius: 30,
-                        backgroundColor: btnDisabled
-                          ? BASE_COLORS.STONE200
-                          : BASE_COLORS.TEXT_DARK,
-                        paddingInline: 8,
-                      }}
-                    >
-                      {timerActive ? (
-                        <Pause
-                          size={Math.min(18 * scale, 26)}
-                          color={
-                            btnDisabled
-                              ? BASE_COLORS.STONE400
-                              : BASE_COLORS.WHITE
-                          }
-                          fill={
-                            btnDisabled
-                              ? BASE_COLORS.STONE400
-                              : BASE_COLORS.WHITE
-                          }
-                          strokeWidth={0.5}
-                        />
-                      ) : (
-                        <Play
-                          size={Math.min(18 * scale, 26)}
-                          color={
-                            btnDisabled
-                              ? BASE_COLORS.STONE400
-                              : BASE_COLORS.WHITE
-                          }
-                          fill={
-                            btnDisabled
-                              ? BASE_COLORS.STONE400
-                              : BASE_COLORS.WHITE
-                          }
-                          strokeWidth={1}
-                        />
-                      )}
-                    </Button>
-                  </View>
-                );
-              }}
-            </CountdownCircleTimer>
+                            if (newActive) {
+                              await handlePlay(remainingSecs);
+                            } else {
+                              await handlePause(remainingSecs);
+                            }
+                          }}
+                          style={{
+                            borderRadius: 30,
+                            backgroundColor: btnDisabled
+                              ? BASE_COLORS.STONE200
+                              : BASE_COLORS.TEXT_DARK,
+                            paddingInline: 8,
+                          }}
+                        >
+                          {timerActive ? (
+                            <Pause
+                              size={Math.min(18 * scale, 26)}
+                              color={
+                                btnDisabled
+                                  ? BASE_COLORS.STONE400
+                                  : BASE_COLORS.WHITE
+                              }
+                              fill={
+                                btnDisabled
+                                  ? BASE_COLORS.STONE400
+                                  : BASE_COLORS.WHITE
+                              }
+                              strokeWidth={0.5}
+                            />
+                          ) : (
+                            <Play
+                              size={Math.min(18 * scale, 26)}
+                              color={
+                                btnDisabled
+                                  ? BASE_COLORS.STONE400
+                                  : BASE_COLORS.WHITE
+                              }
+                              fill={
+                                btnDisabled
+                                  ? BASE_COLORS.STONE400
+                                  : BASE_COLORS.WHITE
+                              }
+                              strokeWidth={1}
+                            />
+                          )}
+                        </Button>
+                      </View>
+                    );
+                  }}
+                </CountdownCircleTimer>
+              </View>
+            )}
           </Card>
         )}
 
@@ -997,11 +944,11 @@ export default function Progress() {
           router.push({ 
             pathname: `/ChatBot`, 
             params: {
-                      recipe_slug: brew.recipe_slug,
-                      last_step_id: brew.last_step_id,
-                      from: "progress",
-                    },
-        })
+              recipe_slug: brew.recipe_slug,
+              last_step_id: brew.last_step_id,
+              from: "progress",
+            },
+          })
         }}
         color={BASE_COLORS.WHITE}
         style={{
@@ -1015,6 +962,18 @@ export default function Progress() {
           colors: {
             onSurfaceDisabled: BASE_COLORS.STONE400,
           },
+        }}
+      />
+      <ReviewModal
+        visible={reviewModalVisible}
+        onDismiss={() => {
+          setReviewModalVisible(false);
+          router.push("/HomePage");
+        }}
+        recipe_slug={brew?.recipe_slug ?? ""}
+        onSuccess={() => {
+          setReviewModalVisible(false);
+          router.push("/HomePage");
         }}
       />
     </SafeAreaView>
