@@ -163,7 +163,7 @@ describe("<PaymentSuccess />", () => {
 
     expect(getByText("Payment Successful!")).toBeTruthy();
     expect(getByText("Thank you for your purchase! You can now return to the homepage!")).toBeTruthy();
-    expect(getByText("Back to Home")).toBeTruthy();
+    expect(getByText("Back to home")).toBeTruthy();
     expect(getByText("CheckIcon")).toBeTruthy();
   });
 
@@ -206,7 +206,7 @@ describe("<PaymentSuccess />", () => {
   it("navigates to HomePage", () => {
     const { getByText } = render(<PaymentSuccess />);
 
-    fireEvent.press(getByText("Back to Home"));
+    fireEvent.press(getByText("Back to home"));
 
     expect(replaceMock).toHaveBeenCalledWith("/HomePage");
   });
