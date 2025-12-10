@@ -651,7 +651,7 @@ it("navigates naar volgende stap via Complete button and updates Supabase", asyn
   await findByText("black IPA Progress");
 
   // The test environment's mocked Button ignores `disabled`, so pressing works.
-  const completeBtn = await findByText(/Complete step/i);
+  const completeBtn = await findByText(/Step completed/i);
 
   await act(async () => fireEvent.press(completeBtn));
 
@@ -671,7 +671,7 @@ it("gaat correct om met een enkele stap zonder duration en zonder volgende stap"
   expect(stepText).toBeTruthy();
 
   // Druk op de Complete step knop (mocked Button ignores disabled)
-  const completeBtn = await findByText(/Complete step/i);
+  const completeBtn = await findByText(/Step completed/i);
   await act(async () => fireEvent.press(completeBtn));
 
   // Controleer dat Supabase updates werden aangeroepen
@@ -746,7 +746,7 @@ it("when brew status is 1 it sets start_date (brews.update path)", async () => {
 
   const { findByText } = renderWithNavigation(<Progress />);
   await findByText("black IPA Progress");
-  const completeBtn = await findByText(/Complete step/i);
+  const completeBtn = await findByText(/Step completed/i);
 
   await act(async () => fireEvent.press(completeBtn));
 

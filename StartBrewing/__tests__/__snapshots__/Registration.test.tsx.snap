@@ -433,6 +433,7 @@ exports[`<Registration /> matches snapshot 1`] = `
             >
               <TextInput
                 keyboardType="default"
+                maxLength={30}
                 multiline={false}
                 onBlur={[Function]}
                 onChangeText={[Function]}
@@ -470,6 +471,7 @@ exports[`<Registration /> matches snapshot 1`] = `
           >
             <TextInput
               keyboardType="default"
+              maxLength={30}
               multiline={false}
               onBlur={[Function]}
               onChangeText={[Function]}
@@ -677,6 +679,7 @@ exports[`<Registration /> matches snapshot 1`] = `
       >
         <TextInput
           keyboardType="email-address"
+          maxLength={50}
           multiline={false}
           onBlur={[Function]}
           onChangeText={[Function]}
@@ -734,6 +737,7 @@ exports[`<Registration /> matches snapshot 1`] = `
       >
         <TextInput
           keyboardType="default"
+          maxLength={30}
           multiline={false}
           onBlur={[Function]}
           onChangeText={[Function]}
@@ -766,6 +770,7 @@ exports[`<Registration /> matches snapshot 1`] = `
       >
         <TextInput
           keyboardType="default"
+          maxLength={30}
           multiline={false}
           onBlur={[Function]}
           onChangeText={[Function]}
@@ -929,6 +934,7 @@ exports[`<Registration /> matches snapshot 1`] = `
       >
         <TextInput
           keyboardType="default"
+          maxLength={30}
           multiline={false}
           onBlur={[Function]}
           onChangeText={[Function]}

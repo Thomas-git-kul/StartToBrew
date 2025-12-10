@@ -111,12 +111,15 @@ export default function Auth() {
             placeholder="Email or Username"
             value={identifier}
             onChangeText={setIdentifier}
+            maxLength={50}
+
           />
           <TextInput
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            maxLength={30}
           />
           {loginError.length > 0 && <ErrorChip text={loginError} />}
         </View>

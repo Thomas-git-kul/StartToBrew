@@ -395,6 +395,7 @@ export default function EditAccount() {
                 placeholder="First Name"
                 onChangeText={setFirstname}
                 value={firstname}
+                maxLength={30}
               />
             </View>
           </View>
@@ -403,6 +404,7 @@ export default function EditAccount() {
               placeholder="Last Name"
               onChangeText={setLastname}
               value={lastname}
+              maxLength={30}
             />
           </View>
         </View>
@@ -411,6 +413,7 @@ export default function EditAccount() {
           onChangeText={setMail}
           value={mail}
           keyboardType="email-address"
+          maxLength={50}
         />
 
         <ThemedText type="subTitle" className="mt-3 mb-1">
@@ -420,6 +423,7 @@ export default function EditAccount() {
           placeholder="Username"
           onChangeText={setUsername}
           value={username}
+          maxLength={30}
         />
         <TextInput
           placeholder="Biography"
@@ -427,6 +431,7 @@ export default function EditAccount() {
           value={bio}
           multiline
           numberOfLines={4}
+          maxLength={200}
         />
 
         <ThemedText type="subTitle" className="mt-3 mb-1">
@@ -437,6 +442,7 @@ export default function EditAccount() {
           onChangeText={setCurrentPassword}
           value={currentPassword}
           secureTextEntry
+          maxLength={30}
         />
         {currentPasswordError ? (
           <View className="mb-5">
@@ -448,6 +454,7 @@ export default function EditAccount() {
           onChangeText={setNewPassword}
           value={newPassword}
           secureTextEntry
+          maxLength={30}
         />
         {newPassword.length > 0 &&
           (newPassword.length < 6 ||
@@ -471,6 +478,7 @@ export default function EditAccount() {
           onChangeText={setConfirmNewPassword}
           value={confirmNewPassword}
           secureTextEntry
+          maxLength={30}
         />
         <View className="mb-5">
           {confirmNewPassword.length > 0 &&

@@ -2,7 +2,9 @@
 
 exports[`<PaymentSuccess /> matches snapshot 1`] = `
 <View>
-  <View>
+  <View
+    className="mx-3 items-center"
+  >
     <Text>
       Payment Successful!
     </Text>
@@ -34,7 +36,7 @@ exports[`<PaymentSuccess /> matches snapshot 1`] = `
           "shadowRadius": 0,
         }
       }
-      testID="button-container-outer-layer"
+      testID="back-button-container-outer-layer"
     >
       <View
         collapsable={false}
@@ -56,7 +58,7 @@ exports[`<PaymentSuccess /> matches snapshot 1`] = `
             "shadowRadius": 0,
           }
         }
-        testID="button-container"
+        testID="back-button-container"
       >
         <View
           accessibilityRole="button"
@@ -99,7 +101,7 @@ exports[`<PaymentSuccess /> matches snapshot 1`] = `
               },
             ]
           }
-          testID="button"
+          testID="back-button"
         >
           <View
             style={
@@ -163,9 +165,9 @@ exports[`<PaymentSuccess /> matches snapshot 1`] = `
                   ],
                 ]
               }
-              testID="button-text"
+              testID="back-button-text"
             >
-              Back to Home
+              Back to home
             </Text>
           </View>
         </View>

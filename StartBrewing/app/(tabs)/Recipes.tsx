@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { View, ScrollView, Dimensions, StyleSheet, Text, FlatList } from "react-native";
 import { Searchbar, ActivityIndicator, Chip, Button, Modal, Portal } from "react-native-paper";
 import { Search, X, Check } from "lucide-react-native";
@@ -17,6 +17,7 @@ import TextInput from "@/components/textInput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Spinner from "@/components/spinner";
 import SelectionChip from "@/components/selectionChip";
+import { useFocusEffect } from "@react-navigation/native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -89,14 +90,14 @@ export default function Recipes() {
 
   const { refreshKey } = useAppRefresh();
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchAll = async () => {
+        try {
+          setLoading(true);
+          setError(null);
 
-        // 1. Recipes + ratings
-        const { data: recipesData, error: recipesError } = await supabase
+          const { data: recipesData, error: recipesError } = await supabase
           .from("recipes")
           .select(
             "recipe_slug, name, description, rating, style, abv_target, ibu_target, srm_target, haze_level, difficulty"
@@ -198,7 +199,8 @@ export default function Recipes() {
       }
     };
     fetchAll();
-  }, [refreshKey]);
+    }, [refreshKey])
+  );
 
   {
     /* Filter functions */

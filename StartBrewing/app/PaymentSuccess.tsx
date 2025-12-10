@@ -1,20 +1,19 @@
+'use client';
+
 import { useEffect } from "react";
 import { View, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Button } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
 import { ThemedText } from "@/components/themed-text";
 import { CheckCircle } from "lucide-react-native";
 import emailjs from "@emailjs/browser";
 import { supabase } from "@/supabase";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const BASE_SCREEN_WIDTH = 375;
-const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
+import PrimaryButton from "@/components/primaryButton";
+import { useFonts } from "@/hooks/use-fonts";
 
 export default function PaymentSuccess() {
+  useFonts();
   const router = useRouter();
   const params = useLocalSearchParams();
   const email = params.email as string | undefined;
@@ -182,7 +181,7 @@ export default function PaymentSuccess() {
         justifyContent: "center",
       }}
     >
-      <View>
+      <View className="mx-3 items-center">
         <ThemedText type="title" className="mb-2">
           Payment Successful!
         </ThemedText>
@@ -202,21 +201,11 @@ export default function PaymentSuccess() {
           You can now return to the homepage!
         </ThemedText>
 
-        <Button
-          mode="contained"
+        <PrimaryButton
+          title="Back to home"
+          testID="back-button"
           onPress={() => router.replace("/HomePage")}
-          labelStyle={{
-            fontSize: Math.min(16 * scale, 24),
-            color: BASE_COLORS.WHITE,
-            fontFamily: FontFamilies.BODY,
-          }}
-          style={{
-            borderRadius: 30,
-            backgroundColor: BASE_COLORS.TEXT_DARK,
-          }}
-        >
-          Back to Home
-        </Button>
+        />
       </View>
     </SafeAreaView>
   );

@@ -1,6 +1,7 @@
 import { BadgeEarnedModal } from "@/components/BadgeEarnedModal";
 import Header from "@/components/header";
 import PrimaryButton from "@/components/primaryButton";
+import { ReviewModal } from "@/components/reviewModal";
 import SecondaryButton from "@/components/secondaryButton";
 import SelectionChip from "@/components/selectionChip";
 import Spinner from "@/components/spinner";
@@ -28,8 +29,7 @@ import {
   Dimensions,
   Image,
   ScrollView,
-  TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { Chip, FAB, Modal, Portal } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -72,8 +72,6 @@ export default function SpecificRecipe() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
 
   const [reviewVisible, setReviewVisible] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [reviewText, setReviewText] = useState("");
   const [kitsVisible, setKitsVisible] = useState(false);
   const [northStarLogged, setNorthStarLogged] = useState(false);
   const { increment, get, reset } = useClickCounter();
@@ -201,102 +199,22 @@ export default function SpecificRecipe() {
     }
   };
 
-  const handleStarPress = (value: number) => {
-    setRating(value);
-  };
-
-  const handleSubmitReview = async () => {
+  const handleReviewSuccess = async () => {
+    // Refresh data after successful review
     if (!recipe_slug) return;
-    if (rating === 0) {
-      Alert.alert(
-        "Rating required",
-        "Please select a rating before submitting."
-      );
-      return;
-    }
-
+    
     try {
-      const { data: sessionData, error: sessionError } =
-        await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
-      const user = sessionData?.session?.user;
-      if (!user) {
-        Alert.alert("Login vereist", "Log eerst in om een review te plaatsen.");
-        return;
-      }
-
-      const { data: existingReview, error: existingError } = await supabase
-        .from("recipe_reviews")
-        .select("rating")
-        .eq("recipe_slug", recipe_slug)
-        .eq("account_id", user.id)
-        .maybeSingle();
-      if (existingError) throw existingError;
-      if (existingReview) {
-        Alert.alert("Review bestaat al", "Je hebt dit recept al beoordeeld.");
-        setHasUserReviewed(true);
-        setReviewVisible(false);
-        return;
-      }
-
-      const { error: insertError } = await supabase
-        .from("recipe_reviews")
-        .insert({
-          recipe_slug: recipe_slug,
-          rating: rating,
-          account_id: user.id,
-          review_text: reviewText && reviewText.length > 0 ? reviewText : null,
-        });
-      if (insertError) {
-        throw insertError;
-      }
-
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from("recipe_reviews")
-        .select("rating")
-        .eq("recipe_slug", recipe_slug);
-      if (reviewsError) throw reviewsError;
-
-      const count = (reviewsData || []).length;
-      const avg = count
-        ? reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) /
-          count
-        : null;
-
-      const updatePayload: any = {};
-      if (avg != null) updatePayload.rating = parseFloat(avg.toFixed(2));
-      updatePayload.review_count = count;
-
-      const { error: updateError } = await supabase
-        .from("recipes")
-        .update(updatePayload)
-        .eq("recipe_slug", recipe_slug);
-      if (updateError) throw updateError;
-
       await fetchRecipeBundle(recipe_slug);
       await fetchReviews(recipe_slug);
-      try {
-        triggerRefresh();
-      } catch {
-        // ignore
-      }
-      setHasUserReviewed(true);
-      setReviewText("");
-      setRating(0);
       checkUserReviewed(recipe_slug);
-
+      setHasUserReviewed(true);
+      triggerRefresh();
       await refreshProgress();
-      if (user?.id) {
-        await checkForNewBadge(user.id);
+      if (currentUserId) {
+        await checkForNewBadge(currentUserId);
       }
     } catch (e: any) {
-      Alert.alert(
-        "Review mislukt",
-        e.message ?? "Onbekende fout bij opslaan review"
-      );
-      await refreshProgress();
-    } finally {
-      setReviewVisible(false);
+      console.error("Error refreshing after review:", e);
     }
   };
 
@@ -714,6 +632,27 @@ export default function SpecificRecipe() {
 
   useFocusEffect(
     useCallback(() => {
+      const getCurrentUser = async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          setCurrentUserId(user?.id ?? null);
+        } catch {
+          setCurrentUserId(null);
+        }
+      };
+
+      const loadData = async () => {
+        if (!recipe_slug) return;
+        
+        await getCurrentUser();
+        await fetchRecipeBundle(recipe_slug);
+        await checkUserReviewed(recipe_slug);
+        await fetchStarterKits(recipe_slug);
+        await fetchReviews(recipe_slug);
+      };
+
+      loadData();
+
       // Reset modal states when navigating back to this screen
       // This ensures clean state after returning from other pages
       return () => {
@@ -721,7 +660,7 @@ export default function SpecificRecipe() {
         setKitsVisible(false);
         setBatchSizeModalVisible(false);
       };
-    }, [])
+    }, [recipe_slug])
   );
 
   useEffect(() => {
@@ -900,11 +839,7 @@ export default function SpecificRecipe() {
                   <SecondaryButton
                     title="Add review"
                     testID="review-button"
-                    onPress={() => {
-                      setRating(0);
-                      setReviewText("");
-                      setReviewVisible(true);
-                    }}
+                    onPress={() => {setReviewVisible(true)}}
                     size={14}
                   />
                 </View>
@@ -1194,74 +1129,12 @@ export default function SpecificRecipe() {
       </Portal>
 
       {/* Modal for reviews */}
-      <Portal>
-        <Modal
-          visible={reviewVisible}
-          onDismiss={() => {
-            setReviewVisible(false);
-            setRating(0);
-            setReviewText("");
-          }}
-          contentContainerStyle={{
-            backgroundColor: BASE_COLORS.LIGHT_BG,
-            padding: 20,
-            borderRadius: 12,
-            marginHorizontal: 30,
-          }}
-        >
-          <ThemedText type="title" className="text-center mb-4">
-            Rate this recipe
-          </ThemedText>
-          <TextInput
-            placeholder="(optional) Share your thoughts about this beer..."
-            value={reviewText}
-            onChangeText={setReviewText}
-            multiline
-            numberOfLines={4}
-          />
-
-          <View className="flex-row justify-center gap-3 mb-4">
-            {[1, 2, 3, 4, 5].map((value) => (
-              <TouchableOpacity
-                key={value}
-                onPress={() => handleStarPress(value)}
-                testID={`star-${value}`}
-              >
-                <Star
-                  size={36}
-                  stroke={
-                    value <= rating
-                      ? BASE_COLORS.ACCENT_LIGHT
-                      : BASE_COLORS.ACCENT_PRIMARY
-                  }
-                  fill={
-                    value <= rating ? BASE_COLORS.ACCENT_LIGHT : "transparent"
-                  }
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View className="flex-row justify-between gap-3">
-            <SecondaryButton
-              title="cancel"
-              testID="cancel-review"
-              onPress={() => {
-                setReviewVisible(false);
-                setRating(0);
-                setReviewText("");
-              }}
-              size={14}
-            />
-            <PrimaryButton
-              title="Submit"
-              onPress={handleSubmitReview}
-              testID="submit-review"
-              size={14}
-            />
-          </View>
-        </Modal>
-      </Portal>
+      <ReviewModal
+        visible={reviewVisible}
+        onDismiss={() => setReviewVisible(false)}
+        recipe_slug={recipe_slug || ""}
+        onSuccess={handleReviewSuccess}
+      />
 
       <View
         style={{
