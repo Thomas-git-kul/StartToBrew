@@ -9,6 +9,7 @@ import { useFonts } from "@/hooks/use-fonts";
 import Header from '@/components/header';
 import TextInput from '@/components/textInput';
 import { ThemedText } from "@/components/themed-text";
+import ErrorChip from '@/components/errorChip';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/supabase";
 import { useFocusEffect } from "@react-navigation/native";
@@ -295,26 +296,6 @@ const saveShippingInfo = async () => {
     //loadShippingInfo();
   }, []));
 
-  /*
-  const debounceTimers = React.useRef<Record<string, number>>({});
-
-  const debouncedUpdateQuantity = (
-    store_item_id: number,
-    newQty: number,
-    starterkit: boolean
-  ) => {
-    const key = `${store_item_id}-${starterkit}`;
-    if (debounceTimers.current[key]) {
-      clearTimeout(debounceTimers.current[key]);
-    }
-    debounceTimers.current[key] = setTimeout(() => {
-      updateCartQuantity(store_item_id, newQty, starterkit);
-    }, 800);
-  };
-  */
-
-
-
   return (
     <SafeAreaView 
       className="flex-1" 
@@ -387,23 +368,27 @@ const saveShippingInfo = async () => {
               placeholder="Full Name"
               value={fullName}
               onChangeText={setFullName}
+              maxLength={40}
             />
             <TextInput 
               placeholder="Street name and number"
               value={street}
               onChangeText={setStreet}
+              maxLength={40}
             />
             <View className="flex-row">
               <TextInput 
                 placeholder="City" 
                 value={city}
                 onChangeText={setCity}
+                maxLength={30}
               />
               <View className="flex-1 ml-3">
                 <TextInput 
                   placeholder="Zip code"
                   value={zip}
                   onChangeText={setZip}
+                  maxLength={4}
                 />
               </View>
             </View>
@@ -425,12 +410,14 @@ const saveShippingInfo = async () => {
               disabled={!canProceed}
             />
             {!canProceed && (
-              <ThemedText type="tips" style={{ marginTop: 4 }}>
-                {orders.length === 0
-                  ? "Your cart is empty."
-                  : `Please fill in: ${missingFields().join(", ")}`}
-              </ThemedText>
-  )}
+              <View className="justify-end mt-2">
+                <ErrorChip
+                  text={orders.length === 0
+                    ? "Your cart is empty."
+                    : `Please fill in: ${missingFields().join(", ")}`}
+                />
+              </View>
+            )}
           </View>
         </ScrollView>
       )}
