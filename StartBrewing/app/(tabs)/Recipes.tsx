@@ -199,7 +199,7 @@ export default function Recipes() {
       }
     };
     fetchAll();
-    }, [])
+    }, [refreshKey])
   );
 
   {

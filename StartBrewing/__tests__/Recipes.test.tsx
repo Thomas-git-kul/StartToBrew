@@ -62,6 +62,20 @@ jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+jest.mock("@react-navigation/native", () => {
+  const actual = jest.requireActual("@react-navigation/native");
+  const mockReact = jest.requireActual("react");
+  return {
+    ...actual,
+    useFocusEffect: (callback: any) => {
+      // Call immediately in tests
+      mockReact.useEffect(() => {
+        callback();
+      }, []);
+    },
+  };
+});
+
 jest.mock("@/hooks/use-fonts", () => ({
   useFonts: () => true,
 }));
