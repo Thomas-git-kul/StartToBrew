@@ -718,28 +718,19 @@ export default function Progress() {
         <View className="flex-row justify-between items-start">
           <ThemedText type="title">{title}</ThemedText>
           {!isHistoricalStep && (
-            <TouchableOpacity
-              onPress={() => {
-                if (isButtonDisabled) {
-                  setSnackbarVisible(true);
-                }
-              }}
-              activeOpacity={1}
-            >
-              <View className="mb-2">
-                <PrimaryButton
-                  title="Step completed"
-                  testID="completed-button"
-                  onPress={() => {
-                    if (!phaseDone && isHistoricalStep && isForwardStep) return;
-                    goToNextStepComplete();
-                  }}
-                  disabled={isButtonDisabled}
-                  size={14}
-                  height={34}
-                />
-              </View>
-            </TouchableOpacity>
+            <View className="mb-2">
+              <PrimaryButton
+                title="Step completed"
+                testID="completed-button"
+                onPress={() => {
+                  if (!phaseDone && isHistoricalStep && isForwardStep) return;
+                  goToNextStepComplete();
+                }}
+                disabled={isButtonDisabled}
+                size={14}
+                height={34}
+              />
+            </View>
           )}
         </View>
         {stepData.mode === "two" && stepData.step2 && (

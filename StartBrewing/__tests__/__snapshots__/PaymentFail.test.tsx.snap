@@ -32,7 +32,7 @@ exports[`<PaymentFail /> snapshot 1`] = `
           "shadowRadius": 0,
         }
       }
-      testID="button-container-outer-layer"
+      testID="back-button-container-outer-layer"
     >
       <View
         collapsable={false}
@@ -54,7 +54,7 @@ exports[`<PaymentFail /> snapshot 1`] = `
             "shadowRadius": 0,
           }
         }
-        testID="button-container"
+        testID="back-button-container"
       >
         <View
           accessibilityRole="button"
@@ -97,7 +97,7 @@ exports[`<PaymentFail /> snapshot 1`] = `
               },
             ]
           }
-          testID="button"
+          testID="back-button"
         >
           <View
             style={
@@ -161,9 +161,9 @@ exports[`<PaymentFail /> snapshot 1`] = `
                   ],
                 ]
               }
-              testID="button-text"
+              testID="back-button-text"
             >
-              Back to Shoppingcart
+              Back to shoppingcart
             </Text>
           </View>
         </View>
