@@ -3,18 +3,12 @@ import { useEffect } from "react";
 import { View, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Button } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
-import Header from "@/components/header";
 import { ThemedText } from "@/components/themed-text";
 import { XCircle } from "lucide-react-native";
 import emailjs from "@emailjs/browser";
 import { useFonts } from "@/hooks/use-fonts";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const BASE_SCREEN_WIDTH = 375;
-const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
+import PrimaryButton from "@/components/primaryButton";
 
 export default function PaymentFail() {
   useFonts();
@@ -75,19 +69,11 @@ export default function PaymentFail() {
         </ThemedText>
 
         {/* Back to Home Button */}
-        <Button
-          mode="contained"
+        <PrimaryButton
+          title="Back to shoppingcart"
+          testID="back-button"
           onPress={() => router.replace("/ShoppingCart")}
-          labelStyle={{
-            fontSize: Math.min(16 * scale, 24),
-            color: BASE_COLORS.WHITE,
-            fontFamily: FontFamilies.BODY,
-          }}
-          style={{
-            borderRadius: 30,
-            backgroundColor: BASE_COLORS.TEXT_DARK,
-          }}
-        >Back to Shoppingcart</Button>
+        />
       </View>
     </SafeAreaView>
   );
