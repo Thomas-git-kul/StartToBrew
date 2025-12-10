@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect } from "react";
 import { View, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";

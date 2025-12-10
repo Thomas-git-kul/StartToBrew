@@ -1,6 +1,7 @@
-// app/PaymentFail.tsx
+'use client';
+
 import { useEffect } from "react";
-import { View, Dimensions } from "react-native";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
