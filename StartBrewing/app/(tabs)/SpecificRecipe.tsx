@@ -554,6 +554,27 @@ export default function SpecificRecipe() {
 
   useFocusEffect(
     useCallback(() => {
+      const getCurrentUser = async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          setCurrentUserId(user?.id ?? null);
+        } catch {
+          setCurrentUserId(null);
+        }
+      };
+
+      const loadData = async () => {
+        if (!recipe_slug) return;
+        
+        await getCurrentUser();
+        await fetchRecipeBundle(recipe_slug);
+        await checkUserReviewed(recipe_slug);
+        await fetchStarterKits(recipe_slug);
+        await fetchReviews(recipe_slug);
+      };
+
+      loadData();
+
       // Reset modal states when navigating back to this screen
       // This ensures clean state after returning from other pages
       return () => {
@@ -561,27 +582,8 @@ export default function SpecificRecipe() {
         setKitsVisible(false);
         setBatchSizeModalVisible(false);
       };
-    }, [])
+    }, [recipe_slug])
   );
-
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUserId(user?.id ?? null);
-      } catch {
-        setCurrentUserId(null);
-      }
-    };
-
-    getCurrentUser();
-
-    if (!recipe_slug) return;
-    fetchRecipeBundle(recipe_slug);
-    checkUserReviewed(recipe_slug);
-    fetchStarterKits(recipe_slug);
-    fetchReviews(recipe_slug);
-  }, [recipe_slug]);
 
   const hazeLevels: Record<number, String> = {
     1: "clear",
