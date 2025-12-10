@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { TouchableOpacity, View, Image, ScrollView, Alert, Dimensions } from "react-native";
 import { FAB, Modal, Portal, Chip, Button } from "react-native-paper";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -280,12 +281,15 @@ export default function SpecificRecipe() {
     clicksToFirstBrew?: number,
     batchSizeL?: number
   ) => {
-    if (!recipe_slug || !recipe?.name) {
-      console.warn("Cannot start brew: missing slug or recipe name.");
+    const effectiveSlug = recipe_slug || recipe?.recipe_slug;
+    console.log("brewRecipe called with:", { recipe_slug, effectiveSlug, recipeName: recipe?.name, batchSizeL });
+    if (!effectiveSlug || !recipe?.name) {
+      console.warn("Cannot start brew: missing slug or recipe name.", { recipe_slug, effectiveSlug, recipe });
       return;
     }
 
     try {
+      console.log("Fetching user...");
       const {
         data: { user },
         error: userError,
@@ -294,11 +298,12 @@ export default function SpecificRecipe() {
         console.error("Error fetching user for brew:", userError?.message);
         return;
       }
+      console.log("User fetched:", user.id);
 
       const { data: phasesData, error: phasesError } = await supabase
         .from("phases")
         .select("phase_id")
-        .eq("recipe_slug", recipe_slug)
+        .eq("recipe_slug", effectiveSlug)
         .order("position", { ascending: true });
 
       if (phasesError || !phasesData?.length) {
@@ -348,7 +353,7 @@ export default function SpecificRecipe() {
         .from("brews")
         .select("id_brew")
         .eq("user_id", user.id)
-        .eq("recipe_slug", recipe_slug);
+        .eq("recipe_slug", effectiveSlug);
 
       if (prevError) {
         console.error(
@@ -368,7 +373,7 @@ export default function SpecificRecipe() {
         name: brewName,
         start_date: new Date().toISOString(),
         status_id: 1,
-        recipe_slug: recipe_slug,
+        recipe_slug: effectiveSlug,
         last_step_id: firstStepId,
         batch_size_l: finalBatchSize,
       };
@@ -402,23 +407,45 @@ export default function SpecificRecipe() {
               )
             : null;
 
-          const params: any = {
+          const baseParams: any = {
             user_id: user.id,
             brew_id: brewId,
-            recipe_slug: recipe_slug,
+            recipe_slug: effectiveSlug,
           };
-          if (timeToFirstBrewSeconds != null)
-            params.time_to_first_brew_seconds = timeToFirstBrewSeconds;
 
-          const finalClicks =
-            clicksToFirstBrew != null ? clicksToFirstBrew : get();
-          if (finalClicks != null) params.clicks_to_first_brew = finalClicks;
+          const finalClicks = clicksToFirstBrew != null ? clicksToFirstBrew : get();
 
+          // Log two separate analytics events:
+          // - `northstar_time_in_sec` for the time in seconds until first northstar
+          // - `northstar_amount_of_clicks` for the number of clicks until first northstar
           if (analytics) {
-            logEvent(analytics, "north_star_first_brew", params);
+            if (timeToFirstBrewSeconds != null) {
+              logEvent(analytics, "northstar_time_in_sec", {
+                ...baseParams,
+                time_in_sec: timeToFirstBrewSeconds,
+              });
+            }
+            if (finalClicks != null) {
+              logEvent(analytics, "northstar_amount_of_clicks", {
+                ...baseParams,
+                clicks: finalClicks,
+              });
+            }
           } else {
-            console.log("north_star_first_brew", params);
+            if (timeToFirstBrewSeconds != null) {
+              console.log("northstar_time_in_sec", {
+                ...baseParams,
+                time_in_sec: timeToFirstBrewSeconds,
+              });
+            }
+            if (finalClicks != null) {
+              console.log("northstar_amount_of_clicks", {
+                ...baseParams,
+                clicks: finalClicks,
+              });
+            }
           }
+
           setNorthStarLogged(true);
           try {
             await reset();
@@ -426,7 +453,7 @@ export default function SpecificRecipe() {
             // ignore
           }
         } catch (e: any) {
-          console.error("Failed to log north-star event:", e?.message ?? e);
+          console.error("Failed to log north-star events:", e?.message ?? e);
         }
       }
 
@@ -458,7 +485,9 @@ export default function SpecificRecipe() {
         console.error("Error inserting brew_steps:", brewStepsError.message);
       }
 
+      console.log("Navigating to progress page with brew ID:", brewId);
       router.push({ pathname: "/progress", params: { id: brewId } });
+      console.log("Navigation command sent");
     } catch (e: any) {
       console.error("Exception during brew start:", e.message ?? e);
     }
@@ -600,6 +629,18 @@ export default function SpecificRecipe() {
       setReviews([]);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      // Reset modal states when navigating back to this screen
+      // This ensures clean state after returning from other pages
+      return () => {
+        // Cleanup function runs when screen loses focus
+        setKitsVisible(false);
+        setBatchSizeModalVisible(false);
+      };
+    }, [])
+  );
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -1015,6 +1056,10 @@ export default function SpecificRecipe() {
               testID="skip-button"
               title="Skip"
               onPress={async () => {
+                console.log("Skip button pressed");
+                console.log("recipe_slug:", recipe_slug);
+                console.log("recipe:", recipe);
+                console.log("selectedBatchSize:", selectedBatchSize);
                 try {
                   await increment("modal_ready_start");
                 } catch {
@@ -1023,7 +1068,9 @@ export default function SpecificRecipe() {
                 setKitsVisible(false);
                 const sizeToUse =
                   selectedBatchSize ?? recipe?.batch_size_l ?? 19;
+                console.log("Calling brewRecipe with size:", sizeToUse);
                 await brewRecipe(undefined, sizeToUse);
+                console.log("brewRecipe completed");
               }}
             />
             {selectedBatchSizeOption !== "custom" && (() => {

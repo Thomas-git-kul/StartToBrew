@@ -84,4 +84,25 @@ describe("PaymentScreen", () => {
     const err = await findByText("Failed to create checkout session");
     expect(err).toBeTruthy();
   });
+
+  it("shows error when no user email is found", async () => {
+    (supabase.auth.getUser as jest.Mock).mockResolvedValueOnce({
+      data: { user: null },
+    });
+
+    const { findByText } = render(<PaymentScreen />);
+
+    const err = await findByText("No logged-in user email found.");
+    expect(err).toBeTruthy();
+    expect(Linking.openURL).not.toHaveBeenCalled();
+  });
+
+  it("handles fetch error gracefully", async () => {
+    (global as any).fetch = jest.fn().mockRejectedValueOnce(new Error("Network error"));
+
+    const { findByText } = render(<PaymentScreen />);
+
+    const err = await findByText("Network error");
+    expect(err).toBeTruthy();
+  });
 });

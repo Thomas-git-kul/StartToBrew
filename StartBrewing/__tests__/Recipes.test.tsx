@@ -619,7 +619,7 @@ describe("<Recipes />", () => {
 
   describe("Edge cases", () => {
     it("handles empty recipe list", async () => {
-      (require("@/supabase").supabase.from as jest.Mock).mockReturnValue({
+      (require("@/supabase").supabase.from as jest.Mock).mockReturnValueOnce({
         select: () => ({
           data: [],
           error: null,
@@ -675,6 +675,65 @@ describe("<Recipes />", () => {
         expect(findByText("Sculpin IPA")).toBeTruthy();
         expect(queryByText("Imperial Stout")).toBeNull();
       });
+    });
+  });
+
+  describe("Additional coverage", () => {
+    it("hides recommended section when any filter is active", async () => {
+      // Ensure user is logged in and recommendations exist
+      mockUser = { id: "user-1" };
+      mockRecommendedRecipes = [{ recipe_slug: "americanipa-sculpin" }];
+
+      const { findByText, queryByText } = await renderWithNavigation(<Recipes />);
+      // Initially recommended should be present
+      await findByText("Recommended for you");
+
+      // Activate a filter (favorites chip) which should hide the recommended section
+      const favoritesChip = await findByText(/Favorites/);
+      fireEvent.press(favoritesChip);
+
+      await waitFor(() => {
+        expect(queryByText("Recommended for you")).toBeNull();
+      });
+    });
+
+    it("clears selections when Clear is pressed in modal", async () => {
+      const { findByText, queryByTestId, findAllByText } = await renderWithNavigation(<Recipes />);
+
+      // Open style modal
+      const styleChip = await findByText(/Style/);
+      fireEvent.press(styleChip);
+
+      // Modal should open
+      await findByText("Select style(s)");
+
+      // Select a style option (one of the available styles from mockRecipes)
+      // use a regex to match any known style so test is less brittle
+      // findAllByText returns all matching options; pick the first to avoid ambiguity
+      const options = await findAllByText(/American IPA|Stout|NEIPA/);
+      fireEvent.press(options[0]);
+
+      // Press Clear in modal
+      const clearBtn = await findByText("Clear");
+      fireEvent.press(clearBtn);
+
+      // Modal should be closed
+      await waitFor(() => {
+        expect(queryByTestId("filter-modal")).toBeNull();
+      });
+    });
+
+    it("shows error UI when recipes fetch fails", async () => {
+      // Make supabase.from('recipes') return an error only for this test
+      const supabase = require("@/supabase").supabase;
+      (supabase.from as jest.Mock).mockReturnValueOnce({
+        select: () => ({ data: null, error: new Error("failed to fetch recipes") }),
+      });
+
+      const { findByText } = await renderWithNavigation(<Recipes />);
+
+      expect(await findByText("Oeps")).toBeTruthy();
+      expect(await findByText(/failed to fetch recipes/)).toBeTruthy();
     });
   });
 });

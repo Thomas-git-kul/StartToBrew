@@ -23,6 +23,8 @@ import Badge from "@/components/ui/Badge";
 import CompletedCard from "@/components/ui/CompletedCard";
 import Dialog from "@/components/dialog";
 import Spinner from "@/components/spinner";
+import PrimaryButton from "@/components/primaryButton";
+import SecondaryButton from "@/components/secondaryButton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -102,10 +104,9 @@ export default function Account() {
   const fetchProfile = useCallback(async () => {
     setLoading(true);
 
-    const {
-      data: { user },
-      error: uErr,
-    } = await supabase.auth.getUser();
+    const authRes: any = await supabase.auth.getUser();
+    const user = authRes?.data?.user;
+    const uErr = authRes?.error ?? null;
 
     if (uErr || !user) {
       setLoading(false);
@@ -227,7 +228,7 @@ export default function Account() {
       .sort((a, b) => {
         if (!a.earned_at || !b.earned_at) return 0;
         return (
-          new Date(b.earned_at).getTime() - new Date(b.earned_at).getTime()
+          new Date(b.earned_at).getTime() - new Date(a.earned_at).getTime()
         );
       });
 
@@ -383,57 +384,65 @@ export default function Account() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="flex-row items-start justify-between mt-2">
-            <View>
-              {avatarUrl ? (
-                <Avatar.Image
-                  source={{ uri: avatarUrl || "" }}
-                  size={Math.min(90 * scale, 300)}
-                  style={{
-                    backgroundColor: BASE_COLORS.LIGHT_BG,
-                    overflow: "hidden",
-                    borderWidth: 1,
-                    borderColor: BASE_COLORS.STONE300,
-                  }}
-                  onError={() => setAvatarUrl(null)}
-                />
-              ) : (
-                <Avatar.Text
-                  size={Math.min(90 * scale, 120)}
-                  label={initials || "?"}
-                  color={BASE_COLORS.TEXT_DARK}
-                  style={{ backgroundColor: BASE_COLORS.STONE200 }}
-                  labelStyle={{
-                    padding: 4,
-                    fontFamily: FontFamilies.BODY,
-                    fontSize: Math.min(30 * scale, 40),
-                  }}
-                />
-              )}
-              <Text
+            {avatarUrl ? (
+              <Avatar.Image
+                source={{ uri: avatarUrl || "" }}
+                size={Math.min(90 * scale, 300)}
                 style={{
-                  fontSize: Math.min(16 * scale, 24),
+                  backgroundColor: BASE_COLORS.LIGHT_BG,
+                  overflow: "hidden",
+                  borderWidth: 1,
+                  borderColor: BASE_COLORS.STONE300,
+                }}
+                onError={() => setAvatarUrl(null)}
+              />
+            ) : (
+              <Avatar.Text
+                size={Math.min(90 * scale, 120)}
+                label={initials || "?"}
+                color={BASE_COLORS.TEXT_DARK}
+                style={{ backgroundColor: BASE_COLORS.STONE200 }}
+                labelStyle={{
+                  padding: 4,
                   fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.STONE900,
-                  marginBottom: 4,
+                  fontSize: Math.min(30 * scale, 40),
                 }}
-              >
-                {fullName || "Name not set"}
-              </Text>
-            </View>
-
-            <View>
-              <View
-                className="grid grid-cols-3 gap-2"
-                style={{
-                  marginBottom: 24,
-                }}
-              >
-                <StatisticsCard title="Badges" value={badgeCount} />
-                <StatisticsCard title="Brews" value={completedBrewsCount} />
-                <StatisticsCard title="Level" value={level || 0} />
-              </View>
+              />
+            )}
+            <View className="grid grid-cols-3 gap-2">
+              <StatisticsCard title="Badges" value={badgeCount} />
+              <StatisticsCard title="Brews" value={completedBrewsCount} />
+              <StatisticsCard title="Level" value={level || 0} />
             </View>
           </View>
+
+          <View className="flex-row items-center justify-between">
+            <Text
+              style={{
+                fontSize: Math.min(16 * scale, 24),
+                fontFamily: FontFamilies.BODY,
+                color: BASE_COLORS.STONE900,
+                marginBottom: 4,
+              }}
+            >{fullName || "Name not set"}</Text>
+            {(!avatarUrl || !bio) && (
+              <PrimaryButton
+                title="Complete account"
+                testID="complete-button"
+                onPress={() => {
+                  router.push({
+                    pathname: "/AccountEdit",
+                    params: {
+                      fromComplete: true,
+                    },
+                  } as any);
+                }}
+                size={10}
+                height={28}
+              />
+            )}
+          </View>
+
           {!!bio && (
             <ThemedText
               type="defaultText"
@@ -538,6 +547,7 @@ export default function Account() {
                     <Badge
                       id_badge={badge.id_badge}
                       icon_url={badge.icon_url}
+                      code={badge.code}
                       onPress={() => {
                         setSelectedBadge(badge);
                         setBadgeModalVisible(true);

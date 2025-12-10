@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Pressable, Alert, ScrollView, Dimensions } from "react-native";
-import { Avatar, Button, Paragraph } from "react-native-paper";
+import { View, Pressable, Alert, ScrollView, Dimensions, Text } from "react-native";
+import { Avatar, Button, Snackbar } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -9,7 +9,7 @@ import { FontFamilies } from "@/constants/Fonts";
 import { supabase } from "@/supabase";
 import { updateAvatar } from "@/supabase/storage/updateAvatar";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
 import TextInput from "@/components/textInput";
@@ -36,6 +36,7 @@ type Profile = {
 export default function EditAccount() {
   useFonts()
   const router = useRouter();
+  const params = useLocalSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,6 +55,7 @@ export default function EditAccount() {
   const [passwordError, setPasswordError] = useState("");
   const [currentPasswordError, setCurrentPasswordError] = useState("");
   const [isDialogVisible, setDialogVisible] = useState(false);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
 
   const initials = useMemo(() => {
     const src = fullName || username || "";
@@ -121,6 +123,12 @@ export default function EditAccount() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  useEffect(() => {
+    if (params.fromComplete === 'true') {
+      setSnackbarVisible(true);
+    }
+  }, [params.fromComplete]);
 
   const onChangeAvatar = useCallback(async () => {
     if (!userId) return;
@@ -433,6 +441,28 @@ export default function EditAccount() {
           router.push("/Account");
         }}
       />
+      
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={4000}
+        style={{
+          backgroundColor: BASE_COLORS.WHITE,
+          shadowColor: BASE_COLORS.STONE700,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.07,
+        }}
+      >
+        <Text 
+          style={{ 
+            fontSize: Math.min(14 * scale, 18),
+            fontFamily: FontFamilies.BODY,
+            color: BASE_COLORS.STONE600,
+          }}
+        >
+          Add profile picture and fill in the bio to complete your account
+        </Text>
+      </Snackbar>
     </SafeAreaView>
   );
 }

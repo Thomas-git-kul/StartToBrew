@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { View, ScrollView } from "react-native";
 import { Button, ActivityIndicator } from "react-native-paper";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -55,6 +55,20 @@ export default function ShoppingCart() {
   const [loading, setLoading] = useState(true);
   const { from, beforeFrom, id, categoryId } = useLocalSearchParams() as { from?: string, beforeFrom?: string, id?: number, categoryId?: number };
   
+  //shipping info
+  const [fullName, setFullName] = useState("");
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [zip, setZip] = useState("");
+  const missingFields = () => {
+    const fields: string[] = [];
+    if (!fullName) fields.push("Full Name");
+    if (!street) fields.push("Street");
+    if (!city) fields.push("City");
+    if (!zip) fields.push("Zip code");
+    return fields;
+  };
+  const canProceed = orders.length > 0 && missingFields().length === 0;
 
   // Format Euro prices
   const formatter = useMemo(
@@ -213,8 +227,72 @@ export default function ShoppingCart() {
     }
   };
 
+  const loadShippingInfo = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  // 1. Try to load existing shipping info
+  const { data: shipping, error } = await supabase
+    .from("shipping_info")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  // 2. If found → auto-fill
+  if (shipping) {
+    setFullName(shipping.full_name || "");
+    setStreet(shipping.street || "");
+    setCity(shipping.city || "");
+    setZip(shipping.zip || "");
+    
+    // Auto-fill full_name ONLY if empty
+    if (!shipping.full_name) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.full_name) setFullName(profile.full_name);
+    }
+    return;
+  }
+
+  // 3. If NOT found → load profile for first-time autofill
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.full_name) setFullName(profile.full_name);
+};
+
+const saveShippingInfo = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await supabase
+    .from("shipping_info")
+    .upsert({
+      user_id: user.id,
+      full_name: fullName,
+      street,
+      city,
+      zip
+    },
+    { onConflict: ["user_id"] });
+
+  if (error) console.error("Error saving shipping info:", error);
+};
+
+  useEffect(() => {
+    loadShippingInfo();
+  },[]);
+
   useFocusEffect( React.useCallback(() => {
     loadCart();
+    //loadShippingInfo();
   }, []));
 
   /*
@@ -234,6 +312,7 @@ export default function ShoppingCart() {
     }, 800);
   };
   */
+
 
 
   return (
@@ -306,28 +385,52 @@ export default function ShoppingCart() {
             <ThemedText type="title">Shipping Information</ThemedText>
             <TextInput 
               placeholder="Full Name"
+              value={fullName}
+              onChangeText={setFullName}
             />
             <TextInput 
-              placeholder="Street name and number"/>
+              placeholder="Street name and number"
+              value={street}
+              onChangeText={setStreet}
+            />
             <View className="flex-row">
-                <TextInput placeholder="City" />
+              <TextInput 
+                placeholder="City" 
+                value={city}
+                onChangeText={setCity}
+              />
               <View className="flex-1 ml-3">
-                <TextInput placeholder="Zip code"/>
+                <TextInput 
+                  placeholder="Zip code"
+                  value={zip}
+                  onChangeText={setZip}
+                />
               </View>
             </View>
           </View>
+
 
           {/* Proceed */}
           <View className="items-end mb-4">
             <PrimaryButton
               title="Proceed to payment"
-              onPress={() => router.push({
-                pathname: "/Payment" as any,
-                params: { amount: Math.round(total * 100) } // convert to cents
-              } as any)}
+              onPress={async () => {
+                await saveShippingInfo(); 
+                router.push({
+                  pathname: "/Payment" as any,
+                  params: { amount: Math.round(total * 100) }
+                });
+              }}
               testID="payment"
-              disabled={false}
+              disabled={!canProceed}
             />
+            {!canProceed && (
+              <ThemedText type="tips" style={{ marginTop: 4 }}>
+                {orders.length === 0
+                  ? "Your cart is empty."
+                  : `Please fill in: ${missingFields().join(", ")}`}
+              </ThemedText>
+  )}
           </View>
         </ScrollView>
       )}
