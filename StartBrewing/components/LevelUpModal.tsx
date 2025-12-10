@@ -4,6 +4,7 @@ import { Modal, Portal, Button } from "react-native-paper";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
+import PrimaryButton from "@/components/primaryButton";
 
 type Props = {
   visible: boolean;
@@ -32,17 +33,13 @@ export function LevelUpModal({ visible, from, to, onClose }: Props) {
           You went from level {from} to level {to}.
         </ThemedText>
 
-        <Button
-          mode="contained"
-          onPress={onClose}
-          style={{ borderRadius: 20, backgroundColor: BASE_COLORS.TEXT_DARK }}
-          labelStyle={{
-            color: BASE_COLORS.WHITE,
-            fontFamily: FontFamilies.BODY,
-          }}
-        >
-          Nice!
-        </Button>
+        <View className="flex-row justify-end">
+          <PrimaryButton
+            testID="close-button"
+            title="Nice!"
+            onPress={onClose}
+          />
+        </View>
       </Modal>
     </Portal>
   );

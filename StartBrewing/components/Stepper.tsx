@@ -42,7 +42,7 @@ export default function Stepper({ step, total, onNext, onPrev, isCompleted = fal
         style={{
           fontSize: 16,
           fontFamily: isCompleted ? FontFamilies.BODY : FontFamilies.BODY_BOLD,
-          color: BASE_COLORS.STONE600,
+          color: isCompleted ? BASE_COLORS.STONE600 : BASE_COLORS.ACCENT_PRIMARY,
         }}
       >
         Step {step} / {total}
