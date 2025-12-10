@@ -1,9 +1,8 @@
-import React from "react";
-import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
-import Progress from "../app/(tabs)/progress";
 import { NavigationContainer } from "@react-navigation/native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { supabase } from "@/supabase";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React from "react";
+import Progress from "../app/(tabs)/progress";
 
 jest.mock("expo-router", () => {
   const React = require("react");
@@ -20,20 +19,28 @@ jest.mock("@/components/header", () => {
   const React = require("react");
   const { View, Text, TouchableOpacity } = require("react-native");
   // Make the header mock interactive so tests can trigger `onIconPressLeft`
-  return ({ title, onIconPressLeft, actionTestIDLeft }: any) => (
+  return ({ title, onIconPressLeft, actionTestIDLeft }: any) =>
     React.createElement(
       View,
       null,
-      React.createElement(TouchableOpacity, { testID: actionTestIDLeft, onPress: onIconPressLeft }, React.createElement(Text, null, "back")),
+      React.createElement(
+        TouchableOpacity,
+        { testID: actionTestIDLeft, onPress: onIconPressLeft },
+        React.createElement(Text, null, "back")
+      ),
       React.createElement(Text, null, title)
-    )
-  );
+    );
 });
 
 jest.mock("@/components/themed-text", () => {
   const { Text } = require("react-native");
   return { ThemedText: ({ children }: any) => <Text>{children}</Text> };
 });
+
+// ⬇️ NIEUW: mock badge helper zodat de nieuwe badge-flow geen echte Supabase-call doet
+jest.mock("@/supabase/queries/badges", () => ({
+  fetchLatestBadge: jest.fn().mockResolvedValue(null),
+}));
 
 // Mock react-native-paper to avoid needing Provider in tests
 jest.mock("react-native-paper", () => {
@@ -485,7 +492,10 @@ describe("<Progress />", () => {
 
   it("header back navigates to Agenda when from=agenda", async () => {
     // override params for this test
-    (useLocalSearchParams as jest.Mock).mockReturnValue({ id: "1", from: "agenda" });
+    (useLocalSearchParams as jest.Mock).mockReturnValue({
+      id: "1",
+      from: "agenda",
+    });
     const { findByTestId, findByText } = await renderProgress();
     await findByText("black IPA Progress");
     const backBtn = await findByTestId("back-header");
@@ -803,12 +813,28 @@ it("handles two-mode and switches to phase 2 on complete", async () => {
           eq: () => ({
             order: async () => ({
               data: [
-                { step_id: "1", title: "S1", description_md: "a", start_offset_min: 0, duration_min: 10, next_step_id: "2", temp_c_target: 100 },
-                { step_id: "2", title: "S2", description_md: "b", start_offset_min: 5, duration_min: 0, next_step_id: null, temp_c_target: 100 },
+                {
+                  step_id: "1",
+                  title: "S1",
+                  description_md: "a",
+                  start_offset_min: 0,
+                  duration_min: 10,
+                  next_step_id: "2",
+                  temp_c_target: 100,
+                },
+                {
+                  step_id: "2",
+                  title: "S2",
+                  description_md: "b",
+                  start_offset_min: 5,
+                  duration_min: 0,
+                  next_step_id: null,
+                  temp_c_target: 100,
+                },
               ],
               error: null,
             }),
-            maybeSingle: async () => ({ data: [], error: null}),
+            maybeSingle: async () => ({ data: [], error: null }),
           }),
         }),
       };
@@ -1047,7 +1073,9 @@ it("handles autoStartExpired branch when stored timer already expired", async ()
                       id_brew: 1,
                       step_id: 1,
                       status: "in_progress",
-                      completed_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
+                      completed_at: new Date(
+                        Date.now() - 1000 * 60 * 60
+                      ).toISOString(), // 1 hour ago
                       time_left: 30, // already expired
                     },
                     error: null,

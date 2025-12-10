@@ -1,24 +1,34 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Pressable, Alert, ScrollView, Dimensions, Text } from "react-native";
-import { Avatar, Button, Snackbar } from "react-native-paper";
-import * as ImagePicker from "expo-image-picker";
+// app/AccountEdit.tsx
+import { BadgeEarnedModal } from "@/components/BadgeEarnedModal";
+import Dialog from "@/components/dialog";
+import ErrorChip from "@/components/errorChip";
+import Header from "@/components/header";
+import Spinner from "@/components/spinner";
+import TextInput from "@/components/textInput";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { supabase } from "@/supabase";
-import { updateAvatar } from "@/supabase/storage/updateAvatar";
-import { Image } from "expo-image";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import Header from "@/components/header";
 import { useFonts } from "@/hooks/use-fonts";
-import TextInput from "@/components/textInput";
-import ErrorChip from "@/components/errorChip";
-import Dialog from "@/components/dialog";
-import Spinner from "@/components/spinner";
+import { supabase } from "@/supabase";
+import { fetchLatestBadge } from "@/supabase/queries/badges";
+import { updateAvatar } from "@/supabase/storage/updateAvatar";
+import * as ImagePicker from "expo-image-picker";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BASE_SCREEN_WIDTH = 375; 
+import {
+  Alert,
+  Dimensions,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import { Avatar, Button, Snackbar } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const BASE_SCREEN_WIDTH = 375;
 const scale = SCREEN_WIDTH / BASE_SCREEN_WIDTH;
 
 type Profile = {
@@ -34,7 +44,7 @@ type Profile = {
 };
 
 export default function EditAccount() {
-  useFonts()
+  useFonts();
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -56,12 +66,41 @@ export default function EditAccount() {
   const [currentPasswordError, setCurrentPasswordError] = useState("");
   const [isDialogVisible, setDialogVisible] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [latestBadgeId, setLatestBadgeId] = useState<number | null>(null);
+  const [badgeModalVisible, setBadgeModalVisible] = useState(false);
+  const [badgeForModal, setBadgeForModal] = useState<{
+    name: string | null;
+    iconUrl: string | null;
+  } | null>(null);
 
   const initials = useMemo(() => {
     const src = fullName || username || "";
     const parts = src.trim().split(/\s+/).slice(0, 2);
     return parts.map((p) => p[0]?.toUpperCase() ?? "").join("");
   }, [fullName, username]);
+
+  const initLatestBadge = useCallback(async (accountId: string) => {
+    const latest = await fetchLatestBadge(accountId);
+    if (latest) {
+      setLatestBadgeId(latest.id);
+    }
+  }, []);
+
+  const checkForNewBadge = useCallback(
+    async (accountId: string) => {
+      const latest = await fetchLatestBadge(accountId);
+      if (!latest) return false;
+
+      if (latestBadgeId == null || latest.id !== latestBadgeId) {
+        setLatestBadgeId(latest.id);
+        setBadgeForModal({ name: latest.name, iconUrl: latest.imageUrl });
+        setBadgeModalVisible(true);
+        return true;
+      }
+      return false;
+    },
+    [latestBadgeId]
+  );
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -78,10 +117,13 @@ export default function EditAccount() {
 
     setUserId(user.id);
     setAuthEmail(user.email ?? "");
+    await initLatestBadge(user.id);
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id,username,full_name,avatar_url,bio,updated_at,mail,firstname,lastname")
+      .select(
+        "id,username,full_name,avatar_url,bio,updated_at,mail,firstname,lastname"
+      )
       .eq("id", user.id)
       .single();
 
@@ -125,7 +167,7 @@ export default function EditAccount() {
   }, [fetchProfile]);
 
   useEffect(() => {
-    if (params.fromComplete === 'true') {
+    if (params.fromComplete === "true") {
       setSnackbarVisible(true);
     }
   }, [params.fromComplete]);
@@ -192,11 +234,17 @@ export default function EditAccount() {
           return;
         }
         if (!/[A-Z]/.test(newPassword)) {
-          Alert.alert("Error", "Password must contain at least 1 capital letter.");
+          Alert.alert(
+            "Error",
+            "Password must contain at least 1 capital letter."
+          );
           return;
         }
         if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
-          Alert.alert("Error", "Password must contain at least 1 special character.");
+          Alert.alert(
+            "Error",
+            "Password must contain at least 1 special character."
+          );
           return;
         }
         if (newPassword !== confirmNewPassword) {
@@ -204,10 +252,11 @@ export default function EditAccount() {
           return;
         }
         // Re-authenticate user with current password
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: authEmail,
-          password: currentPassword,
-        });
+        const { data: signInData, error: signInError } =
+          await supabase.auth.signInWithPassword({
+            email: authEmail,
+            password: currentPassword,
+          });
         if (signInError) {
           setCurrentPasswordError("Current password incorrect");
           return;
@@ -215,10 +264,15 @@ export default function EditAccount() {
           setCurrentPasswordError("");
         }
         if (!signInData.session) {
-          Alert.alert("Error", "Unaible to obtain a valid session for password change.");
+          Alert.alert(
+            "Error",
+            "Unaible to obtain a valid session for password change."
+          );
           return;
         }
-        const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
+        const { error: pwError } = await supabase.auth.updateUser({
+          password: newPassword,
+        });
         if (pwError) {
           if (pwError.status === 422) {
             setPasswordError("New and current password cannot be the same");
@@ -246,28 +300,41 @@ export default function EditAccount() {
         .eq("id", userId);
 
       if (error) Alert.alert("Unaible to save profile", error.message);
-      else Alert.alert("Saved", "Your profile has been updated.");
-
+      else {
+        Alert.alert("Saved", "Your profile has been updated.");
+        if (userId) await checkForNewBadge(userId);
+      }
       router.push("../Account");
     } catch (err: any) {
       Alert.alert("Error", err?.message ?? "Unknown error while saving.");
     } finally {
       setSaving(false);
     }
-  }, [router, userId, username, fullName, bio, mail, firstname, lastname, currentPassword, newPassword, confirmNewPassword, authEmail, saving]);
+  }, [
+    router,
+    userId,
+    username,
+    fullName,
+    bio,
+    mail,
+    firstname,
+    lastname,
+    currentPassword,
+    newPassword,
+    confirmNewPassword,
+    authEmail,
+    saving,
+  ]);
 
   if (loading) {
-    return (
-      <Spinner 
-        title="Loading account information..."
-      />
-    );
+    return <Spinner title="Loading account information..." />;
   }
 
   return (
-    <SafeAreaView 
+    <SafeAreaView
       className="flex-1"
-      style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}>
+      style={{ backgroundColor: BASE_COLORS.LIGHT_BG }}
+    >
       <Header
         title="Edit profile"
         iconNameLeft="ArrowLeft"
@@ -288,11 +355,11 @@ export default function EditAccount() {
             <Avatar.Image
               source={{ uri: avatarUrl || "" }}
               size={Math.min(90 * scale, 300)}
-              style={{ 
+              style={{
                 backgroundColor: BASE_COLORS.LIGHT_BG,
                 overflow: "hidden",
                 borderWidth: 1,
-                borderColor: BASE_COLORS.STONE300 
+                borderColor: BASE_COLORS.STONE300,
               }}
               onError={() => setAvatarUrl(null)}
             />
@@ -303,16 +370,24 @@ export default function EditAccount() {
               color={BASE_COLORS.TEXT_DARK}
               style={{ backgroundColor: BASE_COLORS.STONE200 }}
               labelStyle={{
-                padding: 4, 
-                fontFamily: FontFamilies.BODY, 
-                fontSize: Math.min(30 * scale, 40) 
+                padding: 4,
+                fontFamily: FontFamilies.BODY,
+                fontSize: Math.min(30 * scale, 40),
               }}
             />
           )}
         </Pressable>
-        <ThemedText type="tips" style={{color: BASE_COLORS.STONE400}} className="mb-5">Tap to change</ThemedText>
+        <ThemedText
+          type="tips"
+          style={{ color: BASE_COLORS.STONE400 }}
+          className="mb-5"
+        >
+          Tap to change
+        </ThemedText>
 
-        <ThemedText type="subTitle" className="mb-1">Update personal information</ThemedText>
+        <ThemedText type="subTitle" className="mb-1">
+          Update personal information
+        </ThemedText>
         <View className="flex-row gap-3 flex-wrap">
           <View style={{ width: "47%" }}>
             <View className="flex-1">
@@ -338,7 +413,9 @@ export default function EditAccount() {
           keyboardType="email-address"
         />
 
-        <ThemedText type="subTitle" className="mt-3 mb-1">Update account information</ThemedText>
+        <ThemedText type="subTitle" className="mt-3 mb-1">
+          Update account information
+        </ThemedText>
         <TextInput
           placeholder="Username"
           onChangeText={setUsername}
@@ -352,7 +429,9 @@ export default function EditAccount() {
           numberOfLines={4}
         />
 
-        <ThemedText type="subTitle" className="mt-3 mb-1">Change password</ThemedText>
+        <ThemedText type="subTitle" className="mt-3 mb-1">
+          Change password
+        </ThemedText>
         <TextInput
           placeholder="Current Password"
           onChangeText={setCurrentPassword}
@@ -370,19 +449,23 @@ export default function EditAccount() {
           value={newPassword}
           secureTextEntry
         />
-        {newPassword.length > 0 && (newPassword.length < 6 || !/[A-Z]/.test(newPassword) || !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) && (
-          <View className="mb-5">
-            {newPassword.length > 0 && newPassword.length < 6 && (
-              <ErrorChip text="Enter at least 6 characters" />
-            )}
-            {newPassword.length > 0 && !/[A-Z]/.test(newPassword) && (
-              <ErrorChip text="Enter at least 1 capital letter" />
-            )}
-            {newPassword.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) && (
-              <ErrorChip text="Enter at least 1 special character" />
-            )}
-          </View>
-        )}
+        {newPassword.length > 0 &&
+          (newPassword.length < 6 ||
+            !/[A-Z]/.test(newPassword) ||
+            !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) && (
+            <View className="mb-5">
+              {newPassword.length > 0 && newPassword.length < 6 && (
+                <ErrorChip text="Enter at least 6 characters" />
+              )}
+              {newPassword.length > 0 && !/[A-Z]/.test(newPassword) && (
+                <ErrorChip text="Enter at least 1 capital letter" />
+              )}
+              {newPassword.length > 0 &&
+                !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) && (
+                  <ErrorChip text="Enter at least 1 special character" />
+                )}
+            </View>
+          )}
         <TextInput
           placeholder="Confirm New Password"
           onChangeText={setConfirmNewPassword}
@@ -390,12 +473,11 @@ export default function EditAccount() {
           secureTextEntry
         />
         <View className="mb-5">
-          {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
-              <ErrorChip text="Passwords don't match"/>
-          )}
-          {passwordError ? (
-              <ErrorChip text={passwordError}/>
-          ) : null}
+          {confirmNewPassword.length > 0 &&
+            newPassword !== confirmNewPassword && (
+              <ErrorChip text="Passwords don't match" />
+            )}
+          {passwordError ? <ErrorChip text={passwordError} /> : null}
         </View>
 
         <View className="flex-row justify-between">
@@ -408,23 +490,27 @@ export default function EditAccount() {
               fontFamily: FontFamilies.BODY,
               color: BASE_COLORS.TEXT_DARK,
             }}
-          >Cancel</Button>
+          >
+            Cancel
+          </Button>
           <Button
             mode="contained"
             onPress={onSave}
             disabled={saving}
-            loading={saving} 
-            labelStyle={{ 
+            loading={saving}
+            labelStyle={{
               fontSize: Math.min(16 * scale, 24),
               color: BASE_COLORS.WHITE,
-              fontFamily: FontFamilies.BODY,            
+              fontFamily: FontFamilies.BODY,
             }}
             style={{
               borderRadius: 20,
               marginBottom: 15,
               backgroundColor: BASE_COLORS.TEXT_DARK,
             }}
-          >Save</Button>
+          >
+            Save
+          </Button>
         </View>
       </ScrollView>
 
@@ -441,7 +527,7 @@ export default function EditAccount() {
           router.push("/Account");
         }}
       />
-      
+
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
@@ -453,8 +539,8 @@ export default function EditAccount() {
           shadowOpacity: 0.07,
         }}
       >
-        <Text 
-          style={{ 
+        <Text
+          style={{
             fontSize: Math.min(14 * scale, 18),
             fontFamily: FontFamilies.BODY,
             color: BASE_COLORS.STONE600,
@@ -463,6 +549,12 @@ export default function EditAccount() {
           Add profile picture and fill in the bio to complete your account
         </Text>
       </Snackbar>
+      <BadgeEarnedModal
+        visible={badgeModalVisible}
+        badgeName={badgeForModal?.name ?? null}
+        iconUrl={badgeForModal?.iconUrl ?? null}
+        onClose={() => setBadgeModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }

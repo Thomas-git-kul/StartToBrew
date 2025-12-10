@@ -1,28 +1,28 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { View, ScrollView, Dimensions, Text } from "react-native";
-import { Card, FAB, Chip, Button } from "react-native-paper";
-import {
-  Pause,
-  BotMessageSquare,
-  Thermometer,
-  Play,
-  Lightbulb,
-  ChevronRight,
-  CheckCheck,
-  CheckCheckIcon,
-} from "lucide-react-native";
-import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { BadgeEarnedModal } from "@/components/BadgeEarnedModal";
 import Header from "@/components/header";
-import { BASE_COLORS } from "@/constants/Colors";
-import { ThemedText } from "@/components/themed-text";
-import { useFonts } from "@/hooks/use-fonts";
-import { FontFamilies } from "@/constants/Fonts";
-import { supabase } from "@/supabase";
-import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
-import { useUserProgressContext } from "@/context/UserProgressContext";
 import Spinner from "@/components/spinner";
 import Stepper from "@/components/Stepper";
+import { ThemedText } from "@/components/themed-text";
+import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
+import { useUserProgressContext } from "@/context/UserProgressContext";
+import { useFonts } from "@/hooks/use-fonts";
+import { supabase } from "@/supabase";
+import { fetchLatestBadge } from "@/supabase/queries/badges";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  BotMessageSquare,
+  CheckCheck,
+  Lightbulb,
+  Pause,
+  Play,
+  Thermometer,
+} from "lucide-react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Dimensions, ScrollView, Text, View } from "react-native";
+import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
+import { Button, Card, Chip, FAB } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -52,9 +52,42 @@ export default function Progress() {
   const [completedAt, setCompletedAt] = useState<Date | null>(null);
   const { from } = useLocalSearchParams() as { from?: string };
   const [brew, setBrew] = useState<any>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [latestBadgeId, setLatestBadgeId] = useState<number | null>(null);
+  const [badgeModalVisible, setBadgeModalVisible] = useState(false);
+  const [badgeForModal, setBadgeForModal] = useState<{
+    name: string | null;
+    iconUrl: string | null;
+  } | null>(null);
+  const [navigateAfterBadge, setNavigateAfterBadge] = useState<
+    "/HomePage" | null
+  >(null);
 
   const currentStep = useRef<any>(null);
   let CompletedStep = useRef<boolean>(false);
+
+  const initLatestBadge = useCallback(async (accountId: string) => {
+    const latest = await fetchLatestBadge(accountId);
+    if (latest) {
+      setLatestBadgeId(latest.id);
+    }
+  }, []);
+
+  const checkForNewBadge = useCallback(
+    async (accountId: string) => {
+      const latest = await fetchLatestBadge(accountId);
+      if (!latest) return false;
+
+      if (latestBadgeId == null || latest.id !== latestBadgeId) {
+        setLatestBadgeId(latest.id);
+        setBadgeForModal({ name: latest.name, iconUrl: latest.imageUrl });
+        setBadgeModalVisible(true);
+        return true;
+      }
+      return false;
+    },
+    [latestBadgeId]
+  );
 
   const loadStep = useCallback(
     async (stepId?: string) => {
@@ -66,6 +99,15 @@ export default function Progress() {
           return;
         }
 
+        const user = userData.user;
+        setCurrentUserId(user.id);
+        // baseline latest badge (alleen eerste keer of als je dat wil)
+        if (latestBadgeId === null) {
+          const latest = await fetchLatestBadge(user.id);
+          if (latest) {
+            setLatestBadgeId(latest.id);
+          }
+        }
         const { data: brew } = await supabase
           .from("brews")
           .select(
@@ -150,8 +192,7 @@ export default function Progress() {
         }
 
         // Check of we een historische stap bekijken
-        const isHistorical =
-          brew_steps.status === "completed";
+        const isHistorical = brew_steps.status === "completed";
         setIsHistoricalStep(isHistorical);
 
         // Check of we een forward stap bekijken
@@ -461,8 +502,8 @@ export default function Progress() {
 
   const durationSec =
     phase === 1
-      ? (stepData?.step1?.duration_sec ?? 0)
-      : (stepData?.step2?.duration_sec ?? 0);
+      ? stepData?.step1?.duration_sec ?? 0
+      : stepData?.step2?.duration_sec ?? 0;
 
   const handleComplete = useCallback(
     (totalElapsedTime: number) => {
@@ -579,8 +620,14 @@ export default function Progress() {
         .select();
 
       if (isLastStep) {
-        await refreshProgress();
-        router.push("/HomePage");
+        const hasNewBadge = await checkForNewBadge(currentUserId ?? "");
+        if (hasNewBadge) {
+          // Na sluiten van modal naar Home navigeren
+          setNavigateAfterBadge("/HomePage");
+        } else {
+          await refreshProgress();
+          router.push("/HomePage");
+        }
         return;
       }
 
@@ -594,14 +641,7 @@ export default function Progress() {
     } catch (error) {
       console.error("goToNextStep error:", error);
     }
-  }, [
-    brewId,
-    stepData,
-    loadStep,
-    router,
-    allSteps,
-    refreshProgress,
-  ]);
+  }, [brewId, stepData, loadStep, router, allSteps, refreshProgress]);
 
   const goToPreviousStep = useCallback(() => {
     if (!stepData || allSteps.length === 0) return;
@@ -676,11 +716,11 @@ export default function Progress() {
   const title =
     phase === 1
       ? stepData.step1.title
-      : (stepData.step2?.title ?? stepData.step1.title);
+      : stepData.step2?.title ?? stepData.step1.title;
   const desc =
     phase === 1
       ? stepData.step1.desc
-      : (stepData.step2?.desc ?? stepData.step1.desc);
+      : stepData.step2?.desc ?? stepData.step1.desc;
   const tips = phase === 1 ? stepData.step1.tips : stepData.step2?.tips;
   const ingredients: {
     name: string;
@@ -691,7 +731,10 @@ export default function Progress() {
     if (!stepData) return [];
     if (stepData.mode === "two") {
       // altijd beide stappen combineren
-      return [...(stepData.step1?.ingredients ?? []), ...(stepData.step2?.ingredients ?? [])];
+      return [
+        ...(stepData.step1?.ingredients ?? []),
+        ...(stepData.step2?.ingredients ?? []),
+      ];
     } else {
       // single mode
       return phase === 1
@@ -750,20 +793,24 @@ export default function Progress() {
                 labelStyle={{
                   fontSize: 16,
                   fontFamily: FontFamilies.BODY,
-                  color: (!phaseDone || isHistoricalStep || isForwardStep) ? BASE_COLORS.STONE300 : BASE_COLORS.STONE600,
+                  color:
+                    !phaseDone || isHistoricalStep || isForwardStep
+                      ? BASE_COLORS.STONE300
+                      : BASE_COLORS.STONE600,
                 }}
                 style={{
                   alignSelf: "flex-end",
                   marginRight: 0,
                 }}
               >
-                <View className="flex-row items-center justify-content"
+                <View
+                  className="flex-row items-center justify-content"
                   style={{
                     marginRight: 8,
                     marginInline: 8,
                   }}
                 >
-                  <CheckCheck/>
+                  <CheckCheck />
                   <Text> Complete step</Text>
                 </View>
               </Button>
@@ -857,7 +904,8 @@ export default function Progress() {
               onComplete={handleComplete}
             >
               {({ remainingTime }) => {
-                const btnDisabled = phaseDone || isHistoricalStep || isForwardStep;
+                const btnDisabled =
+                  phaseDone || isHistoricalStep || isForwardStep;
                 return (
                   <View style={{ alignItems: "center" }}>
                     <Text
@@ -987,6 +1035,19 @@ export default function Progress() {
           </View>
         )}
       </ScrollView>
+      <BadgeEarnedModal
+        visible={badgeModalVisible}
+        badgeName={badgeForModal?.name ?? null}
+        iconUrl={badgeForModal?.iconUrl ?? null}
+        onClose={async () => {
+          setBadgeModalVisible(false);
+          if (navigateAfterBadge) {
+            await refreshProgress();
+            router.push(navigateAfterBadge);
+            setNavigateAfterBadge(null);
+          }
+        }}
+      />
       <FAB
         testID="chat-button"
         mode="flat"
@@ -994,14 +1055,14 @@ export default function Progress() {
           <BotMessageSquare size={props.size} color={BASE_COLORS.WHITE} />
         )}
         onPress={() => {
-          router.push({ 
-            pathname: `/ChatBot`, 
+          router.push({
+            pathname: `/ChatBot`,
             params: {
-                      recipe_slug: brew.recipe_slug,
-                      last_step_id: brew.last_step_id,
-                      from: "progress",
-                    },
-        })
+              recipe_slug: brew.recipe_slug,
+              last_step_id: brew.last_step_id,
+              from: "progress",
+            },
+          });
         }}
         color={BASE_COLORS.WHITE}
         style={{

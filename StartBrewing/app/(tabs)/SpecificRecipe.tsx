@@ -1,29 +1,38 @@
-import { useState, useEffect, useCallback } from "react";
-import { TouchableOpacity, View, Image, ScrollView, Alert, Dimensions } from "react-native";
-import { FAB, Modal, Portal, Chip, Button } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useFocusEffect } from "@react-navigation/native";
-import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { BadgeEarnedModal } from "@/components/BadgeEarnedModal";
 import Header from "@/components/header";
-import { useFonts } from "@/hooks/use-fonts";
-import { Star } from "lucide-react-native";
-import { ThemedText } from "@/components/themed-text";
-import { supabase } from "@/supabase";
-import { analytics, logEvent } from "@/firebase/firebaseConfig";
-import { useClickCounter } from "@/context/ClickCounterContext";
-import { useFavorites } from "@/context/FavoritesContext";
-import { getBeerImageSource } from "@/hooks/beer-image";
-import StoreCard from "@/components/ui/StoreCard";
-import ReviewCard from "@/components/ui/ReviewCard";
-import { useUserProgressContext } from "@/context/UserProgressContext";
-import { useAppRefresh } from "@/context/AppRefreshContext";
-import Spinner from "@/components/spinner";
-import TextInput from "@/components/textInput";
 import PrimaryButton from "@/components/primaryButton";
 import SecondaryButton from "@/components/secondaryButton";
 import SelectionChip from "@/components/selectionChip";
+import Spinner from "@/components/spinner";
+import TextInput from "@/components/textInput";
+import { ThemedText } from "@/components/themed-text";
+import ReviewCard from "@/components/ui/ReviewCard";
+import StoreCard from "@/components/ui/StoreCard";
+import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
+import { useAppRefresh } from "@/context/AppRefreshContext";
+import { useClickCounter } from "@/context/ClickCounterContext";
+import { useFavorites } from "@/context/FavoritesContext";
+import { useUserProgressContext } from "@/context/UserProgressContext";
+import { analytics, logEvent } from "@/firebase/firebaseConfig";
+import { getBeerImageSource } from "@/hooks/beer-image";
+import { useFonts } from "@/hooks/use-fonts";
+import { supabase } from "@/supabase";
+import { fetchLatestBadge } from "@/supabase/queries/badges";
+import { useFocusEffect } from "@react-navigation/native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Star } from "lucide-react-native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Alert,
+  Dimensions,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Chip, FAB, Modal, Portal } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -102,6 +111,14 @@ export default function SpecificRecipe() {
   const [selectedBatchSize, setSelectedBatchSize] = useState<number | null>(
     null
   );
+
+  // Badge modal state
+  const [latestBadgeId, setLatestBadgeId] = useState<number | null>(null);
+  const [badgeModalVisible, setBadgeModalVisible] = useState(false);
+  const [badgeForModal, setBadgeForModal] = useState<{
+    name: string | null;
+    iconUrl: string | null;
+  } | null>(null);
 
   const handleToggleFavorite = async () => {
     if (!recipe_slug) return;
@@ -191,7 +208,10 @@ export default function SpecificRecipe() {
   const handleSubmitReview = async () => {
     if (!recipe_slug) return;
     if (rating === 0) {
-      Alert.alert("Rating required", "Please select a rating before submitting.");
+      Alert.alert(
+        "Rating required",
+        "Please select a rating before submitting."
+      );
       return;
     }
 
@@ -266,6 +286,9 @@ export default function SpecificRecipe() {
       checkUserReviewed(recipe_slug);
 
       await refreshProgress();
+      if (user?.id) {
+        await checkForNewBadge(user.id);
+      }
     } catch (e: any) {
       Alert.alert(
         "Review mislukt",
@@ -282,9 +305,18 @@ export default function SpecificRecipe() {
     batchSizeL?: number
   ) => {
     const effectiveSlug = recipe_slug || recipe?.recipe_slug;
-    console.log("brewRecipe called with:", { recipe_slug, effectiveSlug, recipeName: recipe?.name, batchSizeL });
+    console.log("brewRecipe called with:", {
+      recipe_slug,
+      effectiveSlug,
+      recipeName: recipe?.name,
+      batchSizeL,
+    });
     if (!effectiveSlug || !recipe?.name) {
-      console.warn("Cannot start brew: missing slug or recipe name.", { recipe_slug, effectiveSlug, recipe });
+      console.warn("Cannot start brew: missing slug or recipe name.", {
+        recipe_slug,
+        effectiveSlug,
+        recipe,
+      });
       return;
     }
 
@@ -413,7 +445,8 @@ export default function SpecificRecipe() {
             recipe_slug: effectiveSlug,
           };
 
-          const finalClicks = clicksToFirstBrew != null ? clicksToFirstBrew : get();
+          const finalClicks =
+            clicksToFirstBrew != null ? clicksToFirstBrew : get();
 
           // Log two separate analytics events:
           // - `northstar_time_in_sec` for the time in seconds until first northstar
@@ -558,7 +591,8 @@ export default function SpecificRecipe() {
 
       const count = (reviewsData || []).length;
       const avg = count
-        ? reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) / count
+        ? reviewsData!.reduce((s: any, r: any) => s + (r.rating ?? 0), 0) /
+          count
         : null;
 
       const updatePayload: any = {};
@@ -630,6 +664,54 @@ export default function SpecificRecipe() {
     }
   };
 
+  const initLatestBadge = useCallback(async (accountId: string) => {
+    const latest = await fetchLatestBadge(accountId);
+    if (latest) {
+      setLatestBadgeId(latest.id);
+    }
+  }, []);
+
+  const checkForNewBadge = useCallback(
+    async (accountId: string) => {
+      const latest = await fetchLatestBadge(accountId);
+      if (!latest) return false;
+
+      if (latestBadgeId == null || latest.id !== latestBadgeId) {
+        setLatestBadgeId(latest.id);
+        setBadgeForModal({ name: latest.name, iconUrl: latest.imageUrl });
+        setBadgeModalVisible(true);
+        return true;
+      }
+      return false;
+    },
+    [latestBadgeId]
+  );
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        const id = user?.id ?? null;
+        setCurrentUserId(id);
+        if (id) {
+          await initLatestBadge(id); // baseline
+        }
+      } catch {
+        setCurrentUserId(null);
+      }
+    };
+
+    getCurrentUser();
+
+    if (!recipe_slug) return;
+    fetchRecipeBundle(recipe_slug);
+    checkUserReviewed(recipe_slug);
+    fetchStarterKits(recipe_slug);
+    fetchReviews(recipe_slug);
+  }, [recipe_slug, initLatestBadge]);
+
   useFocusEffect(
     useCallback(() => {
       // Reset modal states when navigating back to this screen
@@ -645,7 +727,9 @@ export default function SpecificRecipe() {
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setCurrentUserId(user?.id ?? null);
       } catch {
         setCurrentUserId(null);
@@ -722,8 +806,8 @@ export default function SpecificRecipe() {
         selectedBatchSizeOption === "5"
           ? 5
           : selectedBatchSizeOption === "10"
-            ? 10
-            : 19;
+          ? 10
+          : 19;
     }
 
     setSelectedBatchSize(size);
@@ -746,11 +830,11 @@ export default function SpecificRecipe() {
         actionTestIDLeft="back-button"
         onIconPressLeft={() => {
           if (from === "account") {
-            router.push("/Account")
+            router.push("/Account");
           } else if (from === "home") {
-            router.push("/HomePage")
+            router.push("/HomePage");
           } else {
-            router.push("/Recipes")
+            router.push("/Recipes");
           }
         }}
       />
@@ -808,10 +892,7 @@ export default function SpecificRecipe() {
             </View>
             <View>
               {hasUserReviewed ? (
-                <ThemedText
-                  type="subTitle"
-                  testID="already-reviewed-label"
-                >
+                <ThemedText type="subTitle" testID="already-reviewed-label">
                   You reviewed ✓
                 </ThemedText>
               ) : (
@@ -897,10 +978,14 @@ export default function SpecificRecipe() {
             ) : (
               displayedReviews.map((r, idx) => (
                 <View key={idx}>
-                  <ReviewCard 
-                    review={r as any} 
+                  <ReviewCard
+                    review={r as any}
                     currentUserId={currentUserId ?? undefined}
-                    onDelete={r.account_id ? () => handleDeleteReview(r.account_id!) : undefined}
+                    onDelete={
+                      r.account_id
+                        ? () => handleDeleteReview(r.account_id!)
+                        : undefined
+                    }
                   />
                 </View>
               ))
@@ -923,7 +1008,9 @@ export default function SpecificRecipe() {
             borderColor: BASE_COLORS.STONE200,
           }}
         >
-          <ThemedText type="title" className="text-center mb-4">Choose batch size</ThemedText>
+          <ThemedText type="title" className="text-center mb-4">
+            Choose batch size
+          </ThemedText>
           <View className="flex-row flex-wrap gap-2">
             {["5", "10", "19"].map((val) => {
               const selected = selectedBatchSizeOption === val;
@@ -954,7 +1041,7 @@ export default function SpecificRecipe() {
                 keyboardType="numeric"
                 value={customBatchSize}
                 onChangeText={(text) => {
-                  const filtered = text.replace(/[^0-9.,]/g, '');
+                  const filtered = text.replace(/[^0-9.,]/g, "");
                   setCustomBatchSize(filtered);
                 }}
               />
@@ -1073,34 +1160,35 @@ export default function SpecificRecipe() {
                 console.log("brewRecipe completed");
               }}
             />
-            {selectedBatchSizeOption !== "custom" && (() => {
-              let filteredKits = kits;
-              if (selectedBatchSize) {
-                filteredKits = kits.filter(
-                  (kit) => kit.size_liters === selectedBatchSize
-                );
-              }
-              const firstKit = filteredKits[0];
+            {selectedBatchSizeOption !== "custom" &&
+              (() => {
+                let filteredKits = kits;
+                if (selectedBatchSize) {
+                  filteredKits = kits.filter(
+                    (kit) => kit.size_liters === selectedBatchSize
+                  );
+                }
+                const firstKit = filteredKits[0];
 
-              return firstKit ? (
-                <PrimaryButton
-                  testID="ordernow-button"
-                  title="Order now"
-                  onPress={() => {
-                    setKitsVisible(false);
-                    router.push({
-                      pathname: "/StoreItem",
-                      params: {
-                        id: firstKit.id,
-                        categoryNumber: 4,
-                        from: "specificrecipe",
-                        recipe_slug: recipe_slug,
-                      },
-                    } as any);
-                  }}
-                />
-              ) : null;
-            })()}
+                return firstKit ? (
+                  <PrimaryButton
+                    testID="ordernow-button"
+                    title="Order now"
+                    onPress={() => {
+                      setKitsVisible(false);
+                      router.push({
+                        pathname: "/StoreItem",
+                        params: {
+                          id: firstKit.id,
+                          categoryNumber: 4,
+                          from: "specificrecipe",
+                          recipe_slug: recipe_slug,
+                        },
+                      } as any);
+                    }}
+                  />
+                ) : null;
+              })()}
           </View>
         </Modal>
       </Portal>
@@ -1203,6 +1291,13 @@ export default function SpecificRecipe() {
           }}
         />
       </View>
+
+      <BadgeEarnedModal
+        visible={badgeModalVisible}
+        badgeName={badgeForModal?.name ?? null}
+        iconUrl={badgeForModal?.iconUrl ?? null}
+        onClose={() => setBadgeModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
