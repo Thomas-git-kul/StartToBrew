@@ -16,16 +16,6 @@ import Spinner from "@/components/spinner";
 export default function PaymentFail() {
   const fontsLoaded = useFonts();
   const router = useRouter();
-
-  // Show spinner while fonts load
-  if (!fontsLoaded) {
-    return (
-      <Spinner
-        title="loading"
-      />
-    );
-  }
-
   const params = useLocalSearchParams();
   const email = params.email as string | undefined;
   const amount = params.amount as string | undefined;
@@ -54,7 +44,16 @@ export default function PaymentFail() {
           console.error("Failed to send failure email:", error.text || error);
         });
     }
-  }, [email, amount, orderId]);
+  }, [email, amountInEuros, orderId]);
+
+  // Show spinner while fonts load
+  if (!fontsLoaded) {
+    return (
+      <Spinner
+        title="loading"
+      />
+    );
+  }
 
   return (
     <SafeAreaView

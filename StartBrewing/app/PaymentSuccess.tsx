@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import { useEffect } from "react";
-import { View, Dimensions } from "react-native";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -17,16 +17,6 @@ import Spinner from "@/components/spinner";
 export default function PaymentSuccess() {
   const fontsLoaded = useFonts();
   const router = useRouter();
-
-  // Show spinner while fonts load
-  if (!fontsLoaded) {
-    return (
-      <Spinner
-        title="loading"
-      />
-    );
-  }
-
   const params = useLocalSearchParams();
   const email = params.email as string | undefined;
   const amount = params.amount as string | undefined;
@@ -183,7 +173,16 @@ export default function PaymentSuccess() {
     };
 
     processOrder();
-  }, [email, amount, orderId]);
+  }, [email, amountInEuros, orderId]);
+
+  // Show spinner while fonts load
+  if (!fontsLoaded) {
+    return (
+      <Spinner
+        title="loading"
+      />
+    );
+  }
 
   return (
     <SafeAreaView
