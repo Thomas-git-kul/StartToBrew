@@ -77,6 +77,8 @@ export default function OrderCard({
             height: IMAGE_HEIGHT,
             borderTopLeftRadius: 12,
             borderBottomLeftRadius: 12,
+            borderRightWidth: 1,
+            borderColor: BASE_COLORS.STONE100,
           }}
           resizeMode="cover"
         />

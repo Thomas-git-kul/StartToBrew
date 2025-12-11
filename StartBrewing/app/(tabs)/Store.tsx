@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { View, ScrollView, Dimensions, FlatList } from "react-native";
-import { Searchbar, Chip, Button } from "react-native-paper";
-import { Search, X, Check } from "lucide-react-native";
-import { BASE_COLORS } from "@/constants/Colors";
-import { useRouter } from "expo-router";
-import { useFonts } from "@/hooks/use-fonts";
+import Header from "@/components/header";
 import StoreCard from "@/components/ui/StoreCard";
-import Header from "@/components/header"
+import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { supabase } from "../../supabase";
-import { ThemedText } from "../../components/themed-text";
+import { useFonts } from "@/hooks/use-fonts";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Check, Search, X } from "lucide-react-native";
+import React, { useState } from "react";
+import { Dimensions, FlatList, ScrollView, View } from "react-native";
+import { Button, Chip, Searchbar } from "react-native-paper";
 import Spinner from "../../components/spinner";
+import { ThemedText } from "../../components/themed-text";
+import { supabase } from "../../supabase";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const BASE_SCREEN_WIDTH = 375;
@@ -29,7 +28,9 @@ interface Item {
   price: string;
   image: any;
   categoryId: number;
+  imageUrl?: string;
 }
+
 
 export default function StorePage() {
   useFonts();
@@ -74,6 +75,35 @@ export default function StorePage() {
     ...categories.filter((c) => selectedCategories.includes(c.id)),
     ...categories.filter((c) => !selectedCategories.includes(c.id)),
   ]
+    // Bouw een public URL op basis van het pad in image_url
+  const buildPublicImageUrl = (imageUrl?: string | null) => {
+    const raw = imageUrl?.trim();
+    const baseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+
+    if (!raw || !baseUrl) return null;
+
+    // Als er al "tools/" in zit, gebruik dat pad, anders prefixen
+    const path = raw.startsWith("tools/") ? raw : `tools/${raw}`;
+
+    return `${baseUrl}/storage/v1/object/public/${path}`;
+  };
+
+    const getStoreItemImageSource = (row: any) => {
+    // 1) Probeer public URL uit image_url
+    const publicUrl = buildPublicImageUrl(row.image_url as string | null | undefined);
+    if (publicUrl) {
+      return { uri: publicUrl };
+    }
+
+    // 2) Fallback naar bestaande assets op basis van categorie
+    return (
+      exampleImages[row.category_id] ||
+      require("@/assets/images/Premiumkit.png")
+    );
+  };
+
+
+
 
   const isFocused = useIsFocused();
 
@@ -99,7 +129,7 @@ export default function StorePage() {
 
           const { data: storeItemsData, error: storeItemsError } = await supabase
             .from("store_items")
-            .select("id_store_item, name, category_id, price")
+            .select("id_store_item, name, category_id, price, image_url")
             .limit(50);
           const { data: starterkitItemsData, error: starterkitItemsError } = await supabase
             .from("starter_kits")
@@ -114,8 +144,11 @@ export default function StorePage() {
               title: row.name ?? "Untitled Item",
               categoryId: row.category_id ?? undefined,
               price: row.price ? `€${row.price}` : "N/A",
-              image: exampleImages[row.category_id] || require("@/assets/images/Premiumkit.png"),
+              // BELANGRIJK: gebruik helper, niet rechtstreeks exampleImages
+              image: getStoreItemImageSource(row),
+              imageUrl: row.image_url ?? undefined,
             }));
+
             const mappedStarterKits: Item[] = (starterkitItemsData ?? []).map((row: any) => ({
               id: row.id_starter_kit ?? undefined,
               title: row.name ?? "Untitled Starter Kit",
