@@ -89,52 +89,23 @@ export default function PaymentSuccess() {
         // --------------------------
         // 4. Create the order with all fields at once
         // --------------------------
-        let numericOrderId: number;
+        const { data: newOrder, error: newOrderError } = await supabase
+          .from("orders")
+          .insert({
+            user_id: userId,
+            total_amount: Number(amountInEuros),
+            status: "paid",
+            paid_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
 
-        if (orderId) {
-          numericOrderId = Number(orderId);
-          // Check if order exists
-          const { data: existingOrder, error: orderCheckError } = await supabase
-            .from("orders")
-            .select("id_order")
-            .eq("id_order", numericOrderId)
-            .single();
-
-          if (orderCheckError || !existingOrder) {
-            console.warn("Order ID does not exist, creating a new paid order.");
-            const { data: newOrder, error: newOrderError } = await supabase
-              .from("orders")
-              .insert({
-                user_id: userId,
-                total_amount: Number(amountInEuros),
-                status: "paid",
-                paid_at: new Date().toISOString(),
-              })
-              .select()
-              .single();
-            if (newOrderError || !newOrder) {
-              console.error("Failed to create order:", newOrderError);
-              return;
-            }
-            numericOrderId = newOrder.id_order;
-          }
-        } else {
-          const { data: newOrder, error: newOrderError } = await supabase
-            .from("orders")
-            .insert({
-              user_id: userId,
-              total_amount: Number(amountInEuros),
-              status: "paid",
-              paid_at: new Date().toISOString(),
-            })
-            .select()
-            .single();
-          if (newOrderError || !newOrder) {
-            console.error("Failed to create order:", newOrderError);
-            return;
-          }
-          numericOrderId = newOrder.id_order;
+        if (newOrderError || !newOrder) {
+          console.error("Failed to create order:", newOrderError);
+          return;
         }
+
+        const numericOrderId = newOrder.id_order;
 
         // --------------------------
         // 5. Insert order_items with starter_kit
@@ -174,7 +145,7 @@ export default function PaymentSuccess() {
       }
 
       // --------------------------
-      // EMAIL CODE (unchanged)
+      // EMAIL CODE
       // --------------------------
       if (email && amountInEuros && orderId) {
         emailjs
@@ -184,14 +155,13 @@ export default function PaymentSuccess() {
             {
               customer_email: email,
               amount: amountInEuros,
-              order_id: orderId,
             },
             process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY!
           )
           .then((result) => console.log("Email sent successfully:", result.text))
           .catch((error) => console.error("Failed to send email:", error.text || error));
       } else {
-        console.warn("Missing email, amount, or order ID, cannot send receipt.");
+        console.warn("Missing email or amount, cannot send receipt.");
       }
     };
 
