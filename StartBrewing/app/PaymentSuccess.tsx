@@ -23,6 +23,11 @@ export default function PaymentSuccess() {
   const orderId = params.order_id as string | undefined;
   const amountInEuros = (Number(amount) / 100).toFixed(2);
 
+  const title = "Payment Successful!"
+  const text1 = "Thank you for your purchase!"
+  const text2 = "You can now return to the homepage!"
+  const button ="Back to home"
+
   useEffect(() => {
     const processOrder = async () => {
       try {
@@ -193,9 +198,7 @@ export default function PaymentSuccess() {
       }}
     >
       <View className="mx-3 items-center">
-        <ThemedText type="title" className="mb-2">
-          Payment Successful!
-        </ThemedText>
+        <ThemedText type="title" className="mb-2">{title}</ThemedText>
 
         <View className="items-center mb-6">
           <CheckCircle
@@ -206,14 +209,11 @@ export default function PaymentSuccess() {
           />
         </View>
 
-        <ThemedText type="defaultText" className="text-center mb-6">
-          Thank you for your purchase!
-          {"\n"}
-          You can now return to the homepage!
+        <ThemedText type="defaultText" className="text-center mb-6">{text1}{"\n"}{text2}
         </ThemedText>
 
         <PrimaryButton
-          title="Back to home"
+          title={button}
           testID="back-button"
           onPress={() => router.replace("/HomePage")}
         />
