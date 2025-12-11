@@ -22,6 +22,11 @@ export default function PaymentFail() {
   const orderId = params.order_id as string | undefined;
   const amountInEuros = amount ? (Number(amount) / 100).toFixed(2) : "0.00";
 
+  const title = "Payment Failed"
+  const text1 = "Unfortunately, your payment could not be completed."
+  const text2 = "Please try again or contact support."
+  const button ="Back to shoppingcart"
+
   useEffect(() => {
     if (email && amountInEuros && orderId) {
       // Optionally send a failed payment email
@@ -64,7 +69,7 @@ export default function PaymentFail() {
       }}
     >
       <View className="mx-3 items-center">
-        <ThemedText type="title" className="mb-2">Payment Failed</ThemedText>
+        <ThemedText type="title" className="mb-2">{title}</ThemedText>
 
         {/* Red cross icon */}
         <XCircle
@@ -74,15 +79,12 @@ export default function PaymentFail() {
           className="mb-3"
         />
 
-        <ThemedText type="defaultText" className="text-center mb-6">
-          Unfortunately, your payment could not be completed.
-          {"\n"}
-          Please try again or contact support.
+        <ThemedText type="defaultText" className="text-center mb-6">{text1}{"\n"}{text2}
         </ThemedText>
 
         {/* Back to Home Button */}
         <PrimaryButton
-          title="Back to shoppingcart"
+          title={button}
           testID="back-button"
           onPress={() => router.replace("/ShoppingCart")}
         />
