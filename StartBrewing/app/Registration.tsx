@@ -254,15 +254,12 @@ export default function Registration() {
           <ErrorChip text="This email is already in use"/>
         )}
 
-        <ThemedText type="subTitle" className="mt-6">
-          Account
-        </ThemedText>
+        <ThemedText type="subTitle" className="mt-6">Account</ThemedText>
         <TextInput
           value={username}
           onChangeText={text => { setUsername(text); setUsernameInUseError(false); }}
           placeholder="Username"
           maxLength={30}
-         
         />
         {usernameInUseError && (
           <View className="mb-5">
@@ -275,7 +272,6 @@ export default function Registration() {
           placeholder="Password"
           secureTextEntry
           maxLength={30}
-
         />
         {password.length > 0 && (password.length < 6 || !/[A-Z]/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) && (
           <View className="mb-5">
