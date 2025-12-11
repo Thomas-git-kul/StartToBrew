@@ -1,8 +1,8 @@
 'use client';
 export const prerender = false;
 
-import { useEffect } from "react";
-import { View, Dimensions } from "react-native";
+import { useEffect, useState } from "react";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -12,15 +12,39 @@ import emailjs from "@emailjs/browser";
 import { supabase } from "@/supabase";
 import PrimaryButton from "@/components/primaryButton";
 import { useFonts } from "@/hooks/use-fonts";
+import Spinner from "@/components/spinner";
 
 export default function PaymentSuccess() {
-  useFonts();
+  const fontsLoaded = useFonts();
   const router = useRouter();
   const params = useLocalSearchParams();
   const email = params.email as string | undefined;
   const amount = params.amount as string | undefined;
   const orderId = params.order_id as string | undefined;
   const amountInEuros = (Number(amount) / 100).toFixed(2);
+
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [button, setButton] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFeedback() {
+      const { data, error } = await supabase
+        .from("payment_feedback")
+        .select("id, title, text, button")
+        .eq("id", 2)
+        .single();
+
+      if (!error && data) {
+        setTitle(data.title || "Failed to load");
+        setText(data.text || "Failed to load");
+        setButton(data.button || "Failed to load");
+      }
+      setIsLoading(false);
+    }
+    fetchFeedback();
+  }, []);
 
   useEffect(() => {
     const processOrder = async () => {
@@ -172,7 +196,16 @@ export default function PaymentSuccess() {
     };
 
     processOrder();
-  }, [email, amount, orderId]);
+  }, [email, amountInEuros, orderId]);
+
+  // Show spinner while fonts or data is loading
+  if (!fontsLoaded || isLoading) {
+    return (
+      <Spinner
+        title="loading"
+      />
+    );
+  }
 
   return (
     <SafeAreaView
@@ -183,9 +216,7 @@ export default function PaymentSuccess() {
       }}
     >
       <View className="mx-3 items-center">
-        <ThemedText type="title" className="mb-2">
-          Payment Successful!
-        </ThemedText>
+        <ThemedText type="title" className="mb-2">{title}</ThemedText>
 
         <View className="items-center mb-6">
           <CheckCircle
@@ -196,14 +227,11 @@ export default function PaymentSuccess() {
           />
         </View>
 
-        <ThemedText type="defaultText" className="text-center mb-6">
-          Thank you for your purchase!
-          {"\n"}
-          You can now return to the homepage!
+        <ThemedText type="defaultText" className="text-center mb-6">{text}
         </ThemedText>
 
         <PrimaryButton
-          title="Back to home"
+          title={button}
           testID="back-button"
           onPress={() => router.replace("/HomePage")}
         />

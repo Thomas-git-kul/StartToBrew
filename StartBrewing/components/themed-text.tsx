@@ -1,4 +1,4 @@
-import { StyleSheet, Text, type TextProps, Dimensions } from 'react-native';
+import { StyleSheet, Text, type TextProps, Dimensions, Platform } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
@@ -22,23 +22,37 @@ export function ThemedText({
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
-  return (
-    <Text
-      style={[
-        { color },
-        type === 'defaultText' ? styles.defaultText : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'subTitle' ? styles.subTitle : undefined,
-        type === 'inputSug' ? styles.inputSug : undefined,
-        type === 'accentDark' ? styles.accentDark : undefined,
-        type === 'numbers' ? styles.numbers : undefined,
-        type === 'titleBlack' ? styles.titleBlack : undefined,
-        type === 'tips' ? styles.tips : undefined,
-        style,
-      ]}
-      {...rest}
-    />
-  );
+  const textStyle = [
+    { color },
+    type === 'defaultText' ? styles.defaultText : undefined,
+    type === 'title' ? styles.title : undefined,
+    type === 'subTitle' ? styles.subTitle : undefined,
+    type === 'inputSug' ? styles.inputSug : undefined,
+    type === 'accentDark' ? styles.accentDark : undefined,
+    type === 'numbers' ? styles.numbers : undefined,
+    type === 'titleBlack' ? styles.titleBlack : undefined,
+    type === 'tips' ? styles.tips : undefined,
+    style,
+  ];
+
+  if (Platform.OS === "web") {
+    const flat = StyleSheet.flatten(textStyle) || {};
+
+    return (
+      <span
+        style={{
+          ...flat,
+          fontFamily: flat.fontFamily || "inherit",
+          display: "inline-block",
+          whiteSpace: "pre-wrap",
+        } as React.CSSProperties}
+        {...rest}
+      >
+        {rest.children}
+      </span>
+    );
+  }
+  return <Text style={textStyle} {...rest} />;
 }
 
 const styles = StyleSheet.create({
@@ -83,4 +97,3 @@ const styles = StyleSheet.create({
     color: BASE_COLORS.ACCENT_LIGHT
   },
 });
-

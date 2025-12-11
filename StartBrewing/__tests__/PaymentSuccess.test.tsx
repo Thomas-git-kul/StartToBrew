@@ -55,6 +55,10 @@ jest.mock("@/constants/Fonts", () => ({
   FontFamilies: { BODY: "System" },
 }));
 
+jest.mock("@/hooks/use-fonts", () => ({
+  useFonts: jest.fn(() => true),
+}));
+
 /* ------------------------------
    SUPABASE MOCK (single source of truth)
 ------------------------------- */
@@ -71,6 +75,25 @@ jest.mock("@/supabase", () => ({
     from: (...args: any[]) => mockFrom(...args),
   },
 }));
+
+/* ------------------------------
+   HELPER: Default payment_feedback mock
+------------------------------- */
+const defaultPaymentFeedbackMock = () => ({
+  select: () => ({
+    eq: () => ({
+      single: jest.fn().mockResolvedValue({
+        data: {
+          id: 2,
+          title: "Payment Successful!",
+          text: "Thank you for your purchase! You can now return to the homepage!",
+          button: "Back to home",
+        },
+        error: null,
+      }),
+    }),
+  }),
+});
 
 /* ------------------------------
    SUPABASE TABLE BEHAVIOR
@@ -92,6 +115,23 @@ beforeEach(() => {
 
   mockFrom.mockImplementation((table: string) => {
     switch (table) {
+      case "payment_feedback":
+        return {
+          select: () => ({
+            eq: () => ({
+              single: jest.fn().mockResolvedValue({
+                data: {
+                  id: 2,
+                  title: "Payment Successful!",
+                  text: "Thank you for your purchase! You can now return to the homepage!",
+                  button: "Back to home",
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+
       case "shopping_carts":
         return {
           select: () => ({
@@ -158,10 +198,13 @@ beforeEach(() => {
 ------------------------------- */
 
 describe("<PaymentSuccess />", () => {
-  it("renders essential UI", () => {
+  it("renders essential UI", async () => {
     const { getByText } = render(<PaymentSuccess />);
 
-    expect(getByText("Payment Successful!")).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText("Payment Successful!")).toBeTruthy();
+    });
+
     expect(getByText("Thank you for your purchase! You can now return to the homepage!")).toBeTruthy();
     expect(getByText("Back to home")).toBeTruthy();
     expect(getByText("CheckIcon")).toBeTruthy();
@@ -203,8 +246,12 @@ describe("<PaymentSuccess />", () => {
     ]);
   });
 
-  it("navigates to HomePage", () => {
+  it("navigates to HomePage", async () => {
     const { getByText } = render(<PaymentSuccess />);
+
+    await waitFor(() => {
+      expect(getByText("Back to home")).toBeTruthy();
+    });
 
     fireEvent.press(getByText("Back to home"));
 
@@ -212,7 +259,7 @@ describe("<PaymentSuccess />", () => {
   });
 
   it("creates a new order when orderId is missing and skips email", async () => {
-    (useLocalSearchParams as jest.Mock).mockReturnValueOnce({
+    (useLocalSearchParams as jest.Mock).mockReturnValue({
       email: "test@example.com",
       amount: "500",
     });
@@ -238,6 +285,9 @@ describe("<PaymentSuccess />", () => {
   it("defaults starter_kit to false when missing", async () => {
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return {
             select: () => ({
@@ -316,6 +366,9 @@ describe("<PaymentSuccess />", () => {
   it("stops processing when no shopping cart is found", async () => {
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return {
             select: () => ({
@@ -392,6 +445,9 @@ describe("<PaymentSuccess />", () => {
 
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return {
             select: () => ({
@@ -452,6 +508,9 @@ describe("<PaymentSuccess />", () => {
     // shopping_cart_items returns empty array
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return {
             select: () => ({
@@ -542,6 +601,9 @@ describe("<PaymentSuccess />", () => {
 
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return {
             select: () => ({
@@ -567,6 +629,9 @@ describe("<PaymentSuccess />", () => {
   it("logs error when fetching cart items fails (itemsError branch)", async () => {
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return {
             select: () => ({
@@ -604,6 +669,9 @@ describe("<PaymentSuccess />", () => {
     // simulate existing order not found, and insert failing
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return {
             select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: { id_cart: 55 }, error: null }) }) }),
@@ -643,6 +711,9 @@ describe("<PaymentSuccess />", () => {
 
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return { select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: { id_cart: 55 }, error: null }) }) }), delete: () => ({ eq: jest.fn().mockResolvedValue({ error: null }) }) };
         case "shopping_cart_items":
@@ -676,6 +747,9 @@ describe("<PaymentSuccess />", () => {
   it("logs error when inserting order_items fails (orderItemsErr branch)", async () => {
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return {
             select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: { id_cart: 55 }, error: null }) }) }),
@@ -717,6 +791,9 @@ describe("<PaymentSuccess />", () => {
 
     mockFrom.mockImplementation((table: string) => {
       switch (table) {
+        case "payment_feedback":
+          return defaultPaymentFeedbackMock();
+
         case "shopping_carts":
           return {
             select: () => ({ eq: () => ({ single: jest.fn().mockResolvedValue({ data: { id_cart: 55 }, error: null }) }) }),

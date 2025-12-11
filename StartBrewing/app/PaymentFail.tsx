@@ -1,7 +1,7 @@
 'use client';
 export const prerender = false;
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -11,6 +11,8 @@ import { XCircle } from "lucide-react-native";
 import emailjs from "@emailjs/browser";
 import { useFonts } from "@/hooks/use-fonts";
 import PrimaryButton from "@/components/primaryButton";
+import Spinner from "@/components/spinner";
+import { supabase } from "@/supabase";
 
 export default function PaymentFail() {
   useFonts();
@@ -21,9 +23,31 @@ export default function PaymentFail() {
   const orderId = params.order_id as string | undefined;
   const amountInEuros = amount ? (Number(amount) / 100).toFixed(2) : "0.00";
 
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [button, setButton] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFeedback() {
+      const { data, error } = await supabase
+        .from("payment_feedback")
+        .select("id, title, text, button")
+        .eq("id", 1)
+        .single();
+
+      if (!error && data) {
+        setTitle(data.title || "Failed to load");
+        setText(data.text || "Failed to load");
+        setButton(data.button || "Failed to load");
+      }
+      setIsLoading(false);
+    }
+    fetchFeedback();
+  }, []);
+
   useEffect(() => {
     if (email && amountInEuros && orderId) {
-      // Optionally send a failed payment email
       emailjs
         .send(
           process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID!,
@@ -43,7 +67,16 @@ export default function PaymentFail() {
           console.error("Failed to send failure email:", error.text || error);
         });
     }
-  }, [email, amount, orderId]);
+  }, [email, amountInEuros, orderId]);
+
+  // Show spinner while fonts or data is loading
+  if (isLoading) {
+    return (
+      <Spinner
+        title="Loading..."
+      />
+    );
+  }
 
   return (
     <SafeAreaView
@@ -54,7 +87,7 @@ export default function PaymentFail() {
       }}
     >
       <View className="mx-3 items-center">
-        <ThemedText type="title" className="mb-2">Payment Failed</ThemedText>
+        <ThemedText type="title" className="mb-2">{title}</ThemedText>
 
         {/* Red cross icon */}
         <XCircle
@@ -64,15 +97,12 @@ export default function PaymentFail() {
           className="mb-3"
         />
 
-        <ThemedText type="defaultText" className="text-center mb-6">
-          Unfortunately, your payment could not be completed.
-          {"\n"}
-          Please try again or contact support.
+        <ThemedText type="defaultText" className="text-center mb-6">{text}
         </ThemedText>
 
         {/* Back to Home Button */}
         <PrimaryButton
-          title="Back to shoppingcart"
+          title={button}
           testID="back-button"
           onPress={() => router.replace("/ShoppingCart")}
         />
