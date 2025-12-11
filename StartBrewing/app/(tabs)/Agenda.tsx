@@ -1,23 +1,25 @@
-import { useCallback, useState, useEffect } from "react";
-import { View, ScrollView, Dimensions, Text } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFonts } from "@/hooks/use-fonts";
-import { Calendar } from "react-native-calendars";
-import { Card, Chip, Button } from "react-native-paper";
 import Header from "@/components/header";
+import Spinner from "@/components/spinner";
+import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
 import { FontFamilies } from "@/constants/Fonts";
-import { ThemedText } from "@/components/themed-text";
-import { Clock, ChevronLeft, ChevronRight } from "lucide-react-native";
-import { useRouter } from "expo-router";
+import { useFonts } from "@/hooks/use-fonts";
 import { supabase } from "@/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Dimensions, ScrollView, Text, View } from "react-native";
+import { Calendar } from "react-native-calendars";
+import { Button, Card, Chip } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Spinner from "@/components/spinner";
 
 const BASE_SCREEN_WIDTH = 375;
 const scale = Dimensions.get("window").width / BASE_SCREEN_WIDTH;
 const isJest = typeof jest !== "undefined";
+
+const getDateKey = (date: Date) => date.toISOString().split("T")[0];
 
 export function formatDuration(minutes: number) {
   if (minutes >= 10080) return `${Math.floor(minutes / 10080)} week(s)`;
@@ -76,9 +78,8 @@ export default function Agenda() {
   const router = useRouter();
 
   const [phasesByDate, setPhasesByDate] = useState<Record<string, BrewEntry[]>>({});
-  const [currentDate, setCurrentDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [currentDate, setCurrentDate] = useState(getDateKey(new Date()));
+
   const [calendarVisible, setCalendarVisible] = useState(true);
   const [loading, setLoading] = useState(true);
 
@@ -152,68 +153,69 @@ export default function Agenda() {
         let lastCompletedStepDate: Date | null = null;
 
         allSteps.forEach((step) => {
-          const status = brewStepStatusMap[`${brew.id_brew}_${step.step_id}`];
-          const brewStepInfo = brewStepsTyped.find(
-            (b) => b.id_brew === brew.id_brew && b.step_id === step.step_id
-          );
+  const status = brewStepStatusMap[`${brew.id_brew}_${step.step_id}`];
+  const brewStepInfo = brewStepsTyped.find(
+    (b) => b.id_brew === brew.id_brew && b.step_id === step.step_id
+  );
 
-          if (status === "completed" && brewStepInfo?.completed_at) {
-            const date = new Date(brewStepInfo.completed_at);
-            if (!lastCompletedStepDate || date > lastCompletedStepDate) {
-              lastCompletedStepDate = date;
-            }
-          }
-        });
+  if (status === "completed" && brewStepInfo?.completed_at) {
+    const date = new Date(brewStepInfo.completed_at);
+    if (!lastCompletedStepDate || date > lastCompletedStepDate) {
+      lastCompletedStepDate = date;
+    }
+  }
+});
 
-        const today = new Date();
+const today = new Date();
 
-        // Startpunt: laatste completed stap OF startdatum brew
-        let currentStepTime = lastCompletedStepDate
-          ? new Date(lastCompletedStepDate)
-          : new Date();
+// Startpunt: laatste completed stap OF startdatum brew
+let baseDate: Date;
+if (lastCompletedStepDate) {
+  baseDate = new Date(lastCompletedStepDate);
+} else {
+  // gebruik effectief de start_date van de brew
+  baseDate = new Date(brew.start_date);
+}
 
-        currentStepTime.setHours(0, 0, 0, 0);
+// normaliseer naar middernacht
+baseDate.setHours(0, 0, 0, 0);
+let currentStepTime = new Date(baseDate);
 
-        // Nu elke stap datum geven
-        allSteps.forEach((step, globalStepIdx) => {
-          let stepDate = new Date(currentStepTime);
+// Nu elke stap datum geven
+allSteps.forEach((step, globalStepIdx) => {
+  let stepDate = new Date(currentStepTime);
 
-          // Als completed → Overschrijf datum
-          const brewStepInfo = brewStepsTyped.find(
-            (b) => b.id_brew === brew.id_brew && b.step_id === step.step_id
-          );
+  // Als completed → Overschrijf datum
+  const brewStepInfo = brewStepsTyped.find(
+    (b) => b.id_brew === brew.id_brew && b.step_id === step.step_id
+  );
 
-          if (brewStepInfo?.status === "completed" && brewStepInfo.completed_at) {
-            stepDate = new Date(brewStepInfo.completed_at);
-            currentStepTime = new Date(stepDate);
-          } else {
-            // Geen completed, dus duration toepassen op currentStepTime
-            if (step.duration_min) {
-              stepDate = new Date(currentStepTime);
-              stepDate.setMinutes(stepDate.getMinutes() + step.duration_min);
-            } else {
-              stepDate = new Date(currentStepTime);
-          }
+  if (brewStepInfo?.status === "completed" && brewStepInfo.completed_at) {
+    stepDate = new Date(brewStepInfo.completed_at);
+    currentStepTime = new Date(stepDate);
+  } else {
+    // Geen completed, dus duration toepassen op currentStepTime
+    if (step.duration_min) {
+      stepDate = new Date(currentStepTime);
+      stepDate.setMinutes(stepDate.getMinutes() + step.duration_min);
+    } else {
+      stepDate = new Date(currentStepTime);
+    }
 
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-          if (stepDate < today) {
-            // De eerste niet-completed stap ligt vóór vandaag → forceer vandaag
-            stepDate = new Date(today);
-            currentStepTime = new Date(today);
-          } else {
-            // Geen correctie → gewoon verder rekenen
-            currentStepTime = new Date(stepDate);
-          }}
+    if (stepDate < today) {
+      // De eerste niet-completed stap ligt vóór vandaag → forceer vandaag
+      stepDate = new Date(today);
+      currentStepTime = new Date(today);
+    } else {
+      // Geen correctie → gewoon verder rekenen
+      currentStepTime = new Date(stepDate);
+    }
+  }
 
-          // Datum naar string
-          const dayStr = `${stepDate.getFullYear()}-${(stepDate.getMonth() + 1)
-            .toString()
-            .padStart(2, "0")}-${stepDate
-            .getDate()
-            .toString()
-            .padStart(2, "0")}`;
+  const dayStr = getDateKey(stepDate);
 
           // Bouw agenda entry op dezelfde manier als je al deed
           if (!agenda[dayStr]) agenda[dayStr] = [];
@@ -308,9 +310,10 @@ export default function Agenda() {
         title="Agenda"
         iconName="Calendar1"
         onIconPress={() => {
-          const today = new Date().toISOString().split("T")[0];
-          setCurrentDate(today);
+          const todayKey = getDateKey(new Date());
+          setCurrentDate(todayKey);
         }}
+
       />
 
       {loading ? (
