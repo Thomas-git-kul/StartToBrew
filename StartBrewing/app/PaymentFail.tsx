@@ -1,4 +1,5 @@
 'use client';
+export const prerender = false;
 
 import { useEffect } from "react";
 import { View } from "react-native";

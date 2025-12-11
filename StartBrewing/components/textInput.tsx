@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { View, TextInput, Pressable, Dimensions } from "react-native";
 import { Eye, EyeOff } from "lucide-react-native";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -29,7 +29,6 @@ export default function CustomTextInput({
   numberOfLines,
   keyboardType = "default",
   maxLength,
-  style,
 }: textInputProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -37,6 +36,15 @@ export default function CustomTextInput({
   const borderColor = focused
     ? BASE_COLORS.ACCENT_PRIMARY
     : BASE_COLORS.STONE300;
+
+  const handleTextChange = (text: string) => {
+    if (keyboardType === "numeric" && text) {
+      const numericText = text.replace(/[^0-9.]/g, '');
+      onChangeText?.(numericText);
+    } else {
+      onChangeText?.(text);
+    }
+  };
 
   return (
     <View 
@@ -46,7 +54,7 @@ export default function CustomTextInput({
     >
       <TextInput
         placeholder={placeholder}
-        onChangeText={onChangeText}
+        onChangeText={handleTextChange}
         value={value}
         secureTextEntry={secureTextEntry && !showPassword}
         multiline={multiline}

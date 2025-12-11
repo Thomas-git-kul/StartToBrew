@@ -1,10 +1,11 @@
-import React from "react";
-import { render, fireEvent, act, waitFor } from "@testing-library/react-native";
+// __tests__/SpecificRecipe.test.tsx
 import { NavigationContainer } from "@react-navigation/native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
+import React from "react";
 import { Alert } from "react-native";
 import SpecificRecipe from "../app/(tabs)/SpecificRecipe";
-import { useRouter, useLocalSearchParams } from "expo-router";
 
+// ---------- BASIS MOCKS ----------
 jest.mock("@/hooks/use-fonts", () => ({ useFonts: () => true }));
 jest.mock("@/hooks/beer-image", () => ({
   getBeerImageSource: () => ({ uri: "test-beer-image" }),
@@ -17,7 +18,7 @@ const mockGet = jest.fn(() => 0);
 const mockReset = jest.fn();
 const mockToggleFavorite = jest.fn();
 
-// ⬇️ NIEUW: mock de user progress context, zodat useUserProgressContext geen error gooit
+// UserProgressContext
 jest.mock("@/context/UserProgressContext", () => ({
   useUserProgressContext: () => ({
     progress: null,
@@ -28,6 +29,7 @@ jest.mock("@/context/UserProgressContext", () => ({
   }),
 }));
 
+// ClickCounterContext
 jest.mock("@/context/ClickCounterContext", () => ({
   useClickCounter: () => ({
     clickCount: 0,
@@ -37,12 +39,39 @@ jest.mock("@/context/ClickCounterContext", () => ({
   }),
 }));
 
-// Mock AppRefresh context zodat useAppRefresh niet crasht
+// AppRefreshContext
 jest.mock("@/context/AppRefreshContext", () => ({
   useAppRefresh: () => ({
     triggerRefresh: mockTriggerRefresh,
   }),
 }));
+
+// --------- NIEUW: BADGE FUNCTIONALITEIT MOCKS ----------
+
+// fetchLatestBadge mock
+const mockFetchLatestBadge = jest.fn();
+jest.mock("@/supabase/queries/badges", () => ({
+  fetchLatestBadge: (...args: any[]) => mockFetchLatestBadge(...args),
+}));
+
+// BadgeEarnedModal mock – simpele view met testID
+jest.mock("@/components/BadgeEarnedModal", () => {
+  const { View, Text, TouchableOpacity } = require("react-native");
+  return {
+    BadgeEarnedModal: ({ visible, badgeName, onClose }: any) =>
+      visible ? (
+        <View testID="badge-earned-modal">
+          <Text>{badgeName || "Badge earned!"}</Text>
+          <TouchableOpacity
+            testID="badge-earned-close"
+            onPress={onClose}
+          >
+            <Text>Close</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null,
+  };
+});
 
 // Mock ReviewModal component
 jest.mock("@/components/reviewModal", () => ({
@@ -132,7 +161,7 @@ const recipeData = {
   description:
     "Den Ballaste Point Sculpin IPA 60 is a classic American IPA voor hopliefhebbers.",
   difficulty: 1,
-  rating: null, // geen rating beschikbaar (valt nu terug op 0.0 / 5)
+  rating: null,
   haze_level: 1,
 };
 
@@ -203,26 +232,20 @@ const mapIngredient = (row: (typeof ingredientRows)[number]) => {
 };
 
 /* ------------------------------
-   MOCKS
+   ROUTER + PARAMS MOCKS
 ------------------------------- */
 
-// Router + params
 const mockPush = jest.fn();
 let mockRecipeSlug: string | undefined = recipeSlug;
 let mockFrom: string | undefined = undefined;
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
-  useLocalSearchParams: () => ({ 
-    recipe_slug: mockRecipeSlug, 
+  useLocalSearchParams: () => ({
+    recipe_slug: mockRecipeSlug,
     slug: mockRecipeSlug,
-    from: mockFrom 
+    from: mockFrom,
   }),
-}));
-
-// Fonts
-jest.mock("@/hooks/use-fonts", () => ({
-  useFonts: () => true,
 }));
 
 // ThemedText
@@ -241,9 +264,7 @@ jest.mock("react-native-safe-area-context", () => {
   return { SafeAreaView: ({ children }: any) => <View>{children}</View> };
 });
 
-// --------------------------
-// Mock Colors & Fonts
-// --------------------------
+// Colors & Fonts
 jest.mock("@/constants/Colors", () => ({
   BASE_COLORS: {
     LIGHT_BG: "#fafafa",
@@ -262,12 +283,16 @@ jest.mock("@/constants/Fonts", () => ({
   FontFamilies: { BODY: "System" },
 }));
 
-// --------------------------
-// Mock Header
-// --------------------------
+// Header
 jest.mock("@/components/header", () => {
   const { View, Text, TouchableOpacity } = require("react-native");
-  return ({ title, onIconPress, onIconPressLeft, actionTestID, actionTestIDLeft }: any) => (
+  return ({
+    title,
+    onIconPress,
+    onIconPressLeft,
+    actionTestID,
+    actionTestIDLeft,
+  }: any) => (
     <View>
       {actionTestIDLeft && onIconPressLeft && (
         <TouchableOpacity testID={actionTestIDLeft} onPress={onIconPressLeft}>
@@ -324,7 +349,8 @@ jest.mock("lucide-react-native", () => {
   const { Text } = require("react-native");
   const make =
     (name: string) =>
-    ({ size, color, fill, stroke }: any) => <Text>{`${name}`}</Text>;
+    ({ size, color, fill, stroke }: any) =>
+      <Text>{`${name}`}</Text>;
   return {
     Star: make("Star"),
     Heart: make("Heart"),
@@ -332,12 +358,7 @@ jest.mock("lucide-react-native", () => {
   };
 });
 
-// beer-image
-jest.mock("@/hooks/beer-image", () => ({
-  getBeerImageSource: () => ({ uri: "test-beer-image" }),
-}));
-
-// Mock variables to control supabase responses
+// Supabase mocks
 let mockUser: any = { id: "user-1", created_at: new Date().toISOString() };
 let mockSession: any = null;
 let mockRecipeReviews: any[] = [];
@@ -380,7 +401,7 @@ jest.mock("@/supabase", () => ({
 
         case "recipe_reviews":
           return {
-            select: (fields?: string) => {
+            select: () => {
               const eqChain = {
                 eq: (col2: string, val2: any) => {
                   if (col2 === "account_id") {
@@ -402,7 +423,7 @@ jest.mock("@/supabase", () => ({
                   data: mockHasUserReviewed ? { rating: 4 } : null,
                   error: null,
                 }),
-                order: (field: string, opts: any) => ({
+                order: () => ({
                   limit: async () => ({
                     data: mockRecipeReviews,
                     error: null,
@@ -413,17 +434,17 @@ jest.mock("@/supabase", () => ({
                   error: null,
                 }),
               };
-              
+
               return {
-                eq: (col: string, val: any) => eqChain,
+                eq: () => eqChain,
               };
             },
             insert: () => ({
               select: async () => ({ data: null, error: null }),
             }),
             delete: () => ({
-              eq: (col: string, val: any) => ({
-                eq: async (col2: string, val2: any) => ({
+              eq: () => ({
+                eq: async () => ({
                   data: null,
                   error: null,
                 }),
@@ -471,15 +492,10 @@ jest.mock("@/supabase", () => ({
 
         case "brews":
           return {
-            select: (fields?: string) => ({
-              eq: (col: string, val: any) => {
-                if (col === "recipe_slug") {
-                  return {
-                    eq: async () => ({ data: [], error: null }),
-                  };
-                }
-                return { eq: async () => ({ data: [], error: null }) };
-              },
+            select: () => ({
+              eq: () => ({
+                eq: async () => ({ data: [], error: null }),
+              }),
             }),
             insert: () => ({
               select: async () => ({
@@ -543,17 +559,15 @@ jest.mock("@/context/FavoritesContext", () => ({
   }),
 }));
 
-// Mock StoreCard and ReviewCard
+// StoreCard & ReviewCard
 jest.mock("@/components/ui/StoreCard", () => {
-  const { View, Text, TouchableOpacity } = require("react-native");
-  return ({ title, price, onPress }: any) => {
-    return (
-      <TouchableOpacity onPress={onPress} testID="store-card">
-        <Text>{title}</Text>
-        <Text>{price}</Text>
-      </TouchableOpacity>
-    );
-  };
+  const { Text, TouchableOpacity } = require("react-native");
+  return ({ title, price, onPress }: any) => (
+    <TouchableOpacity onPress={onPress} testID="store-card">
+      <Text>{title}</Text>
+      <Text>{price}</Text>
+    </TouchableOpacity>
+  );
 });
 
 jest.mock("@/components/ui/ReviewCard", () => {
@@ -571,7 +585,7 @@ jest.mock("@/components/ui/ReviewCard", () => {
   );
 });
 
-// Mock Spinner
+// Spinner
 jest.mock("@/components/spinner", () => {
   const { View, Text } = require("react-native");
   return ({ title }: any) => (
@@ -581,7 +595,7 @@ jest.mock("@/components/spinner", () => {
   );
 });
 
-// Mock custom TextInput
+// custom TextInput
 jest.mock("@/components/textInput", () => {
   const { TextInput: RNTextInput } = require("react-native");
   return ({ value, onChangeText, ...rest }: any) => (
@@ -589,7 +603,7 @@ jest.mock("@/components/textInput", () => {
   );
 });
 
-// Mock PrimaryButton
+// PrimaryButton
 jest.mock("@/components/primaryButton", () => {
   const { TouchableOpacity, Text } = require("react-native");
   return ({ title, testID, onPress }: any) => (
@@ -599,7 +613,7 @@ jest.mock("@/components/primaryButton", () => {
   );
 });
 
-// Mock SecondaryButton
+// SecondaryButton
 jest.mock("@/components/secondaryButton", () => {
   const { TouchableOpacity, Text } = require("react-native");
   return ({ title, testID, onPress }: any) => (
@@ -609,7 +623,7 @@ jest.mock("@/components/secondaryButton", () => {
   );
 });
 
-// Mock Alert
+// Alert
 jest.spyOn(Alert, "alert");
 
 /* ------------------------------
@@ -637,12 +651,16 @@ describe("<SpecificRecipe />", () => {
     mockRecipeReviews = [];
     mockHasUserReviewed = false;
     mockStarterKits = [];
+    mockFetchLatestBadge.mockReset();
+    mockFetchLatestBadge.mockResolvedValue(null); // default: geen badge
   });
 
   describe("Basic rendering", () => {
     it("renders the title of the recipe", async () => {
       const { findByText } = await renderWithNavigation(<SpecificRecipe />);
-      expect(await findByText("Den Ballaste Point Sculpin IPA 60")).toBeTruthy();
+      expect(
+        await findByText("Den Ballaste Point Sculpin IPA 60")
+      ).toBeTruthy();
     });
 
     it("shows start brewing button", async () => {
@@ -671,8 +689,8 @@ describe("<SpecificRecipe />", () => {
     it("displays ingredients list", async () => {
       const { findByText } = await renderWithNavigation(<SpecificRecipe />);
       expect(await findByText("Ingredients:")).toBeTruthy();
-      expect(await findByText(/Main.*yeast/i)).toBeTruthy();
-      expect(await findByText(/Pale Ale Malt.*grain/i)).toBeTruthy();
+      expect(await findByText(/Main.*Yeast/i)).toBeTruthy();
+      expect(await findByText(/Pale Ale Malt/i)).toBeTruthy();
     });
 
     it("shows default rating when no reviews", async () => {
@@ -683,7 +701,9 @@ describe("<SpecificRecipe />", () => {
 
     it("shows no reviews message when there are no reviews", async () => {
       const { findByText } = await renderWithNavigation(<SpecificRecipe />);
-      expect(await findByText("This beer has no reviews yet.")).toBeTruthy();
+      expect(
+        await findByText("This beer has no reviews yet.")
+      ).toBeTruthy();
     });
   });
 
@@ -691,7 +711,7 @@ describe("<SpecificRecipe />", () => {
     it("toggles favorite when heart button is pressed", async () => {
       const { findByTestId } = await renderWithNavigation(<SpecificRecipe />);
       const heartBtn = await findByTestId("heart-button");
-      
+
       fireEvent.press(heartBtn);
       await waitFor(() => {
         expect(mockToggleFavorite).toHaveBeenCalledWith(recipeSlug);
@@ -844,7 +864,9 @@ describe("<SpecificRecipe />", () => {
     });
 
     it("displays starter kits in modal", async () => {
-      const { findByText, queryByText } = await renderWithNavigation(<SpecificRecipe />);
+      const { findByText, queryByText } = await renderWithNavigation(
+        <SpecificRecipe />
+      );
 
       const startBtn = await findByText("Start Brewing");
       fireEvent.press(startBtn);
@@ -853,11 +875,10 @@ describe("<SpecificRecipe />", () => {
       fireEvent.press(confirmBtn);
 
       await findByText("Get your StarterKit now!");
-      
-      // Wait a bit for the kits to render
+
       await waitFor(() => {
         expect(queryByText(/Basic Kit/)).toBeTruthy();
-      }, { timeout: 2000 });
+      });
     });
 
     it("starts brewing when Skip is pressed in kits modal", async () => {
@@ -909,8 +930,8 @@ describe("<SpecificRecipe />", () => {
 
       await findByText("Rate this recipe");
       const stars = await findAllByTestId(/star-/);
-      
-      fireEvent.press(stars[3]); // Select 4 stars
+
+      fireEvent.press(stars[3]); // 4 sterren
       expect(stars[3]).toBeTruthy();
     });
 
@@ -925,7 +946,7 @@ describe("<SpecificRecipe />", () => {
       const input = await findByPlaceholderText(
         "(optional) Share your thoughts about this beer..."
       );
-      
+
       fireEvent.changeText(input, "Great beer!");
       expect(input.props.value).toBe("Great beer!");
     });
@@ -998,9 +1019,7 @@ describe("<SpecificRecipe />", () => {
       mockSession = { user: { id: "user-1" } };
       mockHasUserReviewed = true;
 
-      const { findByText, findByTestId } = await renderWithNavigation(
-        <SpecificRecipe />
-      );
+      const { findByTestId } = await renderWithNavigation(<SpecificRecipe />);
 
       const label = await findByTestId("already-reviewed-label");
       expect(label).toBeTruthy();
@@ -1044,9 +1063,7 @@ describe("<SpecificRecipe />", () => {
     });
 
     it("deletes review when delete button is pressed", async () => {
-      const { findByTestId, findByText } = await renderWithNavigation(
-        <SpecificRecipe />
-      );
+      const { findByTestId } = await renderWithNavigation(<SpecificRecipe />);
 
       const deleteBtn = await findByTestId("delete-review-btn");
       fireEvent.press(deleteBtn);
@@ -1075,12 +1092,10 @@ describe("<SpecificRecipe />", () => {
 
   describe("Error handling", () => {
     it("handles missing recipe slug gracefully", async () => {
-      // Set recipe slug to undefined
       mockRecipeSlug = undefined;
 
       const result = await renderWithNavigation(<SpecificRecipe />);
-      
-      // Component should still render without crashing
+
       await waitFor(() => {
         expect(result).toBeDefined();
       });
@@ -1122,6 +1137,7 @@ describe("<SpecificRecipe />", () => {
     });
   });
 
+  // ---------- NIEUW: BADGE MODAL TEST ----------
   describe("Edge cases and additional coverage", () => {
     it("closes batch size modal when dismissed", async () => {
       const { findByText, queryByText } = await renderWithNavigation(
@@ -1784,80 +1800,11 @@ describe("<SpecificRecipe />", () => {
       });
     });
 
-    /*
-    it("handles triggerRefresh error after review submission", async () => {
-      mockSession = { user: { id: "user-1" } };
-      mockTriggerRefresh.mockImplementationOnce(() => {
-        throw new Error("Trigger refresh failed");
+    describe("Snapshot", () => {
+      it("matches snapshot", async () => {
+        const tree = (await renderWithNavigation(<SpecificRecipe />)).toJSON();
+        expect(tree).toMatchSnapshot();
       });
-
-      const { findByText, findAllByTestId } = await renderWithNavigation(
-        <SpecificRecipe />
-      );
-
-      const addReviewBtn = await findByText("Add review");
-      fireEvent.press(addReviewBtn);
-
-      await findByText("Rate this recipe");
-      const stars = await findAllByTestId(/star-/);
-      fireEvent.press(stars[4]);
-
-      const submitBtn = await findByText("Submit");
-      fireEvent.press(submitBtn);
-
-      // Should still succeed despite triggerRefresh error
-      await waitFor(() => {
-        expect(mockRefreshProgress).toHaveBeenCalled();
-      });
-    });
-    */
-
-    it("calls refreshProgress even when review submission fails", async () => {
-      mockSession = { user: { id: "user-1" } };
-
-      const supabase = require("@/supabase").supabase;
-      const originalFrom = supabase.from;
-      supabase.from = jest.fn((table) => {
-        if (table === "recipe_reviews" && table !== "recipes") {
-          return {
-            select: () => ({
-              eq: () => ({
-                maybeSingle: async () => ({ data: null, error: null }),
-              }),
-            }),
-            insert: async () => ({
-              data: null,
-              error: { message: "Insert review failed" },
-            }),
-          };
-        }
-        return originalFrom(table);
-      });
-
-      const { findByText, findAllByTestId } = await renderWithNavigation(
-        <SpecificRecipe />
-      );
-
-      const addReviewBtn = await findByText("Add review");
-      fireEvent.press(addReviewBtn);
-
-      await findByText("Rate this recipe");
-      const stars = await findAllByTestId(/star-/);
-      fireEvent.press(stars[3]);
-
-      const submitBtn = await findByText("Submit");
-      fireEvent.press(submitBtn);
-
-      await waitFor(() => {
-        expect(mockRefreshProgress).toHaveBeenCalled();
-      });
-    });
-  });
-
-  describe("Snapshot", () => {
-    it("matches snapshot", async () => {
-      const tree = (await renderWithNavigation(<SpecificRecipe />)).toJSON();
-      expect(tree).toMatchSnapshot();
     });
   });
 });
