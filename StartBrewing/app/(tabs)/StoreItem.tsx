@@ -1,19 +1,19 @@
-import { useState, useMemo, useEffect } from "react";
-import { View, ScrollView, Image, Pressable, Dimensions, Text, TextInput } from "react-native";
-import { Button, Snackbar, ActivityIndicator } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { BASE_COLORS } from "@/constants/Colors";
-import { FontFamilies } from "@/constants/Fonts";
-import { useFonts } from "@/hooks/use-fonts";
 import Header from "@/components/header";
-import { ThemedText } from "@/components/themed-text";
-import { CirclePlus, CircleMinus } from "lucide-react-native";
-import { supabase } from "@/supabase";
-import Spinner from "@/components/spinner";
-import { useAppRefresh } from "@/context/AppRefreshContext";
 import PrimaryButton from "@/components/primaryButton";
 import SecondaryButton from "@/components/secondaryButton";
+import Spinner from "@/components/spinner";
+import { ThemedText } from "@/components/themed-text";
+import { BASE_COLORS } from "@/constants/Colors";
+import { FontFamilies } from "@/constants/Fonts";
+import { useAppRefresh } from "@/context/AppRefreshContext";
+import { useFonts } from "@/hooks/use-fonts";
+import { supabase } from "@/supabase";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { CircleMinus, CirclePlus } from "lucide-react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Dimensions, Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Snackbar } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const IMAGE_WIDTH = SCREEN_WIDTH - 20;
@@ -43,6 +43,37 @@ export default function StoreItem() {
   const [quantity, setQuantity] = useState("1");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  //helper function to get store item image source
+    const buildPublicImageUrl = (imageUrl?: string | null) => {
+    const raw = imageUrl?.trim();
+    const baseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+
+    if (!raw || !baseUrl) return null;
+
+    const path = raw.startsWith("tools/") ? raw : `tools/${raw}`;
+    return `${baseUrl}/storage/v1/object/public/${path}`;
+  };
+
+  // helper function to get store item image source
+  const getStoreItemImageSource = (
+    categoryNumber: number,
+    imageUrl?: string | null
+  ) => {
+    const publicUrl = buildPublicImageUrl(imageUrl);
+
+    if (publicUrl) {
+      return { uri: publicUrl };
+    }
+
+    // Fallback: lokale asset
+    return (
+      exampleImages[Number(categoryNumber)] ||
+      require("@/assets/images/Premiumkit.png")
+    );
+  };
+
+
+
 
   // Format price in Euro
   const formatter = useMemo(
@@ -188,7 +219,7 @@ export default function StoreItem() {
           // Regular store item
           ({ data, error } = await supabase
             .from("store_items")
-            .select("id_store_item, name, category_id, price")
+            .select("id_store_item, name, category_id, price, image_url")
             .eq("id_store_item", id)
             .single());
             if (data) {
@@ -202,7 +233,19 @@ export default function StoreItem() {
           return;
         }
 
-        if (mounted && data) {
+                if (mounted && data) {
+          const isStarterKit = Number(categoryNumber) === 4;
+
+          const imageSource = isStarterKit
+            ? (
+                exampleImages[Number(categoryNumber)] ||
+                require("@/assets/images/starterkit2.png")
+              )
+            : getStoreItemImageSource(
+                Number(categoryNumber),
+                data.image_url ?? null
+              );
+
           setItem({
             id: data.id,
             name: data.name ?? "Untitled Item",
@@ -212,12 +255,13 @@ export default function StoreItem() {
             images: [
               {
                 id: "0",
-                source: exampleImages[Number(categoryNumber)] 
-                  || require("@/assets/images/Premiumkit.png"),
+                source: imageSource,
               },
             ],
           });
         }
+
+
       } catch (e: any) {
         console.warn("Supabase fetch exception:", e?.message ?? e);
       } finally {
