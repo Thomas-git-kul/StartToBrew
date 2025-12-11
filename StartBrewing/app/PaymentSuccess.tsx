@@ -1,7 +1,7 @@
 'use client';
 export const prerender = false;
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -23,10 +23,28 @@ export default function PaymentSuccess() {
   const orderId = params.order_id as string | undefined;
   const amountInEuros = (Number(amount) / 100).toFixed(2);
 
-  const title = "Payment Successful!"
-  const text1 = "Thank you for your purchase!"
-  const text2 = "You can now return to the homepage!"
-  const button ="Back to home"
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [button, setButton] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFeedback() {
+      const { data, error } = await supabase
+        .from("payment_feedback")
+        .select("id, title, text, button")
+        .eq("id", 2)
+        .single();
+
+      if (!error && data) {
+        setTitle(data.title || "Failed to load");
+        setText(data.text || "Failed to load");
+        setButton(data.button || "Failed to load");
+      }
+      setIsLoading(false);
+    }
+    fetchFeedback();
+  }, []);
 
   useEffect(() => {
     const processOrder = async () => {
@@ -180,8 +198,8 @@ export default function PaymentSuccess() {
     processOrder();
   }, [email, amountInEuros, orderId]);
 
-  // Show spinner while fonts load
-  if (!fontsLoaded) {
+  // Show spinner while fonts or data is loading
+  if (!fontsLoaded || isLoading) {
     return (
       <Spinner
         title="loading"
@@ -209,7 +227,7 @@ export default function PaymentSuccess() {
           />
         </View>
 
-        <ThemedText type="defaultText" className="text-center mb-6">{text1}{"\n"}{text2}
+        <ThemedText type="defaultText" className="text-center mb-6">{text}
         </ThemedText>
 
         <PrimaryButton
