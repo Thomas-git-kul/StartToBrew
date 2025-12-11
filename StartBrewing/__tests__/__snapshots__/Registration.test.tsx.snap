@@ -537,6 +537,7 @@ exports[`<Registration /> matches snapshot 1`] = `
           >
             <TextInput
               keyboardType="numeric"
+              maxLength={2}
               multiline={false}
               onBlur={[Function]}
               onChangeText={[Function]}
@@ -577,6 +578,7 @@ exports[`<Registration /> matches snapshot 1`] = `
           >
             <TextInput
               keyboardType="numeric"
+              maxLength={2}
               multiline={false}
               onBlur={[Function]}
               onChangeText={[Function]}
@@ -617,6 +619,7 @@ exports[`<Registration /> matches snapshot 1`] = `
           >
             <TextInput
               keyboardType="numeric"
+              maxLength={4}
               multiline={false}
               onBlur={[Function]}
               onChangeText={[Function]}

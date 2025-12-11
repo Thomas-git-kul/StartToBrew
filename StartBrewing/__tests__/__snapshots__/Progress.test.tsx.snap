@@ -142,7 +142,15 @@ exports[`<Progress /> snapshot 1`] = `
       <View
         className="flex-row justify-between items-start"
       >
-        <Text>
+        <Text
+          style={
+            {
+              "color": "#57534e",
+              "fontFamily": "Battambang_Bold",
+              "fontSize": 22,
+            }
+          }
+        >
           60-min Citra
         </Text>
         <View
