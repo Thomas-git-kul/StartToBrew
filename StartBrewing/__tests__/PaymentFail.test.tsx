@@ -75,8 +75,9 @@ jest.mock("@/hooks/use-fonts", () => ({
 
 describe("<PaymentFail />", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
+    
     (useRouter as jest.Mock).mockReturnValue({ replace: replaceMock });
-    replaceMock.mockClear();
 
     (useLocalSearchParams as jest.Mock).mockReturnValue({
       email: "test@example.com",
@@ -84,7 +85,7 @@ describe("<PaymentFail />", () => {
       order_id: "ORDER123",
     });
 
-    (emailjs.send as jest.Mock).mockClear();
+    (emailjs.send as jest.Mock).mockResolvedValue({ text: "ok" });
   });
 
   it("renders essential UI elements", () => {
@@ -127,12 +128,15 @@ describe("<PaymentFail />", () => {
     expect(replaceMock).toHaveBeenCalledWith("/ShoppingCart");
   });
 
-  it("does not send email when params are missing", () => {
-    (useLocalSearchParams as jest.Mock).mockReturnValueOnce({});
+  it("does not send email when params are missing", async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({});
 
     render(<PaymentFail />);
 
-    expect(emailjs.send).not.toHaveBeenCalled();
+    // Wait a bit to ensure useEffect has run
+    await waitFor(() => {
+      expect(emailjs.send).not.toHaveBeenCalled();
+    }, { timeout: 100 });
   });
 
   it("handles emailjs.send error", async () => {

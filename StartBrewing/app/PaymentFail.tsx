@@ -1,7 +1,7 @@
 'use client';
 export const prerender = false;
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -22,10 +22,18 @@ export default function PaymentFail() {
   const orderId = params.order_id as string | undefined;
   const amountInEuros = amount ? (Number(amount) / 100).toFixed(2) : "0.00";
 
-  const title = "Payment Failed"
-  const text1 = "Unfortunately, your payment could not be completed."
-  const text2 = "Please try again or contact support."
-  const button ="Back to shoppingcart"
+  const [title, setTitle] = useState("");
+  const [text1, setText1] = useState("");
+  const [text2, setText2] = useState("");
+  const [button, setButton] = useState("");
+
+  useEffect(() => {
+    // Simulate fetching from database
+    setTitle("Payment Failed");
+    setText1("Unfortunately, your payment could not be completed.");
+    setText2("Please try again or contact support.");
+    setButton("Back to shoppingcart");
+  }, []);
 
   useEffect(() => {
     if (email && amountInEuros && orderId) {
