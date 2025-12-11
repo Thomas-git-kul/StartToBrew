@@ -211,7 +211,6 @@ export default function Registration() {
               onChangeText={setLastname}
               placeholder="Lastname"
               maxLength={30}
-
             />
           </View>
         </View>
@@ -219,13 +218,31 @@ export default function Registration() {
         <ThemedText type="subTitle" className="mt-2">Birth Date</ThemedText>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <TextInput value={day} onChangeText={setDay} placeholder="DD" keyboardType="numeric"/>
+            <TextInput 
+              value={day} 
+              onChangeText={setDay} 
+              placeholder="DD" 
+              keyboardType="numeric"
+              maxLength={2}
+            />
           </View>
           <View style={{ width: "25%" }}>
-            <TextInput value={month} onChangeText={setMonth} placeholder="MM" keyboardType="numeric"/>
+            <TextInput 
+              value={month} 
+              onChangeText={setMonth} 
+              placeholder="MM" 
+              keyboardType="numeric"
+              maxLength={2}
+            />
           </View>
           <View style={{ width: "50%" }}>
-            <TextInput value={year} onChangeText={setYear} placeholder="YYYY" keyboardType="numeric"/>
+            <TextInput 
+              value={year} 
+              onChangeText={setYear} 
+              placeholder="YYYY" 
+              keyboardType="numeric"
+              maxLength={4}
+            />
           </View>
         </View>
         <View className="mb-3">
