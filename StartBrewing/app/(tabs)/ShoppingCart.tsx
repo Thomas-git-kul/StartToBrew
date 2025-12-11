@@ -387,7 +387,10 @@ const saveShippingInfo = async () => {
                 <TextInput 
                   placeholder="Zip code"
                   value={zip}
-                  onChangeText={setZip}
+                  onChangeText={(text) => {
+                    const numericText = text.replace(/[^0-9]/g, '');
+                    setZip(numericText);
+                  }}
                   maxLength={5}
                   keyboardType="numeric"
                 />
