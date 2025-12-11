@@ -65,6 +65,10 @@ jest.mock("@/constants/Fonts", () => ({
   },
 }));
 
+jest.mock("@/hooks/use-fonts", () => ({
+  useFonts: jest.fn(() => true),
+}));
+
 /* ------------------------------
    TESTS
 ------------------------------- */
