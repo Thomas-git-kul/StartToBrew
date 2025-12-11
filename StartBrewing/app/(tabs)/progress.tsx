@@ -107,6 +107,23 @@ export default function Progress() {
     [latestBadgeId]
   );
 
+  const checkIfUserReviewed = useCallback(async (recipeSlug: string, userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("recipe_reviews")
+        .select("rating")
+        .eq("recipe_slug", recipeSlug)
+        .eq("account_id", userId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return !!data;
+    } catch (error) {
+      console.error("Error checking if user reviewed:", error);
+      return false;
+    }
+  }, []);
+
   const loadStep = useCallback(
     async (stepId?: string) => {
       setLoading(true);
@@ -635,14 +652,19 @@ export default function Progress() {
 
       if (isLastStep) {
         const hasNewBadge = await checkForNewBadge(currentUserId ?? "");
+        const hasReviewed = await checkIfUserReviewed(brew.recipe_slug, currentUserId ?? "");
 
         if (hasNewBadge) {
           // Na sluiten van de badge-modal naar Home navigeren
           setNavigateAfterBadge("/HomePage");
         } else {
-          // Geen nieuwe badge: gewoon progress refreshen en review-modal tonen
+          // Geen nieuwe badge: gewoon progress refreshen en review-modal tonen (alleen als nog niet gereviewed)
           await refreshProgress();
-          setReviewModalVisible(true);
+          if (!hasReviewed) {
+            setReviewModalVisible(true);
+          } else {
+            router.push("/HomePage");
+          }
         }
       return;
     }
@@ -782,7 +804,13 @@ export default function Progress() {
         contentContainerStyle={{ paddingBottom: 95 }}
       >
         <View className="flex-row justify-between items-start">
-          <ThemedText type="title">{title}</ThemedText>
+          <Text 
+            style={{
+              fontSize: Math.min(18 * scale, 22),
+              fontFamily: FontFamilies.BODY_BOLD,
+              color: BASE_COLORS.STONE600,
+            }}
+          >{title}</Text>
           {!isHistoricalStep && (
             <View className="mb-2">
               <PrimaryButton
@@ -999,7 +1027,13 @@ export default function Progress() {
           setBadgeModalVisible(false);
           if (navigateAfterBadge) {
             await refreshProgress();
-            router.push(navigateAfterBadge);
+            // Check if user has already reviewed before showing review modal
+            const hasReviewed = await checkIfUserReviewed(brew?.recipe_slug ?? "", currentUserId ?? "");
+            if (!hasReviewed && brew?.recipe_slug) {
+              setReviewModalVisible(true);
+            } else {
+              router.push(navigateAfterBadge);
+            }
             setNavigateAfterBadge(null);
           }
         }}

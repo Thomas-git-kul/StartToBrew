@@ -389,6 +389,7 @@ const saveShippingInfo = async () => {
                   value={zip}
                   onChangeText={setZip}
                   maxLength={5}
+                  keyboardType="numeric"
                 />
               </View>
             </View>
