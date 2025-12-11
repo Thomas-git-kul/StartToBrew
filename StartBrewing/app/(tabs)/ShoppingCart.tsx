@@ -24,6 +24,7 @@ interface CartItem {
   price: string;
   starterkit: boolean;
   categoryId?: number | null;
+  imageUrl?: string;
 }
 interface StoreItem {
   id_store_item: number;
@@ -46,6 +47,32 @@ const exampleImages: Record<number, any> = {
   4: require("@/assets/images/starterkit2.png"),
   5: require("@/assets/images/Airlock.png"),
   6: require("@/assets/images/measurement.png"),
+};
+
+const buildPublicImageUrl = (imageUrl?: string | null) => {
+  const raw = imageUrl?.trim();
+  const baseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+
+  if (!raw || !baseUrl) return null;
+
+  // If it already contains "tools/", use that path, otherwise prefix it
+  const path = raw.startsWith("tools/") ? raw : `tools/${raw}`;
+
+  return `${baseUrl}/storage/v1/object/public/${path}`;
+};
+
+const getStoreItemImageSource = (row: any) => {
+  // 1) Try public URL from image_url
+  const publicUrl = buildPublicImageUrl(row.image_url as string | null | undefined);
+  if (publicUrl) {
+    return { uri: publicUrl };
+  }
+
+  // 2) Fallback to existing assets based on category
+  return (
+    exampleImages[row.category_id] ||
+    require("@/assets/images/Premiumkit.png")
+  );
 };
 
 export default function ShoppingCart() {
@@ -118,8 +145,8 @@ export default function ShoppingCart() {
         return;
       }
 
-      // Fetch store items and starter kits
-      const { data: storeItems } = await supabase.from("store_items").select("*");
+      // Fetch store items and starter kits with image_url
+      const { data: storeItems } = await supabase.from("store_items").select("id_store_item, name, price, category_id, image_url");
       const { data: starterKits } = await supabase.from("starter_kits").select("*");
       const mappedOrders: CartItem[] = (cartItems as any[]).map((item) => {
         if (item.starter_kit) {
@@ -137,15 +164,16 @@ export default function ShoppingCart() {
           };
         } else {
           // Regular store item
-          const storeItem = (storeItems as StoreItem[]).find(s => s.id_store_item === item.store_item_id);
+          const storeItem = (storeItems as any[]).find((s: any) => s.id_store_item === item.store_item_id);
           return {
             store_item_id: item.store_item_id,
             title: storeItem?.name || "Item",
             quantity: item.quantity,
             price: `€${storeItem?.price?.toFixed(2) ?? "0.00"}`,
             starterkit: false,
-            image: exampleImages[storeItem?.category_id ?? 1],
+            image: getStoreItemImageSource(storeItem || {}),
             categoryId: storeItem?.category_id ?? null,
+            imageUrl: storeItem?.image_url ?? undefined,
           };
         }
       });
