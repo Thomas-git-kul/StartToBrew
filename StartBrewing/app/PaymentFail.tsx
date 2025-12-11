@@ -11,9 +11,10 @@ import { XCircle } from "lucide-react-native";
 import emailjs from "@emailjs/browser";
 import { useFonts } from "@/hooks/use-fonts";
 import PrimaryButton from "@/components/primaryButton";
+import Spinner from "@/components/spinner";
 
 export default function PaymentFail() {
-  useFonts();
+  const fontsLoaded = useFonts();
   const router = useRouter();
   const params = useLocalSearchParams();
   const email = params.email as string | undefined;
@@ -43,7 +44,16 @@ export default function PaymentFail() {
           console.error("Failed to send failure email:", error.text || error);
         });
     }
-  }, [email, amount, orderId]);
+  }, [email, amountInEuros, orderId]);
+
+  // Show spinner while fonts load
+  if (!fontsLoaded) {
+    return (
+      <Spinner
+        title="loading"
+      />
+    );
+  }
 
   return (
     <SafeAreaView

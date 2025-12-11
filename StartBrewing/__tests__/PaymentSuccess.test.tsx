@@ -55,6 +55,10 @@ jest.mock("@/constants/Fonts", () => ({
   FontFamilies: { BODY: "System" },
 }));
 
+jest.mock("@/hooks/use-fonts", () => ({
+  useFonts: jest.fn(() => true),
+}));
+
 /* ------------------------------
    SUPABASE MOCK (single source of truth)
 ------------------------------- */

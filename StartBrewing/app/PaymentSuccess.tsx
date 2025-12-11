@@ -2,7 +2,7 @@
 export const prerender = false;
 
 import { useEffect } from "react";
-import { View, Dimensions } from "react-native";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -12,9 +12,10 @@ import emailjs from "@emailjs/browser";
 import { supabase } from "@/supabase";
 import PrimaryButton from "@/components/primaryButton";
 import { useFonts } from "@/hooks/use-fonts";
+import Spinner from "@/components/spinner";
 
 export default function PaymentSuccess() {
-  useFonts();
+  const fontsLoaded = useFonts();
   const router = useRouter();
   const params = useLocalSearchParams();
   const email = params.email as string | undefined;
@@ -172,7 +173,16 @@ export default function PaymentSuccess() {
     };
 
     processOrder();
-  }, [email, amount, orderId]);
+  }, [email, amountInEuros, orderId]);
+
+  // Show spinner while fonts load
+  if (!fontsLoaded) {
+    return (
+      <Spinner
+        title="loading"
+      />
+    );
+  }
 
   return (
     <SafeAreaView
