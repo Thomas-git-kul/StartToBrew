@@ -181,48 +181,61 @@ export default function ChatBot() {
   };
 
   const send = async () => {
-    if (!input && !image) return;
+  if (!input && !image) return;
 
-    const userMessage = input || (image ? "[image]" : "");
-    setInput('');
-    const userData = image && image.base64 != null ? image.base64 : undefined;
-    setMessages(prev => [...prev, { from: 'user', text: input || undefined, data: userData }]);
-    setLoading(true);
+  // Maak een lokale copy van image/base64 voor deze message
+  const userMessageData = image?.base64 ?? undefined;
 
-    try {
-      const promptText = buildPrompt(input || "[image]", contextData);
-      const body: { prompt: string; image?: string } = { prompt: promptText };
-      if (image?.base64) {
-        body.image = image.base64;
-      }
+  // Voeg de user message toe aan de chat
+  const userMsg: ChatMessage = {
+    from: 'user',
+    // only include text if the user actually typed something; don't add a placeholder like "[image]"
+    text: input || undefined,
+    type: image ? 'image' : 'text',
+    data: userMessageData,
+  };
+  setMessages(prev => [...prev, userMsg]);
 
-      // Attach hidden context when available (brew, recipe, steps, current step)
-      if (contextData) {
-        // Keep payload shape simple; backend can decide how to use it.
-        (body as any).context = contextData;
-      }
+  setLoading(true);
 
-      console.log("Sending to ChatBot function:", body);
+  try {
+    const promptText = buildPrompt(input || "[image]", contextData);
+    const body: { prompt: string; image?: string } = { prompt: promptText };
 
-      const res = await fetch("https://neeqemudecnuayqlvohk.supabase.co/functions/v1/ChatBot", {
+    // Stuur base64 afbeelding naar de backend
+    if (image?.base64) {
+      body.image = image.base64;
+    }
+
+    // Voeg context toe als die beschikbaar is
+    if (contextData) {
+      (body as any).context = contextData;
+    }
+
+    console.log("Sending to ChatBot function:", body);
+
+    const res = await fetch(
+      "https://neeqemudecnuayqlvohk.supabase.co/functions/v1/ChatBot",
+      {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-         },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       }
-      );
+    );
 
-      const data = await res.json();
-      setMessages(prev => [...prev, { from: 'bot', text: data.text }]);
-    } catch (err) {
-      console.error(err);
-      setMessages(prev => [...prev, { from: 'bot', text: 'Sorry, something went wrong.' }]);
-    } finally {
-      setLoading(false);
-      setImage(null); // reset image after sending
-    }
-  };
+    const data = await res.json();
+
+    // Voeg bot reactie toe
+    setMessages(prev => [...prev, { from: 'bot', text: data.text }]);
+  } catch (err) {
+    console.error(err);
+    setMessages(prev => [...prev, { from: 'bot', text: 'Sorry, something went wrong.' }]);
+  } finally {
+    setLoading(false);
+    setInput('');
+    setImage(null);
+  }
+};
 
   const pickImageWeb = () => {
     // Guard for non-browser (jest/node) environments
@@ -288,61 +301,69 @@ export default function ChatBot() {
     >
       <SafeAreaView className='flex-1 mx-3'>
         <ScrollView showsVerticalScrollIndicator={false} ref={scrollViewRef}>
-          {messages.map((msg, i) => (
-            <View key={i}>
-              {msg.from === "bot" && (
-                <View className="flex-row items-center gap-2">
-                  <Avatar.Icon 
-                    size={32} 
-                    icon={() => <BotMessageSquare size={20} color={BASE_COLORS.STONE700} />} 
-                    style={{ backgroundColor: "transparent" }} 
-                  />
-                  <Text
-                    style={{
-                      fontFamily: FontFamilies.BODY_BOLD,
-                      fontSize: 14,
-                      color: BASE_COLORS.STONE700,
-                    }}
-                  >BeerBot</Text>
+          {messages.map((msg, i) => {
+            const isBot = msg.from === 'bot';
+            const isImage = msg.type === 'image' && !!msg.data;
+
+            return (
+              <View key={i}>
+                {isBot && (
+                  <View className="flex-row items-center gap-2">
+                    <Avatar.Icon 
+                      size={32} 
+                      icon={() => <BotMessageSquare size={20} color={BASE_COLORS.STONE700} />} 
+                      style={{ backgroundColor: "transparent" }} 
+                    />
+                    <Text
+                      style={{
+                        fontFamily: FontFamilies.BODY_BOLD,
+                        fontSize: 14,
+                        color: BASE_COLORS.STONE700,
+                      }}
+                    >BeerBot</Text>
+                  </View>
+                )}
+
+                <View
+                  testID={isBot ? `bot-msg-${i}` : `user-msg-${i}`}
+                  style={[isBot ? styles.botMsg : styles.userMsg, isImage ? styles.imageContainer : undefined]}
+                >
+                  {/* Only render text when it's not an image-only message */}
+                  {msg.text && msg.type !== 'image' && (
+                    <Markdown
+                      style={{
+                        body: {
+                          color: msg.from === "user" ? BASE_COLORS.STONE950 : BASE_COLORS.STONE950,
+                        },
+                      }}
+                    >{msg.text}</Markdown>
+                  )}
+
+                  {msg.data && (
+                    <Image
+                      source={{
+                        uri:
+                          typeof msg.data === "string" && msg.data.startsWith("data:")
+                            ? msg.data
+                            : `data:image/jpeg;base64,${msg.data}`,
+                      }}
+                      style={isImage ? {
+                        width: 150,
+                        height: 150,
+                        marginBottom: 12,
+                        borderRadius: 8,
+                      } : {
+                        width: "100%",
+                        height: 200,
+                        marginBottom: 12,
+                        borderRadius: 8,
+                      }}
+                    />
+                  )}
                 </View>
-              )}
-
-              <View
-                testID={msg.from === "bot" ? `bot-msg-${i}` : `user-msg-${i}`}
-                style={msg.from === "user" ? styles.userMsg : styles.botMsg}
-              >
-                {msg.text && (
-                  <Markdown
-                    style={{
-                      body: {
-                        color:
-                          msg.from === "user"
-                            ? BASE_COLORS.STONE950
-                            : BASE_COLORS.STONE950,
-                      },
-                    }}
-                  >{msg.text}</Markdown>
-                )}
-
-                {msg.data && (
-                  <Image
-                    source={{
-                      uri:
-                        typeof msg.data === "string" && msg.data.startsWith("data:")
-                          ? msg.data
-                          : `data:image/jpeg;base64,${msg.data}`,
-                    }}
-                    style={{
-                      width: "100%",
-                      height: 200,
-                      marginBottom: 12,
-                      borderRadius: 8,
-                    }}
-                  />
-                )}
               </View>
-            </View>
-          ))}
+            );
+          })}
 
           {loading && 
             <Spinner title="Thinking..." size="large" />
@@ -413,5 +434,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     paddingInline: 16,
     maxWidth: '90%',
+  },
+  imageContainer: {
+    padding: 0,
+    borderRadius: 8,
+    // center image inside the bubble
+    alignItems: 'center',
+    justifyContent: 'center',
+    // clear inline padding from text-bubble and use equal horizontal padding
+    paddingInline: 0,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    // container width = image width (150) + horizontal padding (12*2) => 174
+    maxWidth: 174,
   },
 });
