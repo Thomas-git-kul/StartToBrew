@@ -12,9 +12,18 @@ import emailjs from "@emailjs/browser";
 import { supabase } from "@/supabase";
 import PrimaryButton from "@/components/primaryButton";
 import { useFonts } from "@/hooks/use-fonts";
+import Spinner from "@/components/spinner";
 
 export default function PaymentSuccess() {
-  useFonts();
+  const fontsLoaded = useFonts();
+  if (!fontsLoaded) {
+    return (
+      <Spinner 
+        title="Loading..."
+      />
+    );
+  }
+
   const router = useRouter();
   const params = useLocalSearchParams();
   const email = params.email as string | undefined;

@@ -11,9 +11,18 @@ import { XCircle } from "lucide-react-native";
 import emailjs from "@emailjs/browser";
 import { useFonts } from "@/hooks/use-fonts";
 import PrimaryButton from "@/components/primaryButton";
+import Spinner from "@/components/spinner";
 
 export default function PaymentFail() {
-  useFonts();
+  const fontsLoaded = useFonts();
+  if (!fontsLoaded) {
+    return (
+      <Spinner 
+        title="Loading..."
+      />
+    );
+  }
+
   const router = useRouter();
   const params = useLocalSearchParams();
   const email = params.email as string | undefined;
