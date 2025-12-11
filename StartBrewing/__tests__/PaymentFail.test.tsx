@@ -70,6 +70,29 @@ jest.mock("@/hooks/use-fonts", () => ({
 }));
 
 /* ------------------------------
+   SUPABASE MOCK
+------------------------------- */
+jest.mock("@/supabase", () => ({
+  supabase: {
+    from: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id: 1,
+              title: "Payment Failed",
+              text: "Unfortunately, your payment could not be completed.\nPlease try again or contact support.",
+              button: "Back to shoppingcart",
+            },
+            error: null,
+          }),
+        }),
+      }),
+    }),
+  },
+}));
+
+/* ------------------------------
    TESTS
 ------------------------------- */
 
@@ -88,10 +111,13 @@ describe("<PaymentFail />", () => {
     (emailjs.send as jest.Mock).mockResolvedValue({ text: "ok" });
   });
 
-  it("renders essential UI elements", () => {
+  it("renders essential UI elements", async () => {
     const { getByText } = render(<PaymentFail />);
 
-    expect(getByText("Payment Failed")).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText("Payment Failed")).toBeTruthy();
+    });
+
     expect(
       getByText("Unfortunately, your payment could not be completed.\nPlease try again or contact support.")
     ).toBeTruthy();
@@ -119,8 +145,12 @@ describe("<PaymentFail />", () => {
     );
   });
 
-  it("navigates to shoppingcart when button is pressed", () => {
+  it("navigates to shoppingcart when button is pressed", async () => {
     const { getByText } = render(<PaymentFail />);
+
+    await waitFor(() => {
+      expect(getByText("Back to shoppingcart")).toBeTruthy();
+    });
 
     const button = getByText("Back to shoppingcart");
     fireEvent.press(button);

@@ -12,9 +12,10 @@ import emailjs from "@emailjs/browser";
 import { useFonts } from "@/hooks/use-fonts";
 import PrimaryButton from "@/components/primaryButton";
 import Spinner from "@/components/spinner";
+import { supabase } from "@/supabase";
 
 export default function PaymentFail() {
-  const fontsLoaded = useFonts();
+  useFonts();
   const router = useRouter();
   const params = useLocalSearchParams();
   const email = params.email as string | undefined;
@@ -23,21 +24,30 @@ export default function PaymentFail() {
   const amountInEuros = amount ? (Number(amount) / 100).toFixed(2) : "0.00";
 
   const [title, setTitle] = useState("");
-  const [text1, setText1] = useState("");
-  const [text2, setText2] = useState("");
+  const [text, setText] = useState("");
   const [button, setButton] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching from database
-    setTitle("Payment Failed");
-    setText1("Unfortunately, your payment could not be completed.");
-    setText2("Please try again or contact support.");
-    setButton("Back to shoppingcart");
+    async function fetchFeedback() {
+      const { data, error } = await supabase
+        .from("payment_feedback")
+        .select("id, title, text, button")
+        .eq("id", 1)
+        .single();
+
+      if (!error && data) {
+        setTitle(data.title || "Failed to load");
+        setText(data.text || "Failed to load");
+        setButton(data.button || "Failed to load");
+      }
+      setIsLoading(false);
+    }
+    fetchFeedback();
   }, []);
 
   useEffect(() => {
     if (email && amountInEuros && orderId) {
-      // Optionally send a failed payment email
       emailjs
         .send(
           process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID!,
@@ -59,11 +69,11 @@ export default function PaymentFail() {
     }
   }, [email, amountInEuros, orderId]);
 
-  // Show spinner while fonts load
-  if (!fontsLoaded) {
+  // Show spinner while fonts or data is loading
+  if (isLoading) {
     return (
       <Spinner
-        title="loading"
+        title="Loading..."
       />
     );
   }
@@ -87,7 +97,7 @@ export default function PaymentFail() {
           className="mb-3"
         />
 
-        <ThemedText type="defaultText" className="text-center mb-6">{text1}{"\n"}{text2}
+        <ThemedText type="defaultText" className="text-center mb-6">{text}
         </ThemedText>
 
         {/* Back to Home Button */}
