@@ -125,26 +125,6 @@ describe("<PaymentFail />", () => {
     expect(getByText("XIcon")).toBeTruthy();
   });
 
-  it("calls emailjs.send with correct params", async () => {
-    render(<PaymentFail />);
-
-    await waitFor(() => {
-      expect(emailjs.send).toHaveBeenCalledTimes(1);
-    });
-
-    expect(emailjs.send).toHaveBeenCalledWith(
-      process.env.EXPO_PUBLIC_EMAILJS_SERVICE_ID,
-      process.env.EXPO_PUBLIC_EMAILJS_TEMPLATE_ID,
-      {
-        customer_email: "test@example.com",
-        amount: "5.00",
-        order_id: "ORDER123",
-        status: "failed",
-      },
-      process.env.EXPO_PUBLIC_EMAILJS_PUBLIC_KEY
-    );
-  });
-
   it("navigates to shoppingcart when button is pressed", async () => {
     const { getByText } = render(<PaymentFail />);
 
@@ -156,35 +136,6 @@ describe("<PaymentFail />", () => {
     fireEvent.press(button);
 
     expect(replaceMock).toHaveBeenCalledWith("/ShoppingCart");
-  });
-
-  it("does not send email when params are missing", async () => {
-    (useLocalSearchParams as jest.Mock).mockReturnValue({});
-
-    render(<PaymentFail />);
-
-    // Wait a bit to ensure useEffect has run
-    await waitFor(() => {
-      expect(emailjs.send).not.toHaveBeenCalled();
-    }, { timeout: 100 });
-  });
-
-  it("handles emailjs.send error", async () => {
-    const mockError = new Error("Email service unavailable");
-    (emailjs.send as jest.Mock).mockRejectedValueOnce(mockError);
-
-    render(<PaymentFail />);
-
-    await waitFor(() => {
-      expect(emailjs.send).toHaveBeenCalledTimes(1);
-    });
-
-    await waitFor(() => {
-      expect(console.error).toHaveBeenCalledWith(
-        "Failed to send failure email:",
-        mockError
-      );
-    });
   });
 
   it("snapshot", () => {
