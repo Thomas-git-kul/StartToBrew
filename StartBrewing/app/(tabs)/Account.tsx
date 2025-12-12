@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { View, Dimensions, Text, Alert, ScrollView } from "react-native";
-import {
-  ActivityIndicator,
-  Avatar,
-  Button,
-  Modal,
-  Portal,
-} from "react-native-paper";
+import { Avatar, Button, Modal, Portal } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { BASE_COLORS } from "@/constants/Colors";
@@ -454,27 +448,22 @@ export default function Account() {
           )}
 
           {/* Completed brews eerst */}
-          <View className="flex-row justify-between">
+          <View className="flex-row items-center justify-between mt-6">
             <ThemedText type="title">Completed</ThemedText>
             {completedBrewsCount > 3 && (
-              <Button
-                mode="text"
+              <SecondaryButton
+                title={showAllBrews ? "See less" : "See more"}
                 onPress={() => setShowAllBrews((s) => !s)}
-                labelStyle={{
-                  fontSize: Math.min(14 * scale, 18),
-                  fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-              >
-                {showAllBrews ? "See less" : "See more"}
-              </Button>
+                testID="seemore-brews"
+                size={14}
+              />
             )}
           </View>
           <View>
             {brewsLoading ? (
               <Spinner title="Loading brews..." size="small" />
             ) : completedBrewsCount === 0 ? (
-              <ThemedText type="defaultText">
+              <ThemedText type="defaultText" className="mt-1">
                 You have not completed any brews yet.
               </ThemedText>
             ) : (
@@ -510,26 +499,21 @@ export default function Account() {
           </View>
 
           {/* Badges onder completed */}
-          <View className="flex-row justify-between">
+          <View className="flex-row justify-between items-center mt-6">
             <ThemedText type="title">Earned badges</ThemedText>
             {hasMoreBadges && (
-              <Button
-                mode="text"
+              <SecondaryButton
+                title={showAllBadges ? "See less" : "See more"}
                 onPress={() => setShowAllBadges((s) => !s)}
-                labelStyle={{
-                  fontSize: Math.min(14 * scale, 18),
-                  fontFamily: FontFamilies.BODY,
-                  color: BASE_COLORS.TEXT_DARK,
-                }}
-              >
-                {showAllBadges ? "See less" : "See more"}
-              </Button>
+                testID="seemore-badges"
+                size={14}
+              />
             )}
           </View>
           {badgesLoading ? (
             <Spinner title="Loading badges..." size="small" />
           ) : badgesToDisplay.length === 0 ? (
-            <ThemedText type="defaultText" className="mb-8">
+            <ThemedText type="defaultText">
               Brew beers to earn badges.
             </ThemedText>
           ) : (

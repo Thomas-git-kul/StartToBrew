@@ -96,12 +96,15 @@ exports[`ChatBot snapshot 1`] = `
               </View>
               <View
                 style={
-                  {
-                    "alignSelf": "flex-start",
-                    "marginBottom": 4,
-                    "maxWidth": "90%",
-                    "paddingInline": 16,
-                  }
+                  [
+                    {
+                      "alignSelf": "flex-start",
+                      "marginBottom": 4,
+                      "maxWidth": "90%",
+                      "paddingInline": 16,
+                    },
+                    undefined,
+                  ]
                 }
                 testID="bot-msg-0"
               >
